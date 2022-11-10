@@ -229,8 +229,11 @@ class Spin:
         return new_data
         
     
-    def mass_weighted(self, arr, mass):
+    #def mass_weighted(self, arr, mass):
         # Function to mass-weight a given input
+        # this acts as a proxy for luminosity test
+        
+        
 
 class SubHalo:
     

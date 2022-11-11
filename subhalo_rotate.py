@@ -40,14 +40,13 @@ class Spin:
         self.gas_coords     = gas['Coordinates'] - self.centre
 
         # Compute spin vectors within radius of interest
-        self.spin_stars       = self.spin_vector(stars, self.centre, self.perc_vel, self.halfmass_rad, 'stars')    # unit vector
-        self.spin_gas         = self.spin_vector(gas, self.centre, self.perc_vel, self.halfmass_rad, 'gas')        # unit vector
-        self.spin_stars_large = self.spin_vector(stars, self.centre, self.perc_vel, self.halfmass_rad*20, 'stars')    # unit vector
-        self.spin_gas_large   = self.spin_vector(gas, self.centre, self.perc_vel, self.halfmass_rad*20, 'gas')        # unit vector
+        self.spin_stars       = self.spin_vector(stars, self.centre, self.perc_vel, self.halfmass_rad, 'stars')       # unit vector centred
+        self.spin_gas         = self.spin_vector(gas, self.centre, self.perc_vel, self.halfmass_rad, 'gas')           # unit vector centred
+        self.spin_stars_large = self.spin_vector(stars, self.centre, self.perc_vel, self.halfmass_rad*20, 'stars')    # unit vector centred
+        self.spin_gas_large   = self.spin_vector(gas, self.centre, self.perc_vel, self.halfmass_rad*20, 'gas')        # unit vector centred
         
         # Compute angle between star spin and gas spin vector
         self.mis_angle = self.misalignment_angle(self.spin_stars, self.spin_gas)
-            
         
         # Find z_angle when given an axis as reference (z) and an attribute (stars)
         self.z_angle, matrix = self.find_angle('z', self.spin_stars)
@@ -328,7 +327,8 @@ if __name__ == '__main__':
             # For radius find the spin vectors
             L = Spin(GroupNum, SubGroupNum, subhalo.centre, subhalo.perc_vel, subhalo.halfmass_rad)
 
-            # Assign sql data to variables to extract spin           
+            # Assign sql data to variables to extract spin 
+                      
             print('CENTRE [pKpc]:', subhalo.centre)                         #pMpc
             print('PERCULIAR VELOCITY [pkm/s]:', subhalo.perc_vel)          #pkm/s
             print('STELLAR MASS [Msun]: %.3f' %subhalo.stelmass)            #Msun

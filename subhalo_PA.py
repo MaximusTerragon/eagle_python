@@ -8,7 +8,9 @@ from astropy.constants import G
 import matplotlib.pyplot as plt 
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.spatial.transform import Rotation
+from scipy.spatial import Voronoi, voronoi_plot_2d
 import matplotlib.colors as colors
+import matplotlib.cm as cm
 from read_dataset import read_dataset
 from read_header import read_header
 from read_dataset_dm_mass import read_dataset_dm_mass
@@ -139,17 +141,17 @@ class Subhalo:
         # Assign bulk galaxy values to this subhalo
         self.gn             = gn
         self.sgn            = sgn
-        self.stelmass       = stelmass          # [Msun]
-        self.gasmass        = gasmass           # [Msun]
-        self.halfmass_rad   = halfmass_rad      # [pMpc]
-        self.centre         = centre            # [pMpc]
-        self.centre_mass    = centre_mass       # [pMpc]
-        self.perc_vel       = perc_vel          # [pMpc/s]
-        self.viewing_angle  = viewing_angle     # [deg]
+        self.stelmass       = np.sum(stars['Mass'])     # [Msun]
+        self.gasmass        = np.sum(gas['Mass'])       # [Msun]
+        self.halfmass_rad   = halfmass_rad              # [pMpc]
+        self.centre         = centre                    # [pMpc]
+        self.centre_mass    = centre_mass               # [pMpc]
+        self.perc_vel       = perc_vel                  # [pMpc/s]
+        self.viewing_angle  = viewing_angle             # [deg]
         
         # Find original spin vector and rotation matrix to rotate that vector about z-axis (degrees, clockwise)
-        stars_spin_original, stars_L_original = self.spin_vector(stars, self.centre, self.perc_vel, self.halfmass_rad, 'stars')    # unit vector, [kg m^2 /s]
-        gas_spin_original, gas_L_original = self.spin_vector(gas, self.centre, self.perc_vel, self.halfmass_rad, 'gas')    # unit vector, [kg m^2 /s]
+        stars_spin_original, stars_L_original = self.spin_vector(stars, self.centre, self.perc_vel, self.halfmass_rad, 'stars')    # unit vector, [Msun pMpc^2 /s]
+        gas_spin_original, gas_L_original = self.spin_vector(gas, self.centre, self.perc_vel, self.halfmass_rad, 'gas')    # unit vector, [Msun pMpc^2 /s]
         matrix = self.rotate_around_axis('z', 360. - viewing_angle, stars_spin_original)
         
         # Compute new data of rotated particle data
@@ -161,24 +163,19 @@ class Subhalo:
         self.gas_coords   = gas_rotated['Coordinates']              # [pMpc] (centred)
         self.stars_vel    = stars_rotated['Velocity']               # [pMpc/s] (centred)
         self.gas_vel      = gas_rotated['Velocity']                 # [pMpc/s] (centred)
+        self.stars_mass   = stars_rotated['Mass']
+        self.gas_mass     = gas_rotated['Mass']
         
         #print(self.perc_vel*u.Mpc.to(u.km))
         #print(stars['Velocity']*u.Mpc.to(u.km))
         #print(self.stars_vel*u.Mpc.to(u.km))
         
         # Find new spin vectors
-        self.stars_spin, self.stars_L = self.spin_vector(stars_rotated, np.array([0, 0, 0]), np.array([0, 0, 0]), self.halfmass_rad, 'stars')  # unit vector, [kg m2 /s]
-        self.gas_spin, self.gas_L     = self.spin_vector(gas_rotated, np.array([0, 0, 0]), np.array([0, 0, 0]), self.halfmass_rad, 'gas')      # unit vector, [kg m2 /s]
+        self.stars_spin, self.stars_L = self.spin_vector(stars_rotated, np.array([0, 0, 0]), np.array([0, 0, 0]), self.halfmass_rad, 'stars')  # unit vector, [Msun pMpc^2 /s]
+        self.gas_spin, self.gas_L     = self.spin_vector(gas_rotated, np.array([0, 0, 0]), np.array([0, 0, 0]), self.halfmass_rad, 'gas')      # unit vector, [Msun pMpc^2 /s]
         
         # Compute angle between star spin and gas angular momentum vector
-        self.mis_angle = self.misalignment_angle(self.stars_spin, self.gas_spin)       # [deg]
-        
-        # Find mass weighted velocity
-        self.stars_vel_weighted = self.mass_weighted(stars_rotated, self.stelmass)
-        self.gas_vel_weighted   = self.mass_weighted(gas_rotated, self.gasmass)
-        
-        
-        # orientate too
+        self.mis_angle = self.misalignment_angle(self.stars_spin, self.gas_spin)   # [deg]
     
     
     def spin_vector(self, arr, origin, perculiar_velocity, radius, desc):
@@ -207,9 +204,6 @@ class Subhalo:
         
         # Expressing as unit vector
         spin_unit = spin / (spin[0]**2 + spin[1]**2 + spin[2]**2)**0.5
-        
-        # Convert units to [kg m^2 /s]
-        L = L * u.Mpc.to(u.m) * u.Msun.to(u.kg) * u.Mpc.to(u.m)
         
         return spin_unit, L
 
@@ -298,16 +292,7 @@ class Subhalo:
         new_data['Velocity']        = self.rotate_coords(matrix, data['Velocity'] - perculiar_velocity)
         
         return new_data
-        
-    
-    def mass_weighted(self, arr, mass):
-        # Function to mass-weight a given input
-        velocity = arr['Velocity'] * arr['Mass'][:, None] / mass
-        
-        return velocity
-        
-    #def kappa... need to use rotate
-        
+            
         
     
 class Subhalo_Align:
@@ -323,29 +308,32 @@ class Subhalo_Align:
         self.centre_mass    = centre_mass       # [pMpc]
         self.perc_vel       = perc_vel          # [pMpc/s]
         
-        # Compute spin vectors within radius of interest
-        self.stars_spin, self.stars_L  = self.spin_vector(stars, self.centre, self.perc_vel, self.halfmass_rad, 'stars') # unit vector centred
-        self.gas_spin, self.gas_L    = self.spin_vector(gas, self.centre, self.perc_vel, self.halfmass_rad, 'gas')       # unit vector centred
+        # Compute spin vectors within radius of interest (30 pkpc)        0.03 replace with self.halfmass_rad
+        self.stars_spin = self.spin_vector(stars, self.centre, self.perc_vel, 0.03, 'stars') # unit vector centred
+        self.gas_spin = self.spin_vector(gas, self.centre, self.perc_vel, 0.03, 'gas')       # unit vector centred
         
         # Find z_angle between stars and a given axis as reference (z)
         self.z_angle, matrix = self.orientate('z', self.stars_spin)
         
-        # Compute new data of rotated particle data
-        stars_rotated = self.rotate_galaxy(matrix, self.centre, self.perc_vel, stars)
-        gas_rotated   = self.rotate_galaxy(matrix, self.centre, self.perc_vel, gas)
+        # Compute new data of aligned particle data
+        stars_aligned = self.rotate_galaxy(matrix, self.centre, self.perc_vel, stars)
+        gas_aligned   = self.rotate_galaxy(matrix, self.centre, self.perc_vel, gas)
         
         # Assign particle data
         self.stars_coords     = stars['Coordinates'] - self.centre
         self.gas_coords       = gas['Coordinates'] - self.centre
-        self.stars_coords_new = stars_rotated['Coordinates']
-        self.gas_coords_new   = gas_rotated['Coordinates']
+        self.stars_coords_new = stars_aligned['Coordinates']
+        self.gas_coords_new   = gas_aligned['Coordinates']
         
-        # Find new spin vectors
-        self.stars_spin_new, self.stars_L_new = self.spin_vector(stars_rotated, np.array([0, 0, 0]), np.array([0, 0, 0]), self.halfmass_rad, 'stars')
-        self.gas_spin_new, self.gas_L_new     = self.spin_vector(gas_rotated, np.array([0, 0, 0]), np.array([0, 0, 0]), self.halfmass_rad, 'gas')
+        # Find new spin vectors within halfmassrad
+        self.stars_spin_new = self.spin_vector(stars_aligned, np.array([0, 0, 0]), np.array([0, 0, 0]), self.halfmass_rad, 'stars')
+        self.gas_spin_new   = self.spin_vector(gas_aligned, np.array([0, 0, 0]), np.array([0, 0, 0]), self.halfmass_rad, 'gas')
         
         # Compute angle between star spin and gas angular momentum vector
         self.mis_angle = self.misalignment_angle(self.stars_spin_new, self.gas_spin_new)       # [deg]
+        
+        # Compute stellar cp-rotating kinetic energy fraction within a radius
+        self.kappa = self.kappa_co(stars_aligned, np.array([0, 0, 0]), np.array([0, 0, 0]), 0.03)  # [pkpc]
         
     
     def spin_vector(self, arr, origin, perculiar_velocity, radius, desc):
@@ -375,10 +363,7 @@ class Subhalo_Align:
         # Expressing as unit vector
         spin_unit = spin / (spin[0]**2 + spin[1]**2 + spin[2]**2)**0.5
         
-        # Convert units to [kg m^2 /s]
-        L = L * u.Mpc.to(u.m) * u.Msun.to(u.kg) * u.Mpc.to(u.m)
-        
-        return spin_unit, L
+        return spin_unit
         
     
     def misalignment_angle(self, angle1, angle2):
@@ -483,24 +468,43 @@ class Subhalo_Align:
         new_data['Velocity']        = self.rotate_coords(matrix, data['Velocity'] - perculiar_velocity)
         
         return new_data
-    
+        
+            
+    def kappa_co(self, arr, origin, perculiar_velocity, radius):
+        # Compute distance to centre and mask all within stelhalfrad
+        r  = np.linalg.norm(arr['Coordinates'] - origin, axis=1)
+        mask = np.where(r <= radius)
+        
+        # Compute angular momentum within specified radius
+        L  = np.cross((arr['Coordinates'] - origin)[mask] * arr['Mass'][:, None][mask], (arr['Velocity'] - perculiar_velocity)[mask])
+        
+        # Projected radius along disk within specified radius
+        rad_projected = np.linalg.norm(arr['Coordinates'][:,:2][mask] - origin[:2], axis=1)
+        
+        # Total kinetic energy of stars
+        K_tot = np.sum(0.5 * arr['Mass'][mask] * np.square(np.linalg.norm(arr['Velocity'][mask] - perculiar_velocity, axis=1)))
+        
+        # Kinetic energy of ordered co-rotation (using only angular momentum in z-axis)
+        K_rot = np.sum(0.5 * np.square(L[:,2] / rad_projected) / arr['Mass'][mask])
+        
+        return K_rot/K_tot
         
         
 if __name__ == '__main__':
     # list of simulations
     mySims = np.array([('RefL0012N0188', 12)])   
     
-    def galaxy_render(GroupNumList=np.array([16]),
+    def galaxy_render(GroupNumList=np.array([4]),
                         SubGroupNum=0, 
-                        particles=2000,
+                        particles=10000,
                         minangle=0,
                         maxangle=360, 
                         stepangle=30, 
-                        boxradius=40,      # [pkpc] 
+                        boxradius=50,      # [pkpc] 
                         stars=False, 
-                        gas=False, 
-                        stars_rot=True, 
-                        gas_rot=True,
+                        gas=True, 
+                        stars_rot=False, 
+                        gas_rot=False,
                         stars_total = True, 
                         gas_total = True, 
                         centre_of_pot=True, 
@@ -519,11 +523,12 @@ if __name__ == '__main__':
 
             # Print galaxy properties
             print('\nGROUP NUMBER:', subhalo_al.gn) 
-            print('STELLAR MASS: %.3f' %subhalo_al.stelmass)            # [pMsun]
-            print('HALFMASS RAD: %.3f' %subhalo_al.halfmass_rad)        # [pkpc]
-            print('CENTRE:', subhalo_al.centre)                         # [pMpc]
-            print('PERCULIAR VELOCITY:', subhalo_al.perc_vel)           # [pkm/s]
-            print('MISALIGNMENT ANGLE: %.1f' %subhalo_al.mis_angle)     # [deg]
+            print('KAPPA: %.2f' %subhalo_al.kappa)
+            print('STELLAR MASS: %.3f log10 M$_\odot$' %np.log10(subhalo_al.stelmass))            # [pMsun]
+            print('HALFMASS RAD: %.3f pkpc' %(1000*subhalo_al.halfmass_rad))        # [pkpc]
+            print('MISALIGNMENT ANGLE: %.1f deg' %subhalo_al.mis_angle)     # [deg]
+            print('CENTRE [pMpc]:', subhalo_al.centre)                         # [pMpc]
+            print('PERCULIAR VELOCITY [pkm/s]:', subhalo_al.perc_vel)           # [pkm/s]
             
             # Graph initialising and base formatting
             graphformat(8, 11, 11, 11, 11, 5, 5)
@@ -565,16 +570,16 @@ if __name__ == '__main__':
                 
             if centre_of_pot == True:
                 # Plot centre_of_potential
-                ax.scatter(subhalo_al.centre[0] - subhalo_al.centre[0], subhalo_al.centre[1] - subhalo_al.centre[1], subhalo_al.centre[2] - subhalo_al.centre[2], c='k', s=3, zorder=10)
+                ax.scatter(0, 0, 0, c='pink', s=3, zorder=10)
             if centre_of_mass == True:
                 # Plot centre_of_mass
-                ax.scatter(subhalo_al.centre_mass[0] - subhalo_al.centre[0], subhalo_al.centre_mass[1] - subhalo_al.centre[1], subhalo_al.centre_mass[2] - subhalo_al.centre[2], c='b', s=3, zorder=10)
+                ax.scatter(1000*(subhalo_al.centre_mass[0] - subhalo_al.centre[0]), 1000*(subhalo_al.centre_mass[1] - subhalo_al.centre[1]), 1000*(subhalo_al.centre_mass[2] - subhalo_al.centre[2]), c='purple', s=3, zorder=10)
             
             if axis == True:
                 # Plot axis
-                ax.quiver(0, 0, 0, 0.01, 0, 0, color='r', linewidth=0.5)
-                ax.quiver(0, 0, 0, 0, 0.01, 0, color='g', linewidth=0.5)
-                ax.quiver(0, 0, 0, 0, 0, 0.01, color='b', linewidth=0.5)
+                ax.quiver(0, 0, 0, 10, 0, 0, color='r', linewidth=0.5)
+                ax.quiver(0, 0, 0, 0, 10, 0, color='g', linewidth=0.5)
+                ax.quiver(0, 0, 0, 0, 0, 10, color='b', linewidth=0.5)
                 
             # Plot formatting
             ax.set_facecolor('xkcd:black')
@@ -582,21 +587,24 @@ if __name__ == '__main__':
             ax.set_ylim(-boxradius, boxradius)
             ax.set_zlim(-boxradius, boxradius)   
              
+            print('VIEWING ANGLES: ', end='')
             for ii in np.arange(minangle, maxangle+1, stepangle):
+                print(ii , end=' ')                 # [deg]
                 ax.view_init(0, ii)
-                plt.savefig("/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%i/galaxy_test/galaxy_render_%i.jpeg"%(GroupNum,ii), dpi=300)
+                
+                plt.savefig("/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%i/galaxy_gas/galaxy_%i.jpeg"%(GroupNum,ii), dpi=300)
                 
             plt.close()
             print('')
             
     
-    def velocity_projection(GroupNumList = np.array([16]),
+    def velocity_projection(GroupNumList = np.array([4]),
                             SubGroupNum = 0,
                             minangle = 0,
                             maxangle = 360,
-                            stepangle = 30,
-                            boxradius = 40,         # [pkpc]
-                            pixel = 30):
+                            stepangle = 10,
+                            boxradius = 50,         # [pkpc]
+                            pixel = 100):
         
         for GroupNum in GroupNumList:
             # Initial extraction of galaxy data
@@ -609,50 +617,141 @@ if __name__ == '__main__':
             for viewing_angle in np.arange(minangle, maxangle+1, stepangle):
                 # If we want the original values, enter 0 for viewing angle
                 subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.stelmass, galaxy.gasmass, galaxy.halfmass_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas, viewing_angle)
-                
-                #boxradius = 2*galaxy.halfmass_rad/1000
+            
+                #boxradius = subhalo.halfmass_rad*1000
                 
                 # Print galaxy properties for first call
                 if i == 0:
-                    print('\n')
-                    print('GROUP NUMBER:', subhalo.gn) 
-                    print('STELLAR MASS: %.3f' %np.log10(subhalo.stelmass))     # [pMsun]
-                    print('HALFMASS RAD: %.3f' %(subhalo.halfmass_rad*1000) )   # [pkpc]
-                    print('CENTRE:', subhalo.centre)                            # [pMpc]
-                    print('PERCULIAR VELOCITY:', subhalo.perc_vel)              # [pkm/s]
-                    print('MISALIGNMENT ANGLE: %.1f' %subhalo.mis_angle)        # [deg]
-                print('VIEWING ANGLE: ', subhalo.viewing_angle)                 # [deg]
+                    # Call subhalo align for kappa only once
+                    subhalo_al = Subhalo_Align(galaxy.gn, galaxy.sgn, galaxy.stelmass, galaxy.gasmass, galaxy.halfmass_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas)
+                    
+                    print('\nGROUP NUMBER:', subhalo.gn) 
+                    print('STELLAR MASS [log10 Msun]: %.3f' %np.log10(subhalo.stelmass))            # [pMsun]
+                    print('HALFMASS RAD [pkpc]: %.3f' %(1000*subhalo.halfmass_rad))                 # [pkpc]
+                    print('KAPPA: %.2f' %subhalo_al.kappa)
+                    print('MISALIGNMENT ANGLE [deg]: %.1f' %subhalo.mis_angle)                      # [deg]
+                    print('CENTRE [pMpc]:', subhalo.centre)                                         # [pMpc]
+                    print('PERCULIAR VELOCITY [pkm/s]:', subhalo.perc_vel)                          # [pkm/s]
+                print('VIEWING ANGLE: ', viewing_angle)
+                
+                
+                # function for voronoi_tessalate 
+                def voronoi_tessalate(coords, velocity, mass):
+                    # Assign xy, y, and z values for histogram2d
+                    x   = [row[1] for row in coords*1000]
+                    y   = [row[2] for row in coords*1000]
+                    vel = [row[0] for row in velocity*u.Mpc.to(u.km)*-1.]
+                    
+                    # Histogram to find counts in each bin
+                    counts, xbins, ybins = np.histogram2d(y, x, bins=(pixel, pixel), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
+                    
+                    # Histogram to find total mass-weighted velocity in those bins, and account for number of values in each bin
+                    vel, _, _ = np.histogram2d(y, x, weights=vel*mass/np.mean(mass), bins=(xbins, ybins), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
+                    vel = np.divide(vel, counts, out=np.zeros_like(vel), where=counts!=0)
+                    
+                    # Convert histogram2d data into coords + value
+                    i, j = np.nonzero(vel)                                                    # find indicies of non-0 bins
+                    a = np.array((xbins[:-1] + 0.5*(xbins[1] - xbins[0]))[i])     # convert bin to centred coords (x, y)
+                    b = np.array((ybins[:-1] + 0.5*(ybins[1] - ybins[0]))[j])
+                    
+                    # Stack points, and add points at infinity (to color Voronoi outer edges)
+                    points_vel = vel[np.nonzero(vel)]
+                    points = np.column_stack((b, a))
+                    points = np.append(points, [[999,999], [-999,999], [999,-999], [-999,-999]], axis=0)
+                    
+                    # Create tessalation
+                    vor = Voronoi(points)
+                    
+                    # Find min/max values for normalization
+                    minmax = abs(max(points_vel, key=abs))                
+                    
+                    return vor, points_vel, minmax
+                
+                
+                # Initiate points and velocities for voronoi
+                vor_stars, vor_stars_vel, minmax_stars = voronoi_tessalate(subhalo.stars_coords, subhalo.stars_vel, subhalo.stars_mass)
+                #vor_gas, vor_gas_vel, minmax_gas     = voronoi_tessalate(subhalo.gas_coords, subhalo.gas_vel, subhalo.gas_mass)
+                
+                minmax_stars = 220
+                
+                # Create tessalation
+                norm_stars   = colors.Normalize(vmin=-minmax_stars, vmax=minmax_stars, clip=True)
+                mapper_stars = cm.ScalarMappable(norm=norm_stars, cmap=cm.coolwarm)
+                #norm_gas     = mpl.colors.Normalize(vmin=-minmax_gas, vmax=minmax_gas, clip=True)
+                #mapper_gas   = cm.ScalarMappable(norm=norm_gas, cmap=cm.coolwarm)
                 
                 # Graph initialising and base formatting
-                graphformat(8, 11, 11, 11, 11, 5, 5)
-                fig, [ax1, ax2] = plt.subplots(1, 2, figsize=[10, 4.2])
-                
-                # Custom colormap
+                graphformat(8, 11, 11, 11, 11, 5, 4)
+                #fig, [ax1, ax2] = plt.subplots(1, 2, figsize=[10, 4.2])
         
+                # plot Voronoi diagra, and fill finite regions with color mapped from velocity
+                voronoi_plot_2d(vor_stars, show_points=False, show_vertices=False, line_width=0, s=1)
+                for r in range(len(vor_stars.point_region)):
+                    region = vor_stars.regions[vor_stars.point_region[r]]
+                    if not -1 in region:
+                        polygon = [vor_stars.vertices[i] for i in region]
+                        plt.fill(*zip(*polygon), color=mapper_stars.to_rgba(vor_stars_vel[r]))
+                        
+                # Graph formatting
+                plt.xlim(-boxradius, boxradius)
+                plt.ylim(-boxradius, boxradius)
+                plt.xlabel('y-axis [pkpc]')
+                plt.ylabel('x-axis [pkpc]')
+                plt.title('Stars')
+                
+                # Overplot original points for comparisson
+                #plt.scatter([row[1] for row in subhalo.starscoords*1000], [row[2] for row in subhalo.stars_coords*1000], c=[row[0] for row in subhalo.stars_vel*u.Mpc.to(u.km)*-1.])
+
+                # Colorbar
+                plt.colorbar(mapper_stars, label='mean velocity [km/s]')
+        
+                plt.tight_layout()
+        
+                plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/galaxy_projection/voronoi_%s.jpeg' %(str(GroupNum), str(viewing_angle)), dpi=300)
+                plt.close()
+                
+                i = i + 1
+                
+                """
                 # Assign x, y, and the weighted z values for gas and stars
-                x_stars = [row[1] for row in subhalo.stars_coords*1000]
-                y_stars = [row[2] for row in subhalo.stars_coords*1000]
-                z_stars = [row[0] for row in subhalo.stars_vel*u.Mpc.to(u.km)*-1.]
-                x_gas   = [row[1] for row in subhalo.gas_coords*1000]
-                y_gas   = [row[2] for row in subhalo.gas_coords*1000]
-                z_gas   = [row[0] for row in subhalo.gas_vel*u.Mpc.to(u.km)*-1.]
+                stars_x   = [row[1] for row in subhalo.stars_coords*1000]
+                stars_y   = [row[2] for row in subhalo.stars_coords*1000]
+                stars_vel = [row[0] for row in subhalo.stars_vel*u.Mpc.to(u.km)*-1.]
+                gas_x     = [row[1] for row in subhalo.gas_coords*1000]
+                gas_y     = [row[2] for row in subhalo.gas_coords*1000]
+                gas_vel   = [row[0] for row in subhalo.gas_vel*u.Mpc.to(u.km)*-1.]
         
-                # Create histograms to find mean velocity in each bin (dividing weight by mean)
-                counts_stars, xbins_stars, ybins_stars = np.histogram2d(y_stars, x_stars, bins=(pixel, pixel), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
-                counts_gas, xbins_gas, ybins_gas       = np.histogram2d(y_gas,   x_gas,   bins=(pixel, pixel), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
-                sums_stars, _, _ = np.histogram2d(y_stars, x_stars, weights=z_stars, bins=(xbins_stars, ybins_stars), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
-                sums_gas, _, _   = np.histogram2d(y_gas,   x_gas,   weights=z_gas,   bins=(xbins_gas, ybins_gas), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
+                # Histogram to find counts in each bin
+                counts_stars, xbins_stars, ybins_stars = np.histogram2d(stars_y, stars_x, bins=(pixel, pixel), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
+                counts_gas, xbins_gas, ybins_gas       = np.histogram2d(gas_y,   gas_x,   bins=(pixel, pixel), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
+                
+                # Histogram to find total mass-weighted velocity in those bins
+                stars_vel, _, _ = np.histogram2d(stars_y, stars_x, weights=stars_vel*subhalo.stars_mass/np.mean(subhalo.stars_mass), bins=(xbins_stars, ybins_stars), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
+                gas_vel, _, _   = np.histogram2d(gas_y,   gas_x,   weights=gas_vel*subhalo.gas_mass/np.mean(subhalo.gas_mass),   bins=(xbins_gas, ybins_gas),     range=[[-boxradius, boxradius], [-boxradius, boxradius]])
         
-                """#with np.errstate(divide='ignore', invalid='ignore'):
-                    #print(np.array(np.tile(xbins_stars[:-1], (len(xbins_stars[:-1]), 1))).shape)
-                    #print(np.array(ybins_stars).size)
-                    #print(np.array(sums_stars/counts_stars).size)
-                    #print(np.array(np.tile(xbins_stars[:-1], (len(xbins_stars[:-1]), 1))))
-                    #print(np.array(np.tile(ybins_stars[:-1], (len(ybins_stars[:-1]), 1))).T)
+                # Account for number of values in each bin
+                stars_vel = np.divide(stars_vel, counts_stars, out=np.zeros_like(stars_vel), where=counts_stars!=0)
+                gas_vel   = np.divide(gas_vel,   counts_gas,   out=np.zeros_like(gas_vel),   where=counts_gas!=0)
                 
-                #print(sums_gas/counts_gas)
+                # Convert histogram2d data into coords + value
+                i_stars, j_stars = np.nonzero(stars_vel)                                                    # find indicies of non-0 bins
+                a_stars = np.array((xbins_stars[:-1] + 0.5*(xbins_stars[1] - xbins_stars[0]))[i_stars])     # convert bin to centred coords (x, y)
+                b_stars = np.array((ybins_stars[:-1] + 0.5*(ybins_stars[1] - ybins_stars[0]))[j_stars])
+                i_gas, j_gas = np.nonzero(gas_vel)                                                    # find indicies of non-0 bins
+                a_gas = np.array((xbins_gas[:-1] + 0.5*(xbins_gas[1] - xbins_gas[0]))[i_gas])         # convert bin to centred coords (x, y)
+                b_gas = np.array((ybins_gas[:-1] + 0.5*(ybins_gas[1] - ybins_gas[0]))[j_gas])
+        
+                # Stack points, and add points at infinity (to color Voronoi outer edges)
+                stars_vel = stars_vel[np.nonzero(stars_vel)]
+                stars_points = np.column_stack((b_stars, a_stars))
+                stars_points = np.append(stars_points, [[999,999], [-999,999], [999,-999], [-999,-999]], axis=0)
+                gas_vel = gas_vel[np.nonzero(gas_vel)]
+                gas_points = np.column_stack((b_gas, a_gas))
+                gas_points = np.append(gas_points, [[999,999], [-999,999], [999,-999], [-999,-999]], axis=0)
+                """
                 
-                # Run fit_kinematic_pa
+                
+                """# Run fit_kinematic_pa
                 with np.errstate(divide='ignore', invalid='ignore'):
                     angBest, angErr, vSyst = fit_kinematic_pa(np.array(np.tile(xbins_stars[:-1], (len(xbins_stars[:-1]), 1))), np.array(np.tile(ybins_stars[:-1], (len(ybins_stars[:-1]), 1))).T, sums_stars/counts_stars)
                     print('fit_kinematic_pa best angle = %.1f' %angBest)
@@ -665,31 +764,8 @@ if __name__ == '__main__':
                 print('Fit delta PA = %.1f' %(angBest-a))"""
                 
                 
-                # Find means 
-                with np.errstate(divide='ignore', invalid='ignore'):  # suppress possible divide-by-zero warnings
-                    im1 = ax1.pcolormesh(xbins_stars, ybins_stars, sums_stars / counts_stars, cmap='coolwarm')
-                    im2 = ax2.pcolormesh(xbins_gas, ybins_gas, sums_gas / counts_gas, cmap='coolwarm')
-        
-                # General formatting
-                for ax in [ax1, ax2]:
-                    ax.set_xlim(-boxradius, boxradius)
-                    ax.set_ylim(-boxradius, boxradius)
-                    ax.set_xlabel('y-axis [pkpc]')
-                    ax.set_ylabel('z-axis [pkpc]')
-                ax1.set_title('Stars')
-                ax2.set_title('Gas')
-
-                # Colorbar
-                plt.colorbar(im1, ax=ax1, label='mean velocity [km/s]')
-                plt.colorbar(im2, ax=ax2, label='mean velocity [km/s]')
-        
-                plt.tight_layout()
-        
-                plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/galaxy_test/galaxy_%s.jpeg' %(str(GroupNum), str(viewing_angle)), dpi=300)
-                plt.close()
-                print('')
-                
-                i = i + 1
+            
+            print('')
     
     
     def plot_spin_vectors(viewing_angle,
@@ -700,7 +776,7 @@ if __name__ == '__main__':
                           stars_rot = True, 
                           gas_rot = True,
                           plot_centre = True, 
-                          boxradius = 0.005,
+                          boxradius = 40,           # [pkpc]
                           particles = 2000):
         
         # Initial extraction of galaxy data
@@ -708,14 +784,12 @@ if __name__ == '__main__':
         subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.stelmass, galaxy.gasmass, galaxy.halfmass_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas, viewing_angle)
         
         # Print galaxy properties    
-        print('\n')
-        print('GROUP NUMBER:', subhalo.gn) 
-        print('STELLAR MASS: %.3f' %subhalo.stelmass)            # [pMsun]
-        print('HALFMASS RAD: %.3f' %subhalo.halfmass_rad)        # [pkpc]
-        print('CENTRE:', subhalo.centre)                         # [pMpc]
-        print('PERCULIAR VELOCITY:', subhalo.perc_vel)           # [pkm/s]
-        print('MISALIGNMENT ANGLE: %.1f' %subhalo.mis_angle)     # [deg]
-        print('VIEWING ANGLE: ', subhalo.viewing_angle)          # [deg]
+        print('\nGROUP NUMBER:', subhalo.gn) 
+        print('STELLAR MASS: %.3f [log10 M$_\odot$]' %np.log10(subhalo.stelmass))            # [pMsun]
+        print('HALFMASS RAD: %.3f [pkpc]' %(1000*subhalo.halfmass_rad))        # [pkpc]
+        print('CENTRE [pkpc]:', subhalo.centre)                         # [pMpc]
+        print('PERCULIAR VELOCITY [pkm/s]:', subhalo.perc_vel)           # [pkm/s]
+        print('MISALIGNMENT ANGLE [deg]: %.1f' %subhalo.mis_angle)     # [deg]
     
         # Graph initialising and base formatting
         graphformat(8, 11, 11, 11, 11, 5, 5)
@@ -730,10 +804,10 @@ if __name__ == '__main__':
             
             if stars == True:
                 # Plot original stars
-                ax.scatter(subhalo.stars_coords[mask_stars][0], subhalo.stars_coords[mask_stars][1], subhalo.stars_coords[mask_stars][2], s=0.1, alpha=0.8, c='orange')
+                ax.scatter(1000*subhalo.stars_coords[mask_stars][0], 1000*subhalo.stars_coords[mask_stars][1], 1000*subhalo.stars_coords[mask_stars][2], s=0.1, alpha=0.8, c='orange')
                 
                 # Plot individual spin vectors (multiplied by a factor to make them visible)
-                ax.quiver(subhalo.stars_coords[mask_stars][0], subhalo.stars_coords[mask_stars][1], subhalo.stars_coords[mask_stars][2], 
+                ax.quiver(1000*subhalo.stars_coords[mask_stars][0], 1000*subhalo.stars_coords[mask_stars][1], 1000*subhalo.stars_coords[mask_stars][2], 
                             subhalo.stars_vel[mask_stars][0]*0.5e14, subhalo.stars_vel[mask_stars][1]*0.5e14, subhalo.stars_vel[mask_stars][2]*0.5e14, linewidth=0.5, color='white')
                 
                 # Plot original spin vectors
@@ -741,10 +815,10 @@ if __name__ == '__main__':
                 
             if gas == True:
                 # Plot original gas
-                ax.scatter(subhalo.gas_coords[mask_gas][0], subhalo.gas_coords[mask_gas][1], subhalo.gas_coords[mask_gas][2], s=0.05, alpha=0.8, c='dodgerblue')
+                ax.scatter(1000*subhalo.gas_coords[mask_gas][0], 1000*subhalo.gas_coords[mask_gas][1], 1000*subhalo.gas_coords[mask_gas][2], s=0.05, alpha=0.8, c='dodgerblue')
                 
                 # Plot individual spin vectors (multiplied by a factor to make them visible)
-                ax.quiver(subhalo.gas_coords[mask_stars][0], subhalo.gas_coords[mask_stars][1], subhalo.gas_coords[mask_stars][2], 
+                ax.quiver(1000*subhalo.gas_coords[mask_stars][0], 1000*subhalo.gas_coords[mask_stars][1], 1000*subhalo.gas_coords[mask_stars][2], 
                             subhalo.gas_vel[mask_stars][0]*0.5e14, subhalo.gas_vel[mask_stars][1]*0.5e14, subhalo.gas_vel[mask_stars][2]*0.5e14, linewidth=0.5, color='turquoise')
                 
                 # Plot original spin vectors
@@ -752,10 +826,10 @@ if __name__ == '__main__':
                 
             if stars_rot == True:
                 # Plot rotated stars
-                ax.scatter(subhalo.stars_coords[mask_stars][0], subhalo.stars_coords[mask_stars][1], subhalo.stars_coords[mask_stars][2], s=0.1, alpha=0.8, c='orange')
+                ax.scatter(1000*subhalo.stars_coords[mask_stars][0], 1000*subhalo.stars_coords[mask_stars][1], 1000*subhalo.stars_coords[mask_stars][2], s=0.1, alpha=0.8, c='orange')
                 
                 # Plot individual spin vectors (multiplied by a factor to make them visible)
-                ax.quiver(subhalo.stars_coords[mask_stars][0], subhalo.stars_coords[mask_stars][1], subhalo.stars_coords[mask_stars][2], 
+                ax.quiver(1000*subhalo.stars_coords[mask_stars][0], 1000*subhalo.stars_coords[mask_stars][1], 1000*subhalo.stars_coords[mask_stars][2], 
                             subhalo.stars_vel[mask_stars][0]*0.5e14, subhalo.stars_vel[mask_stars][1]*0.5e14, subhalo.stars_vel[mask_stars][2]*0.5e14, linewidth=0.5, color='white')
                 
                 # Plot rotated spin vectors
@@ -763,10 +837,10 @@ if __name__ == '__main__':
                 
             if gas_rot == True:
                 # Plot rotated gas
-                ax.scatter(subhalo.gas_coords[mask_gas][0], subhalo.gas_coords[mask_gas][1], subhalo.gas_coords[mask_gas][2], s=0.05, alpha=0.8, c='dodgerblue')
+                ax.scatter(1000*subhalo.gas_coords[mask_gas][0], 1000*subhalo.gas_coords[mask_gas][1], 1000*subhalo.gas_coords[mask_gas][2], s=0.05, alpha=0.8, c='dodgerblue')
                 
                 # Plot individual spin vectors (multiplied by a factor to make them visible)
-                ax.quiver(subhalo.gas_coords[mask_gas][0], subhalo.gas_coords[mask_gas][1], subhalo.gas_coords[mask_gas][2], 
+                ax.quiver(1000*subhalo.gas_coords[mask_gas][0], 1000*subhalo.gas_coords[mask_gas][1], 1000*subhalo.gas_coords[mask_gas][2], 
                             subhalo.gas_vel[mask_gas][0]*0.5e14, subhalo.gas_vel[mask_gas][1]*0.5e14, subhalo.gas_vel[mask_gas][2]*0.5e14, linewidth=0.5, color='turquoise')
                 
                 # Plot rotated spin vectors
@@ -777,9 +851,9 @@ if __name__ == '__main__':
             ax.scatter(0, 0, 0, c='k', s=3)
         
         # Plot axis
-        ax.quiver(0, 0, 0, 0.005, 0, 0, color='r', linewidth=0.5)
-        ax.quiver(0, 0, 0, 0, 0.005, 0, color='g', linewidth=0.5)
-        ax.quiver(0, 0, 0, 0, 0, 0.005, color='b', linewidth=0.5)
+        ax.quiver(0, 0, 0, 5, 0, 0, color='r', linewidth=0.5)
+        ax.quiver(0, 0, 0, 0, 5, 0, color='g', linewidth=0.5)
+        ax.quiver(0, 0, 0, 0, 0, 5, color='b', linewidth=0.5)
         
         # Plot formatting
         ax.set_facecolor('xkcd:black')
@@ -799,7 +873,7 @@ if __name__ == '__main__':
     #galaxy_render()
     
     """ Will plot velocity projection when given any angle (or range)"""
-    #velocity_projection()
+    velocity_projection()
 
     """ Will plot spin vectors of a rotated galaxy about z axis (anti-clockwise) by any angle (deg)"""
     #plot_spin_vectors(0)
@@ -866,8 +940,7 @@ if __name__ == '__main__':
         plt.savefig("./trial_plots/galaxy_%s/galaxy_PA/galaxy_projection_%s.jpeg" %(str(GroupNum), str(viewing_angle)), dpi=300)
         plt.close()
 """
-
-"""OLD SUBHALO 
+"""OLD class SUBHALO 
 class SubHalo:
     
     def __init__(self, sim, gn, sgn):
@@ -922,9 +995,9 @@ class SubHalo:
             
             return myData
     
-"""   
 """
-class Spin:
+"""OLD class Spin
+    class Spin:
 
     def __init__(self, gn, sgn, centre, centre_vel, radius_kpc, stelmass, gasmass, viewing_angle, load_region_length=2):  # cMpc/h
                 
@@ -974,17 +1047,49 @@ class Spin:
         self.stars_vel = self.mass_weighted(stars_rotated, self.stelmass)
         self.gas_vel   = self.mass_weighted(gas_rotated, self.gasmass)
         
-        print("##################")
+        print('##################')
         print(self.stars_vel_new)
         print(stars['Mass'])
         print(self.stelmass)
         print(self.stars_vel)
-        print("##################")
+        print('##################')
         
         print(spin_stars)
         print(self.spin_stars_abs)
         print(spin_gas)
         print(self.spin_gas_abs)
         ####################################################
-""" 
-    
+"""
+"""OLD pcolormesh
+
+                # Assign x, y, and the weighted z values for gas and stars
+                x_stars = [row[1] for row in subhalo.stars_coords*1000]
+                y_stars = [row[2] for row in subhalo.stars_coords*1000]
+                z_stars = [row[0] for row in subhalo.stars_vel*u.Mpc.to(u.km)*-1.]
+                x_gas   = [row[1] for row in subhalo.gas_coords*1000]
+                y_gas   = [row[2] for row in subhalo.gas_coords*1000]
+                z_gas   = [row[0] for row in subhalo.gas_vel*u.Mpc.to(u.km)*-1.]
+                w_stars = subhalo.stars_mass/np.mean(subhalo.stars_mass)
+                w_gas   = subhalo.gas_mass/np.mean(subhalo.gas_mass)
+        
+                # Create histograms to find mean velocity in each bin (dividing weight by mean)
+                counts_stars, xbins_stars, ybins_stars = np.histogram2d(y_stars, x_stars, bins=(pixel, pixel), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
+                counts_gas, xbins_gas, ybins_gas       = np.histogram2d(y_gas, x_gas, bins=(pixel, pixel), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
+                sums_stars, _, _ = np.histogram2d(y_stars, x_stars, weights=z_stars, bins=(xbins_stars, ybins_stars), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
+                sums_gas, _, _   = np.histogram2d(y_gas,   x_gas,   weights=z_gas,   bins=(xbins_gas, ybins_gas), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
+        
+                # Find means 
+                with np.errstate(divide='ignore', invalid='ignore'):  # suppress possible divide-by-zero warnings
+                    im1 = ax1.pcolormesh(xbins_stars, ybins_stars, sums_stars / counts_stars, cmap='coolwarm', vmin=-250, vmax=250)
+                    #im2 = ax2.pcolormesh(xbins_gas, ybins_gas, sums_gas / counts_gas, cmap='coolwarm')
+                
+                sums_stars, _, _ = np.histogram2d(y_stars, x_stars, weights=z_stars*w_stars, bins=(xbins_stars, ybins_stars), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
+                with np.errstate(divide='ignore', invalid='ignore'):  # suppress possible divide-by-zero warnings
+                    im2 = ax2.pcolormesh(xbins_stars, ybins_stars, sums_stars / counts_stars, cmap='coolwarm', vmin=-250, vmax=250)
+                    
+                sums_stars, _, _ = np.histogram2d(y_stars, x_stars, weights=subhalo.stars_mass, bins=(xbins_stars, ybins_stars), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
+                with np.errstate(divide='ignore', invalid='ignore'):  # suppress /0
+                    # Plot total mass and mean mass distributions at orientation
+                    im3 = ax3.pcolormesh(xbins_stars, ybins_stars, sums_stars, cmap='coolwarm')
+                    im4 = ax4.pcolormesh(xbins_stars, ybins_stars, sums_stars / counts_stars, cmap='coolwarm')     
+"""

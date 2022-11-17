@@ -1,13 +1,37 @@
 import h5py
 import numpy as np
 import astropy.units as u
+import matplotlib.colors as colors
+import random
 from astropy.constants import G
 import matplotlib.pyplot as plt 
 from read_dataset import read_dataset
 from read_header import read_header
 from read_dataset_dm_mass import read_dataset_dm_mass
 
-N = 10000
+
+x = np.array([1, 2, 2, 4])
+y = np.array([1, 3, 3.5, 9])
+z = np.array([100, 100, 200, 200])
+
+a = np.array([20, 10, 10, 10])
+w = a/np.mean(a)
+
+counts, xbins, ybins = np.histogram2d(y, x, bins=(10, 10), range=[[0, 10], [0, 10]])
+sums, _, _ = np.histogram2d(y, x, weights=z*w, bins=(xbins, ybins), range=[[0, 100], [0, 10]])
+
+im = plt.pcolormesh(xbins, ybins, sums / counts, cmap='coolwarm')
+plt.colorbar(im, label='mean velocity [km/s]')
+                
+plt.show()
+
+
+
+
+
+
+
+"""N = 10000
 x = np.random.uniform(0, 10, N)
 y = np.random.uniform(0, 10, N)
 z = x
@@ -27,7 +51,7 @@ with np.errstate(divide='ignore', invalid='ignore'):  # suppress possible divide
 plt.colorbar(m3, ax=ax3)
 ax3.set_title('mean values')
 plt.tight_layout()
-plt.show()
+plt.show()"""
 
 
 """

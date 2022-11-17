@@ -528,7 +528,7 @@ if __name__ == '__main__':
             print('HALFMASS RAD: %.3f pkpc' %(1000*subhalo_al.halfmass_rad))        # [pkpc]
             print('MISALIGNMENT ANGLE: %.1f deg' %subhalo_al.mis_angle)     # [deg]
             print('CENTRE [pMpc]:', subhalo_al.centre)                         # [pMpc]
-            print('PERCULIAR VELOCITY [pkm/s]:', subhalo_al.perc_vel)           # [pkm/s]
+            print('PERCULIAR VELOCITY [pkm/s]:', (subhalo.perc_vel*u.Mpc.to(u.km)))           # [pkm/s]
             
             # Graph initialising and base formatting
             graphformat(8, 11, 11, 11, 11, 5, 5)
@@ -598,11 +598,11 @@ if __name__ == '__main__':
             print('')
             
     
-    def velocity_projection(GroupNumList = np.array([4]),
+    def velocity_projection(GroupNumList = np.array([2, 7, 16]),
                             SubGroupNum = 0,
                             minangle = 0,
                             maxangle = 360,
-                            stepangle = 10,
+                            stepangle = 30,
                             boxradius = 50,         # [pkpc]
                             pixel = 100):
         
@@ -631,7 +631,7 @@ if __name__ == '__main__':
                     print('KAPPA: %.2f' %subhalo_al.kappa)
                     print('MISALIGNMENT ANGLE [deg]: %.1f' %subhalo.mis_angle)                      # [deg]
                     print('CENTRE [pMpc]:', subhalo.centre)                                         # [pMpc]
-                    print('PERCULIAR VELOCITY [pkm/s]:', subhalo.perc_vel)                          # [pkm/s]
+                    print('PERCULIAR VELOCITY [pkm/s]:', (subhalo.perc_vel*u.Mpc.to(u.km)))                          # [pkm/s]
                 print('VIEWING ANGLE: ', viewing_angle)
                 
                 
@@ -672,7 +672,7 @@ if __name__ == '__main__':
                 vor_stars, vor_stars_vel, minmax_stars = voronoi_tessalate(subhalo.stars_coords, subhalo.stars_vel, subhalo.stars_mass)
                 #vor_gas, vor_gas_vel, minmax_gas     = voronoi_tessalate(subhalo.gas_coords, subhalo.gas_vel, subhalo.gas_mass)
                 
-                minmax_stars = 220
+                minmax_stars = 150
                 
                 # Create tessalation
                 norm_stars   = colors.Normalize(vmin=-minmax_stars, vmax=minmax_stars, clip=True)
@@ -703,11 +703,11 @@ if __name__ == '__main__':
                 #plt.scatter([row[1] for row in subhalo.starscoords*1000], [row[2] for row in subhalo.stars_coords*1000], c=[row[0] for row in subhalo.stars_vel*u.Mpc.to(u.km)*-1.])
 
                 # Colorbar
-                plt.colorbar(mapper_stars, label='mean velocity [km/s]')
+                plt.colorbar(mapper_stars, label='mass-weighted mean velocity [km/s]')
         
                 plt.tight_layout()
         
-                plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/galaxy_projection/voronoi_%s.jpeg' %(str(GroupNum), str(viewing_angle)), dpi=300)
+                plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/galaxy_projection_voronoi/voronoi_%s.jpeg' %(str(GroupNum), str(viewing_angle)), dpi=300)
                 plt.close()
                 
                 i = i + 1
@@ -788,7 +788,7 @@ if __name__ == '__main__':
         print('STELLAR MASS: %.3f [log10 M$_\odot$]' %np.log10(subhalo.stelmass))            # [pMsun]
         print('HALFMASS RAD: %.3f [pkpc]' %(1000*subhalo.halfmass_rad))        # [pkpc]
         print('CENTRE [pkpc]:', subhalo.centre)                         # [pMpc]
-        print('PERCULIAR VELOCITY [pkm/s]:', subhalo.perc_vel)           # [pkm/s]
+        print('PERCULIAR VELOCITY [pkm/s]:', (subhalo.perc_vel*u.Mpc.to(u.km)))           # [pkm/s]
         print('MISALIGNMENT ANGLE [deg]: %.1f' %subhalo.mis_angle)     # [deg]
     
         # Graph initialising and base formatting

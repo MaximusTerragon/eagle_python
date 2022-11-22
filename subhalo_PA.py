@@ -3,6 +3,9 @@ import numpy as np
 import astropy.units as u
 import random
 import math
+import vorbin
+import matplotlib as mpl
+from vorbin.voronoi_2d_binning import voronoi_2d_binning
 from pafit.fit_kinematic_pa import fit_kinematic_pa
 from astropy.constants import G
 import matplotlib.pyplot as plt 
@@ -598,13 +601,14 @@ if __name__ == '__main__':
             print('')
             
     
-    def velocity_projection(GroupNumList = np.array([2, 7, 16]),
+    def velocity_projection(GroupNumList = np.array([4]),
                             SubGroupNum = 0,
                             minangle = 0,
-                            maxangle = 360,
-                            stepangle = 30,
-                            boxradius = 50,         # [pkpc]
-                            pixel = 100):
+                            maxangle = 30,
+                            stepangle = 10,
+                            boxradius = 40,         # [pkpc]
+                            resolution = 1,          # [pkpc]
+                            target_particles = 10):      
         
         for GroupNum in GroupNumList:
             # Initial extraction of galaxy data
@@ -635,136 +639,292 @@ if __name__ == '__main__':
                 print('VIEWING ANGLE: ', viewing_angle)
                 
                 
-                # function for voronoi_tessalate 
-                def voronoi_tessalate(coords, velocity, mass):
+                """
+                #########################
+                Purpose
+                -------
+                Will create 2dhist to mimic flux pixels, mass-weight 
+                the velocity and find mean within bins.
+                
+                Calling function
+                ----------------
+                centre of square bins, output of bins = weight_histo(coords, velocity, mass)
+                
+                
+                Input Parameters
+                ----------------
+                
+                gn: int
+                    Groupnumber for filesave
+                viewing_angle: float or int
+                    viewing angle for filesave
+                coords: [[x, y, z], [x, y, z], ...]
+                    Input raw particle coordinates such as 
+                    subhalo.stars_coords as array of array. 
+                    
+                    Take in kpc -> kpc
+                velocity: [[x, y, z], [x, y, z], ...]
+                    Input raw particle velocity 
+                
+                    Take in kms ->kms
+                mass: [m1, m2, m3, ...]
+                    Input raw particle masses, any unit
+                bin_res: float
+                    Size of bins in pkpc
+                boxradius: float
+                    2d edges of 2dhistogram in pkpc
+                quiet: boolean
+                    Mutes the prints
+                plot: boolean
+                    Can plot and savefig
+                
+                
+                
+                Output Parameters
+                -----------------
+                
+                points: [[x, y], [x, y], ...]
+                    x and y coordinates of CENTRE of bin
+                    in units of whatever was put in
+                points_num: [n1, n2, n3, ...]
+                    Returns number of particles in the bin
+                points_vel: [v1, v2, v3, ...]
+                    mass-weighted mean velocity of the bins
+                    in whatever unit was put in
+                
+                #######################
+                """
+                
+                def weight_histo(gn, viewing_angle, coords, velocity, mass, 
+                                 bin_res=resolution, 
+                                 boxradius=boxradius, 
+                                 quiet=1, 
+                                 plot=1):
+                                 
                     # Assign xy, y, and z values for histogram2d
-                    x   = [row[1] for row in coords*1000]
-                    y   = [row[2] for row in coords*1000]
-                    vel = [row[0] for row in velocity*u.Mpc.to(u.km)*-1.]
+                    x   = [row[1] for row in coords]
+                    y   = [row[2] for row in coords]
+                    vel = [row[0] for row in velocity*-1.]
                     
                     # Histogram to find counts in each bin
+                    pixel = math.ceil(boxradius*2 / bin_res)
                     counts, xbins, ybins = np.histogram2d(y, x, bins=(pixel, pixel), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
                     
                     # Histogram to find total mass-weighted velocity in those bins, and account for number of values in each bin
-                    vel, _, _ = np.histogram2d(y, x, weights=vel*mass/np.mean(mass), bins=(xbins, ybins), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
-                    vel = np.divide(vel, counts, out=np.zeros_like(vel), where=counts!=0)
+                    vel_weighted, _, _ = np.histogram2d(y, x, weights=vel*mass/np.mean(mass), bins=(xbins, ybins), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
+                    vel_weighted = np.divide(vel_weighted, counts, out=np.zeros_like(counts), where=counts!=0)
                     
+                    if not quiet:
+                        # Print mean mass-weighted velocity of each bin
+                        print(vel_weighted)
+                    
+                    if plot:
+                        # Plot 2d histogram
+                        plt.figure()
+                        graphformat(8, 11, 11, 11, 11, 5, 4)
+                        im = plt.pcolormesh(xbins, ybins, vel_weighted, cmap='coolwarm', vmin=-150, vmax=150)
+                        plt.colorbar(im, label='mass-weighted mean velocity', extend='both')
+                        
+                        # Formatting
+                        plt.xlim(-boxradius, boxradius)
+                        plt.ylim(-boxradius, boxradius)
+                        
+                        plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/galaxy_projection_hist/projection_%s.jpeg' %(str(gn), str(viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.5)
+                        plt.close()
+                        
                     # Convert histogram2d data into coords + value
-                    i, j = np.nonzero(vel)                                                    # find indicies of non-0 bins
+                    i, j = np.nonzero(counts)                                     # find indicies of non-0 bins
                     a = np.array((xbins[:-1] + 0.5*(xbins[1] - xbins[0]))[i])     # convert bin to centred coords (x, y)
                     b = np.array((ybins[:-1] + 0.5*(ybins[1] - ybins[0]))[j])
                     
-                    # Stack points, and add points at infinity (to color Voronoi outer edges)
-                    points_vel = vel[np.nonzero(vel)]
-                    points = np.column_stack((b, a))
-                    points = np.append(points, [[999,999], [-999,999], [999,-999], [-999,-999]], axis=0)
+                    # Stack coordinates and remove 0 bins
+                    points_vel = vel_weighted[np.nonzero(counts)]
+                    points_num = counts[np.nonzero(counts)]            # number of particles within bins
+                    points     = np.column_stack((b, a))
                     
-                    # Create tessalation
+                    if not quiet:
+                        print(points)
+                        print(points_num)
+                        print(points_vel)
+                    
+                    return points, points_num, points_vel
+                    
+                
+                """
+                #########################
+                Purpose
+                -------
+                Will create vornoi plot using the 2dhist, and output mean vel
+                values within the bin
+                
+                Calling function
+                ----------------
+                centre of square bins, output of bins = voronoi_tessalate(coords, velocity, mass)
+                
+                
+                Input Parameters
+                ----------------
+                
+                gn: int
+                    Groupnumber for filesave
+                viewing_angle: float or int
+                    viewing angle for filesave
+                coords: [[x, y, z], [x, y, z], ...]
+                    Input raw particle coordinates such as 
+                    subhalo.stars_coords as array of array. 
+                    
+                    Take in kpc -> kpc
+                velocity: [[x, y, z], [x, y, z], ...]
+                    Input raw particle velocity 
+                
+                    Take in kms ->kms
+                mass: [m1, m2, m3, ...]
+                    Input raw particle masses, any unit
+                bin_res: float
+                    Size of bins in pkpc
+                boxradius: float
+                    2d edges of 2dhistogram in pkpc
+                target_particles: int
+                    Min. number of particles to vornoi bin
+                quiet: boolean
+                    Mutes the prints
+                plot: boolean
+                    Can plot and savefig
+                
+                
+                
+                Output Parameters
+                -----------------
+                
+                points: [[x, y], [x, y], ...]
+                    x and y coordinates of CENTRE of bin
+                    in units of whatever was put in
+                vel_bin: [v1, v2, v3, ...]
+                    mass-weighted mean velocity that was
+                    grouped by min. particle count
+                vor: something
+                    voronoi tessalation details to be 
+                    fed into the vornoi_plot_2d
+                
+                #######################
+                """
+                
+                def voronoi_tessalate(gn, viewing_angle, coords, velocity, mass, 
+                                      bin_res=1, 
+                                      boxradius=boxradius, 
+                                      target_particles = target_particles,
+                                      quiet=1, 
+                                      plot=0):
+                                      
+                    # Assign xy, y, and z values for histogram2d
+                    x   = [row[1] for row in coords]
+                    y   = [row[2] for row in coords]
+                    vel = [row[0] for row in velocity*-1.]
+                    
+                    # Histogram to find counts in each bin
+                    pixel = math.ceil(boxradius*2 / bin_res)
+                    counts, xbins, ybins = np.histogram2d(y, x, bins=(pixel, pixel), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
+                    
+                    # Histogram to find total mass-weighted velocity in those bins, and returns TOTAL velocity (mean in bin will be calculated after voronoi)
+                    vel_weighted, _, _ = np.histogram2d(y, x, weights=vel*mass/np.mean(mass), bins=(xbins, ybins), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
+                    
+                    # Convert histogram2d data into coords + value
+                    i, j = np.nonzero(counts)                                     # find indicies of non-0 bins
+                    a = np.array((xbins[:-1] + 0.5*(xbins[1] - xbins[0]))[i])     # convert bin to centred coords (x, y)
+                    b = np.array((ybins[:-1] + 0.5*(ybins[1] - ybins[0]))[j])
+                    
+                    # Stack coordinates and remove 0 bins
+                    points_vel = vel_weighted[np.nonzero(counts)]
+                    points_num = counts[np.nonzero(counts)]           # number of particles within bins
+                    points     = np.column_stack((b, a))
+                    
+                    # Call 2d voronoi binning (don't plot)
+                    if plot:
+                        plt.figure()
+                        graphformat(8, 11, 11, 11, 11, 5, 4)
+                        _, x_gen, y_gen, _, _, bin_count, vel, _, _ = voronoi_2d_binning(points[:,0], points[:,1], points_vel, points_num, target_particles, plot=1, quiet=quiet, pixelsize=(2*boxradius/pixel), sn_func=None)
+                        plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/galaxy_projection_voronoi/voronoi_output/vorbin_%s.jpeg' %(str(gn), str(viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.5)
+                        plt.close()
+                    if not plot:
+                        _, x_gen, y_gen, _, _, bin_count, vel, _, _ = voronoi_2d_binning(points[:,0], points[:,1], points_vel, points_num, target_particles, plot=0, quiet=quiet, sn_func=None)
+                    
+                    if not quiet:
+                        # print number of particles in each bin
+                        print(bin_count)
+                    
+                    # Create tessalation, append points at infinity to color plot edges
+                    points = np.column_stack((x_gen, y_gen))
+                    points = np.append(points, [[999,999], [-999,999], [999,-999], [-999,-999]], axis=0)    
+                    vel_bin = np.divide(vel, bin_count)     # find mean in each square bin (total velocity / total particles in voronoi bins)
                     vor = Voronoi(points)
                     
-                    # Find min/max values for normalization
-                    minmax = abs(max(points_vel, key=abs))                
+                    return points, vel_bin, vor
+                
+                
+                # Initialise figure
+                graphformat(8, 11, 11, 11, 11, 3.75, 3)
+                fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(9, 4))
+                
+                
+                # Tessalate stars    
+                points, vel_bin, vor = voronoi_tessalate(subhalo.gn, subhalo.viewing_angle, subhalo.stars_coords*1000, subhalo.stars_vel*u.Mpc.to(u.km), subhalo.stars_mass)
+                  
+                # normalize chosen colormap
+                minima = -abs(max(vel_bin, key=abs))
+                minima = -150
+                maxima = -minima
+                norm = mpl.colors.Normalize(vmin=minima, vmax=maxima, clip=True)
+                mapper = cm.ScalarMappable(norm=norm, cmap=cm.coolwarm)
                     
-                    return vor, points_vel, minmax
-                
-                
-                # Initiate points and velocities for voronoi
-                vor_stars, vor_stars_vel, minmax_stars = voronoi_tessalate(subhalo.stars_coords, subhalo.stars_vel, subhalo.stars_mass)
-                #vor_gas, vor_gas_vel, minmax_gas     = voronoi_tessalate(subhalo.gas_coords, subhalo.gas_vel, subhalo.gas_mass)
-                
-                minmax_stars = 150
-                
-                # Create tessalation
-                norm_stars   = colors.Normalize(vmin=-minmax_stars, vmax=minmax_stars, clip=True)
-                mapper_stars = cm.ScalarMappable(norm=norm_stars, cmap=cm.coolwarm)
-                #norm_gas     = mpl.colors.Normalize(vmin=-minmax_gas, vmax=minmax_gas, clip=True)
-                #mapper_gas   = cm.ScalarMappable(norm=norm_gas, cmap=cm.coolwarm)
-                
-                # Graph initialising and base formatting
-                graphformat(8, 11, 11, 11, 11, 5, 4)
-                #fig, [ax1, ax2] = plt.subplots(1, 2, figsize=[10, 4.2])
-        
-                # plot Voronoi diagra, and fill finite regions with color mapped from velocity
-                voronoi_plot_2d(vor_stars, show_points=False, show_vertices=False, line_width=0, s=1)
-                for r in range(len(vor_stars.point_region)):
-                    region = vor_stars.regions[vor_stars.point_region[r]]
+                # plot Voronoi diagram, and fill finite regions with color mapped from vel value
+                voronoi_plot_2d(vor, ax=ax1, show_points=False, show_vertices=False, line_width=0, s=1)
+                for r in range(len(vor.point_region)):
+                    region = vor.regions[vor.point_region[r]]
                     if not -1 in region:
-                        polygon = [vor_stars.vertices[i] for i in region]
-                        plt.fill(*zip(*polygon), color=mapper_stars.to_rgba(vor_stars_vel[r]))
-                        
-                # Graph formatting
-                plt.xlim(-boxradius, boxradius)
-                plt.ylim(-boxradius, boxradius)
-                plt.xlabel('y-axis [pkpc]')
-                plt.ylabel('x-axis [pkpc]')
-                plt.title('Stars')
+                        polygon = [vor.vertices[i] for i in region]
+                        ax1.fill(*zip(*polygon), color=mapper.to_rgba(vel_bin[r]))
+                
+                
+                # Tessalate stars    
+                points, vel_bin, vor = voronoi_tessalate(subhalo.gn, subhalo.viewing_angle, subhalo.gas_coords*1000, subhalo.gas_vel*u.Mpc.to(u.km), subhalo.gas_mass)
+                    
+                # plot Voronoi diagram, and fill finite regions with color mapped from vel value
+                voronoi_plot_2d(vor, ax=ax2, show_points=False, show_vertices=False, line_width=0, s=1)
+                for r in range(len(vor.point_region)):
+                    region = vor.regions[vor.point_region[r]]
+                    if not -1 in region:
+                        polygon = [vor.vertices[i] for i in region]
+                        ax2.fill(*zip(*polygon), color=mapper.to_rgba(vel_bin[r]))
+                
+                # Graph formatting
+                for ax in [ax1, ax2]:
+                    ax.set_xlim(-boxradius, boxradius)
+                    ax.set_ylim(-boxradius, boxradius)
+                    ax.set_xlabel('x-axis [pkpc]')
+                ax1.set_ylabel('y-axis [pkpc]')
+                ax1.set_title('Stars')
+                ax2.set_title('Gas')
+                ax1.text(-boxradius, boxradius+1, '1kpc hist, target %i particles' %target_particles, fontsize=8)
+                
+                # Colorbar
+                cax = plt.axes([0.92, 0.11, 0.015, 0.77])
+                plt.colorbar(mapper, cax=cax, label='mass-weighted mean velocity [km/s]', extend='both')
                 
                 # Overplot original points for comparisson
-                #plt.scatter([row[1] for row in subhalo.starscoords*1000], [row[2] for row in subhalo.stars_coords*1000], c=[row[0] for row in subhalo.stars_vel*u.Mpc.to(u.km)*-1.])
-
-                # Colorbar
-                plt.colorbar(mapper_stars, label='mass-weighted mean velocity [km/s]')
-        
-                plt.tight_layout()
-        
-                plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/galaxy_projection_voronoi/voronoi_%s.jpeg' %(str(GroupNum), str(viewing_angle)), dpi=300)
+                #plt.scatter([row[1] for row in subhalo.stars_coords*1000], [row[2] for row in subhalo.stars_coords*1000], c=[row[0] for row in subhalo.stars_vel*u.Mpc.to(u.km)*-1.], s=0.5, edgecolor='k')
+                
+                plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/galaxy_projection_voronoi/voronoi_%s.jpeg' %(str(subhalo.gn), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.5)
                 plt.close()
+                
+                # Plot 2dhisto of velocity
+                #_, _, _ = weight_histo(subhalo.gn, subhalo.viewing_angle, subhalo.stars_coords*1000, subhalo.stars_vel*u.Mpc.to(u.km), subhalo.stars_mass)
+                
+                # Collect voronoi details
+                #voronoi_tessalate(subhalo.gn, subhalo.viewing_angle, subhalo.stars_coords*1000, subhalo.stars_vel*u.Mpc.to(u.km), subhalo.stars_mass)
                 
                 i = i + 1
                 
-                """
-                # Assign x, y, and the weighted z values for gas and stars
-                stars_x   = [row[1] for row in subhalo.stars_coords*1000]
-                stars_y   = [row[2] for row in subhalo.stars_coords*1000]
-                stars_vel = [row[0] for row in subhalo.stars_vel*u.Mpc.to(u.km)*-1.]
-                gas_x     = [row[1] for row in subhalo.gas_coords*1000]
-                gas_y     = [row[2] for row in subhalo.gas_coords*1000]
-                gas_vel   = [row[0] for row in subhalo.gas_vel*u.Mpc.to(u.km)*-1.]
-        
-                # Histogram to find counts in each bin
-                counts_stars, xbins_stars, ybins_stars = np.histogram2d(stars_y, stars_x, bins=(pixel, pixel), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
-                counts_gas, xbins_gas, ybins_gas       = np.histogram2d(gas_y,   gas_x,   bins=(pixel, pixel), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
-                
-                # Histogram to find total mass-weighted velocity in those bins
-                stars_vel, _, _ = np.histogram2d(stars_y, stars_x, weights=stars_vel*subhalo.stars_mass/np.mean(subhalo.stars_mass), bins=(xbins_stars, ybins_stars), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
-                gas_vel, _, _   = np.histogram2d(gas_y,   gas_x,   weights=gas_vel*subhalo.gas_mass/np.mean(subhalo.gas_mass),   bins=(xbins_gas, ybins_gas),     range=[[-boxradius, boxradius], [-boxradius, boxradius]])
-        
-                # Account for number of values in each bin
-                stars_vel = np.divide(stars_vel, counts_stars, out=np.zeros_like(stars_vel), where=counts_stars!=0)
-                gas_vel   = np.divide(gas_vel,   counts_gas,   out=np.zeros_like(gas_vel),   where=counts_gas!=0)
-                
-                # Convert histogram2d data into coords + value
-                i_stars, j_stars = np.nonzero(stars_vel)                                                    # find indicies of non-0 bins
-                a_stars = np.array((xbins_stars[:-1] + 0.5*(xbins_stars[1] - xbins_stars[0]))[i_stars])     # convert bin to centred coords (x, y)
-                b_stars = np.array((ybins_stars[:-1] + 0.5*(ybins_stars[1] - ybins_stars[0]))[j_stars])
-                i_gas, j_gas = np.nonzero(gas_vel)                                                    # find indicies of non-0 bins
-                a_gas = np.array((xbins_gas[:-1] + 0.5*(xbins_gas[1] - xbins_gas[0]))[i_gas])         # convert bin to centred coords (x, y)
-                b_gas = np.array((ybins_gas[:-1] + 0.5*(ybins_gas[1] - ybins_gas[0]))[j_gas])
-        
-                # Stack points, and add points at infinity (to color Voronoi outer edges)
-                stars_vel = stars_vel[np.nonzero(stars_vel)]
-                stars_points = np.column_stack((b_stars, a_stars))
-                stars_points = np.append(stars_points, [[999,999], [-999,999], [999,-999], [-999,-999]], axis=0)
-                gas_vel = gas_vel[np.nonzero(gas_vel)]
-                gas_points = np.column_stack((b_gas, a_gas))
-                gas_points = np.append(gas_points, [[999,999], [-999,999], [999,-999], [-999,-999]], axis=0)
-                """
-                
-                
-                """# Run fit_kinematic_pa
-                with np.errstate(divide='ignore', invalid='ignore'):
-                    angBest, angErr, vSyst = fit_kinematic_pa(np.array(np.tile(xbins_stars[:-1], (len(xbins_stars[:-1]), 1))), np.array(np.tile(ybins_stars[:-1], (len(ybins_stars[:-1]), 1))).T, sums_stars/counts_stars)
-                    print('fit_kinematic_pa best angle = %.1f' %angBest)
-                    print(angErr)
-                
-                    a, b, c, = fit_kinematic_pa(np.array(np.tile(ybins_gas[:-1], (len(ybins_gas[:-1]), 1))), np.array(np.tile(ybins_gas[:-1], (len(ybins_gas[:-1]), 1))).T, sums_gas/counts_gas)
-                    print('fit_kinematic_pa best angle = %.1f' %angBest)
-                    print(angErr)
-                    
-                print('Fit delta PA = %.1f' %(angBest-a))"""
-                
-                
-            
+
             print('')
     
     
@@ -877,6 +1037,13 @@ if __name__ == '__main__':
 
     """ Will plot spin vectors of a rotated galaxy about z axis (anti-clockwise) by any angle (deg)"""
     #plot_spin_vectors(0)
+    
+    
+    # get pa_fit to work on 2dhist
+    # plot mis angles of top 20 galaxies
+    # compare to previous 
+    
+    # separate functions
     
     
 
@@ -1092,4 +1259,79 @@ class SubHalo:
                     # Plot total mass and mean mass distributions at orientation
                     im3 = ax3.pcolormesh(xbins_stars, ybins_stars, sums_stars, cmap='coolwarm')
                     im4 = ax4.pcolormesh(xbins_stars, ybins_stars, sums_stars / counts_stars, cmap='coolwarm')     
+"""
+"""OLD voronoi
+                def voronoi_tessalate(coords, velocity, mass):
+                    # Assign xy, y, and z values for histogram2d
+                    x   = [row[1] for row in coords*1000]
+                    y   = [row[2] for row in coords*1000]
+                    vel = [row[0] for row in velocity*u.Mpc.to(u.km)*-1.]
+                    
+                    # Histogram to find counts in each bin
+                    counts, xbins, ybins = np.histogram2d(y, x, bins=(pixel, pixel), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
+                    
+                    # Histogram to find total mass-weighted velocity in those bins, and account for number of values in each bin
+                    vel, _, _ = np.histogram2d(y, x, weights=vel*mass/np.mean(mass), bins=(xbins, ybins), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
+                    vel = np.divide(vel, counts, out=np.zeros_like(vel), where=counts!=0)
+                    
+                    # Convert histogram2d data into coords + value
+                    i, j = np.nonzero(vel)                                                    # find indicies of non-0 bins
+                    a = np.array((xbins[:-1] + 0.5*(xbins[1] - xbins[0]))[i])     # convert bin to centred coords (x, y)
+                    b = np.array((ybins[:-1] + 0.5*(ybins[1] - ybins[0]))[j])
+                    
+                    # Stack points, and add points at infinity (to color Voronoi outer edges)
+                    points_vel = vel[np.nonzero(vel)]
+                    points = np.column_stack((b, a))
+                    points = np.append(points, [[999,999], [-999,999], [999,-999], [-999,-999]], axis=0)
+                    
+                    # Create tessalation
+                    vor = Voronoi(points)
+                    
+                    # Find min/max values for normalization
+                    minmax = abs(max(points_vel, key=abs))                
+                    
+                    return vor, points_vel, minmax
+                
+                
+                # Initiate points and velocities for voronoi
+                vor_stars, vor_stars_vel, minmax_stars = voronoi_tessalate(subhalo.stars_coords, subhalo.stars_vel, subhalo.stars_mass)
+                #vor_gas, vor_gas_vel, minmax_gas     = voronoi_tessalate(subhalo.gas_coords, subhalo.gas_vel, subhalo.gas_mass)
+                
+                minmax_stars = 150
+                
+                # Create tessalation
+                norm_stars   = colors.Normalize(vmin=-minmax_stars, vmax=minmax_stars, clip=True)
+                mapper_stars = cm.ScalarMappable(norm=norm_stars, cmap=cm.coolwarm)
+                #norm_gas     = mpl.colors.Normalize(vmin=-minmax_gas, vmax=minmax_gas, clip=True)
+                #mapper_gas   = cm.ScalarMappable(norm=norm_gas, cmap=cm.coolwarm)
+                
+                # Graph initialising and base formatting
+                graphformat(8, 11, 11, 11, 11, 5, 4)
+                #fig, [ax1, ax2] = plt.subplots(1, 2, figsize=[10, 4.2])
+        
+                # plot Voronoi diagra, and fill finite regions with color mapped from velocity
+                voronoi_plot_2d(vor_stars, show_points=False, show_vertices=False, line_width=0, s=1)
+                for r in range(len(vor_stars.point_region)):
+                    region = vor_stars.regions[vor_stars.point_region[r]]
+                    if not -1 in region:
+                        polygon = [vor_stars.vertices[i] for i in region]
+                        plt.fill(*zip(*polygon), color=mapper_stars.to_rgba(vor_stars_vel[r]))
+                        
+                # Graph formatting
+                plt.xlim(-boxradius, boxradius)
+                plt.ylim(-boxradius, boxradius)
+                plt.xlabel('y-axis [pkpc]')
+                plt.ylabel('x-axis [pkpc]')
+                plt.title('Stars')
+                
+                # Overplot original points for comparisson
+                #plt.scatter([row[1] for row in subhalo.starscoords*1000], [row[2] for row in subhalo.stars_coords*1000], c=[row[0] for row in subhalo.stars_vel*u.Mpc.to(u.km)*-1.])
+
+                # Colorbar
+                plt.colorbar(mapper_stars, label='mass-weighted mean velocity [km/s]')
+        
+                plt.tight_layout()
+        
+                plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/galaxy_projection_voronoi/voronoi_%s.jpeg' %(str(GroupNum), str(viewing_angle)), dpi=300)
+                plt.close()    
 """

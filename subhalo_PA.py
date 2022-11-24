@@ -20,10 +20,12 @@ from read_dataset_dm_mass import read_dataset_dm_mass
 from pyread_eagle import EagleSnapshot
 import eagleSqlTools as sql
 from graphformat import graphformat
+from plotbin.sauron_colormap import register_sauron_colormap
 
 # Directories of data hdf5 file(s)
 dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_028_z000p000/snap_028_z000p000.0.hdf5'
 
+register_sauron_colormap()
 
 class Subhalo_Extract:
     
@@ -153,8 +155,8 @@ class Subhalo:
         self.viewing_angle  = viewing_angle             # [deg]
         
         # Find original spin vector and rotation matrix to rotate that vector about z-axis (degrees, clockwise)
-        stars_spin_original, stars_L_original = self.spin_vector(stars, self.centre, self.perc_vel, self.halfmass_rad, 'stars')    # unit vector, [Msun pMpc^2 /s]
-        gas_spin_original, gas_L_original = self.spin_vector(gas, self.centre, self.perc_vel, self.halfmass_rad, 'gas')    # unit vector, [Msun pMpc^2 /s]
+        stars_spin_original, stars_L_original = self.spin_vector(stars, self.centre, self.perc_vel, 2*self.halfmass_rad, 'stars')    # unit vector, [Msun pMpc^2 /s]
+        gas_spin_original, gas_L_original = self.spin_vector(gas, self.centre, self.perc_vel, 2*self.halfmass_rad, 'gas')    # unit vector, [Msun pMpc^2 /s]
         matrix = self.rotate_around_axis('z', 360. - viewing_angle, stars_spin_original)
         
         # Compute new data of rotated particle data
@@ -604,15 +606,29 @@ if __name__ == '__main__':
     def velocity_projection(GroupNumList = np.array([4]),
                             SubGroupNum = 0,
                             minangle = 0,
-                            maxangle = 30,
+                            maxangle = 180,
                             stepangle = 10,
                             boxradius = 40,         # [pkpc]
                             resolution = 1,          # [pkpc]
                             target_particles = 10):      
         
+        data_catalogue = {}
+        
         for GroupNum in GroupNumList:
             # Initial extraction of galaxy data
             galaxy = Subhalo_Extract(mySims, GroupNum, SubGroupNum)
+            
+            # Empty arrays to collect relevant data
+            gn_list            = []
+            stelmass_list      = []
+            kappa_list         = []
+            mis_angle_list     = []
+            viewing_angle_list = []
+            pa_fit_list        = []
+            pa_fit_error_list  = []
+            pa_fit_list2        = []
+            pa_fit_error_list2  = []
+            
             
             # int count to broadcast print statements of each galaxy
             i = 0 
@@ -622,7 +638,7 @@ if __name__ == '__main__':
                 # If we want the original values, enter 0 for viewing angle
                 subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.stelmass, galaxy.gasmass, galaxy.halfmass_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas, viewing_angle)
             
-                #boxradius = subhalo.halfmass_rad*1000
+                boxradius = 2*subhalo.halfmass_rad*1000
                 
                 # Print galaxy properties for first call
                 if i == 0:
@@ -630,12 +646,12 @@ if __name__ == '__main__':
                     subhalo_al = Subhalo_Align(galaxy.gn, galaxy.sgn, galaxy.stelmass, galaxy.gasmass, galaxy.halfmass_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas)
                     
                     print('\nGROUP NUMBER:', subhalo.gn) 
-                    print('STELLAR MASS [log10 Msun]: %.3f' %np.log10(subhalo.stelmass))            # [pMsun]
-                    print('HALFMASS RAD [pkpc]: %.3f' %(1000*subhalo.halfmass_rad))                 # [pkpc]
+                    print('STELLAR MASS [log10 Msun]: %.3f' %np.log10(subhalo.stelmass))       # [pMsun]
+                    print('HALFMASS RAD [pkpc]: %.3f' %(1000*subhalo.halfmass_rad))            # [pkpc]
                     print('KAPPA: %.2f' %subhalo_al.kappa)
-                    print('MISALIGNMENT ANGLE [deg]: %.1f' %subhalo.mis_angle)                      # [deg]
-                    print('CENTRE [pMpc]:', subhalo.centre)                                         # [pMpc]
-                    print('PERCULIAR VELOCITY [pkm/s]:', (subhalo.perc_vel*u.Mpc.to(u.km)))                          # [pkm/s]
+                    print('MISALIGNMENT ANGLE [deg]: %.1f' %subhalo.mis_angle)                 # [deg]
+                    print('CENTRE [pMpc]:', subhalo.centre)                                    # [pMpc]
+                    print('PERCULIAR VELOCITY [pkm/s]:', (subhalo.perc_vel*u.Mpc.to(u.km)))    # [pkpc]
                 print('VIEWING ANGLE: ', viewing_angle)
                 
                 
@@ -729,7 +745,7 @@ if __name__ == '__main__':
                         plt.xlim(-boxradius, boxradius)
                         plt.ylim(-boxradius, boxradius)
                         
-                        plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/galaxy_projection_hist/projection_%s.jpeg' %(str(gn), str(viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.5)
+                        plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/galaxy_projection_hist/projection_2r_%s.jpeg' %(str(gn), str(viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.5)
                         plt.close()
                         
                     # Convert histogram2d data into coords + value
@@ -853,28 +869,32 @@ if __name__ == '__main__':
                         print(bin_count)
                     
                     # Create tessalation, append points at infinity to color plot edges
-                    points = np.column_stack((x_gen, y_gen))
-                    points = np.append(points, [[999,999], [-999,999], [999,-999], [-999,-999]], axis=0)    
+                    points = np.column_stack((x_gen, y_gen))   
                     vel_bin = np.divide(vel, bin_count)     # find mean in each square bin (total velocity / total particles in voronoi bins)
-                    vor = Voronoi(points)
+                    points_inf = np.append(points, [[999,999], [-999,999], [999,-999], [-999,-999]], axis=0) 
+                    vor = Voronoi(points_inf)
                     
                     return points, vel_bin, vor
                 
-                
+                def plot_2dhist():
+                    
+                def plot_voronoi():
+                    
                 # Initialise figure
                 graphformat(8, 11, 11, 11, 11, 3.75, 3)
                 fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(9, 4))
                 
                 
+                ### VORONOI TESSALATION ROUTINE
                 # Tessalate stars    
-                points, vel_bin, vor = voronoi_tessalate(subhalo.gn, subhalo.viewing_angle, subhalo.stars_coords*1000, subhalo.stars_vel*u.Mpc.to(u.km), subhalo.stars_mass)
-                  
+                points_stars, vel_bin_stars, vor = voronoi_tessalate(subhalo.gn, subhalo.viewing_angle, subhalo.stars_coords*1000, subhalo.stars_vel*u.Mpc.to(u.km), subhalo.stars_mass)
+                
                 # normalize chosen colormap
-                minima = -abs(max(vel_bin, key=abs))
-                minima = -150
+                minima = -abs(max(vel_bin_stars, key=abs))
+                minima = -200
                 maxima = -minima
                 norm = mpl.colors.Normalize(vmin=minima, vmax=maxima, clip=True)
-                mapper = cm.ScalarMappable(norm=norm, cmap=cm.coolwarm)
+                mapper = cm.ScalarMappable(norm=norm, cmap='sauron')         #cmap=cm.coolwarm)
                     
                 # plot Voronoi diagram, and fill finite regions with color mapped from vel value
                 voronoi_plot_2d(vor, ax=ax1, show_points=False, show_vertices=False, line_width=0, s=1)
@@ -882,19 +902,19 @@ if __name__ == '__main__':
                     region = vor.regions[vor.point_region[r]]
                     if not -1 in region:
                         polygon = [vor.vertices[i] for i in region]
-                        ax1.fill(*zip(*polygon), color=mapper.to_rgba(vel_bin[r]))
+                        ax1.fill(*zip(*polygon), color=mapper.to_rgba(vel_bin_stars[r]))
                 
                 
-                # Tessalate stars    
-                points, vel_bin, vor = voronoi_tessalate(subhalo.gn, subhalo.viewing_angle, subhalo.gas_coords*1000, subhalo.gas_vel*u.Mpc.to(u.km), subhalo.gas_mass)
-                    
+                # Tessalate gas   
+                points_gas, vel_bin_gas, vor = voronoi_tessalate(subhalo.gn, subhalo.viewing_angle, subhalo.gas_coords*1000, subhalo.gas_vel*u.Mpc.to(u.km), subhalo.gas_mass)
+                
                 # plot Voronoi diagram, and fill finite regions with color mapped from vel value
                 voronoi_plot_2d(vor, ax=ax2, show_points=False, show_vertices=False, line_width=0, s=1)
                 for r in range(len(vor.point_region)):
                     region = vor.regions[vor.point_region[r]]
                     if not -1 in region:
                         polygon = [vor.vertices[i] for i in region]
-                        ax2.fill(*zip(*polygon), color=mapper.to_rgba(vel_bin[r]))
+                        ax2.fill(*zip(*polygon), color=mapper.to_rgba(vel_bin_gas[r]))
                 
                 # Graph formatting
                 for ax in [ax1, ax2]:
@@ -910,22 +930,104 @@ if __name__ == '__main__':
                 cax = plt.axes([0.92, 0.11, 0.015, 0.77])
                 plt.colorbar(mapper, cax=cax, label='mass-weighted mean velocity [km/s]', extend='both')
                 
-                # Overplot original points for comparisson
-                #plt.scatter([row[1] for row in subhalo.stars_coords*1000], [row[2] for row in subhalo.stars_coords*1000], c=[row[0] for row in subhalo.stars_vel*u.Mpc.to(u.km)*-1.], s=0.5, edgecolor='k')
+                """# Overplot original points for comparisson
+                plt.scatter([row[1] for row in subhalo.stars_coords*1000], [row[2] for row in subhalo.stars_coords*1000], c=[row[0] for row in subhalo.stars_vel*u.Mpc.to(u.km)*-1.], s=0.5, edgecolor='k')"""
                 
-                plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/galaxy_projection_voronoi/voronoi_%s.jpeg' %(str(subhalo.gn), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.5)
+                plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/galaxy_projection_voronoi/voronoi_2r_ß%s.jpeg' %(str(subhalo.gn), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.3)
                 plt.close()
                 
-                # Plot 2dhisto of velocity
-                #_, _, _ = weight_histo(subhalo.gn, subhalo.viewing_angle, subhalo.stars_coords*1000, subhalo.stars_vel*u.Mpc.to(u.km), subhalo.stars_mass)
+                """# Plot 2dhisto of velocity
+                _, _, _ = weight_histo(subhalo.gn, subhalo.viewing_angle, subhalo.stars_coords*1000, subhalo.stars_vel*u.Mpc.to(u.km), subhalo.stars_mass)"""
+                """# Collect voronoi details
+                _, _, _ = voronoi_tessalate(subhalo.gn, subhalo.viewing_angle, subhalo.stars_coords*1000, subhalo.stars_vel*u.Mpc.to(u.km), subhalo.stars_mass)"""
+        
+        
+                ### PA FIT ROUTINE
+                # Run pa_fit on voronoi       
+                angle_stars, angle_err_stars, velsyst_gas = fit_kinematic_pa(points_stars[:,0], points_stars[:,1], vel_bin_stars, quiet=1, plot=1)
+                plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/galaxy_PA/PA_stars_%s.jpeg' %(str(subhalo.gn), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.2)
+                plt.close()
+                angle_gas, angle_err_gas, velsyst_gas = fit_kinematic_pa(points_gas[:,0], points_gas[:,1], vel_bin_gas, quiet=1, plot=1)
+                plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/galaxy_PA/PA_gas_%s.jpeg' %(str(subhalo.gn), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.2)
+                plt.close()
                 
-                # Collect voronoi details
-                #voronoi_tessalate(subhalo.gn, subhalo.viewing_angle, subhalo.stars_coords*1000, subhalo.stars_vel*u.Mpc.to(u.km), subhalo.stars_mass)
+                # Find misalignment angle from pa
+                pa_fit = abs(angle_stars - angle_gas)
+                pa_fit_error = angle_err_stars + angle_err_gas
+                print("PA: %.1f +/- %.1f" %(pa_fit, pa_fit_error))
+                
+                # Append to data
+                pa_fit_list       = np.append(pa_fit_list, pa_fit)
+                pa_fit_error_list = np.append(pa_fit_error_list, pa_fit_error)
+                
+                
+                # Check for consistency with 2dhist
+                points_stars, _, vel_bin_stars = weight_histo(subhalo.gn, subhalo.viewing_angle, subhalo.stars_coords*1000, subhalo.stars_vel*u.Mpc.to(u.km), subhalo.stars_mass)
+                points_gas, _, vel_bin_gas = weight_histo(subhalo.gn, subhalo.viewing_angle, subhalo.gas_coords*1000, subhalo.gas_vel*u.Mpc.to(u.km), subhalo.gas_mass)
+                
+                angle_stars, angle_err_stars, velsyst_gas = fit_kinematic_pa(points_stars[:,0], points_stars[:,1], vel_bin_stars, quiet=1, plot=1)
+                plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/galaxy_PA/PA_stars_hist_%s.jpeg' %(str(subhalo.gn), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.2)
+                plt.close()
+                angle_gas, angle_err_gas, velsyst_gas = fit_kinematic_pa(points_gas[:,0], points_gas[:,1], vel_bin_gas, quiet=1, plot=1)
+                plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/galaxy_PA/PA_gas_hist_%s.jpeg' %(str(subhalo.gn), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.2)
+                plt.close()
+                
+                # Find misalignment angle from pa
+                pa_fit = abs(angle_stars - angle_gas)
+                pa_fit_error = angle_err_stars + angle_err_gas
+                print("PA: %.1f +/- %.1f" %(pa_fit, pa_fit_error))
+                
+                # Append to data
+                pa_fit_list2       = np.append(pa_fit_list2, pa_fit)
+                pa_fit_error_list2 = np.append(pa_fit_error_list2, pa_fit_error)
+                
+                
+                
                 
                 i = i + 1
                 
-
+            
+            ### Start of once per galaxy
+            
             print('')
+            
+            # Collect values for each galaxy
+            gn_list        = np.append(gn_list, subhalo.gn)
+            stelmass_list  = np.append(stelmass_list, subhalo.stelmass)
+            kappa_list     = np.append(kappa_list, subhalo_al.kappa) 
+            mis_angle_list = np.append(mis_angle_list, subhalo.mis_angle)
+            #pa_fit_list    = np.append(pa_fit_list, pa_fit)  
+
+
+        ### Start of GroupNum loop
+        
+        # Append misaslignment angles once per galaxy
+        data_catalogue['GroupNum'] = gn_list
+        data_catalogue['Stelmass'] = stelmass_list
+        data_catalogue['Kappa']    = kappa_list
+        data_catalogue['MisAngle'] = mis_angle_list
+        data_catalogue['PA']       = pa_fit_list
+        data_catalogue['PA_error'] = pa_fit_error_list
+        data_catalogue['PA2']       = pa_fit_list2
+        data_catalogue['PA_error2'] = pa_fit_error_list2
+        
+        plt.figure()
+        plt.scatter(np.arange(0, 181, 10), data_catalogue['PA'], c='r', label='voronoi')
+        plt.scatter(np.arange(0, 181, 10), data_catalogue['PA2'], c='b', label='2dhist')
+        plt.errorbar(np.arange(0, 181, 10), data_catalogue['PA'], xerr=None, yerr=data_catalogue['PA_error'], c='r')
+        plt.errorbar(np.arange(0, 181, 10), data_catalogue['PA2'], xerr=None, yerr=data_catalogue['PA_error2'], c='k')
+        plt.axhline(data_catalogue['MisAngle'], c='k', ls='--')
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/PA_comparison.jpeg' %str(subhalo.gn), dpi=300, bbox_inches='tight', pad_inches=0.2)
+        plt.close()
+        
+        
+        print(data_catalogue)
+        
+            
+        # Here starts total
+    
     
     
     def plot_spin_vectors(viewing_angle,
@@ -1039,7 +1141,8 @@ if __name__ == '__main__':
     #plot_spin_vectors(0)
     
     
-    # get pa_fit to work on 2dhist
+    # convert plot into function
+    # use 2dhist as pa fit
     # plot mis angles of top 20 galaxies
     # compare to previous 
     

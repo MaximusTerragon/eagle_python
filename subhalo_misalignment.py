@@ -25,7 +25,7 @@ class Spin:
         # Allowing these attributes to be called from the object
         self.centre       = centre                              # [pMpc]
         self.perc_vel     = centre_vel * u.km.to(u.Mpc)         # [pMpc/s]
-        self.halfmass_rad = radius_kpc/1000                     # [pMpc]
+        self.halfmass_rad = radius_kpc/1000                     # [pkpc]
         self.gn           = gn
         self.sgn          = sgn
         
@@ -93,6 +93,7 @@ class Spin:
         spin_unit = spin / (spin[0]**2 + spin[1]**2 + spin[2]**2)**0.5
         
         return spin_unit
+
 
     def misalignment_angle(self):
         # Find the misalignment angle
@@ -299,8 +300,7 @@ if __name__ == '__main__':
     ax.axvline(30, ls='--', lw=0.5, c='k')
     plt.suptitle("L%s: Misalignment angle"%str(mySims[0][1]))
         
-    plt.savefig("./trial_plots/Misalignment_angle%s.jpeg"%str(mySims[0][1]), format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
-    plt.show()
+    plt.savefig("/Users/c22048063/Documents/EAGLE/trial_plots/Misalignment_angle_rad.jpeg", format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
     plt.close()
 
         

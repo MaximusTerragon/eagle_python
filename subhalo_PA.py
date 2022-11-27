@@ -142,7 +142,7 @@ class Subhalo_Extract:
 
 class Subhalo:
     
-    def __init__(self, gn, sgn, stelmass, gasmass, halfmass_rad, centre, centre_mass, perc_vel, stars, gas, viewing_angle):
+    def __init__(self, gn, sgn, stelmass, gasmass, halfmass_rad, centre, centre_mass, perc_vel, stars, gas, viewing_angle, calc_spin_rad):
         # Assign bulk galaxy values to this subhalo
         self.gn             = gn
         self.sgn            = sgn
@@ -155,8 +155,8 @@ class Subhalo:
         self.viewing_angle  = viewing_angle             # [deg]
         
         # Find original spin vector (within 2 HMR) and rotation matrix to rotate that vector about z-axis (degrees, clockwise)
-        stars_spin_original, stars_L_original = self.spin_vector(stars, self.centre, self.perc_vel, 2*self.halfmass_rad, 'stars')    # unit vector, [Msun pMpc^2 /s]
-        gas_spin_original, gas_L_original = self.spin_vector(gas, self.centre, self.perc_vel, 2*self.halfmass_rad, 'gas')    # unit vector, [Msun pMpc^2 /s]
+        stars_spin_original, stars_L_original = self.spin_vector(stars, self.centre, self.perc_vel, calc_spin_rad, 'stars')    # unit vector, [Msun pMpc^2 /s]
+        gas_spin_original, gas_L_original = self.spin_vector(gas, self.centre, self.perc_vel, calc_spin_rad, 'gas')    # unit vector, [Msun pMpc^2 /s]
         matrix = self.rotate_around_axis('z', 360. - viewing_angle, stars_spin_original)
         
         # Compute new data of rotated particle data
@@ -176,8 +176,8 @@ class Subhalo:
         #print(self.stars_vel*u.Mpc.to(u.km))
         
         # Find new spin vectors
-        self.stars_spin, self.stars_L = self.spin_vector(stars_rotated, np.array([0, 0, 0]), np.array([0, 0, 0]), self.halfmass_rad, 'stars')  # unit vector, [Msun pMpc^2 /s]
-        self.gas_spin, self.gas_L     = self.spin_vector(gas_rotated, np.array([0, 0, 0]), np.array([0, 0, 0]), self.halfmass_rad, 'gas')      # unit vector, [Msun pMpc^2 /s]
+        self.stars_spin, self.stars_L = self.spin_vector(stars_rotated, np.array([0, 0, 0]), np.array([0, 0, 0]), calc_spin_rad, 'stars')  # unit vector, [Msun pMpc^2 /s]
+        self.gas_spin, self.gas_L     = self.spin_vector(gas_rotated, np.array([0, 0, 0]), np.array([0, 0, 0]), calc_spin_rad, 'gas')      # unit vector, [Msun pMpc^2 /s]
         
         # Compute angle between star spin and gas angular momentum vector
         self.mis_angle = self.misalignment_angle(self.stars_spin, self.gas_spin)   # [deg]
@@ -302,7 +302,7 @@ class Subhalo:
     
 class Subhalo_Align:
     
-    def __init__(self, gn, sgn, stelmass, gasmass, halfmass_rad, centre, centre_mass, perc_vel, stars, gas):
+    def __init__(self, gn, sgn, stelmass, gasmass, halfmass_rad, centre, centre_mass, perc_vel, stars, gas, calc_spin_rad, calc_kappa_rad):
         # Assign bulk galaxy values to this subhalo
         self.gn             = gn
         self.sgn            = sgn
@@ -312,15 +312,21 @@ class Subhalo_Align:
         self.centre         = centre            # [pMpc]
         self.centre_mass    = centre_mass       # [pMpc]
         self.perc_vel       = perc_vel          # [pMpc/s]
+        self.calc_spin_rad  = calc_spin_rad     # [pMpc]  radius at which spin vectors calculated
+        self.calc_kappa_rad = calc_kappa_rad    # [pMpc]  radius at which kappa calculated (also used to orientate)
         
         # Compute spin vectors within radius of interest (30 pkpc)        0.03 replace with self.halfmass_rad
-        self.stars_spin = self.spin_vector(stars, self.centre, self.perc_vel, 0.03, 'stars') # unit vector centred
-        self.gas_spin = self.spin_vector(gas, self.centre, self.perc_vel, 0.03, 'gas')       # unit vector centred
+        self.stars_spin = self.spin_vector(stars, self.centre, self.perc_vel, calc_spin_rad, 'stars') # unit vector centred
+        self.gas_spin = self.spin_vector(gas, self.centre, self.perc_vel, calc_spin_rad, 'gas')       # unit vector centred
+        
+        # Compute angle between star spin and gas angular momentum vector
+        self.mis_angle = self.misalignment_angle(self.stars_spin, self.gas_spin)       # [deg]
         
         # Find z_angle between stars and a given axis as reference (z)
-        self.z_angle, matrix = self.orientate('z', self.stars_spin)
+        stars_kappa = self.spin_vector(stars, self.centre, self.perc_vel, calc_kappa_rad, 'stars') # unit vector centred
+        self.z_angle, matrix = self.orientate('z', stars_kappa)
         
-        # Compute new data of aligned particle data
+        # Compute new data of aligned particle data based on calc_kappa_rad
         stars_aligned = self.rotate_galaxy(matrix, self.centre, self.perc_vel, stars)
         gas_aligned   = self.rotate_galaxy(matrix, self.centre, self.perc_vel, gas)
         
@@ -331,14 +337,11 @@ class Subhalo_Align:
         self.gas_coords_new   = gas_aligned['Coordinates']
         
         # Find new spin vectors within halfmassrad
-        self.stars_spin_new = self.spin_vector(stars_aligned, np.array([0, 0, 0]), np.array([0, 0, 0]), self.halfmass_rad, 'stars')
-        self.gas_spin_new   = self.spin_vector(gas_aligned, np.array([0, 0, 0]), np.array([0, 0, 0]), self.halfmass_rad, 'gas')
-        
-        # Compute angle between star spin and gas angular momentum vector
-        self.mis_angle = self.misalignment_angle(self.stars_spin_new, self.gas_spin_new)       # [deg]
+        self.stars_spin_new = self.spin_vector(stars_aligned, np.array([0, 0, 0]), np.array([0, 0, 0]), calc_spin_rad, 'stars')
+        self.gas_spin_new   = self.spin_vector(gas_aligned, np.array([0, 0, 0]), np.array([0, 0, 0]), calc_spin_rad, 'gas')
         
         # Compute stellar cp-rotating kinetic energy fraction within a radius
-        self.kappa = self.kappa_co(stars_aligned, np.array([0, 0, 0]), np.array([0, 0, 0]), 0.03)  # [pkpc]
+        self.kappa = self.kappa_co(stars_aligned, np.array([0, 0, 0]), np.array([0, 0, 0]), calc_kappa_rad)  # [pMpc]
         
     
     def spin_vector(self, arr, origin, perculiar_velocity, radius, desc):
@@ -499,14 +502,15 @@ if __name__ == '__main__':
     # list of simulations
     mySims = np.array([('RefL0012N0188', 12)])   
     
-    def galaxy_render(GroupNumList=np.array([4]),
+    #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
+    def galaxy_render(GroupNumList=np.array([1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21]),
                         SubGroupNum=0, 
-                        particles=10000,
+                        particles=5000,    #5000
                         minangle=0,
-                        maxangle=360, 
+                        maxangle=90, 
                         stepangle=30, 
-                        boxradius=50,      # [pkpc] 
-                        stars=False, 
+                        boxradius=40,      # [pkpc] 40
+                        stars=True, 
                         gas=True, 
                         stars_rot=False, 
                         gas_rot=False,
@@ -524,8 +528,19 @@ if __name__ == '__main__':
             
             # Initial extraction of galaxy data
             galaxy = Subhalo_Extract(mySims, GroupNum, SubGroupNum)
-            subhalo_al = Subhalo_Align(galaxy.gn, galaxy.sgn, galaxy.stelmass, galaxy.gasmass, galaxy.halfmass_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas)
-
+            
+            
+            #--------------------------------------------------
+            calc_spin_rad = 2*galaxy.halfmass_rad   # both in [pMpc]
+            calc_kappa_rad = 0.03
+            boxradius = calc_spin_rad*1000          # [pkpc]
+            
+            
+            # Galaxy will be rotated to calc_kappa_rad's stellar spin value
+            subhalo_al = Subhalo_Align(galaxy.gn, galaxy.sgn, galaxy.stelmass, galaxy.gasmass, galaxy.halfmass_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas, 
+                                        calc_spin_rad, 
+                                        calc_kappa_rad)
+            
             # Print galaxy properties
             print('\nGROUP NUMBER:', subhalo_al.gn) 
             print('KAPPA: %.2f' %subhalo_al.kappa)
@@ -533,7 +548,7 @@ if __name__ == '__main__':
             print('HALFMASS RAD: %.3f pkpc' %(1000*subhalo_al.halfmass_rad))        # [pkpc]
             print('MISALIGNMENT ANGLE: %.1f deg' %subhalo_al.mis_angle)     # [deg]
             print('CENTRE [pMpc]:', subhalo_al.centre)                         # [pMpc]
-            print('PERCULIAR VELOCITY [pkm/s]:', (subhalo.perc_vel*u.Mpc.to(u.km)))           # [pkm/s]
+            print('PERCULIAR VELOCITY [pkm/s]:', (subhalo_al.perc_vel*u.Mpc.to(u.km)))           # [pkm/s]
             
             # Graph initialising and base formatting
             graphformat(8, 11, 11, 11, 11, 5, 5)
@@ -549,16 +564,16 @@ if __name__ == '__main__':
                 
                 if stars == True:
                     # Plot original stars
-                    ax.scatter(1000*subhalo_al.stars_coords[mask_stars][0], 1000*subhalo_al.stars_coords[mask_stars][1], 1000*subhalo_al.stars_coords[mask_stars][2], s=0.02, alpha=0.9, c='khaki')
+                    ax.scatter(1000*subhalo_al.stars_coords[mask_stars][0], 1000*subhalo_al.stars_coords[mask_stars][1], 1000*subhalo_al.stars_coords[mask_stars][2], s=0.05, alpha=0.9, c='white')
                 if gas == True:
                     # Plot original gas
-                    ax.scatter(1000*subhalo_al.gas_coords[mask_gas][0], 1000*subhalo_al.gas_coords[mask_gas][1], 1000*subhalo_al.gas_coords[mask_gas][2], s=0.02, alpha=0.9, c='blue')
+                    ax.scatter(1000*subhalo_al.gas_coords[mask_gas][0], 1000*subhalo_al.gas_coords[mask_gas][1], 1000*subhalo_al.gas_coords[mask_gas][2], s=0.05, alpha=0.9, c='blue')
                 if stars_rot == True:
                     # Plot rotated stars
-                    ax.scatter(1000*subhalo_al.stars_coords_new[mask_stars][0], 1000*subhalo_al.stars_coords_new[mask_stars][1], 1000*subhalo_al.stars_coords_new[mask_stars][2], s=0.02, alpha=0.9, c='khaki')
+                    ax.scatter(1000*subhalo_al.stars_coords_new[mask_stars][0], 1000*subhalo_al.stars_coords_new[mask_stars][1], 1000*subhalo_al.stars_coords_new[mask_stars][2], s=0.05, alpha=0.9, c='white')
                 if gas_rot == True:
                     # Plot rotated gas
-                    ax.scatter(1000*subhalo_al.gas_coords_new[mask_gas][0], 1000*subhalo_al.gas_coords_new[mask_gas][1], 1000*subhalo_al.gas_coords_new[mask_gas][2], s=0.02, alpha=0.9, c='blue')
+                    ax.scatter(1000*subhalo_al.gas_coords_new[mask_gas][0], 1000*subhalo_al.gas_coords_new[mask_gas][1], 1000*subhalo_al.gas_coords_new[mask_gas][2], s=0.05, alpha=0.9, c='blue')
     
             if stars == True:
                 # Plot original stars spin vector
@@ -597,36 +612,47 @@ if __name__ == '__main__':
                 print(ii , end=' ')                 # [deg]
                 ax.view_init(0, ii)
                 
-                plt.savefig("/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%i/galaxy_gas/galaxy_%i.jpeg"%(GroupNum,ii), dpi=300)
+                plt.savefig("/Users/c22048063/Documents/EAGLE/trial_plots/all_galaxies/galaxy_render_%i_%i.jpeg"%(GroupNum,ii), dpi=300)
+                #plt.show()
                 
             plt.close()
             print('')
             
     
-    def velocity_projection(GroupNumList = np.array([4]),
+    def velocity_projection(GroupNumList = np.array([1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21]), 
                             SubGroupNum = 0,
                             minangle = 0,
-                            maxangle = 180,
+                            maxangle = 0,
                             stepangle = 10,
                             boxradius = 40,         # [pkpc]
                             resolution = 1,          # [pkpc]
                             target_particles = 10,
-                            pa_compare = True):      
+                            pa_compare = False,          # plot the voronoi and 2dhist data pa_fit comparison for single galaxy
+                            mis_pa_compare = True,       # plot misangle - pafit for all selected galaxies
+                            mis_angle_histo = True):     # plot histogram of pafit misangles
         
         data_catalogue = {}
+        
+        # Empty arrays to collect relevant data
+        gn_list            = []
+        stelmass_list      = []
+        kappa_list         = []
+        mis_angle_list     = []
+        viewing_angle_list = []
+        pa_fit_list        = []
+        pa_fit_error_list  = []
+        
         
         for GroupNum in GroupNumList:
             # Initial extraction of galaxy data
             galaxy = Subhalo_Extract(mySims, GroupNum, SubGroupNum)
             
-            # Empty arrays to collect relevant data
-            gn_list            = []
-            stelmass_list      = []
-            kappa_list         = []
-            mis_angle_list     = []
-            viewing_angle_list = []
-            pa_fit_list        = []
-            pa_fit_error_list  = []
+            
+            #------------------------------------
+            calc_spin_rad = 2*galaxy.halfmass_rad   # both in [pMpc]
+            calc_kappa_rad = 0.03
+            boxradius = calc_spin_rad*1000          # [pkpc]
+            
             
             # Collect for comparisson
             pa_fit_2dhist_list      = []
@@ -634,22 +660,21 @@ if __name__ == '__main__':
             pa_fit_voronoi_list     = []
             pa_fit_voronoi_err_list = []
             
-            
             # int count to broadcast print statements of each galaxy
             i = 0 
             
             # Use the data we have called to find a variety of properties
             for viewing_angle in np.arange(minangle, maxangle+1, stepangle):
                 # If we want the original values, enter 0 for viewing angle
-                subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.stelmass, galaxy.gasmass, galaxy.halfmass_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas, viewing_angle)
-            
-                boxradius = 2*subhalo.halfmass_rad*1000
-                boxradius = 40
+                subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.stelmass, galaxy.gasmass, galaxy.halfmass_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas, viewing_angle,
+                                    calc_spin_rad)
                 
                 # Print galaxy properties for first call
                 if i == 0:
                     # Call subhalo align for kappa only once
-                    subhalo_al = Subhalo_Align(galaxy.gn, galaxy.sgn, galaxy.stelmass, galaxy.gasmass, galaxy.halfmass_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas)
+                    subhalo_al = Subhalo_Align(galaxy.gn, galaxy.sgn, galaxy.stelmass, galaxy.gasmass, galaxy.halfmass_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas,
+                                                calc_spin_rad, 
+                                                calc_kappa_rad)
                     
                     print('\nGROUP NUMBER:', subhalo.gn) 
                     print('STELLAR MASS [log10 Msun]: %.3f' %np.log10(subhalo.stelmass))       # [pMsun]
@@ -721,7 +746,7 @@ if __name__ == '__main__':
                                  bin_res=resolution, 
                                  boxradius=boxradius, 
                                  quiet=1, 
-                                 plot=0):
+                                 plot=1):
                                  
                     # Assign xy, y, and z values for histogram2d
                     x   = [row[1] for row in coords]
@@ -751,7 +776,9 @@ if __name__ == '__main__':
                         plt.xlim(-boxradius, boxradius)
                         plt.ylim(-boxradius, boxradius)
                         
-                        plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/galaxy_projection_hist/projection__%s.jpeg' %(str(gn), str(viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.5)
+                        #plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/galaxy_projection_hist/projection__%s.jpeg' %(str(gn), str(viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.5)
+                        plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/all_galaxies/2dhisto/galaxy_%s.jpeg' %(str(gn)), dpi=300, bbox_inches='tight', pad_inches=0.5)
+                        
                         plt.close()
                         
                     # Convert histogram2d data into coords + value
@@ -977,10 +1004,14 @@ if __name__ == '__main__':
                     # Run pa_fit on 2dhist
                     if plot:
                         angle_stars, angle_err_stars, velsyst_gas = fit_kinematic_pa(points_stars[:,0], points_stars[:,1], vel_bin_stars, quiet=1, plot=1)
-                        plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/pa_fits/PA_stars_hist_%s.jpeg' %(str(subhalo.gn), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.2)
+                        #plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/pa_fits/PA_stars_hist_%s.jpeg' %(str(subhalo.gn), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.2)
+                        plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/all_galaxies/pa_fit/galaxy_stars_%s.jpeg' %(str(subhalo.gn)), dpi=300, bbox_inches='tight', pad_inches=0.2)
+                        
                         plt.close()
                         angle_gas, angle_err_gas, velsyst_gas = fit_kinematic_pa(points_gas[:,0], points_gas[:,1], vel_bin_gas, quiet=1, plot=1)
-                        plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/pa_fits/PA_gas_hist_%s.jpeg' %(str(subhalo.gn), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.2)
+                        #plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/pa_fits/PA_gas_hist_%s.jpeg' %(str(subhalo.gn), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.2)
+                        plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/all_galaxies/pa_fit/galaxy_gas_%s.jpeg' %(str(subhalo.gn)), dpi=300, bbox_inches='tight', pad_inches=0.2)
+                        
                         plt.close()
                     if not plot:
                         angle_stars, angle_err_stars, velsyst_gas = fit_kinematic_pa(points_stars[:,0], points_stars[:,1], vel_bin_stars, quiet=1, plot=1)
@@ -996,7 +1027,7 @@ if __name__ == '__main__':
                     return pa_fit, pa_fit_error
                     
                 # Function to pa_fit voronoi-fed data
-                def _pa_fit_voronoi(plot=1, quiet=1):
+                def _pa_fit_voronoi(plot=0, quiet=1):
                     # Extract points
                     points_stars, vel_bin_stars, vor = _voronoi_tessalate(subhalo.gn, subhalo.viewing_angle, subhalo.stars_coords*1000, subhalo.stars_vel*u.Mpc.to(u.km), subhalo.stars_mass)
                     points_gas, vel_bin_gas, vor = _voronoi_tessalate(subhalo.gn, subhalo.viewing_angle, subhalo.gas_coords*1000, subhalo.gas_vel*u.Mpc.to(u.km), subhalo.gas_mass)
@@ -1023,10 +1054,13 @@ if __name__ == '__main__':
                     return pa_fit, pa_fit_error            
                 
 
-                ################################    
-                ### Plot 2dhist of stars and gas
+                #---------------------------------   
+                
+                # Plot 2dhist of stars and gas
                 """plot_2dhist(boxradius, target_particles)   """
                 """plot_voronoi(boxradius, target_particles)"""
+                
+                #-------------------------------- 
                 
                 # Run PA fit routine once per galaxy to append to galaxy list
                 if i == 0:
@@ -1038,7 +1072,6 @@ if __name__ == '__main__':
                     pa_fit_list       = np.append(pa_fit_list, pa_fit)
                     pa_fit_error_list = np.append(pa_fit_error_list, pa_fit_error)
                     
-                ###############################
                 # Call function to track difference between 2dhist and voronoi
                 if pa_compare == 1:
                     # PA fit routine
@@ -1054,24 +1087,19 @@ if __name__ == '__main__':
                 
                 i = i + 1
                 
-            #
+            #---------------------------------
             # Start of once per galaxy
+            print('PA ANGLE [deg]: %.1f +/- %.1f' %(pa_fit, pa_fit_error))                 # [deg]
             print('')
             
             # Collect values for each galaxy
             gn_list        = np.append(gn_list, subhalo.gn)
             stelmass_list  = np.append(stelmass_list, subhalo.stelmass)
             kappa_list     = np.append(kappa_list, subhalo_al.kappa) 
-            mis_angle_list = np.append(mis_angle_list, subhalo.mis_angle)
-            
-            print(len(pa_fit_2dhist_list))
-            print(len(pa_fit_2dhist_err_list))
-            print(len(pa_fit_voronoi_list))
-            print(len(pa_fit_voronoi_err_list))
-            print(len(np.arange(minangle, maxangle+1, stepangle)))
-            
+            mis_angle_list = np.append(mis_angle_list, subhalo.mis_angle)            
+
             # Plot pa_fit routine difference between voronoi and 2dhist
-            def _plot_pa_fit_compare():
+            if pa_compare == True:
                 plt.figure()
                 plt.scatter(np.arange(minangle, maxangle+1, stepangle), pa_fit_2dhist_list, c='b', label='2dhist')
                 plt.scatter(np.arange(minangle, maxangle+1, stepangle), pa_fit_voronoi_list, c='r', label='voronoi')
@@ -1080,35 +1108,75 @@ if __name__ == '__main__':
                 
                 # Formatting
                 plt.axhline(subhalo.mis_angle, c='k', ls='--')
+                plt.xlabel('Viewing angle')
+                plt.ylabel('fit_kinematic_pa')
                 plt.legend()
                 plt.tight_layout()
                 
-                plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/PA_comparison_NEW.jpeg' %str(subhalo.gn), dpi=300, bbox_inches='tight', pad_inches=0.2)
+                plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/PA_comparison_40.jpeg' %str(subhalo.gn), dpi=300, bbox_inches='tight', pad_inches=0.2)
                 plt.close()
 
-            ################################
-            # Function to plot pa fit comparisson
-            if pa_compare == 1:
-                _plot_pa_fit_compare()
 
-
-        #
+        #------------------------------------
         # Start of GroupNum loop
         
-        # Append misaslignment angles once per galaxy
+        # Append misalignment angles once per galaxy
         data_catalogue['GroupNum'] = gn_list
         data_catalogue['Stelmass'] = stelmass_list
         data_catalogue['Kappa']    = kappa_list
         data_catalogue['MisAngle'] = mis_angle_list
         data_catalogue['PA']       = pa_fit_list
         data_catalogue['PA_error'] = pa_fit_error_list
-                
-        print(data_catalogue)
+        #print(data_catalogue)
         
+        # Function to plot 3D angle vs 2D projected angle from pa_fit
+        if mis_pa_compare == True:
+            plt.figure()
+            graphformat(8, 11, 11, 11, 11, 5, 5)
+            plt.scatter(data_catalogue['MisAngle'], data_catalogue['PA'], c='r', label='M$_{*}$ > 10E9')
+            plt.errorbar(data_catalogue['MisAngle'], data_catalogue['PA'], xerr=None, yerr=data_catalogue['PA_error'], ecolor='r', ls='none')
             
-        # Here starts total
+            # Plot straight line (expected)
+            plt.plot([0, 180], [0, 180], c='k', ls='--')
+            
+            # Formatting
+            plt.xlabel('3D $\Psi$$_{gas-star}$')
+            plt.ylabel('fit_kinematic_pa')
+            plt.xlim(0, 180)
+            plt.ylim(0, 180)
+            plt.legend()
+            plt.tight_layout()
+            
+            plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/Misangle_PAfit_2rad.jpeg', dpi=300, bbox_inches='tight', pad_inches=0.2)
+            plt.close()
+
+
+        # Plot to create histogram of pafit angles for galaxy selection
+        if mis_angle_histo == True:
+            
+            # Graph initialising and base formatting
+            graphformat(8, 11, 11, 11, 11, 5, 5)
+            fig, ax = plt.subplots(1, 1, figsize=[8, 4])
     
+            # Plot data as histogram
+            plt.hist(data_catalogue['PA'], bins=np.arange(0, 180, 10), histtype='bar', edgecolor='black', facecolor='dodgerblue', alpha=0.8)
     
+            # General formatting
+            ax.set_xlim(0, 180)
+            ax.set_xticks(np.arange(0, 190, step=30))
+            ax.set_ylim(0, 9)
+            ax.set_xlabel('$\Psi$$_{gas-star}$')
+            ax.set_ylabel('Number')
+            ax.tick_params(axis='both', which='both', direction='in', bottom=True, top=True, left=True, right=True)
+    
+            # Annotations
+            ax.text(160, 8, "z = 0", fontsize=10)
+            ax.axvline(30, ls='--', lw=0.5, c='k')
+            plt.suptitle("L%s: Misalignment angle"%str(mySims[0][1]))
+        
+            plt.savefig("/Users/c22048063/Documents/EAGLE/trial_plots/Misalignment_angle_PAfit_2rad.jpeg", format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
+            plt.close()
+            
     
     def plot_spin_vectors(viewing_angle,
                           GroupNum = 16,
@@ -1212,10 +1280,10 @@ if __name__ == '__main__':
     
     
     """ Will render a 3D scatter of a galaxy"""
-    #galaxy_render()
+    galaxy_render()
     
     """ Will plot velocity projection when given any angle (or range), 2dhist and voronoi plots"""
-    velocity_projection()
+    #velocity_projection()
 
     """ Will plot spin vectors of a rotated galaxy about z axis (anti-clockwise) by any angle (deg)"""
     #plot_spin_vectors(0)

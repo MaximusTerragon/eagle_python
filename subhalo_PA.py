@@ -512,6 +512,7 @@ if __name__ == '__main__':
                         boxradius_in = 'tworad',       # [pkpc], 'rad', 'tworad'
                         calc_spin_rad_in = 'tworad',   # [pkpc], 'rad', 'tworad'
                         calc_kappa_rad_in = 30,        # [pkpc], 'rad', 'tworad'
+                        root_file = 'trial_plots'      # 'trial_plots' or 'plots'
                         stars=True, 
                         gas=True, 
                         stars_rot=False, 
@@ -632,21 +633,32 @@ if __name__ == '__main__':
                 print(ii , end=' ')                 # [deg]
                 ax.view_init(0, ii)
                 
-                #plt.savefig("/Users/c22048063/Documents/EAGLE/trial_plots/all_galaxies/rotate/galaxy_rotate_%i_%i.jpeg"%(GroupNum,ii), dpi=300)
-                plt.show()
+                if stars == True & gas == True:
+                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/galaxy_render/render_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(boxradius_in), str(calc_spin_rad_in), str(ii)), dpi=300)
+                if stars == True & gas == False:
+                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/galaxy_stars/render_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(boxradius_in), str(calc_spin_rad_in), str(ii)), dpi=300)
+                if stars == False & gas == True:
+                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/galaxy_gas/render_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(boxradius_in), str(calc_spin_rad_in), str(ii)), dpi=300)
+                if stars_rot == True & gas_rot == True:
+                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/galaxy_rotate/rotate_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(boxradius_in), str(calc_spin_rad_in), str(ii)), dpi=300)
+                
+                 #plt.savefig("/Users/c22048063/Documents/EAGLE/%s/all_galaxies/rotate/galaxy_rotate_%i_%i_%i_%i.jpeg" %(str(root_file), str(GroupNum), str(boxradius_in), str(calc_spin_rad_in), str(ii)), dpi=300)
+                
+                #plt.show()
                 
             plt.close()
             print('')
             
     
-    def velocity_projection(GroupNumList = np.array([1,4]), 
+    def velocity_projection(GroupNumList = np.array([1]), 
                             SubGroupNum = 0,
                             minangle = 0,
                             maxangle = 0,
                             stepangle = 10,
-                            boxradius_in = 'tworad',       # [pkpc], 'rad', 'tworad'
+                            boxradius_in = 100,       # [pkpc], 'rad', 'tworad'
                             calc_spin_rad_in = 'tworad',   # [pkpc], 'rad', 'tworad'
                             calc_kappa_rad_in = 30,        # [pkpc], 'rad', 'tworad'
+                            root_file = 'trial_plots',     # 'trial_plots' or 'plots'
                             resolution = 1,               # [pkpc]
                             target_particles = 10,
                             pa_compare = False,           # plot the voronoi and 2dhist data pa_fit comparison for single galaxy
@@ -669,7 +681,6 @@ if __name__ == '__main__':
             # Initial extraction of galaxy data
             galaxy = Subhalo_Extract(mySims, GroupNum, SubGroupNum)
             
-            print(galaxy.halfmass_rad)
             #------------------------------------
             # TWEAK THESE
             if boxradius_in == 'rad':
@@ -976,9 +987,9 @@ if __name__ == '__main__':
                     cax = plt.axes([0.92, 0.11, 0.015, 0.77])
                     plt.colorbar(im, cax=cax, label='mass-weighted mean velocity [km/s]', extend='both')
                 
-                    #plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/galaxy_projection_hist/galaxy_%s.jpeg' %(str(subhalo.gn), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.3)
+                    #plt.savefig('/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/galaxy_projection_hist/2dhist_%s_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), str(boxradius_in), str(calc_spin_rad_in), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.3)
                     #plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/all_galaxies/2dhisto/galaxy_%s.jpeg' %str(subhalo.gn), dpi=300, bbox_inches='tight', pad_inches=0.3)
-                    plt.savefig('/Users/c22048063/Documents/EAGLE/plots/galaxy_%s/2dhist_2rad.jpeg' %(str(subhalo.gn)), dpi=300, bbox_inches='tight', pad_inches=0.3)
+                    plt.savefig('/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/2dhist_%s_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), str(boxradius_in), str(calc_spin_rad_in), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.3)
                     
                     plt.close()
                     
@@ -1033,8 +1044,8 @@ if __name__ == '__main__':
                     """# Overplot original points for comparisson
                     plt.scatter([row[1] for row in subhalo.stars_coords*1000], [row[2] for row in subhalo.stars_coords*1000], c=[row[0] for row in subhalo.stars_vel*u.Mpc.to(u.km)*-1.], s=0.5, edgecolor='k')"""
                 
-                    #plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/galaxy_projection_voronoi/voronoi_%s.jpeg' %(str(subhalo.gn), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.3)
-                    plt.savefig('/Users/c22048063/Documents/EAGLE/plots/galaxy_%s/voronoi_2rad.jpeg' %(str(subhalo.gn)), dpi=300, bbox_inches='tight', pad_inches=0.3)
+                    #plt.savefig('/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/galaxy_projection_voronoi/voronoi_%s_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), str(boxradius_in), str(calc_spin_rad_in), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.3)
+                    plt.savefig('/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/voronoi_%s_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), str(boxradius_in), str(calc_spin_rad_in), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.3)
                     
                     
                     plt.close()
@@ -1048,17 +1059,16 @@ if __name__ == '__main__':
                     # Run pa_fit on 2dhist
                     if plot:
                         angle_stars, angle_err_stars, velsyst_gas = fit_kinematic_pa(points_stars[:,0], points_stars[:,1], vel_bin_stars, quiet=1, plot=1)
-                        #plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/pa_fits/PA_stars_hist_%s.jpeg' %(str(subhalo.gn), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.2)
-                        #plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/all_galaxies/pa_fit/galaxy_stars_%s.jpeg' %(str(subhalo.gn)), dpi=300, bbox_inches='tight', pad_inches=0.2)
-                        plt.savefig('/Users/c22048063/Documents/EAGLE/plots/galaxy_%s/PA_stars_2dhist_2rad.jpeg' %(str(subhalo.gn)), dpi=300, bbox_inches='tight', pad_inches=0.3)
-                        
+                        #plt.savefig('/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/pa_fits/PA_stars_hist_%s_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), str(boxradius_in), str(calc_spin_rad_in), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.2)
+                        #plt.savefig('/Users/c22048063/Documents/EAGLE/%s/all_galaxies/pa_fit/PA_stars_hist_%s_%s_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), str(boxradius_in), str(calc_spin_rad_in), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.2)
+                        plt.savefig('/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/PA_stars_2dhist_%s_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), str(boxradius_in), str(calc_spin_rad_in), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.3)
                         
                         plt.close()
                         angle_gas, angle_err_gas, velsyst_gas = fit_kinematic_pa(points_gas[:,0], points_gas[:,1], vel_bin_gas, quiet=1, plot=1)
-                        #plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/pa_fits/PA_gas_hist_%s.jpeg' %(str(subhalo.gn), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.2)
-                        #plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/all_galaxies/pa_fit/galaxy_gas_%s.jpeg' %(str(subhalo.gn)), dpi=300, bbox_inches='tight', pad_inches=0.2)
+                        #plt.savefig('/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/pa_fits/PA_gas_hist_%s_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), str(boxradius_in), str(calc_spin_rad_in), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.2)
+                        #plt.savefig('/Users/c22048063/Documents/EAGLE/%s/all_galaxies/pa_fit/galaxy_gas_%s_%s_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), str(boxradius_in), str(calc_spin_rad_in), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.2)
                         
-                        plt.savefig('/Users/c22048063/Documents/EAGLE/plots/galaxy_%s/PA_gas_2dhist_2rad.jpeg' %(str(subhalo.gn)), dpi=300, bbox_inches='tight', pad_inches=0.3)
+                        plt.savefig('/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/PA_gas_2dhist_%s_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), str(boxradius_in), str(calc_spin_rad_in), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.3)
                         
                         
                         plt.close()
@@ -1088,13 +1098,13 @@ if __name__ == '__main__':
                     # Run pa_fit on voronoi
                     if plot:       
                         angle_stars, angle_err_stars, velsyst_gas = fit_kinematic_pa(points_stars[:,0], points_stars[:,1], vel_bin_stars, quiet=1, plot=1)
-                        #plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/pa_fits/PA_stars_voronoi_%s.jpeg' %(str(subhalo.gn), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.2)
-                        plt.savefig('/Users/c22048063/Documents/EAGLE/plots/galaxy_%s/PA_stars_voronoi_2rad.jpeg' %(str(subhalo.gn)), dpi=300, bbox_inches='tight', pad_inches=0.3)
+                        #plt.savefig('/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/pa_fits/PA_stars_voronoi_%s_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), str(boxradius_in), str(calc_spin_rad_in), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.2)
+                        plt.savefig('/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/PA_stars_voronoi_%s_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), str(boxradius_in), str(calc_spin_rad_in), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.3)
                         
                         plt.close()
                         angle_gas, angle_err_gas, velsyst_gas = fit_kinematic_pa(points_gas[:,0], points_gas[:,1], vel_bin_gas, quiet=1, plot=plot)
-                        #plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/pa_fits/PA_gas_voronoi_%s.jpeg' %(str(subhalo.gn), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.2)
-                        plt.savefig('/Users/c22048063/Documents/EAGLE/plots/galaxy_%s/PA_gas_voronoi_2rad.jpeg' %(str(subhalo.gn)), dpi=300, bbox_inches='tight', pad_inches=0.3)
+                        #plt.savefig('/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/pa_fits/PA_gas_voronoi_%s_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), str(boxradius_in), str(calc_spin_rad_in), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.2)
+                        plt.savefig('/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/PA_gas_voronoi_%s_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), str(boxradius_in), str(calc_spin_rad_in), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.3)
                         
                         plt.close()
                     if not plot:
@@ -1170,7 +1180,7 @@ if __name__ == '__main__':
                 plt.legend()
                 plt.tight_layout()
                 
-                #plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/galaxy_%s/PA_comparison_40.jpeg' %str(subhalo.gn), dpi=300, bbox_inches='tight', pad_inches=0.2)
+                plt.savefig('/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/PA_comparison_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), str(boxradius_in), str(calc_spin_rad_in)), dpi=300, bbox_inches='tight', pad_inches=0.2)
                 
                 plt.close()
 
@@ -1206,7 +1216,7 @@ if __name__ == '__main__':
             plt.tight_layout()
             plt.title('3D angle - PA fit 2rad')
             
-            plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/Misangle_PAfit_2rad_NEW.jpeg', dpi=300, bbox_inches='tight', pad_inches=0.2)
+            plt.savefig('/Users/c22048063/Documents/EAGLE/%s/angle_compare_%s_%s.jpeg' %(str(root_file), str(boxradius_in), str(calc_spin_rad_in)), dpi=300, bbox_inches='tight', pad_inches=0.2)
             plt.close()
 
 
@@ -1233,7 +1243,7 @@ if __name__ == '__main__':
             ax.axvline(30, ls='--', lw=0.5, c='k')
             plt.suptitle("L%s: Misalignment angle"%str(mySims[0][1]))
         
-            plt.savefig("/Users/c22048063/Documents/EAGLE/trial_plots/Misalignment_angle_PAfit_2rad_NEW.jpeg", format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
+            plt.savefig("/Users/c22048063/Documents/EAGLE/%s/Misalignment_PAfit_%s_%s.jpeg" %(str(root_file), str(boxradius_in), str(calc_spin_rad_in)), format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
             plt.close()
             
     

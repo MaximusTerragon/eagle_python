@@ -503,18 +503,19 @@ if __name__ == '__main__':
     mySims = np.array([('RefL0012N0188', 12)])   
     
     #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
-    def galaxy_render(GroupNumList=np.array([1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21]),
+    def galaxy_render(GroupNumList=np.array([1]),
                         SubGroupNum=0, 
-                        particles=0,    #5000
+                        particles=5000,    #5000
                         minangle=0,
-                        maxangle=0, 
+                        maxangle=360, 
                         stepangle=30, 
-                        boxradius_in = 'tworad',       # [pkpc], 'rad', 'tworad'
+                        boxradius_in = 100,       # [pkpc], 'rad', 'tworad'
                         calc_spin_rad_in = 'tworad',   # [pkpc], 'rad', 'tworad'
                         calc_kappa_rad_in = 30,        # [pkpc], 'rad', 'tworad'
-                        root_file = 'trial_plots'      # 'trial_plots' or 'plots'
+                        root_file = 'trial_plots',     # 'trial_plots' or 'plots'
+                        txt_file = True,          # Whether to create a txt file with print data
                         stars=True, 
-                        gas=True, 
+                        gas=False, 
                         stars_rot=False, 
                         gas_rot=False,
                         stars_total = True, 
@@ -539,13 +540,13 @@ if __name__ == '__main__':
                 boxradius = galaxy.halfmass_rad*1000          # [pkpc]
             elif boxradius_in == 'tworad':
                 boxradius = 2*galaxy.halfmass_rad*1000          # [pkpc]
-                print('a')
+            else:
+                boxradius = boxradius_in
                 
             if calc_spin_rad_in == 'rad':
                 calc_spin_rad = galaxy.halfmass_rad           # [pMpc]
             elif calc_spin_rad_in == 'tworad':
                 calc_spin_rad = 2*galaxy.halfmass_rad           # [pMpc]
-                print('b')
             else:
                 calc_spin_rad = calc_spin_rad/1000
                 
@@ -585,16 +586,16 @@ if __name__ == '__main__':
                 
                 if stars == True:
                     # Plot original stars
-                    ax.scatter(1000*subhalo_al.stars_coords[mask_stars][0], 1000*subhalo_al.stars_coords[mask_stars][1], 1000*subhalo_al.stars_coords[mask_stars][2], s=0.05, alpha=0.9, c='white')
+                    ax.scatter(1000*subhalo_al.stars_coords[mask_stars][0], 1000*subhalo_al.stars_coords[mask_stars][1], 1000*subhalo_al.stars_coords[mask_stars][2], s=0.02, alpha=0.9, c='white')
                 if gas == True:
                     # Plot original gas
-                    ax.scatter(1000*subhalo_al.gas_coords[mask_gas][0], 1000*subhalo_al.gas_coords[mask_gas][1], 1000*subhalo_al.gas_coords[mask_gas][2], s=0.05, alpha=0.9, c='blue')
+                    ax.scatter(1000*subhalo_al.gas_coords[mask_gas][0], 1000*subhalo_al.gas_coords[mask_gas][1], 1000*subhalo_al.gas_coords[mask_gas][2], s=0.04, alpha=0.9, c='blue')
                 if stars_rot == True:
                     # Plot rotated stars
-                    ax.scatter(1000*subhalo_al.stars_coords_new[mask_stars][0], 1000*subhalo_al.stars_coords_new[mask_stars][1], 1000*subhalo_al.stars_coords_new[mask_stars][2], s=0.05, alpha=0.9, c='white')
+                    ax.scatter(1000*subhalo_al.stars_coords_new[mask_stars][0], 1000*subhalo_al.stars_coords_new[mask_stars][1], 1000*subhalo_al.stars_coords_new[mask_stars][2], s=0.02, alpha=0.9, c='white')
                 if gas_rot == True:
                     # Plot rotated gas
-                    ax.scatter(1000*subhalo_al.gas_coords_new[mask_gas][0], 1000*subhalo_al.gas_coords_new[mask_gas][1], 1000*subhalo_al.gas_coords_new[mask_gas][2], s=0.05, alpha=0.9, c='blue')
+                    ax.scatter(1000*subhalo_al.gas_coords_new[mask_gas][0], 1000*subhalo_al.gas_coords_new[mask_gas][1], 1000*subhalo_al.gas_coords_new[mask_gas][2], s=0.04, alpha=0.9, c='blue')
     
             if stars == True:
                 # Plot original stars spin vector
@@ -618,9 +619,9 @@ if __name__ == '__main__':
             
             if axis == True:
                 # Plot axis
-                ax.quiver(0, 0, 0, 10, 0, 0, color='r', linewidth=0.5)
-                ax.quiver(0, 0, 0, 0, 10, 0, color='g', linewidth=0.5)
-                ax.quiver(0, 0, 0, 0, 0, 10, color='b', linewidth=0.5)
+                ax.quiver(0, 0, 0, boxradius/3, 0, 0, color='r', linewidth=0.5)
+                ax.quiver(0, 0, 0, 0, boxradius/3, 0, color='g', linewidth=0.5)
+                ax.quiver(0, 0, 0, 0, 0, boxradius/3, color='b', linewidth=0.5)
                 
             # Plot formatting
             ax.set_facecolor('xkcd:black')
@@ -634,34 +635,54 @@ if __name__ == '__main__':
                 ax.view_init(0, ii)
                 
                 if stars == True & gas == True:
-                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/galaxy_render/render_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(boxradius_in), str(calc_spin_rad_in), str(ii)), dpi=300)
-                if stars == True & gas == False:
-                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/galaxy_stars/render_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(boxradius_in), str(calc_spin_rad_in), str(ii)), dpi=300)
-                if stars == False & gas == True:
-                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/galaxy_gas/render_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(boxradius_in), str(calc_spin_rad_in), str(ii)), dpi=300)
-                if stars_rot == True & gas_rot == True:
-                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/galaxy_rotate/rotate_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(boxradius_in), str(calc_spin_rad_in), str(ii)), dpi=300)
+                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_all_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(boxradius_in), str(calc_spin_rad_in), str(ii)), dpi=300)
+                elif stars == True & gas == False:
+                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_stars_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(boxradius_in), str(calc_spin_rad_in), str(ii)), dpi=300)
+                elif stars == False & gas == True:
+                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_gas_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(boxradius_in), str(calc_spin_rad_in), str(ii)), dpi=300)
+                elif stars_rot == True & gas_rot == True:
+                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/rotate_all_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(boxradius_in), str(calc_spin_rad_in), str(ii)), dpi=300)
                 
                  #plt.savefig("/Users/c22048063/Documents/EAGLE/%s/all_galaxies/rotate/galaxy_rotate_%i_%i_%i_%i.jpeg" %(str(root_file), str(GroupNum), str(boxradius_in), str(calc_spin_rad_in), str(ii)), dpi=300)
                 
                 #plt.show()
                 
             plt.close()
+            
+            # Create txt file with output for that galaxy
+            if txt_file == True:
+                f = open("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_%s_%s.txt" %(str(root_file), str(GroupNum), str(boxradius_in), str(calc_spin_rad_in)), 'w+')
+                f.write('GROUP NUMBER: %s\n' %str(subhalo_al.gn))
+                f.write('STELLAR MASS [Msun]: %.3f\n' %np.log10(subhalo_al.stelmass))              # [pMsun]
+                f.write('HALFMASS RAD [pkpc]: %.3f\n' %(1000*subhalo_al.halfmass_rad))             # [pkpc]
+                f.write('KAPPA: %.2f\n' %subhalo_al.kappa)  
+                f.write('MISALIGNMENT ANGLE [deg]: %.1f\n' %subhalo_al.mis_angle)  
+                f.write('\nSPIN RADIUS CALC [pMpc]: %s\n' %str(calc_spin_rad_in))
+                f.write('KAPPA RADIUS CALC [pMpc]: %s\n' %str(calc_kappa_rad_in))
+                f.write('\nCENTRE [pMpc]: [%s, %s ,%s]\n' %(str(subhalo_al.centre[0]), str(subhalo_al.centre[1]), str(subhalo_al.centre[2])))                                 # [pMpc]
+                f.write('PERCULIAR VELOCITY [pkm/s]: [%s, %s ,%s]\n' %(str(subhalo_al.perc_vel[0]*u.Mpc.to(u.km)), str(subhalo_al.perc_vel[1]*u.Mpc.to(u.km)), str(subhalo_al.perc_vel[2]*u.Mpc.to(u.km)))) # [pkm/s]
+                
+                f.close()
+            
             print('')
             
     
     def velocity_projection(GroupNumList = np.array([1]), 
                             SubGroupNum = 0,
                             minangle = 0,
-                            maxangle = 0,
-                            stepangle = 10,
-                            boxradius_in = 100,       # [pkpc], 'rad', 'tworad'
+                            maxangle = 360,
+                            stepangle = 30,
+                            boxradius_in = 'tworad',       # [pkpc], 'rad', 'tworad'
                             calc_spin_rad_in = 'tworad',   # [pkpc], 'rad', 'tworad'
                             calc_kappa_rad_in = 30,        # [pkpc], 'rad', 'tworad'
                             root_file = 'trial_plots',     # 'trial_plots' or 'plots'
                             resolution = 1,               # [pkpc]
                             target_particles = 10,
-                            pa_compare = False,           # plot the voronoi and 2dhist data pa_fit comparison for single galaxy
+                            plot_2dhist_graph = True,
+                            plot_2dhist_pafit_graph = True,
+                            plot_voronoi_graph = False,
+                            plot_voronoi_pafit_graph = False,
+                            pa_compare = True,           # plot the voronoi and 2dhist data pa_fit comparison for single galaxy
                             mis_pa_compare = False,       # plot misangle - pafit for all selected galaxies
                             mis_angle_histo = False):     # plot histogram of pafit misangles
         
@@ -687,6 +708,8 @@ if __name__ == '__main__':
                 boxradius = galaxy.halfmass_rad*1000          # [pkpc]
             elif boxradius_in == 'tworad':
                 boxradius = 2*galaxy.halfmass_rad*1000          # [pkpc]
+            else:
+                boxradius = boxradius_in
                 
             if calc_spin_rad_in == 'rad':
                 calc_spin_rad = galaxy.halfmass_rad           # [pMpc]
@@ -1051,7 +1074,7 @@ if __name__ == '__main__':
                     plt.close()
                 
                 # Function to pa_fit 2dhist-fed data    
-                def _pa_fit_2dhist(plot=1, quiet=1):
+                def _pa_fit_2dhist(plot=plot_2dhist_pafit_graph, quiet=1):
                     # Extract points
                     points_stars, _, vel_bin_stars, _, _, _ = _weight_histo(subhalo.gn, subhalo.viewing_angle, subhalo.stars_coords*1000, subhalo.stars_vel*u.Mpc.to(u.km), subhalo.stars_mass)
                     points_gas, _, vel_bin_gas, _, _, _ = _weight_histo(subhalo.gn, subhalo.viewing_angle, subhalo.gas_coords*1000, subhalo.gas_vel*u.Mpc.to(u.km), subhalo.gas_mass)
@@ -1060,14 +1083,13 @@ if __name__ == '__main__':
                     if plot:
                         angle_stars, angle_err_stars, velsyst_gas = fit_kinematic_pa(points_stars[:,0], points_stars[:,1], vel_bin_stars, quiet=1, plot=1)
                         #plt.savefig('/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/pa_fits/PA_stars_hist_%s_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), str(boxradius_in), str(calc_spin_rad_in), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.2)
-                        #plt.savefig('/Users/c22048063/Documents/EAGLE/%s/all_galaxies/pa_fit/PA_stars_hist_%s_%s_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), str(boxradius_in), str(calc_spin_rad_in), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.2)
+#plt.savefig('/Users/c22048063/Documents/EAGLE/%s/all_galaxies/pa_fit/PA_stars_hist_%s_%s_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), str(boxradius_in), str(calc_spin_rad_in), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.2)
                         plt.savefig('/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/PA_stars_2dhist_%s_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), str(boxradius_in), str(calc_spin_rad_in), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.3)
                         
                         plt.close()
                         angle_gas, angle_err_gas, velsyst_gas = fit_kinematic_pa(points_gas[:,0], points_gas[:,1], vel_bin_gas, quiet=1, plot=1)
                         #plt.savefig('/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/pa_fits/PA_gas_hist_%s_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), str(boxradius_in), str(calc_spin_rad_in), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.2)
-                        #plt.savefig('/Users/c22048063/Documents/EAGLE/%s/all_galaxies/pa_fit/galaxy_gas_%s_%s_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), str(boxradius_in), str(calc_spin_rad_in), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.2)
-                        
+#plt.savefig('/Users/c22048063/Documents/EAGLE/%s/all_galaxies/pa_fit/galaxy_gas_%s_%s_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), str(boxradius_in), str(calc_spin_rad_in), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.2)
                         plt.savefig('/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/PA_gas_2dhist_%s_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), str(boxradius_in), str(calc_spin_rad_in), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.3)
                         
                         
@@ -1090,7 +1112,7 @@ if __name__ == '__main__':
                     return pa_fit, pa_fit_error
                     
                 # Function to pa_fit voronoi-fed data
-                def _pa_fit_voronoi(plot=1, quiet=1):
+                def _pa_fit_voronoi(plot=plot_voronoi_pafit_graph, quiet=1):
                     # Extract points
                     points_stars, vel_bin_stars, vor = _voronoi_tessalate(subhalo.gn, subhalo.viewing_angle, subhalo.stars_coords*1000, subhalo.stars_vel*u.Mpc.to(u.km), subhalo.stars_mass)
                     points_gas, vel_bin_gas, vor = _voronoi_tessalate(subhalo.gn, subhalo.viewing_angle, subhalo.gas_coords*1000, subhalo.gas_vel*u.Mpc.to(u.km), subhalo.gas_mass)
@@ -1113,6 +1135,8 @@ if __name__ == '__main__':
                                        
                     # Find misalignment angle from pa
                     pa_fit = abs(angle_stars - angle_gas)
+                    if pa_fit >= 180:
+                        pa_fit = 360 - pa_fit
                     pa_fit_error = angle_err_stars + angle_err_gas
                     
                     if not quiet:
@@ -1124,8 +1148,10 @@ if __name__ == '__main__':
                 #---------------------------------   
                 
                 # Plot 2dhist of stars and gas
-                _plot_2dhist(boxradius, target_particles)
-                _plot_voronoi(boxradius, target_particles)
+                if plot_2dhist_graph == True:
+                    _plot_2dhist(boxradius, target_particles)
+                if plot_voronoi_graph == True:
+                    _plot_voronoi(boxradius, target_particles)
                 
                 #-------------------------------- 
                 
@@ -1170,8 +1196,8 @@ if __name__ == '__main__':
                 plt.figure()
                 plt.scatter(np.arange(minangle, maxangle+1, stepangle), pa_fit_2dhist_list, c='b', label='2dhist')
                 plt.scatter(np.arange(minangle, maxangle+1, stepangle), pa_fit_voronoi_list, c='r', label='voronoi')
-                plt.errorbar(np.arange(minangle, maxangle+1, stepangle), pa_fit_2dhist_list, xerr=None, yerr=pa_fit_2dhist_err_list, c='b')
-                plt.errorbar(np.arange(minangle, maxangle+1, stepangle), pa_fit_voronoi_list, xerr=None, yerr=pa_fit_voronoi_err_list, c='r')
+                plt.errorbar(np.arange(minangle, maxangle+1, stepangle), pa_fit_2dhist_list, xerr=None, yerr=pa_fit_2dhist_err_list, c='b', alpha=0.5)
+                plt.errorbar(np.arange(minangle, maxangle+1, stepangle), pa_fit_voronoi_list, xerr=None, yerr=pa_fit_voronoi_err_list, c='r', alpha=0.5)
                 
                 # Formatting
                 plt.axhline(subhalo.mis_angle, c='k', ls='--')
@@ -1349,10 +1375,10 @@ if __name__ == '__main__':
     
     
     """ Will render a 3D scatter of a galaxy"""
-    #galaxy_render()
+    galaxy_render()
     
     """ Will plot velocity projection when given any angle (or range), 2dhist and voronoi plots"""
-    velocity_projection()
+    #velocity_projection()
 
     """ Will plot spin vectors of a rotated galaxy about z axis (anti-clockwise) by any angle (deg)"""
     #plot_spin_vectors(0)

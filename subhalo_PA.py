@@ -577,21 +577,22 @@ if __name__ == '__main__':
     
     #1, 4, 7, 16
     #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
-    def galaxy_render(GroupNumList = np.array([1, 4, 7, 16]),
+    def galaxy_render(GroupNumList = np.array([4]),
                         SubGroupNum = 0, 
                         particles = 5000,    #5000,10000
                         minangle  = 0,
-                        maxangle  = 360, 
+                        maxangle  = 0, 
                         stepangle = 30, 
-                        boxradius_in      = 'tworad',   # [pkpc], 'rad', 'tworad'
-                        calc_spin_rad_in  = 'tworad',   # [pkpc], 'rad', 'tworad'
-                        calc_kappa_rad_in = 30,         # [pkpc], 'rad', 'tworad'
+                        boxradius_in          = 'tworad',      # [pkpc], 'rad', 'tworad'
+                        calc_spin_rad_in      = 'tworad',      # [pkpc], 'rad', 'tworad'
+                        calc_spin_rad_list_in = np.arange(0.5, 10.5, 0.5),  # multiples of rad
+                        calc_kappa_rad_in     = 30,            # [pkpc], 'rad', 'tworad'
                         root_file = 'trial_plots',      # 'trial_plots' or 'plots'
                         txt_file    = True,            # create a txt file with print data
                         stars       = False, 
                         gas         = False,
                         gas_sf      = False,
-                        gas_nsf     = True,
+                        gas_nsf     = False,
                         stars_rot   = False, 
                         gas_rot     = False,
                         gas_sf_rot  = False,
@@ -639,20 +640,31 @@ if __name__ == '__main__':
                                         calc_spin_rad, 
                                         calc_kappa_rad)
             
+            spin_gas_list = []
+            spin_sf_list  = []
+            spin_nsf_list = []
+            for rad in galaxy.halfmass_rad*calc_spin_rad_list_in:
+                subhalo_spins = Subhalo_Align(galaxy.gn, galaxy.sgn, galaxy.halfmass_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas, 
+                                        rad, 
+                                        calc_kappa_rad)
+                spin_gas_list.append(subhalo_spins.mis_angle)
+                spin_sf_list.append(subhalo_spins.mis_angle_sf)
+                spin_nsf_list.append(subhalo_spins.mis_angle_nsf)
+                
             # Print galaxy properties
-            print('\nGROUP NUMBER:', subhalo_al.gn) 
-            print('STELLAR MASS [Msun]:    %.3f' %np.log10(subhalo_al.stelmass))    # [pMsun]
+            print('\nGROUP NUMBER:           %s' %str(subhalo_al.gn)) 
+            print('STELLAR MASS [Msun]:    %.3f' %np.log10(subhalo_al.stelmass)) # [Msun]
             print('SF GAS MASS [Msun]:     %.3f' %np.log10(subhalo_al.gasmass_sf))  # [pMsun]
             print('NON-SF GAS MASS [Msun]: %.3f' %np.log10(subhalo_al.gasmass_nsf)) # [pMsun]
-            print('HALFMASS RAD [pkpc]: %.3f' %(1000*subhalo_al.halfmass_rad))        # [pkpc]
-            print('KAPPA: %.2f' %subhalo_al.kappa)
-            print('MISALIGNMENT ANGLE [deg]: %.1f   stars-gas' %subhalo_al.mis_angle)         # [deg]
-            print('#                         %.1f   stars-gas_sf' %subhalo_al.mis_angle_sf)   # [deg]
-            print('#                         %.1f   stars_gas_nsf' %subhalo_al.mis_angle_nsf) # [deg]
-            print('SPIN RAD CALC [pMpc]: %s' %str(calc_spin_rad_in))
-            print('KAPPA RAD CALC [pMpc]: %s' %str(calc_kappa_rad_in))
-            print('CENTRE [pMpc]:', subhalo_al.centre)                                   # [pMpc]
-            print('PERCULIAR VELOCITY [pkm/s]:', (subhalo_al.perc_vel*u.Mpc.to(u.km)))   # [pkm/s]
+            print('HALFMASS RAD [pkpc]:    %.3f' %(1000*subhalo_al.halfmass_rad))        # [pkpc]
+            print('KAPPA:                  %.2f' %subhalo_al.kappa)
+            print('KAPPA RAD CALC [pMpc]:  %s' %str(calc_kappa_rad_in))
+            print('MISALIGNMENT ANGLE:     %.1f   stars-gas' %subhalo_al.mis_angle)         # [deg]
+            print('  #                     %.1f   stars-gas_sf' %subhalo_al.mis_angle_sf)   # [deg]
+            print('  #                     %.1f   stars_gas_nsf' %subhalo_al.mis_angle_nsf) # [deg] 
+            print('SPIN RAD CALC [pMpc]:   %s' %str(calc_spin_rad_in))
+            print('CENTRE [pMpc]:   [%.5f, %.5f , %.5f]\t[pMpc]' %(subhalo_al.centre[0], subhalo_al.centre[1], subhalo_al.centre[2]))                      # [pMpc]
+            print('PERC VELOCITY:   [%.5f, %.5f ,%.5f]\t[pkm/s]' %(subhalo_al.perc_vel[0]*u.Mpc.to(u.km), subhalo_al.perc_vel[1]*u.Mpc.to(u.km), subhalo_al.perc_vel[2]*u.Mpc.to(u.km)))   # [pkm/s]
             
             # Graph initialising and base formatting
             graphformat(8, 11, 11, 11, 11, 5, 5)
@@ -701,9 +713,11 @@ if __name__ == '__main__':
                 ax.quiver(0, 0, 0, subhalo_al.gas_spin[0]*boxradius*0.4, subhalo_al.gas_spin[1]*boxradius*0.4, subhalo_al.gas_spin[2]*boxradius*0.4, color='navy', linewidth=1)
             if gas_sf == True:
                 # Plot original stars spin vector
+                ax.quiver(0, 0, 0, subhalo_al.gas_spin[0]*boxradius*0.4, subhalo_al.gas_spin[1]*boxradius*0.4, subhalo_al.gas_spin[2]*boxradius*0.4, color='navy', linewidth=1)
                 ax.quiver(0, 0, 0, subhalo_al.gas_sf_spin[0]*boxradius*0.4, subhalo_al.gas_sf_spin[1]*boxradius*0.4, subhalo_al.gas_sf_spin[2]*boxradius*0.4, color='c', linewidth=1)
             if gas_nsf == True:
                 # Plot original stars spin vector
+                ax.quiver(0, 0, 0, subhalo_al.gas_spin[0]*boxradius*0.4, subhalo_al.gas_spin[1]*boxradius*0.4, subhalo_al.gas_spin[2]*boxradius*0.4, color='navy', linewidth=1)
                 ax.quiver(0, 0, 0, subhalo_al.gas_nsf_spin[0]*boxradius*0.4, subhalo_al.gas_nsf_spin[1]*boxradius*0.4, subhalo_al.gas_nsf_spin[2]*boxradius*0.4, color='purple', linewidth=1)
             if stars_rot == True:
                 # Plot rotated stars spin vector
@@ -713,9 +727,11 @@ if __name__ == '__main__':
                 ax.quiver(0, 0, 0, subhalo_al.gas_spin_new[0]*boxradius*0.4, subhalo_al.gas_spin_new[1]*boxradius*0.4, subhalo_al.gas_spin_new[2]*boxradius*0.4, color='navy', linewidth=1)
             if gas_sf_rot == True:
                 # Plot original stars spin vector
+                ax.quiver(0, 0, 0, subhalo_al.gas_spin_new[0]*boxradius*0.4, subhalo_al.gas_spin_new[1]*boxradius*0.4, subhalo_al.gas_spin_new[2]*boxradius*0.4, color='navy', linewidth=1)
                 ax.quiver(0, 0, 0, subhalo_al.gas_sf_spin_new[0]*boxradius*0.4, subhalo_al.gas_sf_spin_new[1]*boxradius*0.4, subhalo_al.gas_sf_spin_new[2]*boxradius*0.4, color='c', linewidth=1)
             if gas_nsf_rot == True:
                 # Plot original stars spin vector
+                ax.quiver(0, 0, 0, subhalo_al.gas_spin_new[0]*boxradius*0.4, subhalo_al.gas_spin_new[1]*boxradius*0.4, subhalo_al.gas_spin_new[2]*boxradius*0.4, color='navy', linewidth=1)
                 ax.quiver(0, 0, 0, subhalo_al.gas_nsf_spin_new[0]*boxradius*0.4, subhalo_al.gas_nsf_spin_new[1]*boxradius*0.4, subhalo_al.gas_nsf_spin_new[2]*boxradius*0.4, color='purple', linewidth=1)
             
             if centre_of_pot == True:
@@ -742,15 +758,17 @@ if __name__ == '__main__':
                 print(ii , end=' ')                 # [deg]
                 ax.view_init(0, ii)
                 
-                if (stars == True) & (gas == True):
+                if (stars == True) & (gas == True) & (gas_sf == False) & (gas_nsf == False):
                     plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_all_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(boxradius_in), str(calc_spin_rad_in), str(ii)), dpi=300)
-                elif (stars == True) & (gas == False):
+                elif (stars == True) & (gas == False) & (gas_sf == True) & (gas_nsf == True):
+                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_types_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(boxradius_in), str(calc_spin_rad_in), str(ii)), dpi=300)
+                elif (stars == True) & (gas == False) & (gas_sf == False) & (gas_nsf == False):
                     plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_stars_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(boxradius_in), str(calc_spin_rad_in), str(ii)), dpi=300)
-                elif (stars == False) & (gas == True):
+                elif (stars == False) & (gas == True) & (gas_sf == False) & (gas_nsf == False):
                     plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_gas_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(boxradius_in), str(calc_spin_rad_in), str(ii)), dpi=300)
-                elif (stars == False) & (gas_sf == True):
+                elif (stars == False) & (gas_sf == True) & (gas == False) & (gas_nsf == False):
                     plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_gas_sf_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(boxradius_in), str(calc_spin_rad_in), str(ii)), dpi=300)
-                elif (stars == False) & (gas_nsf == True):
+                elif (stars == False) & (gas_nsf == True) & (gas == False) & (gas_sf == False):
                     plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_gas_nsf_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(boxradius_in), str(calc_spin_rad_in), str(ii)), dpi=300)
                 elif (stars_rot == True) & (gas_rot == True):
                     plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/rotate_all_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(boxradius_in), str(calc_spin_rad_in), str(ii)), dpi=300)
@@ -761,23 +779,62 @@ if __name__ == '__main__':
                 
             plt.close()
             
+            
+            
+            # Graph initialising and base formatting
+            graphformat(8, 11, 11, 11, 11, 5, 5)
+            fig, ax = plt.subplots(1, 1, figsize=[8, 4])
+    
+            # Plot data as histogram
+            plt.plot(galaxy.halfmass_rad*calc_spin_rad_list_in*1000, spin_gas_list, c='navy', alpha=0.7, label='total gas')
+            plt.plot(galaxy.halfmass_rad*calc_spin_rad_list_in*1000, spin_sf_list, c='c', alpha=0.7, label='starforming')
+            plt.plot(galaxy.halfmass_rad*calc_spin_rad_list_in*1000, spin_nsf_list, c='purple', alpha=0.7, label='non-starforming')
+    
+            # General formatting
+            ax.set_xlim(left=0)
+            ax.set_xlabel('radius [pkpc]')
+            ax.set_ylabel('3D $\Psi$$_{gas-star}$ [deg]')
+            ax.tick_params(axis='both', which='both', direction='in', bottom=True, top=True, left=True, right=True)
+    
+            # Annotations
+            ax.axhline(subhalo_al.mis_angle, ls='--', lw=0.5, c='k', label='2*HMR')
+            plt.legend()
+            plt.suptitle("Misangle-radius: GroupNum %s" %str(GroupNum))
+        
+            plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/MisAngle_radius.jpeg" %(str(root_file), str(GroupNum)), format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
+            plt.close()
+            
+            
+            
             # Create txt file with output for that galaxy
             if txt_file == True:
-                f = open("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_%s_%s.txt" %(str(root_file), str(GroupNum), str(calc_spin_rad_in), str(calc_kappa_rad_in)), 'w+')
-                f.write('GROUP NUMBER:   %s\n' %str(subhalo_al.gn))
-                f.write('\nSTELLAR MASS [Msun]:     %.3f\n' %np.log10(subhalo_al.stelmass))     # [pMsun]
-                f.write('GAS MASS [Msun]:         %.3f\n' %np.log10(subhalo_al.gasmass))      # [pMsun]
-                f.write('SF GAS MASS [Msun]:      %.3f\n' %np.log10(subhalo_al.gasmass_sf))   # [pMsun]
-                f.write('NON-SF GAS MASS [Msun]:  %.3f\n' %np.log10(subhalo_al.gasmass_nsf))  # [pMsun]
-                f.write('\nHALFMASS RAD [pkpc]:   %.3f\n' %(1000*subhalo_al.halfmass_rad))   # [pkpc]
-                f.write('KAPPA:                 %.2f\n' %subhalo_al.kappa)  
-                f.write('MISALIGNMENT ANGLE [deg]:   %.1f   stars-gas\n' %subhalo_al.mis_angle)  
-                f.write('#                           %.1f   stars-gas_sf\n' %subhalo_al.mis_angle_sf)  
-                f.write('#                           %.1f   stars-gas_nsf\n' %subhalo_al.mis_angle_nsf)  
-                f.write('\nSPIN RADIUS CALC [pMpc]:    %s\n' %str(calc_spin_rad_in))
-                f.write('KAPPA RADIUS CALC [pMpc]:   %s\n' %str(calc_kappa_rad_in))
-                f.write('\nCENTRE [pMpc]: [%s, %s ,%s]\n' %(str(subhalo_al.centre[0]), str(subhalo_al.centre[1]), str(subhalo_al.centre[2])))                                 # [pMpc]
-                f.write('PERCULIAR VELOCITY [pkm/s]: [%s, %s ,%s]\n' %(str(subhalo_al.perc_vel[0]*u.Mpc.to(u.km)), str(subhalo_al.perc_vel[1]*u.Mpc.to(u.km)), str(subhalo_al.perc_vel[2]*u.Mpc.to(u.km)))) # [pkm/s]
+                dash = '-' * 60
+                f = open("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_%s_%s_NEW.txt" %(str(root_file), str(GroupNum), str(calc_spin_rad_in), str(calc_kappa_rad_in)), 'w+')
+                f.write(dash)
+                f.write('\nGROUP NUMBER:     %s\n' %str(subhalo_al.gn))
+                f.write('\nSUBGROUP NUMBER:  %s\n' %str(subhalo_al.sgn))
+                f.write(dash)
+                f.write('\nSTELLAR MASS:     %.3f   [Msun]' %np.log10(subhalo_al.stelmass))     # [pMsun]
+                f.write('\nGAS MASS:         %.3f   [Msun]' %np.log10(subhalo_al.gasmass))      # [pMsun]
+                f.write('\nSF GAS MASS:      %.3f   [Msun]' %np.log10(subhalo_al.gasmass_sf))   # [pMsun]
+                f.write('\nNON-SF GAS MASS:  %.3f   [Msun]' %np.log10(subhalo_al.gasmass_nsf))  # [pMsun]
+                f.write('\n' + dash)
+                f.write('\nHALFMASS RAD:     %.3f   [pkpc]' %(1000*subhalo_al.halfmass_rad))   # [pkpc]
+                f.write('\n' + dash)
+                f.write('\nKAPPA:             %.2f' %subhalo_al.kappa)  
+                f.write('\nKAPPA RADIUS CALC:   %s    [pkpc]' %str(calc_kappa_rad_in))
+                f.write('\n' + dash)
+                f.write('\nMISALIGNMENT ANGLES [deg]:')
+                f.write('\n\tRAD\tGAS\tSF\tNSF')
+                i = 0
+                while i < len(calc_spin_rad_list_in):
+                    f.write('\n\t%.1f\t%.1f\t%.1f\t%.1f' %(calc_spin_rad_list_in[i], spin_gas_list[i], spin_sf_list[i], spin_nsf_list[i]))
+                    i += 1
+                f.write('\n' + dash)
+                f.write('\nSPIN RADIUS CALC [pMpc]:    %s' %str(calc_spin_rad_in))
+                f.write('\n' + dash)
+                f.write('\nCENTRE:          [%.5f, %.5f , %.5f]\t[pMpc]\n' %(subhalo_al.centre[0], subhalo_al.centre[1], subhalo_al.centre[2]))                                 # [pMpc]
+                f.write('PERC VELOCITY:   [%.5f, %.5f ,%.5f]\t[pkm/s]\n' %(subhalo_al.perc_vel[0]*u.Mpc.to(u.km), subhalo_al.perc_vel[1]*u.Mpc.to(u.km), subhalo_al.perc_vel[2]*u.Mpc.to(u.km))) # [pkm/s]
                 
                 f.close()
             
@@ -789,9 +846,10 @@ if __name__ == '__main__':
                             minangle  = 0,
                             maxangle  = 360,
                             stepangle = 30,
-                            boxradius_in      = 'tworad',       # [pkpc], 'rad', 'tworad'
-                            calc_spin_rad_in  = 'tworad',   # [pkpc], 'rad', 'tworad'
-                            calc_kappa_rad_in = 30,        # [pkpc], 'rad', 'tworad'
+                            boxradius_in          = 'tworad',       # [pkpc], 'rad', 'tworad'
+                            calc_spin_rad_in      = 'tworad',       # [pkpc], 'rad', 'tworad'
+                            calc_spin_rad_list_in = np.arange(0.5, 10, 0.5),  # multiples of rad
+                            calc_kappa_rad_in     = 30,        # [pkpc], 'rad', 'tworad'
                             root_file = 'trial_plots',     # 'trial_plots' or 'plots'
                             txt_file  = True, 
                             resolution = 1,               # [pkpc]
@@ -800,8 +858,8 @@ if __name__ == '__main__':
                             plot_voronoi_graph       = True,
                             plot_2dhist_pafit_graph  = True,
                             plot_voronoi_pafit_graph = False,
-                            pa_compare      = True,           # plot the voronoi and 2dhist data pa_fit comparison for single galaxy
-                            mis_pa_compare  = False,       # plot misangle - pafit for all selected galaxies
+                            pa_compare      = True,       # plot the voronoi and 2dhist data pa_fit comparison for single galaxy
+                            mis_pa_compare  = False,      # plot misangle - pafit for all selected galaxies
                             mis_angle_histo = False):     # plot histogram of pafit misangles
         
         data_catalogue = {}
@@ -872,8 +930,8 @@ if __name__ == '__main__':
                     print('HALFMASS RAD [pkpc]: %.3f' %(1000*subhalo.halfmass_rad))              # [pkpc]
                     print('KAPPA: %.2f' %subhalo_al.kappa)
                     print('MISALIGNMENT ANGLE [deg]: %.1f   stars-gas' %subhalo.mis_angle)         # [deg]
-                    print('                          %.1f   stars-gas_sf' %subhalo.mis_angle_sf)   # [deg]
-                    print('                          %.1f   stars_gas_nsf' %subhalo.mis_angle_nsf) # [deg]
+                    print(' #                        %.1f   stars-gas_sf' %subhalo.mis_angle_sf)   # [deg]
+                    print(' #                        %.1f   stars_gas_nsf' %subhalo.mis_angle_nsf) # [deg]
                     print('SPIN RAD CALC [pMpc]: %s' %str(calc_spin_rad_in))
                     print('KAPPA RAD CALC [pMpc]: %s' %str(calc_kappa_rad_in))
                     print('CENTRE [pMpc]:', subhalo.centre)                                   # [pMpc]
@@ -1344,8 +1402,8 @@ if __name__ == '__main__':
                 f.write('\nHALFMASS RAD [pkpc]:   %.3f\n' %(1000*subhalo.halfmass_rad))   # [pkpc]
                 f.write('KAPPA:                 %.2f\n' %subhalo_al.kappa)  
                 f.write('MISALIGNMENT ANGLE [deg]:   %.1f   stars-gas\n' %subhalo.mis_angle)  
-                f.write('                            %.1f   stars-gas_sf\n' %subhalo.mis_angle_sf)  
-                f.write('                            %.1f   stars-gas_nsf\n' %subhalo.mis_angle_nsf)
+                f.write(' #                          %.1f   stars-gas_sf\n' %subhalo.mis_angle_sf)  
+                f.write(' #                          %.1f   stars-gas_nsf\n' %subhalo.mis_angle_nsf)
                 f.write('PAFIT [deg]:                %.1f +/- %.1f\n' %(pa_fit, pa_fit_error))  
                 f.write('\nSPIN RADIUS CALC [pMpc]:    %s\n' %str(calc_spin_rad_in))
                 f.write('KAPPA RADIUS CALC [pMpc]:   %s\n' %str(calc_kappa_rad_in))

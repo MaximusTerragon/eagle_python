@@ -1,7 +1,7 @@
 import numpy as np
 import h5py
 
-def read_dataset(itype, att, nfiles=16):
+def read_dataset(data_dir, itype, att, nfiles=16):
     """ Read a selected dataset, itype is the PartType and att is the attribute name. """
 
     # Output array.
@@ -49,9 +49,9 @@ def read_dataset(itype, att, nfiles=16):
     return data
     
 
-def read_dataset_dm_mass():
+def read_dataset_dm_mass(data_dir):
     """ Special case for the mass of dark matter particles. """
-    f           = h5py.File('/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_028_z000p000/snap_028_z000p000.0.hdf5', 'r')
+    f           = h5py.File(data_dir, 'r')
     h           = f['Header'].attrs.get('HubbleParam')
     a           = f['Header'].attrs.get('Time')
     dm_mass     = f['Header'].attrs.get('MassTable')[1]
@@ -72,11 +72,9 @@ def read_dataset_dm_mass():
     return m
     
 
-import h5py
-
-def read_header():
+def read_header(data_dir):
     """ Read various attributes from the header group. """
-    f       = h5py.File('/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_028_z000p000/snap_028_z000p000.0.hdf5', 'r')
+    f       = h5py.File(data_dir, 'r')
     a       = f['Header'].attrs.get('Time')         # Scale factor.
     h       = f['Header'].attrs.get('HubbleParam')  # h.
     boxsize = f['Header'].attrs.get('BoxSize')      # L [Mph/h].

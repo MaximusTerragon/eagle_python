@@ -3,10 +3,10 @@ import numpy as np
 import astropy.units as u
 import random
 import math
-import vorbin
+#import vorbin
 import matplotlib as mpl
-from vorbin.voronoi_2d_binning import voronoi_2d_binning
-from pafit.fit_kinematic_pa import fit_kinematic_pa
+#from vorbin.voronoi_2d_binning import voronoi_2d_binning
+#from pafit.fit_kinematic_pa import fit_kinematic_pa
 from astropy.constants import G
 import matplotlib.pyplot as plt 
 from mpl_toolkits.mplot3d import Axes3D
@@ -14,13 +14,19 @@ from scipy.spatial.transform import Rotation
 from scipy.spatial import Voronoi, voronoi_plot_2d
 import matplotlib.colors as colors
 import matplotlib.cm as cm
-from read_dataset import read_dataset
-from read_header import read_header
-from read_dataset_dm_mass import read_dataset_dm_mass
+#from read_dataset import read_dataset
+#from read_header import read_header
+#from read_dataset_dm_mass import read_dataset_dm_mass
+
+from read_dataset_tools import read_dataset, read_dataset_dm_mass, read_header
+from pafit.fit_kinematic_pa import fit_kinematic_pa
+from plotbin.sauron_colormap import register_sauron_colormap
+from vorbin.voronoi_2d_binning import voronoi_2d_binning
+
 from pyread_eagle import EagleSnapshot
 import eagleSqlTools as sql
 from graphformat import graphformat
-from plotbin.sauron_colormap import register_sauron_colormap
+#from plotbin.sauron_colormap import register_sauron_colormap
 
 # Directories of data hdf5 file(s)
 dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_028_z000p000/snap_028_z000p000.0.hdf5'
@@ -578,7 +584,7 @@ if __name__ == '__main__':
                         SubGroupNum = 0, 
                         particles = 2500,    #5000,10000
                         minangle  = 0,
-                        maxangle  = 180, 
+                        maxangle  = 120, 
                         stepangle = 30, 
                         boxradius_in          = 'tworad',      # [pkpc], 'rad', 'tworad'
                         calc_spin_rad_in      = 'tworad',      # [pkpc], 'rad', 'tworad'

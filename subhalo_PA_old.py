@@ -178,13 +178,6 @@ class Subhalo:
             gas_sf[arr]  = gas[arr][self.mask_sf]
             gas_nsf[arr] = gas[arr][self.mask_nsf]
         
-        # Compute new data of rotated particle data
-        self.particle_data = {}
-        for parttype in [stars, gas, gas_sf, gas_nsf]:
-            self.particle_data['%s'%str(parttype)] = self.rotate_galaxy(matrix, self.centre, self.perc_vel, parttype)
-        
-        ###############
-        
         # Find original unit spin vector (within calc_spin_rad) and rotation matrix to rotate that vector about z-axis (degrees, clockwise). 
         # Given as: unit vector, [Msun pMpc^2 /s]
         stars_spin_original, stars_L_original     = self.spin_vector(stars, self.centre, self.perc_vel, calc_spin_rad, 'stars')    
@@ -194,20 +187,29 @@ class Subhalo:
         
         matrix = self.rotate_around_axis('z', 360. - viewing_angle, stars_spin_original)
         
-        
-        
+        # Compute new data of rotated particle data
         stars_rotated   = self.rotate_galaxy(matrix, self.centre, self.perc_vel, stars)
         gas_rotated     = self.rotate_galaxy(matrix, self.centre, self.perc_vel, gas)
-        gas_sf_rotated  = self.rotate_galaxy(matrix, self.centre, self.perc_vel, gas_sf)
-        gas_nsf_rotated = self.rotate_galaxy(matrix, self.centre, self.perc_vel, gas_nsf)
+        gas_sf_rotated  = self.rotate_galaxy(matrix, self.centre, self.perc_vel, gas)
+        gas_nsf_rotated = self.rotate_galaxy(matrix, self.centre, self.perc_vel, gas)
         
         # Assign particle data
         self.stars_coords   = stars_rotated['Coordinates']            # [pMpc] (centred)
-        self.gas_coords     = gas_rotated['Coordinates']         
+        self.gas_coords     = gas_rotated['Coordinates']              
+        self.gas_sf_coords  = gas_sf_rotated['Coordinates']           
+        self.gas_nsf_coords = gas_nsf_rotated['Coordinates']          
         self.stars_vel      = stars_rotated['Velocity']               # [pMpc/s] (centred)
         self.gas_vel        = gas_rotated['Velocity']                 
+        self.gas_sf_vel     = gas_sf_rotated['Velocity']              
+        self.gas_nsf_vel    = gas_nsf_rotated['Velocity']             
         self.stars_mass     = stars_rotated['Mass']                   # [Msun]
         self.gas_mass       = gas_rotated['Mass']
+        self.gas_sf_mass    = gas_sf_rotated['Mass']
+        self.gas_nsf_mass   = gas_nsf_rotated['Mass']
+        
+        #print(self.perc_vel*u.Mpc.to(u.km))
+        #print(stars['Velocity']*u.Mpc.to(u.km))
+        #print(self.stars_vel*u.Mpc.to(u.km))
         
         # Find new spin vectors
         # Given as: unit vector, [Msun pMpc^2 /s]
@@ -372,8 +374,7 @@ class Subhalo_Align:
         for arr in gas.keys():
             gas_sf[arr]  = gas[arr][self.mask_sf]
             gas_nsf[arr] = gas[arr][self.mask_nsf]
-            
-            
+        
         # Compute centred unit vectors within radius of interest (calc_spin_rad, so tworad)
         self.stars_spin   = self.spin_vector(stars, self.centre, self.perc_vel, calc_spin_rad, 'stars')
         self.gas_spin     = self.spin_vector(gas, self.centre, self.perc_vel, calc_spin_rad, 'gas')      
@@ -390,7 +391,6 @@ class Subhalo_Align:
         stars_kappa = self.spin_vector(stars, self.centre, self.perc_vel, calc_kappa_rad, 'stars')
         self.z_angle, matrix = self.orientate('z', stars_kappa)
         
-        
         # Compute new data of aligned particle data based on calc_kappa_rad
         stars_aligned   = self.rotate_galaxy(matrix, self.centre, self.perc_vel, stars)
         gas_aligned     = self.rotate_galaxy(matrix, self.centre, self.perc_vel, gas)
@@ -400,9 +400,12 @@ class Subhalo_Align:
         # Assign particle data
         self.stars_coords       = stars['Coordinates'] - self.centre
         self.gas_coords         = gas['Coordinates'] - self.centre
+        self.gas_sf_coords      = gas_sf['Coordinates'] - self.centre
+        self.gas_nsf_coords     = gas_nsf['Coordinates'] - self.centre
         self.stars_coords_new   = stars_aligned['Coordinates']
         self.gas_coords_new     = gas_aligned['Coordinates']
-        
+        self.gas_sf_coords_new  = gas_sf_aligned['Coordinates']
+        self.gas_nsf_coords_new = gas_nsf_aligned['Coordinates']
         
         # Find new spin vectors within halfmassrad
         self.stars_spin_new   = self.spin_vector(stars_aligned, np.array([0, 0, 0]), np.array([0, 0, 0]), calc_spin_rad, 'stars')
@@ -576,9 +579,9 @@ if __name__ == '__main__':
     #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
     def galaxy_render(GroupNumList = np.array([4]),
                         SubGroupNum = 0, 
-                        particles = 2500,    #5000,10000
+                        particles = 5000,    #5000,10000
                         minangle  = 0,
-                        maxangle  = 180, 
+                        maxangle  = 0, 
                         stepangle = 30, 
                         boxradius_in          = 'tworad',      # [pkpc], 'rad', 'tworad'
                         calc_spin_rad_in      = 'tworad',      # [pkpc], 'rad', 'tworad'
@@ -591,10 +594,10 @@ if __name__ == '__main__':
                         gas          = False,
                         gas_sf       = False,
                         gas_nsf      = False,
-                        stars_rot    = True, 
+                        stars_rot    = False, 
                         gas_rot      = False,
-                        gas_sf_rot   = True,
-                        gas_nsf_rot  = True,
+                        gas_sf_rot   = False,
+                        gas_nsf_rot  = False,
                         centre_of_pot  = True, 
                         centre_of_mass = True,
                         axis           = True):
@@ -662,8 +665,8 @@ if __name__ == '__main__':
                 print('  #                     %.1f   stars-gas_sf' %subhalo_al.mis_angle_sf)   # [deg]
                 print('  #                     %.1f   stars_gas_nsf' %subhalo_al.mis_angle_nsf) # [deg] 
                 print('SPIN RAD CALC [pMpc]:   %s' %str(calc_spin_rad_in))
-                print('CENTRE [pMpc]:   [%.5f,\t%.5f,\t%.5f]\t[pMpc]' %(subhalo_al.centre[0], subhalo_al.centre[1], subhalo_al.centre[2]))                      # [pMpc]
-                print('PERC VELOCITY:   [%.5f,\t%.5f,\t%.5f]\t[pkm/s]' %(subhalo_al.perc_vel[0]*u.Mpc.to(u.km), subhalo_al.perc_vel[1]*u.Mpc.to(u.km), subhalo_al.perc_vel[2]*u.Mpc.to(u.km)))   # [pkm/s]
+                print('CENTRE [pMpc]:   [%.5f, %.5f , %.5f]\t[pMpc]' %(subhalo_al.centre[0], subhalo_al.centre[1], subhalo_al.centre[2]))                      # [pMpc]
+                print('PERC VELOCITY:   [%.5f, %.5f ,%.5f]\t[pkm/s]' %(subhalo_al.perc_vel[0]*u.Mpc.to(u.km), subhalo_al.perc_vel[1]*u.Mpc.to(u.km), subhalo_al.perc_vel[2]*u.Mpc.to(u.km)))   # [pkm/s]
             
             # Graph initialising and base formatting
             graphformat(8, 11, 11, 11, 11, 5, 5)
@@ -676,8 +679,8 @@ if __name__ == '__main__':
                 # Mask to random number of particles given by galaxy_render
                 mask_stars   = random.randint(0, len(subhalo_al.stars_coords[:])-1)
                 mask_gas     = random.randint(0, len(subhalo_al.gas_coords[:])-1)
-                mask_gas_sf  = random.randint(0, len(subhalo_al.gas_coords[subhalo_al.mask_sf][:])-1)
-                mask_gas_nsf = random.randint(0, len(subhalo_al.gas_coords[subhalo_al.mask_nsf][:])-1)
+                mask_gas_sf  = random.randint(0, len(subhalo_al.gas_sf_coords[:])-1)
+                mask_gas_nsf = random.randint(0, len(subhalo_al.gas_nsf_coords[:])-1)
                 
                 if stars == True:
                     # Plot original stars
@@ -687,10 +690,10 @@ if __name__ == '__main__':
                     ax.scatter(1000*subhalo_al.gas_coords[mask_gas][0], 1000*subhalo_al.gas_coords[mask_gas][1], 1000*subhalo_al.gas_coords[mask_gas][2], s=0.04, alpha=0.9, c='blue')
                 if gas_sf == True:
                     # Plot original gas
-                    ax.scatter(1000*subhalo_al.gas_coords[subhalo_al.mask_sf][mask_gas_sf][0], 1000*subhalo_al.gas_coords[subhalo_al.mask_sf][mask_gas_sf][1], 1000*subhalo_al.gas_coords[subhalo_al.mask_sf][mask_gas_sf][2], s=0.04, alpha=0.9, c='c')
+                    ax.scatter(1000*subhalo_al.gas_sf_coords[mask_gas_sf][0], 1000*subhalo_al.gas_sf_coords[mask_gas_sf][1], 1000*subhalo_al.gas_sf_coords[mask_gas_sf][2], s=0.04, alpha=0.9, c='c')
                 if gas_nsf == True:
                     # Plot original gas
-                    ax.scatter(1000*subhalo_al.gas_coords[subhalo_al.mask_nsf][mask_gas_nsf][0], 1000*subhalo_al.gas_coords[subhalo_al.mask_nsf][mask_gas_nsf][1], 1000*subhalo_al.gas_coords[subhalo_al.mask_nsf][mask_gas_nsf][2], s=0.04, alpha=0.9, c='purple')
+                    ax.scatter(1000*subhalo_al.gas_nsf_coords[mask_gas_nsf][0], 1000*subhalo_al.gas_nsf_coords[mask_gas_nsf][1], 1000*subhalo_al.gas_nsf_coords[mask_gas_nsf][2], s=0.04, alpha=0.9, c='purple')
                 if stars_rot == True:
                     # Plot rotated stars
                     ax.scatter(1000*subhalo_al.stars_coords_new[mask_stars][0], 1000*subhalo_al.stars_coords_new[mask_stars][1], 1000*subhalo_al.stars_coords_new[mask_stars][2], s=0.02, alpha=0.9, c='white')
@@ -699,10 +702,10 @@ if __name__ == '__main__':
                     ax.scatter(1000*subhalo_al.gas_coords_new[mask_gas][0], 1000*subhalo_al.gas_coords_new[mask_gas][1], 1000*subhalo_al.gas_coords_new[mask_gas][2], s=0.04, alpha=0.9, c='blue')
                 if gas_sf_rot == True:
                     # Plot original gas
-                    ax.scatter(1000*subhalo_al.gas_coords_new[subhalo_al.mask_sf][mask_gas_sf][0], 1000*subhalo_al.gas_coords_new[subhalo_al.mask_sf][mask_gas_sf][1], 1000*subhalo_al.gas_coords_new[subhalo_al.mask_sf][mask_gas_sf][2], s=0.04, alpha=0.9, c='c')
+                    ax.scatter(1000*subhalo_al.gas_sf_coords_new[mask_gas_sf][0], 1000*subhalo_al.gas_sf_coords_new[mask_gas_sf][1], 1000*subhalo_al.gas_sf_coords_new[mask_gas_sf][2], s=0.04, alpha=0.9, c='c')
                 if gas_nsf_rot == True:
                     # Plot original gas
-                    ax.scatter(1000*subhalo_al.gas_coords_new[subhalo_al.mask_nsf][mask_gas_nsf][0], 1000*subhalo_al.gas_coords_new[subhalo_al.mask_nsf][mask_gas_nsf][1], 1000*subhalo_al.gas_coords_new[subhalo_al.mask_nsf][mask_gas_nsf][2], s=0.04, alpha=0.9, c='purple')
+                    ax.scatter(1000*subhalo_al.gas_nsf_coords_new[mask_gas_nsf][0], 1000*subhalo_al.gas_nsf_coords_new[mask_gas_nsf][1], 1000*subhalo_al.gas_nsf_coords_new[mask_gas_nsf][2], s=0.04, alpha=0.9, c='purple')
                 
             if stars == True:
                 # Plot original stars spin vector
@@ -771,8 +774,7 @@ if __name__ == '__main__':
                     plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_gas_nsf_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(boxradius_in), str(calc_spin_rad_in), str(ii)), dpi=300)
                 elif (stars_rot == True) & (gas_rot == True):
                     plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/rotate_all_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(boxradius_in), str(calc_spin_rad_in), str(ii)), dpi=300)
-                elif (stars_rot == True) & (gas_rot == False) & (gas_sf_rot == True) & (gas_nsf_rot == True):
-                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/rotate_all_types_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(boxradius_in), str(calc_spin_rad_in), str(ii)), dpi=300)
+                
                  #plt.savefig("/Users/c22048063/Documents/EAGLE/%s/all_galaxies/rotate/galaxy_rotate_%i_%i_%i_%i.jpeg" %(str(root_file), str(GroupNum), str(boxradius_in), str(calc_spin_rad_in), str(ii)), dpi=300)
                 
                 #plt.show()
@@ -833,8 +835,8 @@ if __name__ == '__main__':
                 f.write('\n' + dash)
                 f.write('\nSPIN RADIUS CALC [pMpc]:    %s' %str(calc_spin_rad_in))
                 f.write('\n' + dash)
-                f.write('\nCENTRE:          [%.5f,\t%.5f,\t%.5f]\t[pMpc]\n' %(subhalo_al.centre[0], subhalo_al.centre[1], subhalo_al.centre[2]))                                 # [pMpc]
-                f.write('PERC VELOCITY:   [%.5f,\t%.5f,\t%.5f]\t[pkm/s]\n' %(subhalo_al.perc_vel[0]*u.Mpc.to(u.km), subhalo_al.perc_vel[1]*u.Mpc.to(u.km), subhalo_al.perc_vel[2]*u.Mpc.to(u.km))) # [pkm/s]
+                f.write('\nCENTRE:          [%.5f, %.5f , %.5f]\t[pMpc]\n' %(subhalo_al.centre[0], subhalo_al.centre[1], subhalo_al.centre[2]))                                 # [pMpc]
+                f.write('PERC VELOCITY:   [%.5f, %.5f ,%.5f]\t[pkm/s]\n' %(subhalo_al.perc_vel[0]*u.Mpc.to(u.km), subhalo_al.perc_vel[1]*u.Mpc.to(u.km), subhalo_al.perc_vel[2]*u.Mpc.to(u.km))) # [pkm/s]
                 
                 f.close()
             
@@ -948,8 +950,8 @@ if __name__ == '__main__':
                         print('  #                     %.1f   stars-gas_sf' %subhalo.mis_angle_sf)  
                         print('  #                     %.1f   stars_gas_nsf' %subhalo.mis_angle_nsf)  
                         print('SPIN RAD CALC [pMpc]:   %s' %str(calc_spin_rad_in))
-                        print('CENTRE [pMpc]:   [%.5f,\t%.5f,\t%.5f]\t[pMpc]' %(subhalo.centre[0], subhalo_al.centre[1], subhalo_al.centre[2]))                      # [pMpc]
-                        print('PERC VELOCITY:   [%.5f,\t%.5f,\t%.5f]\t[pkm/s]' %(subhalo.perc_vel[0]*u.Mpc.to(u.km), subhalo.perc_vel[1]*u.Mpc.to(u.km), subhalo.perc_vel[2]*u.Mpc.to(u.km)))   # [pkm/s]
+                        print('CENTRE [pMpc]:   [%.5f, %.5f , %.5f]\t[pMpc]' %(subhalo.centre[0], subhalo_al.centre[1], subhalo_al.centre[2]))                      # [pMpc]
+                        print('PERC VELOCITY:   [%.5f, %.5f ,%.5f]\t[pkm/s]' %(subhalo.perc_vel[0]*u.Mpc.to(u.km), subhalo.perc_vel[1]*u.Mpc.to(u.km), subhalo.perc_vel[2]*u.Mpc.to(u.km)))   # [pkm/s]
                         
                 # Print galaxy properties
                 if print_galaxy == True:
@@ -1182,6 +1184,8 @@ if __name__ == '__main__':
                 
                 stars_in = 'stars'
                 gas_in   = 'gas_sf'
+                if stars_in == 'stars':
+                    stars
                 
                 # Function to plot 2dhist-fed data 
                 def _plot_2dhist(boxradius, target_particles, minmax=200):
@@ -1438,8 +1442,8 @@ if __name__ == '__main__':
                 f.write('\nPIXEL RESOLUTION [pkpc]:    %s' %str(resolution))
                 f.write('\nVORONOI TARGET PARTICLES:   %s particles' %str(target_particles))
                 f.write('\n' + dash)
-                f.write('\nCENTRE:          [%.5f,\t%.5f,\t%.5f]\t[pMpc]\n' %(subhalo.centre[0], subhalo_al.centre[1], subhalo_al.centre[2]))                                 # [pMpc]
-                f.write('PERC VELOCITY:   [%.5f,\t%.5f,\t%.5f]\t[pkm/s]\n' %(subhalo.perc_vel[0]*u.Mpc.to(u.km), subhalo.perc_vel[1]*u.Mpc.to(u.km), subhalo.perc_vel[2]*u.Mpc.to(u.km))) # [pkm/s]
+                f.write('\nCENTRE:          [%.5f, %.5f , %.5f]\t[pMpc]\n' %(subhalo.centre[0], subhalo_al.centre[1], subhalo_al.centre[2]))                                 # [pMpc]
+                f.write('PERC VELOCITY:   [%.5f, %.5f ,%.5f]\t[pkm/s]\n' %(subhalo.perc_vel[0]*u.Mpc.to(u.km), subhalo.perc_vel[1]*u.Mpc.to(u.km), subhalo.perc_vel[2]*u.Mpc.to(u.km))) # [pkm/s]
                 
                 f.close()
                 

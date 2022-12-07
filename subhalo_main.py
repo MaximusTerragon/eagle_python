@@ -417,8 +417,9 @@ class Subhalo:
             self.spins_align     = {}
             self.particles_align = {}
             self.spins_align['rad']     = spin_rad_in
+            self.spins_align['hmr'] = spin_rad_in/self.halfmass_rad
             self.particles_align['rad'] = spin_rad_in
-            
+            self.particles_align['hmr'] = spin_rad_in/self.halfmass_rad
             for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
                 tmp_spins = []
                 tmp_particles = []
@@ -436,6 +437,7 @@ class Subhalo:
             # Find misalignment angles (does not find difference between every component ei. gas_sf and gas_nsf)
             self.mis_angles_align = {}
             self.mis_angles_align['rad'] = spin_rad_in
+            self.mis_angles_align['hmr'] = spin_rad_in/self.halfmass_rad
             for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
                 for angle_name in ['gas', 'gas_sf', 'gas_nsf']:
                     tmp_angles = []
@@ -468,7 +470,9 @@ class Subhalo:
             self.spins     = {}
             self.particles = {}
             self.spins['rad']     = spin_rad_in
+            self.spins['hmr']     = spin_rad_in/self.halfmass_rad
             self.particles['rad'] = spin_rad_in
+            self.particles['hmr'] = spin_rad_in/self.halfmass_rad
             for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
                 tmp_spins = []
                 tmp_particles = []
@@ -486,6 +490,7 @@ class Subhalo:
             # Find misalignment angles (does not find difference between every component ei. gas_sf and gas_nsf)
             self.mis_angles = {}
             self.mis_angles['rad'] = spin_rad_in
+            self.mis_angles['hmr'] = spin_rad_in/self.halfmass_rad
             for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
                 for angle_name in ['gas', 'gas_sf', 'gas_nsf']:
                     tmp_angles = []
@@ -534,7 +539,8 @@ class Subhalo:
         L  = np.cross(arr['Coordinates'][mask] * arr['Mass'][:, None][mask], arr['Velocity'][mask])
         
         # Summing for total angular momentum and dividing by mass to get the spin vectors
-        spin = np.sum(L, axis=0)/np.sum(arr['Mass'][mask])
+        with np.errstate(divide='ignore', invalid='ignore'):
+            spin = np.sum(L, axis=0)/np.sum(arr['Mass'][mask])
         
         # Expressing as unit vector
         spin_unit = spin / (spin[0]**2 + spin[1]**2 + spin[2]**2)**0.5

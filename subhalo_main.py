@@ -1,27 +1,12 @@
 import h5py
 import numpy as np
+import math
 import astropy.units as u
 from astropy.constants import G
-import random
-import math
-import matplotlib as mpl
-import matplotlib.pyplot as plt 
-import matplotlib.colors as colors
-import matplotlib.cm as cm
 import eagleSqlTools as sql
-from mpl_toolkits.mplot3d import Axes3D
-from pafit.fit_kinematic_pa import fit_kinematic_pa
-from plotbin.sauron_colormap import register_sauron_colormap
-from vorbin.voronoi_2d_binning import voronoi_2d_binning
 from pyread_eagle import EagleSnapshot
 from read_dataset_tools import read_dataset, read_dataset_dm_mass, read_header
-from graphformat import graphformat
 
-
-# Directories of data hdf5 file(s)
-dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_028_z000p000/snap_028_z000p000.0.hdf5'
-
-register_sauron_colormap()
 
 """ 
 Purpose
@@ -363,8 +348,8 @@ class Subhalo:
     def __init__(self, halfmass_rad, centre, centre_mass, perc_vel, stars, gas, 
                             viewing_angle,
                             spin_rad_in, 
-                            kappa_rad_in, 
-                            trim_rad_in,
+                            trim_rad_in, 
+                            kappa_rad_in,
                             align_rad_in, 
                             orientate_to_axis,
                             quiet=False):
@@ -524,6 +509,7 @@ class Subhalo:
                 print('GASMASS_SF', np.log10(self.gasmass_sf))
                 print('GASMASS_NSF', np.log10(self.gasmass_nsf))
 
+
     def trim_within_rad(self, arr, radius):
         # Compute distance to centre and mask all within trim_rad
         r  = np.linalg.norm(arr['Coordinates'], axis=1)
@@ -553,6 +539,7 @@ class Subhalo:
         # Expressing as unit vector
         spin_unit = spin / (spin[0]**2 + spin[1]**2 + spin[2]**2)**0.5
         
+        # OUTPUTS UNIT VECTOR OF SPIN, PARTICLE COUNT WITHIN RAD, MASS WITHIN RAD 
         return spin_unit, len(r[mask]), np.sum(arr['Mass'][mask])
         
     def misalignment_angle(self, angle1, angle2):
@@ -693,11 +680,12 @@ class Subhalo:
         return K_rot/K_tot
         
         
-
+"""### MANUAL CALL
+# Directories of data hdf5 file(s)
+dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_028_z000p000/snap_028_z000p000.0.hdf5'
 
 # list of simulations
-mySims = np.array([('RefL0012N0188', 12)])  
-
+mySims = np.array([('RefL0012N0188', 12)])   
 GroupNum = 4
 SubGroupNum = 0
 snapNum = 28
@@ -708,17 +696,24 @@ galaxy = Subhalo_Extract(mySims, dataDir, snapNum, GroupNum, SubGroupNum)
 spin_rad_in = galaxy.halfmass_rad*np.arange(0.5, 10.5, 0.5)   # pkpc
 kappa_rad_in = 30                       # [pkpc] False or value
 trim_rad_in = 30                        # [pkpc] False or value
-align_rad_in = 30                       # [pkpc] False or value
+align_rad_in = False    #30                       # [pkpc] False or value
 viewing_angle = 10                      # [deg] will rotate subhalo.data by this angle about z-axis
 orientate_to_axis = 'z'                 # 'z', 'y', 'x', will orientate axis to this angle based on stellar-spin in align_rad_in
 
+spin_rad = spin_rad_in
+trim_rad = trim_rad_in
+kappa_rad = kappa_rad_in
+align_rad = align_rad_in
+
 subhalo = Subhalo(galaxy.halfmass_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas, 
                                     viewing_angle,
-                                    spin_rad_in, 
-                                    kappa_rad_in, 
-                                    trim_rad_in, 
-                                    align_rad_in,               #align_rad=False
+                                    spin_rad,
+                                    trim_rad, 
+                                    kappa_rad, 
+                                    align_rad,               #align_rad=False
                                     orientate_to_axis)     
+"""
+
 
 
 

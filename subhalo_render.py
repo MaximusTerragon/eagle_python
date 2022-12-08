@@ -19,11 +19,11 @@ snapNum = 28
     
 #1, 4, 7, 16
 #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
-def galaxy_render(GroupNumList = np.array([1, 4, 7, 16]),
+def galaxy_render(GroupNumList = np.array([1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21]),
                   SubGroupNum  = 0, 
                   particles    = 10000,    #5000,10000
                   minangle     = 0,
-                  maxangle     = 360, 
+                  maxangle     = 0, 
                   stepangle    = 30, 
                   spin_rad_in  = np.arange(0.5, 10.5, 0.5),     # multiples of rad
                   trim_rad_in  = 100,                      # trim particles <radius, False, 'rad', 'tworad', num [pkpc]
@@ -32,8 +32,8 @@ def galaxy_render(GroupNumList = np.array([1, 4, 7, 16]),
                   boxradius_in = 40,                # boxradius of render
                   root_file = 'trial_plots',        # 'trial_plots' or 'plots'
                   print_galaxy = True,              # print galaxy stats in chat
-                  txt_file     = True,              # create a txt file with print data
-                  stars        = False,
+                  txt_file     = False,              # create a txt file with print data
+                  stars        = True,
                   gas_sf       = True,
                   gas_nsf      = True,
                   orientate_to_axis = 'z',          
@@ -44,7 +44,7 @@ def galaxy_render(GroupNumList = np.array([1, 4, 7, 16]),
                   centre_of_mass    = False,
                   axis              = True,
                   savefig           = False,
-                  plotshow          = False):
+                  plotshow          = True):
         
     for GroupNum in GroupNumList:         
         # Initial extraction of galaxy data
@@ -101,7 +101,8 @@ def galaxy_render(GroupNumList = np.array([1, 4, 7, 16]),
             print(' HALF-\tANGLES (STARS-)\t\tPARTICLE COUNT\t\t\tMASS')
             print(' RAD\tGAS\tSF\tNSF\tSTARS\tGAS\tSF\tNSF\tSTARS\tGAS\tSF\tNSF')
             for i in [1, 3, len(spin_rad_in)-1]:
-                print(' %.1f\t%.1f\t%.1f\t%.1f\t%i\t%i\t%i\t%i\t%.1f\t%.1f\t%.1f\t%.1f' %(subhalo.mis_angles['rad'][i]/subhalo.halfmass_rad, subhalo.mis_angles['gas'][i], subhalo.mis_angles['gas_sf'][i], subhalo.mis_angles['gas_nsf'][i], subhalo.particles['stars'][i], subhalo.particles['gas'][i], subhalo.particles['gas_sf'][i], subhalo.particles['gas_nsf'][i], np.log10(subhalo.particles['stars_mass'][i]), np.log10(subhalo.particles['gas_mass'][i]), np.log10(subhalo.particles['gas_sf_mass'][i]), np.log10(subhalo.particles['gas_nsf_mass'][i])))        
+                with np.errstate(divide='ignore', invalid='ignore'):
+                    print(' %.1f\t%.1f\t%.1f\t%.1f\t%i\t%i\t%i\t%i\t%.1f\t%.1f\t%.1f\t%.1f' %(subhalo.mis_angles['rad'][i]/subhalo.halfmass_rad, subhalo.mis_angles['gas'][i], subhalo.mis_angles['gas_sf'][i], subhalo.mis_angles['gas_nsf'][i], subhalo.particles['stars'][i], subhalo.particles['gas'][i], subhalo.particles['gas_sf'][i], subhalo.particles['gas_nsf'][i], np.log10(subhalo.particles['stars_mass'][i]), np.log10(subhalo.particles['gas_mass'][i]), np.log10(subhalo.particles['gas_sf_mass'][i]), np.log10(subhalo.particles['gas_nsf_mass'][i])))        
             print('CENTRE [pMpc]:      [%.5f,\t%.5f,\t%.5f]' %(subhalo.centre[0]/1000, subhalo.centre[1]/1000, subhalo.centre[2]/1000))        # [pkpc]
             print('PERC VEL [pkm/s]:   [%.5f,\t%.5f,\t%.5f]' %(subhalo.perc_vel[0], subhalo.perc_vel[1], subhalo.perc_vel[2]))  # [pkm/s]
             #print('VIEWING ANGLES: ', end='')

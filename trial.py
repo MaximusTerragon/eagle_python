@@ -8,18 +8,34 @@ import matplotlib as mpl
 import matplotlib.colors as color
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt 
-from read_dataset import read_dataset
-from read_header import read_header
-from read_dataset_dm_mass import read_dataset_dm_mass
 import pandas as pd
 import scipy as sp
 import vorbin
+
+from read_dataset_tools import read_dataset, read_dataset_dm_mass, read_header
+from pafit.fit_kinematic_pa import fit_kinematic_pa
+from plotbin.sauron_colormap import register_sauron_colormap
 from vorbin.voronoi_2d_binning import voronoi_2d_binning
-from scipy.spatial import Voronoi, voronoi_plot_2d
+
+rad = 1
+def function1(a = 1, 
+              b = 2*rad, 
+              c = 3):
+    
+     rad = 8235
+              
+     egg = a + b + c
+              
+     return egg
+     
+x = function1()
+
+print(x)
 
 
 
-#stars_x = np.array([-3, -2, -2, -2, -1, -1, -1, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3])
+
+"""#stars_x = np.array([-3, -2, -2, -2, -1, -1, -1, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3])
 #stars_y = np.array([-2, 1, 0, -1, 1, 0, -1, 1, 0, -1, 1, -1, 0, 1, 0, 2, 2])
 #stars_vel = np.array([-50, -10, -20, -15, 5, -10, 5, 0, 5, 10, -5, 40, 30, 20, 20, 50, 40])
 #stars_mass = np.array([10, 5, 10, 10, 10, 10, 5, 10, 10, 10, 5, 10, 5, 10, 10, 10, 10])
@@ -99,7 +115,7 @@ plt.close()
 # Convert hist data to coords + value
 i, j = np.nonzero(counts_stars)                               # find indexes of non-0 bins
 a = np.array((xbins[:-1] + 0.5*(xbins[1] - xbins[0]))[i])     # convert bin to centred coords
-b = np.array((ybins[:-1] + 0.5*(ybins[1] - ybins[0]))[j])     # convert bin to centred coords"""
+b = np.array((ybins[:-1] + 0.5*(ybins[1] - ybins[0]))[j])     # convert bin to centred coords
 
 # Stack points (non-0 bin values)
 velocity = vel_weighted[np.nonzero(counts_stars)]             # stack non-0 bin values
@@ -174,8 +190,7 @@ plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/trial_vornoi_output.jp
 
 
 
-
-"""SEE DISCORD # Create tessalation
+# Create tessalation
 vor = Voronoi(points)
 
 # Find min/max values for normalization
@@ -210,8 +225,8 @@ plt.colorbar(mapper)
 
 
 
-
-"""N = 10000
+""" 
+N = 10000
 x = np.random.uniform(0, 10, N)
 y = np.random.uniform(0, 10, N)
 z = x
@@ -231,10 +246,10 @@ with np.errstate(divide='ignore', invalid='ignore'):  # suppress possible divide
 plt.colorbar(m3, ax=ax3)
 ax3.set_title('mean values')
 plt.tight_layout()
-plt.show()"""
-
+plt.show()
 
 """
+""" 
 def AngularMomentum(gn, sgn, centre):
     # Load information from the header
     a, h, boxsize = read_header()
@@ -279,4 +294,5 @@ centre = np.array([12.08809, 4.474372, 1.4133347])
 #centre_vel = np.array([])
 
 AngularMomentum(1, 0, centre)
+
 """

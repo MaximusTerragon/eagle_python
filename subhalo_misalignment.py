@@ -82,6 +82,8 @@ class Sample:
 def plot_misalignment_angle(galaxy_mass_limit = 1e9,
                             use_angle_in    = 2.,                                           # multiples of rad
                             plot_angle_type = np.array(['gas', 'gas_sf', 'gas_nsf']),       # gas, gas_sf, gas_nsf
+                            plot_single     = False,                                        # whether to create single plots
+                            plot_together   = True,                                           # or overlapping
                             spin_rad_in     = np.arange(0.5, 10.5, 0.5),                    # multiples of rad
                             trim_rad_in  = False,                     # keep on False
                             kappa_rad_in = 30,                        # calculate kappa for this radius [pkpc]
@@ -157,19 +159,52 @@ def plot_misalignment_angle(galaxy_mass_limit = 1e9,
     
     print(sample.GroupNum)
     
-    for plot_angle_type_i in plot_angle_type:
-        # Collect values to plot
-        misalignment_angle = []
-        mask = np.where(all_misangles['1']['hmr'] == use_angle_in)
-        for GroupNum in sample.GroupNum:
-            misalignment_angle.append(all_misangles['%s' %str(GroupNum)][plot_angle_type_i][int(mask[0])])
+    if plot_single:
+        for plot_angle_type_i in plot_angle_type:
+            # Collect values to plot
+            misalignment_angle = []
+            mask = np.where(all_misangles['1']['hmr'] == use_angle_in)
+            for GroupNum in sample.GroupNum:
+                misalignment_angle.append(all_misangles['%s' %str(GroupNum)][plot_angle_type_i][int(mask[0])])
+        
+            # Graph initialising and base formatting
+            graphformat(8, 11, 11, 11, 11, 5, 5)
+            fig, ax = plt.subplots(1, 1, figsize=[8, 4])
+        
+            # Plot data as histogram
+            plt.hist(misalignment_angle, bins=np.arange(0, 181, 10), histtype='bar', edgecolor='black', facecolor='dodgerblue', alpha=0.8, label=plot_angle_type_i)
+        
+            # General formatting
+            ax.set_xlim(0, 180)
+            ax.set_xticks(np.arange(0, 190, step=30))
+            ax.set_ylim(0, 9)
+            ax.set_xlabel('3D $\Psi$$_{gas-star}$')
+            ax.set_ylabel('Number')
+            ax.tick_params(axis='both', which='both', direction='in', bottom=True, top=True, left=True, right=True)
+    
+            # Annotations
+            ax.axvline(30, ls='--', lw=0.5, c='k')
+            plt.suptitle("L%s: Gas - Star Misalignment"%str(mySims[0][1]))
+            plt.legend()
+    
+            plt.savefig("/Users/c22048063/Documents/EAGLE/trial_plots/Misangle_3D_%s_%s.jpeg" %(str(int(use_angle_in)), plot_angle_type_i), format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
+            plt.close()
+            
+    if plot_multiple:
         
         # Graph initialising and base formatting
         graphformat(8, 11, 11, 11, 11, 5, 5)
         fig, ax = plt.subplots(1, 1, figsize=[8, 4])
         
-        # Plot data as histogram
-        plt.hist(misalignment_angle, bins=np.arange(0, 181, 10), histtype='bar', edgecolor='black', facecolor='dodgerblue', alpha=0.8, label=plot_angle_type_i)
+        for plot_angle_type_i in plot_angle_type:        
+            # Collect values to plot
+            misalignment_angle = []
+            mask = np.where(all_misangles['1']['hmr'] == use_angle_in)
+            for GroupNum in sample.GroupNum:
+                misalignment_angle.append(all_misangles['%s' %str(GroupNum)][plot_angle_type_i][int(mask[0])])
+        
+            # Plot data as histogram
+            plt.hist(misalignment_angle, bins=np.arange(0, 181, 10), histtype='bar', edgecolor='black', alpha=0.5, label=plot_angle_type_i)
         
         # General formatting
         ax.set_xlim(0, 180)
@@ -184,7 +219,7 @@ def plot_misalignment_angle(galaxy_mass_limit = 1e9,
         plt.suptitle("L%s: Gas - Star Misalignment"%str(mySims[0][1]))
         plt.legend()
     
-        plt.savefig("/Users/c22048063/Documents/EAGLE/trial_plots/Mis_angle_%s_%s.jpeg" %(str(int(use_angle_in)), plot_angle_type_i), format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
+        plt.savefig("/Users/c22048063/Documents/EAGLE/trial_plots/Misangle_3D_%s.jpeg" %(str(int(use_angle_in))), format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
         plt.close()
     
 plot_misalignment_angle()  

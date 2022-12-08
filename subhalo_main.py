@@ -455,7 +455,8 @@ class Subhalo:
                 print('\t\tANGLES (STARS-)\t\tPARTICLE COUNT\t\t\tMASS')
                 print('\tRAD\tGAS\tSF\tNSF\tSTARS\tGAS\tSF\tNSF\tSTARS\tGAS\tSF\tNSF')
                 for i in np.arange(0, len(self.mis_angles_align['rad']), 1):
-                    print('\t%.1f\t%.1f\t%.1f\t%.1f\t%i\t%i\t%i\t%i\t%.1f\t%.1f\t%.1f\t%.1f' %(self.mis_angles_align['rad'][i]/self.halfmass_rad, self.mis_angles_align['gas'][i], self.mis_angles_align['gas_sf'][i], self.mis_angles_align['gas_nsf'][i], self.particles_align['stars'][i], self.particles_align['gas'][i], self.particles_align['gas_sf'][i], self.particles_align['gas_nsf'][i], np.log10(self.particles_align['stars_mass'][i]), np.log10(self.particles_align['gas_mass'][i]), np.log10(self.particles_align['gas_sf_mass'][i]), np.log10(self.particles_align['gas_nsf_mass'][i])))        
+                    with np.errstate(divide='ignore', invalid='ignore'):
+                        print('\t%.1f\t%.1f\t%.1f\t%.1f\t%i\t%i\t%i\t%i\t%.1f\t%.1f\t%.1f\t%.1f' %(self.mis_angles_align['rad'][i]/self.halfmass_rad, self.mis_angles_align['gas'][i], self.mis_angles_align['gas_sf'][i], self.mis_angles_align['gas_nsf'][i], self.particles_align['stars'][i], self.particles_align['gas'][i], self.particles_align['gas_sf'][i], self.particles_align['gas_nsf'][i], np.log10(self.particles_align['stars_mass'][i]), np.log10(self.particles_align['gas_mass'][i]), np.log10(self.particles_align['gas_sf_mass'][i]), np.log10(self.particles_align['gas_nsf_mass'][i])))        
             
         # SPIN VECTORS AND ROTATE
         if len(spin_rad_in) > 0:
@@ -508,7 +509,8 @@ class Subhalo:
                 print('\t\tANGLES (STARS-)\t\tPARTICLE COUNT\t\t\tMASS')
                 print('\tRAD\tGAS\tSF\tNSF\tSTARS\tGAS\tSF\tNSF\tSTARS\tGAS\tSF\tNSF')
                 for i in np.arange(0, len(self.mis_angles['rad']), 1):
-                    print('\t%.1f\t%.1f\t%.1f\t%.1f\t%i\t%i\t%i\t%i\t%.1f\t%.1f\t%.1f\t%.1f' %(self.mis_angles['rad'][i]/self.halfmass_rad, self.mis_angles['gas'][i], self.mis_angles['gas_sf'][i], self.mis_angles['gas_nsf'][i], self.particles['stars'][i], self.particles['gas'][i], self.particles['gas_sf'][i], self.particles['gas_nsf'][i], np.log10(self.particles['stars_mass'][i]), np.log10(self.particles['gas_mass'][i]), np.log10(self.particles['gas_sf_mass'][i]), np.log10(self.particles['gas_nsf_mass'][i])))        
+                    with np.errstate(divide='ignore', invalid='ignore'):
+                        print('\t%.1f\t%.1f\t%.1f\t%.1f\t%i\t%i\t%i\t%i\t%.1f\t%.1f\t%.1f\t%.1f' %(self.mis_angles['rad'][i]/self.halfmass_rad, self.mis_angles['gas'][i], self.mis_angles['gas_sf'][i], self.mis_angles['gas_nsf'][i], self.particles['stars'][i], self.particles['gas'][i], self.particles['gas_sf'][i], self.particles['gas_nsf'][i], np.log10(self.particles['stars_mass'][i]), np.log10(self.particles['gas_mass'][i]), np.log10(self.particles['gas_sf_mass'][i]), np.log10(self.particles['gas_nsf_mass'][i])))        
                 print('STELMASS', np.log10(self.stelmass))
                 print('GASMASS', np.log10(self.gasmass))
                 print('GASMASS_SF', np.log10(self.gasmass_sf))

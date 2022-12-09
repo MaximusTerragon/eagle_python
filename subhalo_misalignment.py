@@ -81,15 +81,15 @@ class Sample:
 
 def plot_misalignment_angle(galaxy_mass_limit = 1e9,
                             use_angle_in    = 2.,                                           # multiples of rad
-                            plot_angle_type = np.array(['gas', 'gas_sf', 'gas_nsf']),       # gas, gas_sf, gas_nsf
-                            plot_single     = False,                                        # whether to create single plots
-                            plot_together   = True,                                           # or overlapping
+                            plot_angle_type = np.array(['stars_gas', 'stars_gas_sf', 'stars_gas_nsf']),       # gas, gas_sf, gas_nsf
+                            plot_single     = True,                                        # whether to create single plots
+                            plot_together   = False,                                           # or overlapping
                             spin_rad_in     = np.arange(0.5, 10.5, 0.5),                    # multiples of rad
                             trim_rad_in  = False,                     # keep on False
                             kappa_rad_in = 30,                        # calculate kappa for this radius [pkpc]
                             align_rad_in = False,                     # keep on False              
                             root_file = 'trial_plots',
-                            print_galaxy  = False,
+                            print_galaxy  = True,
                             orientate_to_axis = 'z',     # keep as z
                             viewing_angle = 0):            # keep as 0
                             
@@ -147,9 +147,9 @@ def plot_misalignment_angle(galaxy_mass_limit = 1e9,
             print('KAPPA:                  %.2f' %subhalo.kappa)
             print('KAPPA RAD CALC [pkpc]:  %s'   %str(kappa_rad_in))
             print(' HALF-\tANGLES (STARS-)\t\tPARTICLE COUNT\t\t\tMASS')
-            print(' RAD\tGAS\tSF\tNSF\tSTARS\tGAS\tSF\tNSF\tSTARS\tGAS\tSF\tNSF')
+            print(' RAD\tGAS\tSF\tNSF\tSF-NSF\tSTARS\tGAS\tSF\tNSF\tSTARS\tGAS\tSF\tNSF')
             for i in [1, 3, len(spin_rad_in)-1]:
-                print(' %.1f\t%.1f\t%.1f\t%.1f\t%i\t%i\t%i\t%i\t%.1f\t%.1f\t%.1f\t%.1f' %(subhalo.mis_angles['hmr'][i], subhalo.mis_angles['gas'][i], subhalo.mis_angles['gas_sf'][i], subhalo.mis_angles['gas_nsf'][i], subhalo.particles['stars'][i], subhalo.particles['gas'][i], subhalo.particles['gas_sf'][i], subhalo.particles['gas_nsf'][i], np.log10(subhalo.particles['stars_mass'][i]), np.log10(subhalo.particles['gas_mass'][i]), np.log10(subhalo.particles['gas_sf_mass'][i]), np.log10(subhalo.particles['gas_nsf_mass'][i])))        
+                print(' %.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%i\t%i\t%i\t%i\t%.1f\t%.1f\t%.1f\t%.1f' %(subhalo.mis_angles['hmr'][i], subhalo.mis_angles['stars_gas'][i], subhalo.mis_angles['stars_gas_sf'][i], subhalo.mis_angles['stars_gas_nsf'][i], subhalo.mis_angles['gas_sf_gas_nsf'][i], subhalo.particles['stars'][i], subhalo.particles['gas'][i], subhalo.particles['gas_sf'][i], subhalo.particles['gas_nsf'][i], np.log10(subhalo.particles['stars_mass'][i]), np.log10(subhalo.particles['gas_mass'][i]), np.log10(subhalo.particles['gas_sf_mass'][i]), np.log10(subhalo.particles['gas_nsf_mass'][i])))        
             print('CENTRE [pMpc]:      [%.5f,\t%.5f,\t%.5f]' %(subhalo.centre[0]/1000, subhalo.centre[1]/1000, subhalo.centre[2]/1000))        # [pkpc]
             print('PERC VEL [pkm/s]:   [%.5f,\t%.5f,\t%.5f]' %(subhalo.perc_vel[0], subhalo.perc_vel[1], subhalo.perc_vel[2]))  # [pkm/s]
             #print('VIEWING ANGLES: ', end='')
@@ -184,13 +184,13 @@ def plot_misalignment_angle(galaxy_mass_limit = 1e9,
     
             # Annotations
             ax.axvline(30, ls='--', lw=0.5, c='k')
-            plt.suptitle("L%s: Gas - Star Misalignment"%str(mySims[0][1]))
+            plt.suptitle("L%s: %s Misalignment" %(str(mySims[0][1]), plot_angle_type_i))
             plt.legend()
     
             plt.savefig("/Users/c22048063/Documents/EAGLE/trial_plots/Misangle_3D_%s_%s.jpeg" %(str(int(use_angle_in)), plot_angle_type_i), format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
             plt.close()
             
-    if plot_multiple:
+    if plot_together:
         
         # Graph initialising and base formatting
         graphformat(8, 11, 11, 11, 11, 5, 5)

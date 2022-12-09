@@ -319,6 +319,7 @@ Output Parameters
 .spins, .spins_align:   dictionary
     Has aligned/rotated spin vectors within spin_rad_in's:
         ['rad']     - [pkpc]
+        ['hmr']     - multiples of halfmass_rad
         ['stars']   - [unit vector]
         ['gas']     - [unit vector]
         ['gas_sf']  - [unit vector]
@@ -326,6 +327,7 @@ Output Parameters
 .particles, .particles_align:   dictionary
     Has aligned/rotated particle count and mass within spin_rad_in's:
         ['rad']          - [pkpc]
+        ['hmr']     - multiples of halfmass_rad
         ['stars']        - count
         ['gas']          - count
         ['gas_sf']       - count
@@ -337,10 +339,12 @@ Output Parameters
 .mis_angles, .mis_angles_align:     dictionary
     Has aligned/rotated misalignment angles between stars 
     and X within spin_rad_in's:
-        ['rad']     - [pkpc]
-        ['gas']     - [deg]
-        ['gas_sf']  - [deg]
-        ['gas_nsf'] - [deg]
+        ['rad']            - [pkpc]
+        ['hmr']            - multiples of halfmass_rad
+        ['stars_gas']      - [deg]
+        ['stars_gas_sf']   - [deg]
+        ['stars_gas_nsf']  - [deg]
+        ['gas_sf_gas_nsf'] - [deg]
         
 """
 class Subhalo:
@@ -352,7 +356,7 @@ class Subhalo:
                             kappa_rad_in,
                             align_rad_in, 
                             orientate_to_axis,
-                            quiet=False):
+                            quiet=True):
         
         # Create masks for starforming and non-starforming gas
         self.mask_sf        = np.nonzero(gas['StarFormationRate'])          
@@ -438,13 +442,24 @@ class Subhalo:
             self.mis_angles_align = {}
             self.mis_angles_align['rad'] = spin_rad_in
             self.mis_angles_align['hmr'] = spin_rad_in/self.halfmass_rad
-            for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
+            for parttype_name in [['stars', 'gas'], ['stars', 'gas_sf'], ['stars', 'gas_nsf'], ['gas_sf', 'gas_nsf']]:
+                tmp_angles = []
+                for i in np.arange(0, len(self.spins['stars']), 1):
+                    tmp_angles.append(self.misalignment_angle(self.spins_align[parttype_name[0]][i], self.spins_align[parttype_name[1]][i]))
+                self.mis_angles_align['%s_%s' %(parttype_name[0], parttype_name[1])] = tmp_angles
+            
+            
+            
+            """for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
                 for angle_name in ['gas', 'gas_sf', 'gas_nsf']:
                     tmp_angles = []
                     for i in np.arange(0, len(self.spins_align['stars']), 1):
                         tmp_angles.append(self.misalignment_angle(self.spins_align['stars'][i], self.spins_align[angle_name][i]))
                     self.mis_angles_align[angle_name] = tmp_angles
-            
+            """
+                
+                
+                
             # Trim output data to selected radii (trim_rad)
             if trim_rad_in:
                 for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
@@ -452,12 +467,12 @@ class Subhalo:
                   
             if not quiet:  
                 print('MISALIGNMENT ANGLES ALIGN [deg]:')
-                print('\t\tANGLES (STARS-)\t\tPARTICLE COUNT\t\t\tMASS')
-                print('\tRAD\tGAS\tSF\tNSF\tSTARS\tGAS\tSF\tNSF\tSTARS\tGAS\tSF\tNSF')
+                print(' HALF-\tANGLES (STARS-)\t\t\tPARTICLE COUNT\t\t\tMASS')
+                print(' RAD\tGAS\tSF\tNSF\tSF-NSF\tSTARS\tGAS\tSF\tNSF\tSTARS\tGAS\tSF\tNSF')
                 for i in np.arange(0, len(self.mis_angles_align['rad']), 1):
                     with np.errstate(divide='ignore', invalid='ignore'):
-                        print('\t%.1f\t%.1f\t%.1f\t%.1f\t%i\t%i\t%i\t%i\t%.1f\t%.1f\t%.1f\t%.1f' %(self.mis_angles_align['rad'][i]/self.halfmass_rad, self.mis_angles_align['gas'][i], self.mis_angles_align['gas_sf'][i], self.mis_angles_align['gas_nsf'][i], self.particles_align['stars'][i], self.particles_align['gas'][i], self.particles_align['gas_sf'][i], self.particles_align['gas_nsf'][i], np.log10(self.particles_align['stars_mass'][i]), np.log10(self.particles_align['gas_mass'][i]), np.log10(self.particles_align['gas_sf_mass'][i]), np.log10(self.particles_align['gas_nsf_mass'][i])))        
-            
+                        print(' %.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%i\t%i\t%i\t%i\t%.1f\t%.1f\t%.1f\t%.1f' %(self.mis_angles_align['hmr'][i], self.mis_angles_align['stars_gas'][i], self.mis_angles_align['stars_gas_sf'][i], self.mis_angles_align['stars_gas_nsf'][i], self.mis_angles_align['gas_sf_gas_nsf'][i], self.particles_align['stars'][i], self.particles_align['gas'][i], self.particles_align['gas_sf'][i], self.particles_align['gas_nsf'][i], np.log10(self.particles_align['stars_mass'][i]), np.log10(self.particles_align['gas_mass'][i]), np.log10(self.particles_align['gas_sf_mass'][i]), np.log10(self.particles_align['gas_nsf_mass'][i])))               
+                
         # SPIN VECTORS AND ROTATE
         if len(spin_rad_in) > 0:
             # Find rotation matrix to rotate galaxy
@@ -492,12 +507,22 @@ class Subhalo:
             self.mis_angles = {}
             self.mis_angles['rad'] = spin_rad_in
             self.mis_angles['hmr'] = spin_rad_in/self.halfmass_rad
-            for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
+            for parttype_name in [['stars', 'gas'], ['stars', 'gas_sf'], ['stars', 'gas_nsf'], ['gas_sf', 'gas_nsf']]:
+                tmp_angles = []
+                for i in np.arange(0, len(self.spins['stars']), 1):
+                    tmp_angles.append(self.misalignment_angle(self.spins[parttype_name[0]][i], self.spins[parttype_name[1]][i]))
+                self.mis_angles['%s_%s' %(parttype_name[0], parttype_name[1])] = tmp_angles
+            
+            
+            
+            """for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
                 for angle_name in ['gas', 'gas_sf', 'gas_nsf']:
                     tmp_angles = []
                     for i in np.arange(0, len(self.spins['stars']), 1):
                         tmp_angles.append(self.misalignment_angle(self.spins['stars'][i], self.spins[angle_name][i]))
-                    self.mis_angles[angle_name] = tmp_angles
+                    self.mis_angles[angle_name] = tmp_angles"""
+        
+        
         
             # Trim output data to selected radii (trim_rad)
             if trim_rad_in:
@@ -506,11 +531,11 @@ class Subhalo:
         
             if not quiet:
                 print('MISALIGNMENT ANGLES [deg]:')
-                print('\t\tANGLES (STARS-)\t\tPARTICLE COUNT\t\t\tMASS')
-                print('\tRAD\tGAS\tSF\tNSF\tSTARS\tGAS\tSF\tNSF\tSTARS\tGAS\tSF\tNSF')
+                print(' HALF-\tANGLES (STARS-)\t\t\tPARTICLE COUNT\t\t\tMASS')
+                print(' RAD\tGAS\tSF\tNSF\tSF-NSF\tSTARS\tGAS\tSF\tNSF\tSTARS\tGAS\tSF\tNSF')
                 for i in np.arange(0, len(self.mis_angles['rad']), 1):
                     with np.errstate(divide='ignore', invalid='ignore'):
-                        print('\t%.1f\t%.1f\t%.1f\t%.1f\t%i\t%i\t%i\t%i\t%.1f\t%.1f\t%.1f\t%.1f' %(self.mis_angles['rad'][i]/self.halfmass_rad, self.mis_angles['gas'][i], self.mis_angles['gas_sf'][i], self.mis_angles['gas_nsf'][i], self.particles['stars'][i], self.particles['gas'][i], self.particles['gas_sf'][i], self.particles['gas_nsf'][i], np.log10(self.particles['stars_mass'][i]), np.log10(self.particles['gas_mass'][i]), np.log10(self.particles['gas_sf_mass'][i]), np.log10(self.particles['gas_nsf_mass'][i])))        
+                        print(' %.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%i\t%i\t%i\t%i\t%.1f\t%.1f\t%.1f\t%.1f' %(self.mis_angles['hmr'][i], self.mis_angles['stars_gas'][i], self.mis_angles['stars_gas_sf'][i], self.mis_angles['stars_gas_nsf'][i], self.mis_angles['gas_sf_gas_nsf'][i], self.particles['stars'][i], self.particles['gas'][i], self.particles['gas_sf'][i], self.particles['gas_nsf'][i], np.log10(self.particles['stars_mass'][i]), np.log10(self.particles['gas_mass'][i]), np.log10(self.particles['gas_sf_mass'][i]), np.log10(self.particles['gas_nsf_mass'][i])))               
                 print('STELMASS', np.log10(self.stelmass))
                 print('GASMASS', np.log10(self.gasmass))
                 print('GASMASS_SF', np.log10(self.gasmass_sf))

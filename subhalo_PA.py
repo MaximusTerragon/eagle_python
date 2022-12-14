@@ -321,7 +321,7 @@ Purpose
 def velocity_projection(GroupNumList = np.array([4]), 
                         SubGroupNum  = 0,
                         minangle     = 0,
-                        maxangle     = 360,
+                        maxangle     = 0,
                         stepangle    = 10,
                         spin_rad_in      = np.arange(1.0, 10.5, 0.5),   # multiples of rad
                         trim_rad_in      = 100,                         # trim particles <radius, False, 'rad', 'tworad', num [pkpc]
@@ -331,7 +331,7 @@ def velocity_projection(GroupNumList = np.array([4]),
                           vel_minmax       = 200,
                           resolution       = 1,           # bin size [pkpc]
                           target_particles = 10,          # target voronoi bins
-                          viewing_axis     = 'x',         # Which axis to view galaxy from
+                          viewing_axis     = 'z',         # Which axis to view galaxy from
                         root_file = 'trial_plots',      # 'trial_plots' or 'plots'
                         print_galaxy     = True,        # print galaxy stats in chat
                         txt_file         = True, 
@@ -339,8 +339,8 @@ def velocity_projection(GroupNumList = np.array([4]),
                         angle_type_in    = ['stars_gas', 'stars_gas_sf', 'stars_gas_nsf', 'gas_sf_gas_nsf'],    # misalignment angles to be found 
                         orientate_to_axis        = 'z',  # Keep as 'z'
                         viewing_angle            = 0,    # Keep as 0
-                          plot_2dhist_graph        = False,
-                          plot_voronoi_graph       = True,
+                          plot_2dhist_graph        = True,
+                          plot_voronoi_graph       = False,
                           plot_2dhist_pafit_graph  = False,
                           plot_voronoi_pafit_graph = False,
                             pa_angle_type_in         = '2dhist',    # which pa angles to use: '2dhist', 'voronoi', 'both'
@@ -497,7 +497,7 @@ def velocity_projection(GroupNumList = np.array([4]),
             def _plot_2dhist(colormap='coolwarm'):
                 # Initialise figure
                 graphformat(8, 11, 11, 11, 11, 3.75, 3)
-                fig, axs = plt.subplots(nrows=1, ncols=len(particle_list_in), figsize=(4*len(particle_list_in), 4), sharex=True, sharey=True)
+                fig, axs = plt.subplots(nrows=1, ncols=len(particle_list_in), figsize=(4.5*len(particle_list_in), 4), sharex=True, sharey=True)
                 
                 """# Hist stars  
                 _, _, _, xbins, ybins, vel_weighted = _weight_histo(subhalo.gn, root_file, subhalo.data, 'stars', viewing_angle, viewing_axis, resolution, boxradius, trim_rad)
@@ -568,7 +568,7 @@ def velocity_projection(GroupNumList = np.array([4]),
             def _plot_voronoi(colormap='coolwarm'):
                 # Initialise figure
                 graphformat(8, 11, 11, 11, 11, 3.75, 3)
-                fig, axs = plt.subplots(nrows=1, ncols=len(particle_list_in), figsize=(4*len(particle_list_in), 4), sharex=True, sharey=True)
+                fig, axs = plt.subplots(nrows=1, ncols=len(particle_list_in), figsize=(4.5*len(particle_list_in), 4), sharex=True, sharey=True)
                 
                 ### VORONOI TESSALATION ROUTINE
                 j = 0

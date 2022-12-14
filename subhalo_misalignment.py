@@ -80,14 +80,14 @@ class Sample:
 
 
 def plot_misalignment_angle(galaxy_mass_limit = 1e9,
-                            use_angle_in    = 2.,                                           # multiples of rad
+                            use_angle_in    = 1.,                                           # multiples of rad
                             plot_angle_type = np.array(['stars_gas', 'stars_gas_sf', 'stars_gas_nsf']),       # gas, gas_sf, gas_nsf
-                            plot_single     = True,                                        # whether to create single plots
-                            plot_together   = False,                                           # or overlapping
-                            spin_rad_in     = np.arange(0.5, 10.5, 0.5),                    # multiples of rad
-                            trim_rad_in  = False,                     # keep on False
-                            kappa_rad_in = 30,                        # calculate kappa for this radius [pkpc]
-                            align_rad_in = False,                     # keep on False              
+                              plot_single     = True,                        # whether to create single plots
+                              plot_together   = True,                       # or overlapping
+                            spin_rad_in     = np.arange(0.5, 10.5, 0.5),    # multiples of rad
+                            trim_rad_in  = np.array([100]),                 # keep as 100
+                            kappa_rad_in = 30,                              # calculate kappa for this radius [pkpc]
+                            align_rad_in = False,                           # keep on False              
                             root_file = 'trial_plots',
                             print_galaxy  = True,
                             orientate_to_axis = 'z',     # keep as z
@@ -107,13 +107,7 @@ def plot_misalignment_angle(galaxy_mass_limit = 1e9,
         
         # Detect keywords of rad, tworad. All in [pkpc]
         spin_rad = spin_rad_in * galaxy.halfmass_rad
-        
-        if trim_rad_in == 'rad':
-            trim_rad = galaxy.halfmass_rad
-        elif trim_rad_in == 'tworad':
-            trim_rad = 2*galaxy.halfmass_rad
-        else:
-            trim_rad = trim_rad_in
+        trim_rad = trim_rad_in
             
         if kappa_rad_in == 'rad':
             kappa_rad = galaxy.halfmass_rad
@@ -185,10 +179,10 @@ def plot_misalignment_angle(galaxy_mass_limit = 1e9,
     
             # Annotations
             ax.axvline(30, ls='--', lw=0.5, c='k')
-            plt.suptitle("L%s: %s Misalignment" %(str(mySims[0][1]), plot_angle_type_i))
+            plt.suptitle("L%s: %s Misalignment, type: 3D, hmr: %s" %(str(mySims[0][1]), plot_angle_type_i, str(use_angle_in)))
             plt.legend()
     
-            plt.savefig("/Users/c22048063/Documents/EAGLE/trial_plots/Misangle_3D_%s_%s.jpeg" %(str(int(use_angle_in)), plot_angle_type_i), format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
+            plt.savefig("/Users/c22048063/Documents/EAGLE/trial_plots/Misangle_3D_%s_rad%s.jpeg" %(plot_angle_type_i, str(int(use_angle_in))), format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
             plt.close()
             
     if plot_together:
@@ -217,10 +211,11 @@ def plot_misalignment_angle(galaxy_mass_limit = 1e9,
     
         # Annotations
         ax.axvline(30, ls='--', lw=0.5, c='k')
-        plt.suptitle("L%s: Gas - Star Misalignment"%str(mySims[0][1]))
+        plt.suptitle("L%s: Gas - Star Misalignments, type: 3D, hmr: %s" %(str(mySims[0][1]), str(use_angle_in)))
+        
         plt.legend()
     
-        plt.savefig("/Users/c22048063/Documents/EAGLE/trial_plots/Misangle_3D_%s.jpeg" %(str(int(use_angle_in))), format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
+        plt.savefig("/Users/c22048063/Documents/EAGLE/trial_plots/Misangle_3D_rad%s.jpeg" %(str(int(use_angle_in))), format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
         plt.close()
     
 plot_misalignment_angle()  

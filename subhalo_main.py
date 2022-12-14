@@ -305,12 +305,13 @@ Output Parameters
 
 .data, .data_align:    dictionary
     Has aligned/rotated values for 'stars', 'gas', 'gas_sf', 'gas_nsf':
-        ['Coordinates']         - [pkpc]
-        ['Velocity']            - [pkm/s]
-        ['Mass']                - [Msun]
-        ['StarFormationRate']   - [Msun/s] (i think)
-        ['GroupNumber']         - int array 
-        ['SubGroupNumber']      - int array
+        [hmr]                       - multiples of hmr, ei. '1.0'
+            ['Coordinates']         - [pkpc]
+            ['Velocity']            - [pkm/s]
+            ['Mass']                - [Msun]
+            ['StarFormationRate']   - [Msun/s] (i think)
+            ['GroupNumber']         - int array 
+            ['SubGroupNumber']      - int array
         
     if trim_rad_in has a value, coordinates lying outside
     these values will be trimmed in final output, but still
@@ -444,26 +445,30 @@ class Subhalo:
             self.mis_angles_align['hmr'] = spin_rad_in/self.halfmass_rad
             for parttype_name in [['stars', 'gas'], ['stars', 'gas_sf'], ['stars', 'gas_nsf'], ['gas_sf', 'gas_nsf']]:
                 tmp_angles = []
-                for i in np.arange(0, len(self.spins['stars']), 1):
+                for i in np.arange(0, len(self.spins_align['stars']), 1):
                     tmp_angles.append(self.misalignment_angle(self.spins_align[parttype_name[0]][i], self.spins_align[parttype_name[1]][i]))
                 self.mis_angles_align['%s_%s' %(parttype_name[0], parttype_name[1])] = tmp_angles
-            
-            
-            
-            """for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
-                for angle_name in ['gas', 'gas_sf', 'gas_nsf']:
-                    tmp_angles = []
-                    for i in np.arange(0, len(self.spins_align['stars']), 1):
-                        tmp_angles.append(self.misalignment_angle(self.spins_align['stars'][i], self.spins_align[angle_name][i]))
-                    self.mis_angles_align[angle_name] = tmp_angles
-            """
-                
-                
-                
-            # Trim output data to selected radii (trim_rad)
+                          
+                          
+                          
+                          
+                            
+            """# Trim output data to selected radii (trim_rad)
             if trim_rad_in:
                 for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
                     self.data_align['%s'%parttype_name] = self.trim_within_rad(self.data_align[parttype_name], trim_rad_in)
+            """        
+                    
+            if len(trim_rad_in) > 0:
+                tmp_data = {}
+                for rad in trim_rad_in:
+                    tmp_data.update({'%s' %str(rad): {}})
+                    
+                for rad in trim_rad_in:
+                    for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
+                        tmp_data['%s' %str(rad)]['%s' %parttype_name] = self.trim_within_rad(self.data_align[parttype_name], rad*self.halfmass_rad)
+        
+                self.data_align = tmp_data
                   
             if not quiet:  
                 print('MISALIGNMENT ANGLES ALIGN [deg]:')
@@ -512,23 +517,32 @@ class Subhalo:
                 for i in np.arange(0, len(self.spins['stars']), 1):
                     tmp_angles.append(self.misalignment_angle(self.spins[parttype_name[0]][i], self.spins[parttype_name[1]][i]))
                 self.mis_angles['%s_%s' %(parttype_name[0], parttype_name[1])] = tmp_angles
-            
-            
-            
-            """for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
-                for angle_name in ['gas', 'gas_sf', 'gas_nsf']:
-                    tmp_angles = []
-                    for i in np.arange(0, len(self.spins['stars']), 1):
-                        tmp_angles.append(self.misalignment_angle(self.spins['stars'][i], self.spins[angle_name][i]))
-                    self.mis_angles[angle_name] = tmp_angles"""
-        
-        
-        
-            # Trim output data to selected radii (trim_rad)
+                
+                
+                
+                
+                    
+            """# Trim output data to selected radii (trim_rad)
             if trim_rad_in:
                 for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
                     self.data['%s'%parttype_name] = self.trim_within_rad(self.data[parttype_name], trim_rad_in)
-        
+            """       
+            #---------------------
+            if len(trim_rad_in) > 0:
+                tmp_data = {}
+                for rad in trim_rad_in:
+                    tmp_data.update({'%s' %str(rad): {}})
+                    
+                for rad in trim_rad_in:
+                    for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
+                        tmp_data['%s' %str(rad)]['%s' %parttype_name] = self.trim_within_rad(self.data[parttype_name], rad*self.halfmass_rad)
+                    
+                self.data = tmp_data
+            #---------------------
+            
+            
+            
+            
             if not quiet:
                 print('MISALIGNMENT ANGLES [deg]:')
                 print(' HALF-\tANGLES (STARS-)\t\t\tPARTICLE COUNT\t\t\tMASS')
@@ -713,7 +727,7 @@ class Subhalo:
         return K_rot/K_tot
         
         
-"""### MANUAL CALL
+### MANUAL CALL
 # Directories of data hdf5 file(s)
 dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_028_z000p000/snap_028_z000p000.0.hdf5'
 
@@ -728,8 +742,8 @@ galaxy = Subhalo_Extract(mySims, dataDir, snapNum, GroupNum, SubGroupNum)
 
 spin_rad_in = galaxy.halfmass_rad*np.arange(0.5, 10.5, 0.5)   # pkpc
 kappa_rad_in = 30                       # [pkpc] False or value
-trim_rad_in = 30                        # [pkpc] False or value
-align_rad_in = False    #30                       # [pkpc] False or value
+trim_rad_in = np.arange(0.5, 10.5, 0.5)                        # [pkpc] False or value
+align_rad_in = True    #30                       # [pkpc] False or value
 viewing_angle = 10                      # [deg] will rotate subhalo.data by this angle about z-axis
 orientate_to_axis = 'z'                 # 'z', 'y', 'x', will orientate axis to this angle based on stellar-spin in align_rad_in
 
@@ -745,8 +759,8 @@ subhalo = Subhalo(galaxy.halfmass_rad, galaxy.centre, galaxy.centre_mass, galaxy
                                     kappa_rad, 
                                     align_rad,               #align_rad=False
                                     orientate_to_axis)     
-"""
 
+print(subhalo.data_align.keys())
 
 
 

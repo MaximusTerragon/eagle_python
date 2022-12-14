@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib.cm as cm
 from astropy.constants import G
+from scipy.spatial import Voronoi, voronoi_plot_2d
 from read_dataset_tools import read_dataset, read_dataset_dm_mass, read_header
 from pafit.fit_kinematic_pa import fit_kinematic_pa
 from plotbin.sauron_colormap import register_sauron_colormap
@@ -22,6 +23,9 @@ dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_028_z000
 # list of simulations
 mySims = np.array([('RefL0012N0188', 12)])   
 snapNum = 28
+
+# Register stuff
+register_sauron_colormap()
 
 """ 
 Purpose
@@ -103,7 +107,8 @@ def _weight_histo(gn,
                   boxradius,
                   trim_rad_in,
                   quiet=1, 
-                  plot=0):
+                  plot=0,
+                  colormap='coolwarm'):
                  
     # Assign x, y, and z values for histogram2d depending on viewing axis
     if viewing_axis == 'x':
@@ -117,7 +122,7 @@ def _weight_histo(gn,
     elif viewing_axis == 'z':
         x_new = [row[1] for row in data_type[particle_type]['Coordinates']]
         y_new = [row[0] for row in data_type[particle_type]['Coordinates']*-1.]
-        vel   = [row[2] for row in data_type[particle_type]['Velocity']]
+        vel   = [row[2] for row in data_type[particle_type]['Velocity']*-1.]
     
     # Find number of pixels along histogram
     pixel = math.ceil(boxradius*2 / resolution)
@@ -137,7 +142,7 @@ def _weight_histo(gn,
         # Plot 2d histogram
         plt.figure()
         graphformat(8, 11, 11, 11, 11, 5, 4)
-        im = plt.pcolormesh(xbins, ybins, vel_weighted, cmap='coolwarm', vmin=-150, vmax=150)
+        im = plt.pcolormesh(xbins, ybins, vel_weighted, cmap=colormap, vmin=-150, vmax=150)
         plt.colorbar(im, label='mass-weighted mean velocity', extend='both')
         
         # Formatting
@@ -247,7 +252,8 @@ def _voronoi_tessalate(gn,
                        boxradius,
                        trim_rad, 
                        quiet=1, 
-                       plot=0):
+                       plot=0,
+                       colormap='coolwarm'):
                                   
     # Assign x, y, and z values for histogram2d depending on viewing axis
     if viewing_axis == 'x':
@@ -261,7 +267,7 @@ def _voronoi_tessalate(gn,
     elif viewing_axis == 'z':
         x_new = [row[1] for row in data_type[particle_type]['Coordinates']]
         y_new = [row[0] for row in data_type[particle_type]['Coordinates']*-1.]
-        vel   = [row[2] for row in data_type[particle_type]['Velocity']]
+        vel   = [row[2] for row in data_type[particle_type]['Velocity']*-1.]
     
     # Find number of pixels along histogram
     pixel = math.ceil(boxradius*2 / resolution)
@@ -299,6 +305,7 @@ def _voronoi_tessalate(gn,
     # Create tessalation, append points at infinity to color plot edges
     points     = np.column_stack((x_gen, y_gen))   
     vel_bin    = np.divide(vel, bin_count)     # find mean in each square bin (total velocity / total particles in voronoi bins)
+    points_inf = np.append(points, [[999,999], [-999,999], [999,-999], [-999,-999]], axis=0) 
     vor        = Voronoi(points_inf)
     
     return points, vel_bin, vor
@@ -315,7 +322,7 @@ def velocity_projection(GroupNumList = np.array([4]),
                         SubGroupNum  = 0,
                         minangle     = 0,
                         maxangle     = 360,
-                        stepangle    = 30,
+                        stepangle    = 10,
                         spin_rad_in      = np.arange(1.0, 10.5, 0.5),   # multiples of rad
                         trim_rad_in      = 100,                         # trim particles <radius, False, 'rad', 'tworad', num [pkpc]
                         kappa_rad_in     = 30,                          # calculate kappa for this radius [pkpc]
@@ -324,7 +331,7 @@ def velocity_projection(GroupNumList = np.array([4]),
                           vel_minmax       = 200,
                           resolution       = 1,           # bin size [pkpc]
                           target_particles = 10,          # target voronoi bins
-                          viewing_axis     = 'y',         # Which axis to view galaxy from
+                          viewing_axis     = 'x',         # Which axis to view galaxy from
                         root_file = 'trial_plots',      # 'trial_plots' or 'plots'
                         print_galaxy     = True,        # print galaxy stats in chat
                         txt_file         = True, 
@@ -332,8 +339,8 @@ def velocity_projection(GroupNumList = np.array([4]),
                         angle_type_in    = ['stars_gas', 'stars_gas_sf', 'stars_gas_nsf', 'gas_sf_gas_nsf'],    # misalignment angles to be found 
                         orientate_to_axis        = 'z',  # Keep as 'z'
                         viewing_angle            = 0,    # Keep as 0
-                          plot_2dhist_graph        = True,
-                          plot_voronoi_graph       = False,
+                          plot_2dhist_graph        = False,
+                          plot_voronoi_graph       = True,
                           plot_2dhist_pafit_graph  = False,
                           plot_voronoi_pafit_graph = False,
                             pa_angle_type_in         = '2dhist',    # which pa angles to use: '2dhist', 'voronoi', 'both'
@@ -473,7 +480,10 @@ def velocity_projection(GroupNumList = np.array([4]),
                     
             # Print galaxy properties
             if print_galaxy == True:
-                print('VIEWING ANGLE: %s' %str(viewing_angle), end=' ')
+                if print_i == 0:
+                    print('VIEWING ANGLE: %s' %str(viewing_angle), end=' ')
+                else:
+                    print('%s' %str(viewing_angle), end=' ')
             
                 
             #-------------------------------- 
@@ -484,7 +494,7 @@ def velocity_projection(GroupNumList = np.array([4]),
             #---------------------------------
             
             # Function to plot 2dhist-fed data 
-            def _plot_2dhist():
+            def _plot_2dhist(colormap='coolwarm'):
                 # Initialise figure
                 graphformat(8, 11, 11, 11, 11, 3.75, 3)
                 fig, axs = plt.subplots(nrows=1, ncols=len(particle_list_in), figsize=(4*len(particle_list_in), 4), sharex=True, sharey=True)
@@ -523,7 +533,7 @@ def velocity_projection(GroupNumList = np.array([4]),
                 j = 0
                 for particle_list_in_i in particle_list_in:
                     _, _, _, xbins, ybins, vel_weighted = _weight_histo(subhalo.gn, root_file, subhalo.data, particle_list_in_i, viewing_angle, viewing_axis, resolution, boxradius, trim_rad)
-                    im = axs[j].pcolormesh(xbins, ybins, vel_weighted, cmap='coolwarm', vmin=-vel_minmax, vmax=vel_minmax)
+                    im = axs[j].pcolormesh(xbins, ybins, vel_weighted, cmap=colormap, vmin=-vel_minmax, vmax=vel_minmax)
                     
                     # Graph formatting 
                     axs[j].set_xlabel('x-axis [pkpc]')
@@ -545,7 +555,7 @@ def velocity_projection(GroupNumList = np.array([4]),
                 axs[0].set_ylabel('y-axis [pkpc]')
                 
                 # Annotation
-                axs[0].text(-boxradius, boxradius+1, 'resolution: %s, trim_rad: %s, hmr: %s' %(str(resolution), str(trim_rad_in), str(subhalo.halfmass_rad)), fontsize=8)
+                axs[0].text(-boxradius, boxradius+1, 'resolution: %s pkpc, trim_rad: %s pkpc, hmr: %s pkpc' %(str(resolution), str(trim_rad_in), str(subhalo.halfmass_rad)), fontsize=8)
 
                 # Colorbar
                 cax = plt.axes([0.92, 0.11, 0.015, 0.77])
@@ -555,46 +565,10 @@ def velocity_projection(GroupNumList = np.array([4]),
                 plt.close()
             
             # Function to plot voronoi-fed data    
-            def _plot_voronoi():
+            def _plot_voronoi(colormap='coolwarm'):
                 # Initialise figure
                 graphformat(8, 11, 11, 11, 11, 3.75, 3)
                 fig, axs = plt.subplots(nrows=1, ncols=len(particle_list_in), figsize=(4*len(particle_list_in), 4), sharex=True, sharey=True)
-                
-                """# Tessalate stars 
-                points_stars, vel_bin_stars, vor = _voronoi_tessalate(subhalo.gn, root_file, subhalo.data, 'stars', viewing_angle, viewing_axis, resolution, target_particles, boxradius, trim_rad_in)
-                
-                # normalize chosen colormap
-                norm = mpl.colors.Normalize(vmin=-vel_minmax, vmax=vel_minmax, clip=True)
-                mapper = cm.ScalarMappable(norm=norm, cmap='sauron')         #cmap=cm.coolwarm), cmap='sauron'
-                
-                # plot Voronoi diagram, and fill finite regions with color mapped from vel value
-                voronoi_plot_2d(vor, ax=axs[0,0], show_points=False, show_vertices=False, line_width=0, s=1)
-                for r in range(len(vor.point_region)):
-                    region = vor.regions[vor.point_region[r]]
-                    if not -1 in region:
-                        polygon = [vor.vertices[i] for i in region]
-                        ax1.fill(*zip(*polygon), color=mapper.to_rgba(vel_bin_stars[r]))    
-            
-                # Tessalate gas   
-                points_gas, vel_bin_gas, vor = _voronoi_tessalate(subhalo.gn, root_file, subhalo.data, 'gas', viewing_angle, viewing_axis, resolution, target_particles, boxradius, trim_rad_in)
-                
-                # plot Voronoi diagram, and fill finite regions with color mapped from vel value
-                voronoi_plot_2d(vor, ax=ax2, show_points=False, show_vertices=False, line_width=0, s=1)
-                for r in range(len(vor.point_region)):
-                    region = vor.regions[vor.point_region[r]]
-                    if not -1 in region:
-                        polygon = [vor.vertices[i] for i in region]
-                        ax2.fill(*zip(*polygon), color=mapper.to_rgba(vel_bin_gas[r]))
-                """
-                """# Graph formatting
-                for ax in [ax1, ax2]:
-                    ax.set_xlim(-boxradius, boxradius)
-                    ax.set_ylim(-boxradius, boxradius)
-                    ax.set_xlabel('x-axis [pkpc]')
-                ax1.set_ylabel('y-axis [pkpc]')
-                ax1.set_title('Stars')
-                ax2.set_title('Gas')
-                """
                 
                 ### VORONOI TESSALATION ROUTINE
                 j = 0
@@ -603,7 +577,7 @@ def velocity_projection(GroupNumList = np.array([4]),
                 
                     # normalize chosen colormap
                     norm = mpl.colors.Normalize(vmin=-vel_minmax, vmax=vel_minmax, clip=True)
-                    mapper = cm.ScalarMappable(norm=norm, cmap='sauron')         #cmap=cm.coolwarm), cmap='sauron'
+                    mapper = cm.ScalarMappable(norm=norm, cmap=colormap)         #cmap=cm.coolwarm), cmap='sauron'
                 
                     # plot Voronoi diagram, and fill finite regions with color mapped from vel value
                     voronoi_plot_2d(vor, ax=axs[j], show_points=False, show_vertices=False, line_width=0, s=1)
@@ -611,7 +585,7 @@ def velocity_projection(GroupNumList = np.array([4]),
                         region = vor.regions[vor.point_region[r]]
                         if not -1 in region:
                             polygon = [vor.vertices[i] for i in region]
-                            ax1.fill(*zip(*polygon), color=mapper.to_rgba(vel_bin_particle[r]))
+                            axs[j].fill(*zip(*polygon), color=mapper.to_rgba(vel_bin_particle[r]))
                             
                     # Graph formatting 
                     axs[j].set_xlabel('x-axis [pkpc]')
@@ -633,7 +607,7 @@ def velocity_projection(GroupNumList = np.array([4]),
                 axs[0].set_ylabel('y-axis [pkpc]')
                 
                 # Annotation
-                axs[0].text(-boxradius, boxradius+1, 'resolution: %s, trim_rad: %s, target particles: %s, hmr: %s' %(str(resolution), str(trim_rad_in), str(target_particles), str(subhalo.halfmass_rad)), fontsize=8)
+                axs[0].text(-boxradius, boxradius+1, 'resolution: %s pkpc, trim_rad: %s, target particles: %s, hmr: %s' %(str(resolution), str(trim_rad_in), str(target_particles), str(subhalo.halfmass_rad)), fontsize=8)
                             
                 # Colorbar
                 cax = plt.axes([0.92, 0.11, 0.015, 0.77])

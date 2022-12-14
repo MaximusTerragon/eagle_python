@@ -25,8 +25,8 @@ def galaxy_render(GroupNumList = np.array([4]),
                   minangle     = 0,
                   maxangle     = 0, 
                   stepangle    = 30, 
-                  spin_rad_in  = np.arange(0.5, 10.5, 0.5),     # multiples of rad
-                  trim_rad_in  = 80,                      # trim particles <radius, False, 'rad', 'tworad', num [pkpc]
+                  spin_rad_in  = np.arange(1.0, 10.5, 0.5),     # multiples of rad
+                  trim_rad_in  = np.array([100]),     # trim particles <radius, False, 'rad', 'tworad', num [pkpc]
                   kappa_rad_in = 30,                            # calculate kappa for this radius [pkpc]
                   align_rad_in = False, #False                    # align galaxy to stellar vector in. this radius [pkpc]
                   boxradius_in = 40,                # boxradius of render
@@ -52,13 +52,7 @@ def galaxy_render(GroupNumList = np.array([4]),
         
         # Detect keywords of rad, tworad. All in [pkpc]
         spin_rad = spin_rad_in * galaxy.halfmass_rad
-        
-        if trim_rad_in == 'rad':
-            trim_rad = galaxy.halfmass_rad
-        elif trim_rad_in == 'tworad':
-            trim_rad = 2*galaxy.halfmass_rad
-        else:
-            trim_rad = trim_rad_in
+        trim_rad = trim_rad_in
             
         if kappa_rad_in == 'rad':
             kappa_rad = galaxy.halfmass_rad
@@ -153,28 +147,28 @@ def galaxy_render(GroupNumList = np.array([4]),
         # Plot scatters and spin vectors   
         if not align_rad:
             if stars:
-                plot_rand_scatter(subhalo.data, 'stars', 'lightyellow')
+                plot_rand_scatter(subhalo.data['%s' %str(trim_rad_in[0])], 'stars', 'lightyellow')
                 if plot_spin_vectors:
                     plot_spin_vector(subhalo.spins, 'stars', spin_vector_rad, 'r')
             if gas_sf:
-                plot_rand_scatter(subhalo.data, 'gas_sf', 'cyan')
+                plot_rand_scatter(subhalo.data['%s' %str(trim_rad_in[0])], 'gas_sf', 'cyan')
                 if plot_spin_vectors:
                     plot_spin_vector(subhalo.spins, 'gas_sf', spin_vector_rad, 'darkturquoise')
             if gas_nsf:
-                plot_rand_scatter(subhalo.data, 'gas_nsf', 'royalblue')  
+                plot_rand_scatter(subhalo.data['%s' %str(trim_rad_in[0])], 'gas_nsf', 'royalblue')  
                 if plot_spin_vectors:
                     plot_spin_vector(subhalo.spins, 'gas_nsf', spin_vector_rad, 'blue')   
         elif align_rad:
             if stars:
-                plot_rand_scatter(subhalo.data_align, 'stars', 'lightyellow')
+                plot_rand_scatter(subhalo.data_align['%s' %str(trim_rad_in[0])], 'stars', 'lightyellow')
                 if plot_spin_vectors:
                     plot_spin_vector(subhalo.spins_align, 'stars', spin_vector_rad, 'r')
             if gas_sf:
-                plot_rand_scatter(subhalo.data_align, 'gas_sf', 'cyan')
+                plot_rand_scatter(subhalo.data_align['%s' %str(trim_rad_in[0])], 'gas_sf', 'cyan')
                 if plot_spin_vectors:
                     plot_spin_vector(subhalo.spins_align, 'gas_sf', spin_vector_rad, 'teal')
             if gas_nsf:
-                plot_rand_scatter(subhalo.data_align, 'gas_nsf', 'royalblue')
+                plot_rand_scatter(subhalo.data_align['%s' %str(trim_rad_in[0])], 'gas_nsf', 'royalblue')
                 if plot_spin_vectors:
                     plot_spin_vector(subhalo.spins_align, 'gas_nsf', spin_vector_rad, 'blue')
         
@@ -194,26 +188,39 @@ def galaxy_render(GroupNumList = np.array([4]),
         for ii in np.arange(minangle, maxangle+1, stepangle):
             #print(ii , end=' ')                 # [deg]
             ax.view_init(0, ii)
+            
+            # Formatting 
+            ax.set_xlabel('x-pos [pkpc]')
+            ax.set_ylabel('y-pos [pkpc]')
+            ax.set_zlabel('z-pos [pkpc]')
+            ax.spines['bottom'].set_color('red')
+            ax.spines['top'].set_color('red')
+            ax.xaxis.label.set_color('grey')
+            ax.yaxis.label.set_color('grey')
+            ax.zaxis.label.set_color('grey')
+            ax.tick_params(axis='x', colors='grey')
+            ax.tick_params(axis='y', colors='grey')
+            ax.tick_params(axis='z', colors='grey')
 
             if savefig:
                 if (stars == True) & (gas_sf == True) & (gas_nsf == True) & (align_rad_in == False):
-                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_all_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in), str(spin_vector_rad), str(ii)), dpi=300)
+                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_all_rad%s_spin%s_angle%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in[0]), str(spin_vector_rad), str(ii)), dpi=300)
                 elif (stars == True) & (gas_sf == False) & (gas_nsf == False) & (align_rad_in == False):
-                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_s_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in), str(spin_vector_rad), str(ii)), dpi=300)
+                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_s_rad%s_spin%s_angle%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in[0]), str(spin_vector_rad), str(ii)), dpi=300)
                 elif (stars == False) & (gas_sf == True) & (gas_nsf == True) & (align_rad_in == False):
-                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_sf_nsf_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in), str(spin_vector_rad), str(ii)), dpi=300)
+                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_sf_nsf_rad%s_spin%s_angle%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in[0]), str(spin_vector_rad), str(ii)), dpi=300)
                 elif (stars == False) & (gas_sf == True) & (gas_nsf == False) & (align_rad_in == False):
-                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_sf_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in), str(spin_vector_rad), str(ii)), dpi=300)
+                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_sf_rad%s_spin%s_angle%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in[0]), str(spin_vector_rad), str(ii)), dpi=300)
                 elif (stars == False) & (gas_sf == False) & (gas_nsf == True) & (align_rad_in == False):
-                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_nsf_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in), str(spin_vector_rad), str(ii)), dpi=300)
+                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_nsf_rad%s_spin%s_angle%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in[0]), str(spin_vector_rad), str(ii)), dpi=300)
                 elif (stars == True) & (gas_sf == True) & (gas_nsf == True):
-                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_rot_all_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in), str(spin_vector_rad), str(ii)), dpi=300)
+                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_rot_all_rad%s_spin%s_angle%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in[0]), str(spin_vector_rad), str(ii)), dpi=300)
                 elif (stars == True) & (gas_sf == False) & (gas_nsf == False):
-                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_rot_s_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in), str(spin_vector_rad), str(ii)), dpi=300)
+                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_rot_s_rad%s_spin%s_angle%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in[0]), str(spin_vector_rad), str(ii)), dpi=300)
                 elif (stars == False) & (gas_sf == True) & (gas_nsf == False):
-                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_rot_sf_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in), str(spin_vector_rad), str(ii)), dpi=300)
+                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_rot_sf_rad%s_spin%s_angle%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in[0]), str(spin_vector_rad), str(ii)), dpi=300)
                 elif (stars == False) & (gas_sf == False) & (gas_nsf == True):
-                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_rot_nsf_%s_%s_%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in), str(spin_vector_rad), str(ii)), dpi=300)
+                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_rot_nsf_rad%s_spin%s_angle%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in[0]), str(spin_vector_rad), str(ii)), dpi=300)
 
         if plotshow:
             plt.show()
@@ -244,7 +251,7 @@ def galaxy_render(GroupNumList = np.array([4]),
             i = 0
             while i < len(subhalo.mis_angles['rad']):
                 with np.errstate(divide="ignore"):
-                    f.write('\n%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%i\t%i\t%i\t%i\t%.1f\t%.1f\t%.1f\t%.1f' %(subhalo.mis_angles['rad'][i]/subhalo.halfmass_rad, subhalo.mis_angles['stars_gas'][i], subhalo.mis_angles['stars_gas_sf'][i], subhalo.mis_angles['stars_gas_nsf'][i], subhalo.mis_angles['gas_sf_gas_nsf'][i], subhalo.particles['stars'][i], subhalo.particles['gas'][i], subhalo.particles['gas_sf'][i], subhalo.particles['gas_nsf'][i], np.log10(subhalo.particles['stars_mass'][i]), np.log10(subhalo.particles['gas_mass'][i]), np.log10(subhalo.particles['gas_sf_mass'][i]), np.log10(subhalo.particles['gas_nsf_mass'][i])))        
+                    f.write('\n%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%i\t%i\t%i\t%i\t%.1f\t%.1f\t%.1f\t%.1f' %(subhalo.mis_angles['hmr'][i], subhalo.mis_angles['stars_gas'][i], subhalo.mis_angles['stars_gas_sf'][i], subhalo.mis_angles['stars_gas_nsf'][i], subhalo.mis_angles['gas_sf_gas_nsf'][i], subhalo.particles['stars'][i], subhalo.particles['gas'][i], subhalo.particles['gas_sf'][i], subhalo.particles['gas_nsf'][i], np.log10(subhalo.particles['stars_mass'][i]), np.log10(subhalo.particles['gas_mass'][i]), np.log10(subhalo.particles['gas_sf_mass'][i]), np.log10(subhalo.particles['gas_nsf_mass'][i])))        
                 i += 1
             f.write('\n' + dash)
             f.write('\nCENTRE:          [%.5f,\t%.5f,\t%.5f]\t[pMpc]\n' %(subhalo.centre[0]/1000, subhalo.centre[1]/1000, subhalo.centre[2]/1000))                                 # [pMpc]

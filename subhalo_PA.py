@@ -149,7 +149,7 @@ def _weight_histo(gn,
         plt.xlim(-boxradius, boxradius)
         plt.ylim(-boxradius, boxradius)
         
-        plt.savefig('/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/2dhist_%s_%s_%s_angle_%s.jpeg' %(str(root_file), str(gn), str(particle_type), str(trim_rad_in), str(viewing_axis), str(viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.5)
+        plt.savefig('%s/galaxy_%s/2dhist_%s_%s_%s_angle_%s.jpeg' %(str(root_file), str(gn), str(particle_type), str(trim_rad_in), str(viewing_axis), str(viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.5)
         plt.close()
         
     # Convert histogram2d data into coords + value
@@ -293,7 +293,7 @@ def _voronoi_tessalate(gn,
         plt.figure()
         graphformat(8, 11, 11, 11, 11, 5, 4)
         _, x_gen, y_gen, _, _, bin_count, vel, _, _ = voronoi_2d_binning(points[:,0], points[:,1], points_vel, points_num, target_particles, plot=1, quiet=quiet, pixelsize=(2*boxradius/pixel), sn_func=None)
-        plt.savefig('/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/vorbin_output_%s_%s_%s_angle_%s.jpeg' %(str(root_file), str(gn), str(particle_type), str(trim_rad_in), str(viewing_axis), str(viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.5)
+        plt.savefig('%s/galaxy_%s/vorbin_output_%s_%s_%s_angle_%s.jpeg' %(str(root_file), str(gn), str(particle_type), str(trim_rad_in), str(viewing_axis), str(viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.5)
         plt.close()
     if not plot:
         _, x_gen, y_gen, _, _, bin_count, vel, _, _ = voronoi_2d_binning(points[:,0], points[:,1], points_vel, points_num, target_particles, plot=0, quiet=quiet, pixelsize=(2*boxradius/pixel), sn_func=None)
@@ -321,10 +321,10 @@ Purpose
 def velocity_projection(GroupNumList = np.array([4]), 
                         SubGroupNum  = 0,
                         minangle     = 0,
-                        maxangle     = 30,
-                        stepangle    = 30,
-                        spin_rad_in      = np.arange(1.0, 4.5, 0.5),   # multiples of rad
-                        trim_rad_in      = np.arange(1.0, 4.5, 0.5),   # multiples of rad
+                        maxangle     = 0,
+                        stepangle    = 10,
+                        spin_rad_in      = np.arange(1.0, 5.5, 1.0),   # multiples of rad
+                        trim_rad_in      = 'redundant',   # multiples of rad
                         kappa_rad_in     = 30,                          # calculate kappa for this radius [pkpc]
                         align_rad_in     = False,                       # align galaxy to stellar vector in. this radius [pkpc]
                           boxradius_in     = 40,                          # boxradius of 2dhisto
@@ -333,25 +333,25 @@ def velocity_projection(GroupNumList = np.array([4]),
                           resolution       = 1,           # bin size [pkpc]
                           target_particles = 5,          # target voronoi bins
                           viewing_axis     = 'x',         # Which axis to view galaxy from
-                        root_file = 'trial_plots',      # 'trial_plots' or 'plots'
+                        root_file = '/Users/c22048063/Documents/EAGLE/trial_plots',      
                         print_galaxy     = True,        # print galaxy stats in chat
-                        txt_file         = True, 
-                        particle_list_in = ['stars', 'gas', 'gas_sf', 'gas_nsf'],       #, 'gas_nsf'                        # pa fits to be found
-                        angle_type_in    = ['stars_gas', 'stars_gas_sf', 'stars_gas_nsf'],    # misalignment angles to be found ['stars_gas', 'stars_gas_sf', 'stars_gas_nsf', 'gas_sf_gas_nsf']
+                        txt_file         = False, 
+                        particle_list_in = ['stars', 'gas', 'gas_sf'],       #, 'gas_nsf'                        # pa fits to be found
+                        angle_type_in    = ['stars_gas'],    # misalignment angles to be found ['stars_gas', 'stars_gas_sf', 'stars_gas_nsf', 'gas_sf_gas_nsf']
                         orientate_to_axis        = 'z',  # Keep as 'z'
                         viewing_angle            = 0,    # Keep as 0
                           plot_2dhist_graph        = False,
                           plot_voronoi_graph       = False,
-                          plot_2dhist_pafit_graph  = True,
-                          plot_voronoi_pafit_graph = True,
-                        pa_angle_type_in         = 'both',    # which pa angles to use: '2dhist', 'voronoi', 'both'... compare will use either or both and compare to 3D
+                          plot_2dhist_pafit_graph  = False,
+                          plot_voronoi_pafit_graph = False,
+                        pa_angle_type_in         = '2dhist',    # which pa angles to use: '2dhist', 'voronoi', 'both'... compare will use either or both and compare to 3D
                           pa_compare               = False,       # plot the voronoi and 2dhist data pa_fit comparison for single galaxy
                           pa_compare_angle_type_in = 'stars_gas', # which misangle to compare 
-                          pa_compare_use_rad_in    = 2.,          # multiples of halfmass rad
-                            mis_pa_compare                = False,        # plot misangle - pafit for all selected galaxies
+                          pa_compare_use_rad_in    = 2.0,          # multiples of halfmass rad
+                            mis_pa_compare                = True,        # plot misangle - pafit for all selected galaxies
                             mis_pa_compare_type_in        = '2dhisto',    # what to compare to 3D
                             mis_pa_compare_angle_type_in  = 'stars_gas',
-                            mis_pa_compare_use_rad_in     = 2.,
+                            mis_pa_compare_use_rad_in     = 2.0,
                           mis_angle_histo               = False):      # plot histogram of pafit misangles USES SAME _type_in, angle_type_in, _use_rad_in as above
     
     
@@ -379,8 +379,22 @@ def velocity_projection(GroupNumList = np.array([4]),
     all_data      = {}          # has mass and particle count data
     all_pafit     = {}          # has all orientation angles, errors, and systematic errors
     all_paangles  = {}          # has all pa angles
+    
+    trim_rad_in = spin_rad_in
         
     for GroupNum in GroupNumList:
+        
+        #--------------------------------
+        # Create dictionaries
+        all_pafit['%s' %str(GroupNum)] = {'2dhist': {}, 'voronoi': {}}
+        all_paangles['%s' %str(GroupNum)] = {'2dhist': {}, 'voronoi': {}}
+        for viewing_angle in np.arange(minangle, maxangle+1, stepangle):
+            all_pafit['%s' %str(GroupNum)]['2dhist']['%s' %str(viewing_angle)]     = {'rad':[], 'hmr':[], 'stars_angle':[], 'stars_angle_err':[], 'gas_angle':[], 'gas_angle_err':[], 'gas_sf_angle':[], 'gas_sf_angle_err':[], 'gas_nsf_angle':[], 'gas_nsf_angle_err':[]}
+            all_pafit['%s' %str(GroupNum)]['voronoi']['%s' %str(viewing_angle)]    = {'rad':[], 'hmr':[], 'stars_angle':[], 'stars_angle_err':[], 'gas_angle':[], 'gas_angle_err':[], 'gas_sf_angle':[], 'gas_sf_angle_err':[], 'gas_nsf_angle':[], 'gas_nsf_angle_err':[]}
+            all_paangles['%s' %str(GroupNum)]['2dhist']['%s' %str(viewing_angle)]  = {'rad':[], 'hmr':[], 'stars_gas_angle':[], 'stars_gas_angle_err':[], 'stars_gas_sf_angle':[], 'stars_gas_sf_angle_err':[], 'stars_gas_nsf_angle':[], 'stars_gas_nsf_angle_err':[], 'gas_sf_gas_nsf_angle':[], 'gas_sf_gas_nsf_angle_err':[]}
+            all_paangles['%s' %str(GroupNum)]['voronoi']['%s' %str(viewing_angle)] = {'rad':[], 'hmr':[], 'stars_gas_angle':[], 'stars_gas_angle_err':[], 'stars_gas_sf_angle':[], 'stars_gas_sf_angle_err':[], 'stars_gas_nsf_angle':[], 'stars_gas_nsf_angle_err':[], 'gas_sf_gas_nsf_angle':[], 'gas_sf_gas_nsf_angle_err':[]}
+        #--------------------------------
+        
         # Initial extraction of galaxy data
         galaxy = Subhalo_Extract(mySims, dataDir, snapNum, GroupNum, SubGroupNum)
         
@@ -434,7 +448,7 @@ def velocity_projection(GroupNumList = np.array([4]),
                     print('KAPPA RAD CALC [pkpc]:  %s'   %str(kappa_rad_in))
                     print(' HALF-\tANGLES (STARS-)\t\t\tPARTICLE COUNT\t\t\tMASS')
                     print(' RAD\tGAS\tSF\tNSF\tSF-NSF\tSTARS\tGAS\tSF\tNSF\tSTARS\tGAS\tSF\tNSF')
-                    for i in [0, 2, len(spin_rad_in)-1]:
+                    for i in [0, 1, len(spin_rad_in)-1]:
                         with np.errstate(divide='ignore', invalid='ignore'):
                             print(' %.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%i\t%i\t%i\t%i\t%.1f\t%.1f\t%.1f\t%.1f' %(subhalo.mis_angles['hmr'][i], subhalo.mis_angles['stars_gas'][i], subhalo.mis_angles['stars_gas_sf'][i], subhalo.mis_angles['stars_gas_nsf'][i], subhalo.mis_angles['gas_sf_gas_nsf'][i], subhalo.particles['stars'][i], subhalo.particles['gas'][i], subhalo.particles['gas_sf'][i], subhalo.particles['gas_nsf'][i], np.log10(subhalo.particles['stars_mass'][i]), np.log10(subhalo.particles['gas_mass'][i]), np.log10(subhalo.particles['gas_sf_mass'][i]), np.log10(subhalo.particles['gas_nsf_mass'][i])))        
                     print('CENTRE [pMpc]:      [%.5f,\t%.5f,\t%.5f]' %(subhalo.centre[0]/1000, subhalo.centre[1]/1000, subhalo.centre[2]/1000))        # [pkpc]
@@ -443,8 +457,8 @@ def velocity_projection(GroupNumList = np.array([4]),
                     
                 # Create txt file with output for that galaxy
                 if txt_file == True:
-                    dash = '-' * 100
-                    f = open("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/NEW_velproj.txt" %(str(root_file), str(GroupNum)), 'w+')
+                    dash = '-' * 130
+                    f = open("%s/galaxy_%s/velproj.txt" %(str(root_file), str(GroupNum)), 'w+')
                     f.write(dash)
                     f.write('\nGROUP NUMBER:           %s' %str(subhalo.gn))
                     f.write('\nSUBGROUP NUMBER:        %s' %str(subhalo.sgn))
@@ -481,19 +495,11 @@ def velocity_projection(GroupNumList = np.array([4]),
                 else:
                     print('%s' %str(viewing_angle), end=' ')
             
-                
-            #-------------------------------- 
-            # Create dictionaries
-            all_pafit = {'%s' %str(subhalo.gn): {'2dhist': {'%s' %str(viewing_angle): {'rad':[], 'hmr':[], 'stars_angle':[], 'stars_angle_err':[], 'gas_angle':[], 'gas_angle_err':[], 'gas_sf_angle':[], 'gas_sf_angle_err':[], 'gas_nsf_angle':[], 'gas_nsf_angle_err':[]}}, 'voronoi': {'%s' %str(viewing_angle): {'rad':[], 'hmr':[], 'stars_angle':[], 'stars_angle_err':[], 'gas_angle':[], 'gas_angle_err':[], 'gas_sf_angle':[], 'gas_sf_angle_err':[], 'gas_nsf_angle':[], 'gas_nsf_angle_err':[]}}}}
-            all_paangles = {'%s' %str(subhalo.gn): {'2dhist': {'%s' %str(viewing_angle): {'rad':[], 'hmr':[], 'stars_gas_angle':[], 'stars_gas_angle_err':[], 'stars_gas_sf_angle':[], 'stars_gas_sf_angle_err':[], 'stars_gas_nsf_angle':[], 'stars_gas_nsf_angle_err':[], 'gas_sf_gas_nsf_angle':[], 'gas_sf_gas_nsf_angle_err':[]}}, 'voronoi': {'%s' %str(viewing_angle): {'rad':[], 'hmr':[], 'stars_gas_angle':[], 'stars_gas_angle_err':[], 'stars_gas_sf_angle':[], 'stars_gas_sf_angle_err':[], 'stars_gas_nsf_angle':[], 'stars_gas_nsf_angle_err':[], 'gas_sf_gas_nsf_angle':[], 'gas_sf_gas_nsf_angle_err':[]}}}}
-
-            #---------------------------------
-            
-            
+        
             # Loop over multiples of halfmass_rad
             j = 0
             for trim_rad_i in trim_rad:
-                print(trim_rad_i) 
+                #print(trim_rad_i) 
                 
                 # Function to plot 2dhist-fed data (splinter from _weight_histo)
                 def _plot_2dhist(colormap='coolwarm'):
@@ -536,7 +542,7 @@ def velocity_projection(GroupNumList = np.array([4]),
                     cax = plt.axes([0.92, 0.11, 0.015, 0.77])
                     plt.colorbar(im, cax=cax, label='mass-weighted mean velocity [km/s]', extend='both')
             
-                    plt.savefig('/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/2dhist_rad%s_ax%s_angle%s.jpeg' %(str(root_file), str(subhalo.gn), str(trim_rad_i), str(viewing_axis), str(viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.3)                
+                    plt.savefig('%s/galaxy_%s/2dhist_rad%s_ax%s_angle%s.jpeg' %(str(root_file), str(subhalo.gn), str(trim_rad_i), str(viewing_axis), str(viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.3)                
                     plt.close()
                 
                 # Function to plot voronoi-fed data (splinter from _voronoi_tessalate)
@@ -591,7 +597,7 @@ def velocity_projection(GroupNumList = np.array([4]),
                     cax = plt.axes([0.92, 0.11, 0.015, 0.77])
                     plt.colorbar(mapper, cax=cax, label='mass-weighted mean velocity [km/s]', extend='both')
         
-                    plt.savefig('/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/voronoi_rad%s_ax%s_angle%s.jpeg' %(str(root_file), str(subhalo.gn), str(trim_rad_i), str(viewing_axis), str(viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.3)                
+                    plt.savefig('%s/galaxy_%s/voronoi_rad%s_ax%s_angle%s.jpeg' %(str(root_file), str(subhalo.gn), str(trim_rad_i), str(viewing_axis), str(viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.3)                
                     plt.close()
                 
                 #----------------------------------
@@ -619,7 +625,7 @@ def velocity_projection(GroupNumList = np.array([4]),
                         # Run pa_fit on 2dhist
                         if plot:
                             angle_particle, angle_err_particle, velsyst_particle = fit_kinematic_pa(points_particle[:,0], points_particle[:,1], vel_bin_particle, quiet=1, plot=1)
-                            plt.savefig('/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/PA_2dhist_%s_rad%s_ax%s_angle%s.jpeg' %(str(root_file), str(subhalo.gn), str(particle_list_in_i), str(trim_rad_i), str(viewing_axis), str(viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.3)
+                            plt.savefig('%s/galaxy_%s/PA_2dhist_%s_rad%s_ax%s_angle%s.jpeg' %(str(root_file), str(subhalo.gn), str(particle_list_in_i), str(trim_rad_i), str(viewing_axis), str(viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.3)
                             plt.close()
                         elif not plot:
                             angle_particle, angle_err_particle, velsyst_particle = fit_kinematic_pa(points_particle[:,0], points_particle[:,1], vel_bin_particle, quiet=1, plot=0)
@@ -708,12 +714,12 @@ def velocity_projection(GroupNumList = np.array([4]),
                         
                     for particle_list_in_i in particle_list_in:
                         
-                        
+                        print('Particle count: %i' %subhalo.particles[particle_list_in_i][int(np.where(subhalo.particles['hmr'] == trim_rad_i)[0])])
                         
                         
                         # Check particle count before voronoi binning
                         if subhalo.particles[particle_list_in_i][int(np.where(subhalo.particles['hmr'] == trim_rad_i)[0])] < 10*target_particles:
-                            print('Particle count: %i' %subhalo.particles[particle_list_in_i][int(np.where(subhalo.particles['hmr'] == trim_rad_i)[0])])
+                            print('aParticle count: %i' %subhalo.particles[particle_list_in_i][int(np.where(subhalo.particles['hmr'] == trim_rad_i)[0])])
                             
                             # Append to dictionary
                             all_pafit['%s' %str(subhalo.gn)]['voronoi']['%s' %str(viewing_angle)]['%s_angle' %particle_list_in_i].append(math.nan)
@@ -721,15 +727,13 @@ def velocity_projection(GroupNumList = np.array([4]),
                             
                             continue
                             
-                            
-                        
                         # Extract points
                         points_particle, vel_bin_particle, vor = _voronoi_tessalate(subhalo.gn, root_file, subhalo.data['%s' %str(trim_rad_i)], particle_list_in_i, viewing_angle, viewing_axis, resolution, target_particles, boxradius, trim_rad_i*subhalo.halfmass_rad)
                     
                         # Run pa_fit on voronoi
                         if plot:
                             angle_particle, angle_err_particle, velsyst_particle = fit_kinematic_pa(points_particle[:,0], points_particle[:,1], vel_bin_particle, quiet=1, plot=1)
-                            plt.savefig('/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/PA_voronoi_%s_rad%s_ax%s_angle%s.jpeg' %(str(root_file), str(subhalo.gn), str(particle_list_in_i), str(trim_rad_i), str(viewing_axis), str(viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.3)
+                            plt.savefig('%s/galaxy_%s/PA_voronoi_%s_rad%s_ax%s_angle%s.jpeg' %(str(root_file), str(subhalo.gn), str(particle_list_in_i), str(trim_rad_i), str(viewing_axis), str(viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.3)
                             plt.close()
                         
                         elif not plot:
@@ -821,19 +825,6 @@ def velocity_projection(GroupNumList = np.array([4]),
                     _pa_fit_voronoi()
                 #--------------------------------
                 
-                #--------------------------------
-                # Call function to track difference between 2dhist and voronoi over all requested viewing angles
-                if pa_compare == 1:
-                    # PA fit routine - determines what pa angles are recorded
-                    if pa_angle_type_in == '2dhist':
-                        _pa_fit_2dhist()
-                    elif pa_angle_type_in == 'voronoi':
-                        _pa_fit_voronoi()
-                    elif pa_angle_type_in == 'both':
-                        _pa_fit_2dhist()
-                        _pa_fit_voronoi()
-                #--------------------------------
-                
                 j = j + 1
             
             
@@ -886,7 +877,7 @@ def velocity_projection(GroupNumList = np.array([4]),
                     f.write('\n' + dash)
                     f.write('\nPA FITS 2DHIST & VORONOI [deg]')
                     f.write('\nVIEWING ANGLE: %s' %str(subhalo.viewing_angle))
-                    f.write('\n\t2DHIST\t\t\t\t\t\tVORONOI')
+                    f.write('\n\t2DHIST\t' + '\t'*2*(len(particle_list_in)-1) + '\tVORONOI')
                     f.write('\nHMR')
                     for particle_list_in_i in particle_list_in:
                         f.write('\t%s\t' %str(particle_list_in_i).upper())
@@ -932,7 +923,7 @@ def velocity_projection(GroupNumList = np.array([4]),
                     f.write('\n' + dash)
                     f.write('\nPA MISALIGNMENT ANGLES 2DHIST & VORONOI [deg]')
                     f.write('\nVIEWING ANGLE: %s' %str(subhalo.viewing_angle))
-                    f.write('\n\t2DHIST\t\t\t\tVORONOI')
+                    f.write('\n\t2DHIST\t' + '\t'*2*(len(angle_type_in)-1) + '\tVORONOI')
                     f.write('\nHMR')
                     for angle_type_in_i in angle_type_in:
                         f.write('\t%s' %str(angle_type_in_i).upper())
@@ -964,7 +955,8 @@ def velocity_projection(GroupNumList = np.array([4]),
             voro_points_err = []
             
             # Find row for which hmr = pa_compare_use_rad_in (=2.)
-            mask = np.where(all_paangles['1']['2dhist']['0']['hmr'] == pa_compare_use_rad_in)
+            mask = np.where(np.array(all_paangles['%s' %str(subhalo.gn)]['2dhist']['%s' %str(maxangle)]['hmr']) == pa_compare_use_rad_in)
+            
             for viewing_angle_i in np.arange(minangle, maxangle+1, stepangle):
                 hist_points.append(all_paangles['%s' %str(subhalo.gn)]['2dhist']['%s' %str(viewing_angle_i)]['%s_angle' %pa_compare_angle_type_in][int(mask[0])])
                 hist_points_err.append(all_paangles['%s' %str(subhalo.gn)]['2dhist']['%s' %str(viewing_angle_i)]['%s_angle_err' %pa_compare_angle_type_in][int(mask[0])])
@@ -980,15 +972,18 @@ def velocity_projection(GroupNumList = np.array([4]),
             plt.errorbar(np.arange(minangle, maxangle+1, stepangle), voro_points, xerr=None, yerr=voro_points_err, label='voronoi', alpha=0.6, ls='none', ms=2)
                    
             # Formatting
-            plt.axhline(subhalo.mis_angle[int(mask[0])], c='k', ls='--')
+            plt.axhline(subhalo.mis_angles['%s' %pa_compare_angle_type_in][int(mask[0])], c='k', ls='--')
+            
+            print(subhalo.mis_angles['%s' %pa_compare_angle_type_in][int(mask[0])])
+            
             plt.xlabel('Viewing angle')
             plt.ylabel('fit_kinematic_pa')
-            plt.title('GroupNum %s: %s, %s hmr' %(str(subhalo.gn), pa_compare_type_in, str(pa_compare_use_rad_in)))
+            plt.title('GroupNum %s: %s, %s hmr' %(str(subhalo.gn), pa_compare_angle_type_in, str(pa_compare_use_rad_in)))
             plt.legend()
             plt.tight_layout()
             
             # pa_compare_type_in
-            plt.savefig('/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/NEW_PAcompare_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), pa_compare_type_in, str(pa_compare_use_rad_in)), dpi=300, bbox_inches='tight', pad_inches=0.2)
+            plt.savefig('%s/galaxy_%s/NEW_PAcompare_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), pa_compare_angle_type_in, str(pa_compare_use_rad_in)), dpi=300, bbox_inches='tight', pad_inches=0.2)
             plt.close()      
 
 
@@ -1088,7 +1083,7 @@ def velocity_projection(GroupNumList = np.array([4]),
         plt.legend()
         plt.tight_layout()
         
-        plt.savefig('/Users/c22048063/Documents/EAGLE/%s/NEW_misPAcompare_%s_%s_%s.jpeg' %(str(root_file), mis_pa_compare_angle_type_in, mis_pa_compare, str(mis_pa_compare_use_rad_in)), dpi=300, bbox_inches='tight', pad_inches=0.2)
+        plt.savefig('%s/NEW_misPAcompare_%s_%s_%s.jpeg' %(str(root_file), mis_pa_compare_angle_type_in, mis_pa_compare, str(mis_pa_compare_use_rad_in)), dpi=300, bbox_inches='tight', pad_inches=0.2)
         plt.close()
 
     # Plot to create histogram of pafit angles for galaxy selection
@@ -1121,7 +1116,7 @@ def velocity_projection(GroupNumList = np.array([4]),
         plt.suptitle("L%s: %s Misalignment, type: %s, hmr: %s" %(str(mySims[0][1]), mis_pa_compare_angle_type_in, mis_pa_compare, str(mis_pa_compare_use_rad_in)))
         plt.legend()
     
-        plt.savefig("/Users/c22048063/Documents/EAGLE/%s/NEW_Misangle_2D_%s_%s_%s.jpeg" %(str(root_file), mis_pa_compare_angle_type_in, mis_pa_compare, str(mis_pa_compare_use_rad_in)), format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
+        plt.savefig("%s/NEW_Misangle_2D_%s_%s_%s.jpeg" %(str(root_file), mis_pa_compare_angle_type_in, mis_pa_compare, str(mis_pa_compare_use_rad_in)), format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
         plt.close()
 
 

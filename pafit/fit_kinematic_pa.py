@@ -136,17 +136,41 @@ def fit_kinematic_pa(x, y, vel, debug=False, nsteps=361,
     #-----------------------------
     # Start of Max modifications:
     
-    if angBest < 0:
+    print('\nangBest', angBest)
+    
+    if angBest < 0:		#range is from -180 to +180, so if negative will add 180 to bring in range 0 to 360
         angBest += 180
     
     # Will find angle from y-axis to negative
     ang = [0,np.pi] + np.radians(angBest)
     mask = np.where(((np.arctan2(y,x) + np.pi) > ang[0]) & ((np.arctan2(y,x) + np.pi) < ang[1]))
     
-    if np.mean(velSym[mask]) < 1:
+    print('velSym mean: ', np.mean(velSym[mask]))
+    
+    mask_other = np.array([i for i in np.arange(0, len(velSym), 1) if i not in mask[0]])
+    print('velSym mean other: ', np.mean(velSym[mask_other]))
+    
+    if (np.mean(velSym[mask]) < 0) & (np.mean(velSym[mask_other]) < 0):
+        print('velSym double negative')
+        if np.mean(velSym[mask]) > np.mean(velSym[mask_other]):
+            print('velSym FLIPPED as greater negative exists')
+    if (np.mean(velSym[mask]) > 0) & (np.mean(velSym[mask_other]) > 0):
+        print('velSym double positive')
+        if np.mean(velSym[mask]) < np.mean(velSym[mask_other]):
+            print('velSym FLIPPED as greater positive exists')
+	    	
+	
+    """WE WANT MASK TO BE THE LARGER ONE
+    - -- ... FAILS... both negative, so assumes - is negative and -- is positive... so we flip it if mask > mask_other
+    -- - ... TRUE.... both negative, and correctly assumes -- is negative, so we dont flip if mask < mask_other
+    + ++ ... FAILS... both positive, so assumes + is positive and ++ is negative... so we clearly flip if mask < mask_other
+    ++ + ... TRUE... both positive, and correctly assymes ++ is positive, so we dont flip if mask > mask_other"""
+    
+    if np.mean(velSym[mask]) < np.mean(velSym[mask_other]):
         angBest += 180
         if angBest > 360:
             angBest = angBest - 360 
+        print('angBest mean flipped:', angBest)
             
     x_mask = x[mask]
     y_mask = y[mask]

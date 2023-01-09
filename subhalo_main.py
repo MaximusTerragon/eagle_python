@@ -248,14 +248,14 @@ galaxy. values all from above function
 
 viewing_angle:
     Will rotate output particle data by this angle
-spin_rad_in:    array
+spin_rad_in:    array [pkpc] ... *subhalo.halfmass_rad externally already...
     When given a list of values, for example:
     galaxy.halfmass_rad*np.arange(0.5, 10.5, 0.5)
     will calculate spin values within these values
 kappa_rad_in:   False or value [pkpc]
     Will calculate kappa for this radius from centre
     of galaxy. Usually 30
-trim_rad_in:    False of value [pkpc]
+trim_rad_in:    array [multiples of rad]
     Will trim the output data to this radius. This is
     used for render and 2dhisto
 align_rad_in:   False or value [pkpc]
@@ -727,7 +727,7 @@ class Subhalo:
         return K_rot/K_tot
         
         
-### MANUAL CALL
+"""### MANUAL CALL
 # Directories of data hdf5 file(s)
 dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_028_z000p000/snap_028_z000p000.0.hdf5'
 
@@ -761,7 +761,7 @@ subhalo = Subhalo(galaxy.halfmass_rad, galaxy.centre, galaxy.centre_mass, galaxy
                                     orientate_to_axis)     
 
 print(subhalo.data_align.keys())
-
+"""
 
 
 

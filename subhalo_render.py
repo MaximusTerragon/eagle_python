@@ -21,15 +21,15 @@ snapNum = 28
 #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
 def galaxy_render(GroupNumList = np.array([4]),
                   SubGroupNum  = 0, 
-                  particles    = 10000,    #5000,10000
+                  particles    = 5000,    #5000,10000
                   minangle     = 0,
                   maxangle     = 0, 
                   stepangle    = 30, 
-                  spin_rad_in  = np.arange(1.0, 10.5, 0.5),     # multiples of rad
-                  trim_rad_in  = np.array([100]),     # trim particles <radius, False, 'rad', 'tworad', num [pkpc]
+                  spin_rad_in  = np.arange(1.0, 10.5, 1.0),     # multiples of rad
+                  trim_rad_in  = np.array([2.0]),     # trim particles # multiples of rad, num [pkpc]
                   kappa_rad_in = 30,                            # calculate kappa for this radius [pkpc]
                   align_rad_in = False, #False                    # align galaxy to stellar vector in. this radius [pkpc]
-                  boxradius_in = 40,                # boxradius of render
+                  boxradius_in = 10,                # boxradius of render
                   root_file = 'trial_plots',        # 'trial_plots' or 'plots'
                   print_galaxy = True,              # print galaxy stats in chat
                   txt_file     = False,              # create a txt file with print data
@@ -262,5 +262,6 @@ def galaxy_render(GroupNumList = np.array([4]),
         
         print('')
         
-        
+#--------------      
 galaxy_render()
+#--------------

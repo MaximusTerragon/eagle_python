@@ -136,7 +136,7 @@ def fit_kinematic_pa(x, y, vel, debug=False, nsteps=361,
     #-----------------------------
     # Start of Max modifications:
     
-    print('\nangBest', angBest)
+    print('angBest', angBest)
     
     if angBest < 0:		#range is from -180 to +180, so if negative will add 180 to bring in range 0 to 360
         angBest += 180

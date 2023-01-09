@@ -80,10 +80,10 @@ class Sample:
 
 
 def plot_misalignment_angle(galaxy_mass_limit = 1e9,
-                            use_angle_in    = 1.,                                           # multiples of rad
-                            plot_angle_type = np.array(['stars_gas', 'stars_gas_sf', 'stars_gas_nsf']),       # gas, gas_sf, gas_nsf
+                            use_angle_in    = 1.,                          # multiples of rad
+                            plot_angle_type = np.array(['stars_gas_sf'])  #np.array(['stars_gas', 'stars_gas_sf', 'stars_gas_nsf']),       # gas, gas_sf, gas_nsf
                               plot_single     = True,                        # whether to create single plots
-                              plot_together   = True,                       # or overlapping
+                              plot_together   = False,                       # or overlapping
                             spin_rad_in     = np.arange(0.5, 10.5, 0.5),    # multiples of rad
                             trim_rad_in  = np.array([100]),                 # keep as 100
                             kappa_rad_in = 30,                              # calculate kappa for this radius [pkpc]
@@ -217,6 +217,8 @@ def plot_misalignment_angle(galaxy_mass_limit = 1e9,
     
         plt.savefig("/Users/c22048063/Documents/EAGLE/trial_plots/Misangle_3D_rad%s.jpeg" %(str(int(use_angle_in))), format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
         plt.close()
-    
-plot_misalignment_angle()  
+  
+#------------------------  
+plot_misalignment_angle()
+#------------------------  
 

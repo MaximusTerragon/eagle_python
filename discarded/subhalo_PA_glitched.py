@@ -1281,7 +1281,7 @@ if __name__ == '__main__':
                     
                     # Run pa_fit on 2dhist
                     if plot:
-                        angle_stars, angle_err_stars, velsyst_gas = fit_kinematic_pa(points_stars[:,0], points_stars[:,1], vel_bin_stars, quiet=1, plot=1)
+                        angle_stars, angle_err_stars, velsyst_stars = fit_kinematic_pa(points_stars[:,0], points_stars[:,1], vel_bin_stars, quiet=1, plot=1)
                         plt.savefig('/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/PA_stars_2dhist_%s_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), str(boxradius_in), str(calc_spin_rad_in), str(subhalo.viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.3)
                         plt.close()
                         
@@ -1359,7 +1359,7 @@ if __name__ == '__main__':
                     pa_fit_list       = np.append(pa_fit_list, pa_fit)
                     pa_fit_error_list = np.append(pa_fit_error_list, pa_fit_error)
                     
-                # Call function to track difference between 2dhist and voronoi
+                # Call function to track difference between 2dhist and voronoi for all angles
                 if pa_compare == 1:
                     # PA fit routine
                     pa_fit, pa_fit_error = _pa_fit_2dhist()

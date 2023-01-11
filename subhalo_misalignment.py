@@ -84,10 +84,12 @@ def plot_misalignment_angle(galaxy_mass_limit = 1e9,
                             plot_angle_type = np.array(['stars_gas_sf'])  #np.array(['stars_gas', 'stars_gas_sf', 'stars_gas_nsf']),       # gas, gas_sf, gas_nsf
                               plot_single     = True,                        # whether to create single plots
                               plot_together   = False,                       # or overlapping
+                                savefig   = False,
+                                showfig   = True,                      
                             spin_rad_in     = np.arange(0.5, 10.5, 0.5),    # multiples of rad
-                            trim_rad_in  = np.array([100]),                 # keep as 100
-                            kappa_rad_in = 30,                              # calculate kappa for this radius [pkpc]
-                            align_rad_in = False,                           # keep on False              
+                            trim_rad_in     = np.array([100]),                 # keep as 100
+                            kappa_rad_in    = 30,                              # calculate kappa for this radius [pkpc]
+                            align_rad_in    = False,                           # keep on False              
                             root_file = 'trial_plots',
                             print_galaxy  = True,
                             orientate_to_axis = 'z',     # keep as z
@@ -182,7 +184,10 @@ def plot_misalignment_angle(galaxy_mass_limit = 1e9,
             plt.suptitle("L%s: %s Misalignment, type: 3D, hmr: %s" %(str(mySims[0][1]), plot_angle_type_i, str(use_angle_in)))
             plt.legend()
     
-            plt.savefig("/Users/c22048063/Documents/EAGLE/trial_plots/Misangle_3D_%s_rad%s.jpeg" %(plot_angle_type_i, str(int(use_angle_in))), format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
+            if savefig == True:
+                plt.savefig("/Users/c22048063/Documents/EAGLE/trial_plots/Misangle_3D_%s_rad%s.jpeg" %(plot_angle_type_i, str(int(use_angle_in))), format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
+            if showfig == True:
+                plt.show()
             plt.close()
             
     if plot_together:
@@ -212,10 +217,12 @@ def plot_misalignment_angle(galaxy_mass_limit = 1e9,
         # Annotations
         ax.axvline(30, ls='--', lw=0.5, c='k')
         plt.suptitle("L%s: Gas - Star Misalignments, type: 3D, hmr: %s" %(str(mySims[0][1]), str(use_angle_in)))
-        
         plt.legend()
     
-        plt.savefig("/Users/c22048063/Documents/EAGLE/trial_plots/Misangle_3D_rad%s.jpeg" %(str(int(use_angle_in))), format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
+        if savefig == True:
+            plt.savefig("/Users/c22048063/Documents/EAGLE/trial_plots/Misangle_3D_rad%s.jpeg" %(str(int(use_angle_in))), format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
+        if showfig == True:
+            plt.show()
         plt.close()
   
 #------------------------  

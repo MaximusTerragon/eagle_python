@@ -346,6 +346,17 @@ Output Parameters
         ['stars_gas_sf']   - [deg]
         ['stars_gas_nsf']  - [deg]
         ['gas_sf_gas_nsf'] - [deg]
+.mis_angles_proj                    dictionary
+    Has projected misalignment angles:
+        ['x']
+        ['y']
+        ['z']
+            ['rad']            - [pkpc]
+            ['hmr']            - multiples of halfmass_rad
+            ['stars_gas']      - [deg]
+            ['stars_gas_sf']   - [deg]
+            ['stars_gas_nsf']  - [deg]
+            ['gas_sf_gas_nsf'] - [deg]
         
 """
 class Subhalo:
@@ -508,7 +519,8 @@ class Subhalo:
                 self.particles[parttype_name] = tmp_particles
                 self.particles[parttype_name + '_mass'] = tmp_mass
                 
-            # Find misalignment angles (does not find difference between every component ei. gas_sf and gas_nsf)
+            #--------------------    
+            # Find 3D misalignment angles
             self.mis_angles = {}
             self.mis_angles['rad'] = spin_rad_in
             self.mis_angles['hmr'] = spin_rad_in/self.halfmass_rad
@@ -518,15 +530,32 @@ class Subhalo:
                     tmp_angles.append(self.misalignment_angle(self.spins[parttype_name[0]][i], self.spins[parttype_name[1]][i]))
                 self.mis_angles['%s_%s' %(parttype_name[0], parttype_name[1])] = tmp_angles
                 
+            # Find 2D projected misalignment angles
+            self.mis_angles_proj = {'x': {}, 'y': {}, 'z': {}}
+            for viewing_axis_i in ['x', 'y', 'z']:
+                self.mis_angles_proj[viewing_axis_i]['rad'] = spin_rad_in
+                self.mis_angles_proj[viewing_axis_i]['hmr'] = spin_rad_in/self.halfmass_rad
                 
+                if viewing_axis_i == 'x':
+                    for parttype_name in [['stars', 'gas'], ['stars', 'gas_sf'], ['stars', 'gas_nsf'], ['gas_sf', 'gas_nsf']]:
+                        tmp_angles = []
+                        for i in np.arange(0, len(self.spins['stars']), 1):
+                            tmp_angles.append(self.misalignment_angle(np.array([self.spins[parttype_name[0]][i][1], self.spins[parttype_name[0]][i][2]]), np.array([self.spins[parttype_name[1]][i][1], self.spins[parttype_name[1]][i][2]])))
+                        self.mis_angles_proj['x']['%s_%s' %(parttype_name[0], parttype_name[1])] = tmp_angles
+                if viewing_axis_i == 'y':
+                    for parttype_name in [['stars', 'gas'], ['stars', 'gas_sf'], ['stars', 'gas_nsf'], ['gas_sf', 'gas_nsf']]:
+                        tmp_angles = []
+                        for i in np.arange(0, len(self.spins['stars']), 1):
+                            tmp_angles.append(self.misalignment_angle(np.array([self.spins[parttype_name[0]][i][0], self.spins[parttype_name[0]][i][2]]), np.array([self.spins[parttype_name[1]][i][0], self.spins[parttype_name[1]][i][2]])))
+                        self.mis_angles_proj['y']['%s_%s' %(parttype_name[0], parttype_name[1])] = tmp_angles
+                if viewing_axis_i == 'z':
+                    for parttype_name in [['stars', 'gas'], ['stars', 'gas_sf'], ['stars', 'gas_nsf'], ['gas_sf', 'gas_nsf']]:
+                        tmp_angles = []
+                        for i in np.arange(0, len(self.spins['stars']), 1):
+                            tmp_angles.append(self.misalignment_angle(np.array([self.spins[parttype_name[0]][i][0], self.spins[parttype_name[0]][i][1]]), np.array([self.spins[parttype_name[1]][i][0], self.spins[parttype_name[1]][i][1]])))
+                        self.mis_angles_proj['z']['%s_%s' %(parttype_name[0], parttype_name[1])] = tmp_angles
                 
-                
-                    
-            """# Trim output data to selected radii (trim_rad)
-            if trim_rad_in:
-                for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
-                    self.data['%s'%parttype_name] = self.trim_within_rad(self.data[parttype_name], trim_rad_in)
-            """       
+            
             #---------------------
             if len(trim_rad_in) > 0:
                 tmp_data = {}
@@ -539,8 +568,6 @@ class Subhalo:
                     
                 self.data = tmp_data
             #---------------------
-            
-            
             
             
             if not quiet:
@@ -584,14 +611,14 @@ class Subhalo:
             spin = np.sum(L, axis=0)/np.sum(arr['Mass'][mask])
         
         # Expressing as unit vector
-        spin_unit = spin / (spin[0]**2 + spin[1]**2 + spin[2]**2)**0.5
+        spin_unit = spin / np.linalg.norm(spin)
         
         # OUTPUTS UNIT VECTOR OF SPIN, PARTICLE COUNT WITHIN RAD, MASS WITHIN RAD 
         return spin_unit, len(r[mask]), np.sum(arr['Mass'][mask])
         
     def misalignment_angle(self, angle1, angle2):
         # Find the misalignment angle
-        angle = np.rad2deg(np.arccos(np.clip(np.dot(angle1, angle2), -1.0, 1.0)))     # [deg]
+        angle = np.rad2deg(np.arccos(np.clip(np.dot(angle1/np.linalg.norm(angle1), angle2/np.linalg.norm(angle2)), -1.0, 1.0)))     # [deg]
         
         return angle
     

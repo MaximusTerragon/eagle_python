@@ -28,7 +28,11 @@ print(5+math.nan)
 
 test_array = np.array([1, 2, 3, 4, 5])
 print(test_array)
-print(test_array[0])
+
+if all(ele > 5 for ele in test_array) == False:
+    print('yay')
+elif all(ele > 5 for ele in test_array) == True:
+    print('asfasf')
 
 plt.scatter(x, y)
 plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/aaaaaaaaaaa', dpi=300, bbox_inches='tight', pad_inches=0.2)

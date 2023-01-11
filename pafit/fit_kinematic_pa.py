@@ -136,7 +136,7 @@ def fit_kinematic_pa(x, y, vel, debug=False, nsteps=361,
     #-----------------------------
     # Start of Max modifications:
     
-    print('angBest', angBest)
+    #print('angBest', angBest)
     
     if angBest < 0:		#range is from -180 to +180, so if negative will add 180 to bring in range 0 to 360
         angBest += 180
@@ -145,19 +145,19 @@ def fit_kinematic_pa(x, y, vel, debug=False, nsteps=361,
     ang = [0,np.pi] + np.radians(angBest)
     mask = np.where(((np.arctan2(y,x) + np.pi) > ang[0]) & ((np.arctan2(y,x) + np.pi) < ang[1]))
     
-    print('velSym mean: ', np.mean(velSym[mask]))
+    #print('velSym mean: ', np.mean(velSym[mask]))
     
     mask_other = np.array([i for i in np.arange(0, len(velSym), 1) if i not in mask[0]])
-    print('velSym mean other: ', np.mean(velSym[mask_other]))
+    #print('velSym mean other: ', np.mean(velSym[mask_other]))
     
-    if (np.mean(velSym[mask]) < 0) & (np.mean(velSym[mask_other]) < 0):
-        print('velSym double negative')
-        if np.mean(velSym[mask]) > np.mean(velSym[mask_other]):
-            print('velSym FLIPPED as greater negative exists')
-    if (np.mean(velSym[mask]) > 0) & (np.mean(velSym[mask_other]) > 0):
-        print('velSym double positive')
-        if np.mean(velSym[mask]) < np.mean(velSym[mask_other]):
-            print('velSym FLIPPED as greater positive exists')
+    #if (np.mean(velSym[mask]) < 0) & (np.mean(velSym[mask_other]) < 0):
+        #print('velSym double negative')
+        #if np.mean(velSym[mask]) > np.mean(velSym[mask_other]):
+            #print('velSym FLIPPED as greater negative exists')
+    #if (np.mean(velSym[mask]) > 0) & (np.mean(velSym[mask_other]) > 0):
+        #print('velSym double positive')
+        #if np.mean(velSym[mask]) < np.mean(velSym[mask_other]):
+            #print('velSym FLIPPED as greater positive exists')
 	    	
 	
     """WE WANT MASK TO BE THE LARGER ONE
@@ -170,7 +170,7 @@ def fit_kinematic_pa(x, y, vel, debug=False, nsteps=361,
         angBest += 180
         if angBest > 360:
             angBest = angBest - 360 
-        print('angBest mean flipped:', angBest)
+        #print('angBest mean flipped:', angBest)
             
     x_mask = x[mask]
     y_mask = y[mask]

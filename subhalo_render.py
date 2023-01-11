@@ -19,29 +19,29 @@ snapNum = 28
     
 #1, 4, 7, 16
 #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
-def galaxy_render(GroupNumList = np.array([4]),
+def galaxy_render(GroupNumList = np.array([3]),
                   SubGroupNum  = 0, 
-                  particles    = 5000,    #5000,10000
+                  particles    = 10000,    #5000,10000
                   minangle     = 0,
                   maxangle     = 0, 
                   stepangle    = 30, 
                   spin_rad_in  = np.arange(1.0, 10.5, 1.0),     # multiples of rad
-                  trim_rad_in  = np.array([2.0]),     # trim particles # multiples of rad, num [pkpc]
+                  trim_rad_in  = np.array([20]),     # trim particles # multiples of rad, num [pkpc]
                   kappa_rad_in = 30,                            # calculate kappa for this radius [pkpc]
                   align_rad_in = False, #False                    # align galaxy to stellar vector in. this radius [pkpc]
-                  boxradius_in = 10,                # boxradius of render
+                  boxradius_in = 100,                # boxradius of render
                   root_file = 'trial_plots',        # 'trial_plots' or 'plots'
                   print_galaxy = True,              # print galaxy stats in chat
                   txt_file     = False,              # create a txt file with print data
-                  stars        = True,
+                  stars        = False,
                   gas_sf       = True,
                   gas_nsf      = True,
                   orientate_to_axis = 'z',          
                   viewing_angle     = 0,            # Keep as 0
                   plot_spin_vectors = True,
-                  spin_vector_rad   = 'tworad',      # radius of spinvector to display
+                    spin_vector_rad   = 10.0,      # radius of spinvector to display (in hmr)
                   centre_of_pot     = True, 
-                  centre_of_mass    = False,
+                  centre_of_mass    = True,
                   axis              = True,
                   savefig           = False,
                   plotshow          = True):
@@ -94,17 +94,18 @@ def galaxy_render(GroupNumList = np.array([4]),
             print('KAPPA RAD CALC [pkpc]:  %s'   %str(kappa_rad_in))
             print(' HALF-\tANGLES (STARS-)\t\t\tPARTICLE COUNT\t\t\tMASS')
             print(' RAD\tGAS\tSF\tNSF\tSF-NSF\tSTARS\tGAS\tSF\tNSF\tSTARS\tGAS\tSF\tNSF')
-            for i in [1, 3, len(spin_rad_in)-1]:
+            for i in np.arange(0, len(spin_rad_in), 1):
                 with np.errstate(divide='ignore', invalid='ignore'):
                     print(' %.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%i\t%i\t%i\t%i\t%.1f\t%.1f\t%.1f\t%.1f' %(subhalo.mis_angles['hmr'][i], subhalo.mis_angles['stars_gas'][i], subhalo.mis_angles['stars_gas_sf'][i], subhalo.mis_angles['stars_gas_nsf'][i], subhalo.mis_angles['gas_sf_gas_nsf'][i], subhalo.particles['stars'][i], subhalo.particles['gas'][i], subhalo.particles['gas_sf'][i], subhalo.particles['gas_nsf'][i], np.log10(subhalo.particles['stars_mass'][i]), np.log10(subhalo.particles['gas_mass'][i]), np.log10(subhalo.particles['gas_sf_mass'][i]), np.log10(subhalo.particles['gas_nsf_mass'][i])))        
             print('CENTRE [pMpc]:      [%.5f,\t%.5f,\t%.5f]' %(subhalo.centre[0]/1000, subhalo.centre[1]/1000, subhalo.centre[2]/1000))        # [pkpc]
             print('PERC VEL [pkm/s]:   [%.5f,\t%.5f,\t%.5f]' %(subhalo.perc_vel[0], subhalo.perc_vel[1], subhalo.perc_vel[2]))  # [pkm/s]
             #print('VIEWING ANGLES: ', end='')
-            
+        
+    
         # Graph initialising and base formatting
         graphformat(8, 11, 11, 11, 11, 5, 5)
         fig = plt.figure() 
-        ax = Axes3D(fig, auto_add_to_figure=False)
+        ax = Axes3D(fig, auto_add_to_figure=False, box_aspect=[1,1,1])
         fig.add_axes(ax, computed_zorder=False)
         
         # Plot formatting
@@ -132,12 +133,7 @@ def galaxy_render(GroupNumList = np.array([4]),
            
         
         def plot_spin_vector(dict_name, part_type, rad, color):
-            if rad == 'rad':
-                mask = np.where(dict_name['rad']/subhalo.halfmass_rad == 1.)
-            elif rad == 'tworad':
-                mask = np.where(dict_name['rad']/subhalo.halfmass_rad == 2.)
-            else:
-                mask = np.where(dict_name['rad'] > rad)
+            mask = np.where(dict_name['hmr'] == rad)
             
             arrow = dict_name[part_type][int(min(mask))]
             

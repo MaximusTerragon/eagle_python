@@ -318,7 +318,7 @@ Purpose
 """
 #1, 4, 7, 16
 #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
-def velocity_projection(GroupNumList = np.array([4]), 
+def velocity_projection(GroupNumList = np.array([12]), 
                         SubGroupNum  = 0,
                         minangle     = 0,
                         maxangle     = 0,
@@ -336,7 +336,7 @@ def velocity_projection(GroupNumList = np.array([4]),
                         root_file = '/Users/c22048063/Documents/EAGLE/trial_plots',      
                         print_galaxy     = True,        # print galaxy stats in chat
                         txt_file         = False, 
-                        savefig          = False,       # whether to save and/or show figures
+                        savefig          = True,       # whether to save and/or show figures
                         showfig          = True,
                         particle_list_in = ['stars', 'gas_sf'],       #, 'gas_nsf'                        # pa fits to be found
                         angle_type_in    = ['stars_gas_sf'],    # misalignment angles to be found ['stars_gas', 'stars_gas_sf', 'stars_gas_nsf', 'gas_sf_gas_nsf']
@@ -1098,8 +1098,8 @@ def velocity_projection(GroupNumList = np.array([4]),
             graphformat(8, 11, 11, 11, 11, 3.75, 3)
                 
             # Plot scatter and error bars for both 2dhist and voronoi
-            plt.errorbar(np.arange(minangle, maxangle+1, stepangle), hist_points, xerr=None, yerr=hist_points_err, label='2dhist', alpha=0.6, ls='none', ms=2)
-            plt.errorbar(np.arange(minangle, maxangle+1, stepangle), voro_points, xerr=None, yerr=voro_points_err, label='voronoi', alpha=0.6, ls='none', ms=2)
+            plt.errorbar(np.arange(minangle, maxangle+1, stepangle), hist_points, xerr=None, yerr=hist_points_err, label='2dhist', alpha=0.6, ls='none', ms=2, capsize=4, elinewidth=1, markeredgewidth=1)
+            plt.errorbar(np.arange(minangle, maxangle+1, stepangle), voro_points, xerr=None, yerr=voro_points_err, label='voronoi', alpha=0.6, ls='none', ms=2, capsize=4, elinewidth=1, markeredgewidth=1)
                    
             # Formatting
             plt.axhline(subhalo.mis_angles['%s_angle' %pa_compare_angle_type_in][int(mask[0])], c='k', ls='--')
@@ -1134,6 +1134,8 @@ def velocity_projection(GroupNumList = np.array([4]),
             # Initialise figure
             plt.figure()
             graphformat(8, 11, 11, 11, 11, 3.75, 3)
+            plt.xlim(min(spin_rad_in), max(spin_rad_in))
+            plt.xticks(np.arange(min(spin_rad_in), max(spin_rad_in)+1, 1))
             
             # formatting 
             if rad_type_plot == 'hmr':
@@ -1159,10 +1161,10 @@ def velocity_projection(GroupNumList = np.array([4]),
                 
                 # Plot 2D projected rad
                 if use_projected_plot == True:
-                    plt.errorbar(hmr_points, proj_points, xerr=None, yerr=proj_points_err, label='3D projected', alpha=0.6, ms=2)
+                    plt.errorbar(hmr_points, proj_points, xerr=None, yerr=proj_points_err, label='3D projected', alpha=0.6, ms=2, capsize=4, elinewidth=1, markeredgewidth=1)
                 
                 # Plot scatter and errorbars
-                plt.errorbar(rad_points, hist_points, xerr=None, yerr=hist_points_err, label='2dhist', alpha=0.8, ms=2)
+                plt.errorbar(rad_points, hist_points, xerr=None, yerr=hist_points_err, label='2dhist', alpha=0.8, ms=2, capsize=4, elinewidth=1, markeredgewidth=1)
                 
                 # Formatting
                 plt.title('GroupNum %s: %s, %s' %(str(subhalo.gn), pa_radial_type_in, pa_radial_angle_type_in, ))
@@ -1171,7 +1173,7 @@ def velocity_projection(GroupNumList = np.array([4]),
                 
                 # savefig
                 if savefig == True:
-                    plt.savefig('%s/galaxy_%s/RadialPA_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), pa_radial_type_in, pa_radial_angle_type_in), dpi=300, bbox_inches='tight', pad_inches=0.2)
+                    plt.savefig('%s/RadialPA_gn%s_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), pa_radial_type_in, pa_radial_angle_type_in), dpi=300, bbox_inches='tight', pad_inches=0.2)
                 if showfig == True:
                     plt.show()
                 plt.close()
@@ -1191,10 +1193,10 @@ def velocity_projection(GroupNumList = np.array([4]),
                 
                 # Plot 2D projected rad
                 if use_projected_plot == True:
-                    plt.errorbar(rad_points, proj_points, xerr=None, yerr=proj_points_err, label='3D projected', alpha=0.6, ms=2)
+                    plt.errorbar(rad_points, proj_points, xerr=None, yerr=proj_points_err, label='3D projected', alpha=0.6, ms=2, capsize=4, elinewidth=1, markeredgewidth=1)
                 
                 # Plot scatter and errorbars
-                plt.errorbar(rad_points, voro_points, xerr=None, yerr=voro_points_err, label='voronoi', alpha=0.8, ms=2)
+                plt.errorbar(rad_points, voro_points, xerr=None, yerr=voro_points_err, label='voronoi', alpha=0.8, ms=2, capsize=4, elinewidth=1, markeredgewidth=1)
                 
                 # Formatting
                 plt.title('GroupNum %s: %s, %s' %(str(subhalo.gn), pa_radial_type_in, pa_radial_angle_type_in, ))
@@ -1203,7 +1205,7 @@ def velocity_projection(GroupNumList = np.array([4]),
                 
                 # savefig
                 if savefig == True:
-                    plt.savefig('%s/galaxy_%s/RadialPA_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), pa_radial_type_in, pa_radial_angle_type_in), dpi=300, bbox_inches='tight', pad_inches=0.2)
+                    plt.savefig('%s/RadialPA_gn%s_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), pa_radial_type_in, pa_radial_angle_type_in), dpi=300, bbox_inches='tight', pad_inches=0.2)
                 if showfig == True:
                     plt.show()
                 plt.close()
@@ -1226,11 +1228,11 @@ def velocity_projection(GroupNumList = np.array([4]),
                 
                 # Plot 2D projected rad
                 if use_projected_plot == True:
-                    plt.errorbar(rad_points, proj_points, xerr=None, yerr=proj_points_err, label='3D projected', alpha=0.6, ms=2)
+                    plt.errorbar(rad_points, proj_points, xerr=None, yerr=proj_points_err, label='3D projected', alpha=0.6, ms=2, capsize=4, elinewidth=1, markeredgewidth=1)
                 
                 # Plot scatter and errorbars
-                plt.errorbar(rad_points, hist_points, xerr=None, yerr=hist_points_err, label='2dhist', alpha=0.8, ms=2)
-                plt.errorbar(rad_points, voro_points, xerr=None, yerr=voro_points_err, label='voronoi', alpha=0.8, ms=2)
+                plt.errorbar(rad_points, hist_points, xerr=None, yerr=hist_points_err, label='2dhist', alpha=0.8, ms=2, capsize=4, elinewidth=1, markeredgewidth=1)
+                plt.errorbar(rad_points, voro_points, xerr=None, yerr=voro_points_err, label='voronoi', alpha=0.8, ms=2, capsize=4, elinewidth=1, markeredgewidth=1)
                 
                 # Formatting
                 plt.title('GroupNum %s: %s, %s' %(str(subhalo.gn), pa_radial_type_in, pa_radial_angle_type_in, ))
@@ -1239,7 +1241,7 @@ def velocity_projection(GroupNumList = np.array([4]),
                 
                 # savefig
                 if savefig == True:
-                    plt.savefig('%s/galaxy_%s/RadialPA_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), pa_radial_type_in, pa_radial_angle_type_in), dpi=300, bbox_inches='tight', pad_inches=0.2)
+                    plt.savefig('%s/RadialPA_gn%s_%s_%s.jpeg' %(str(root_file), str(subhalo.gn), pa_radial_type_in, pa_radial_angle_type_in), dpi=300, bbox_inches='tight', pad_inches=0.2)
                 if showfig == True:
                     plt.show()
                 plt.close()
@@ -1370,10 +1372,10 @@ def velocity_projection(GroupNumList = np.array([4]),
 
         # Plot scatter comparing 3D (mis_points) to extracted value from pafit routine (d_points/err)
         if useangle == '2D':
-            plt.errorbar(mis_points_proj, pa_points, xerr=None, yerr=pa_points_err, ecolor='k', ls='none', alpha=0.5, zorder=4)
+            plt.errorbar(mis_points_proj, pa_points, xerr=None, yerr=pa_points_err, ecolor='k', ls='none', alpha=0.5, zorder=4, capsize=4, elinewidth=1, markeredgewidth=1)
             plt.scatter(mis_points_proj, pa_points, c='k', label='M$_{*}$ > 10E9', s=4, zorder=5)
         if useangle == '3D':
-            plt.errorbar(mis_points, pa_points, xerr=None, yerr=pa_points_err, ecolor='k', ls='none', alpha=0.5, zorder=4)
+            plt.errorbar(mis_points, pa_points, xerr=None, yerr=pa_points_err, ecolor='k', ls='none', alpha=0.5, zorder=4, capsize=4, elinewidth=1, markeredgewidth=1)
             plt.scatter(mis_points, pa_points, c='k', label='M$_{*}$ > 10E9', s=4, zorder=5)
 
         # Plot straight line (expected)

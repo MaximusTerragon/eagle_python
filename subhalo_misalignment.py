@@ -84,11 +84,11 @@ def plot_misalignment_angle(galaxy_mass_limit = 1e9,
                             manual_GroupNumList = [],           # manually enter galaxy gns we want
                             use_angle_in    = 2.0,              # multiples of rad
                             plot_angle_type = np.array(['stars_gas_sf']),  #np.array(['stars_gas', 'stars_gas_sf', 'stars_gas_nsf']),
-                            plot_2D_3D      = '3D',             #or use '3D'
-                            viewing_axis    = 'x',              #will ignore if '3D' above
+                            plot_2D_3D      = '2D',             #or use '3D'. DEFAULT 2D
+                            viewing_axis    = 'z',              #will ignore if '3D' above. DEFAULT z
                             gas_sf_min_particles = 0,                      # minimum gas sf particles to use galaxy
                               plot_single     = True,                        # whether to create single plots
-                              plot_together   = False,                       # or overlapping
+                              plot_together   = False,                       # DOES NOT WORK
                                 savefig   = True,
                                 showfig   = False,  
                                 savefig_txt = '',            #extra savefile txt                    
@@ -162,7 +162,9 @@ def plot_misalignment_angle(galaxy_mass_limit = 1e9,
             print('CENTRE [pMpc]:      [%.5f,\t%.5f,\t%.5f]' %(subhalo.centre[0]/1000, subhalo.centre[1]/1000, subhalo.centre[2]/1000))        # [pkpc]
             print('PERC VEL [pkm/s]:   [%.5f,\t%.5f,\t%.5f]' %(subhalo.perc_vel[0], subhalo.perc_vel[1], subhalo.perc_vel[2]))  # [pkm/s]
             #print('VIEWING ANGLES: ', end='')
-        
+        else:
+            print('GN:\t%s\t|HMR:\t%.2f\t|KAPPA:\t%.2f' %(str(subhalo.gn), subhalo.halfmass_rad, subhalo.kappa)) 
+            
         
         #--------------------------------
         # Collecting all relevant particle info for galaxy
@@ -192,10 +194,10 @@ def plot_misalignment_angle(galaxy_mass_limit = 1e9,
             GroupNumPlot       = []
             
             # Selection criteria
-            mask = np.where(all_misangles['1']['hmr'] == use_angle_in)
+            mask = np.where(all_misangles['%s' %str(GroupNumList[0])]['hmr'] == use_angle_in)
             for GroupNum in GroupNumList:
                 # min. sf particle requirement
-                mask_sf = np.where(all_particles['1']['hmr'] == use_angle_in)
+                mask_sf = np.where(all_particles['%s' %str(GroupNumList[0])]['hmr'] == use_angle_in)
                 
                 if all_particles['%s' %str(GroupNum)]['gas_sf'][int(mask_sf[0])] >= gas_sf_min_particles:
                     misalignment_angle.append(all_misangles['%s' %str(GroupNum)]['%s_angle' %plot_angle_type_i][int(mask[0])])
@@ -203,6 +205,7 @@ def plot_misalignment_angle(galaxy_mass_limit = 1e9,
                     GroupNumPlot.append(GroupNum)
         
             print('Final sample:  ', GroupNumPlot)
+            
             # Graph initialising and base formatting
             graphformat(8, 11, 11, 11, 11, 5, 5)
             fig, ax = plt.subplots(1, 1, figsize=[8, 4])
@@ -238,7 +241,7 @@ def plot_misalignment_angle(galaxy_mass_limit = 1e9,
                 ax.set_xlabel('3D projected $\Psi$$_{gas-star}$')
             elif plot_2D_3D == '3D':
                 ax.set_xlabel('3D $\Psi$$_{gas-star}$')
-            ax.set_ylabel('Percentage of Galaxies')
+            ax.set_ylabel('Percentage of galaxies')
             ax.tick_params(axis='both', which='both', direction='in', bottom=True, top=True, left=True, right=True)
     
             # Annotations
@@ -253,7 +256,7 @@ def plot_misalignment_angle(galaxy_mass_limit = 1e9,
                 if plot_2D_3D == '2D':
                     plt.savefig("/Users/c22048063/Documents/EAGLE/trial_plots/Misangle_2D_%s_rad%s_part%s_ax%s%s.jpeg" %(plot_angle_type_i, str(int(use_angle_in)), str(gas_sf_min_particles), viewing_axis, savefig_txt), format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
                 elif plot_2D_3D == '3D':
-                    plt.savefig("/Users/c22048063/Documents/EAGLE/trial_plots/Misangle_3D_%s_rad%s_part%s_%s.jpeg" %(plot_angle_type_i, str(int(use_angle_in)), str(gas_sf_min_particles), savefig_txt), format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
+                    plt.savefig("/Users/c22048063/Documents/EAGLE/trial_plots/Misangle_3D_%s_rad%s_part%s%s.jpeg" %(plot_angle_type_i, str(int(use_angle_in)), str(gas_sf_min_particles), savefig_txt), format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
             if showfig == True:
                 plt.show()
             plt.close()

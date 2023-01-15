@@ -302,7 +302,16 @@ Output Parameters
 .kappa:
     Kappa calculated when galaxy orientated from 
     kappa_rad_in
-
+.kappa_gas:
+    Kappa calculated when galaxy orientated from 
+    kappa_rad_in
+.kappa_gas_sf:
+    Kappa calculated when galaxy orientated from 
+    kappa_rad_in
+.kappa_gas_nsf:
+    Kappa calculated when galaxy orientated from 
+    kappa_rad_in
+        
 .data, .data_align:    dictionary
     Has aligned/rotated values for 'stars', 'gas', 'gas_sf', 'gas_nsf':
         [hmr]                       - multiples of hmr, ei. '1.0'
@@ -338,13 +347,17 @@ Output Parameters
         ['gas_sf_mass']  - [Msun]
         ['gas_nsf_mass'] - [Msun]
 .coms, .coms_align:     dictionary
-    Has all centres of mass within a spin_rad_in:
+    Has all centres of mass and distances within a spin_rad_in:
         ['rad']          - [pkpc]
         ['hmr']     - multiples of halfmass_rad
-        ['stars']        - [x, y, z]
-        ['gas']          - [x, y, z]
-        ['gas_sf']       - [x, y, z]
-        ['gas_nsf']      - [x, y, z]
+        ['stars']          - [x, y, z] [pkpc]
+        ['gas']            - [x, y, z] [pkpc]
+        ['gas_sf']         - [x, y, z] [pkpc]
+        ['gas_nsf']        - [x, y, z] [pkpc]
+        ['stars_gas']      - [pkpc] distance in 3D
+        ['stars_gas_sf']   - [pkpc] distance in 3D
+        ['stars_gas_nsf']  - [pkpc] distance in 3D
+        ['gas_sf_gas_nsf'] - [pkpc] distance in 3D
 .mis_angles, .mis_angles_align:     dictionary
     Has aligned/rotated misalignment angles between stars 
     and X within spin_rad_in's:
@@ -421,6 +434,27 @@ class Subhalo:
             # Orientate entire galaxy according to matrix above, use this to find kappa
             stars_aligned_kappa  = self._rotate_galaxy(matrix, data_nil['stars'])
             self.kappa = self._kappa_co(stars_aligned_kappa, kappa_rad_in) 
+            
+            # Finding gas unit vector within kappa_rad_in, finding angle between it and z and returning matrix for this
+            gas_spin_kappa, _, _ = self._find_spin(data_nil['gas'], kappa_rad_in, 'gas')
+            _ , matrix = self._orientate(orientate_to_axis, gas_spin_kappa)
+            # Orientate entire galaxy according to matrix above, use this to find kappa
+            gas_aligned_kappa  = self._rotate_galaxy(matrix, data_nil['gas'])
+            self.kappa_gas = self._kappa_co(gas_aligned_kappa, kappa_rad_in)
+            
+            # Finding gas_sf unit vector within kappa_rad_in, finding angle between it and z and returning matrix for this
+            gas_sf_spin_kappa, _, _ = self._find_spin(data_nil['gas_sf'], kappa_rad_in, 'gas_sf')
+            _ , matrix = self._orientate(orientate_to_axis, gas_sf_spin_kappa)
+            # Orientate entire galaxy according to matrix above, use this to find kappa
+            gas_sf_aligned_kappa  = self._rotate_galaxy(matrix, data_nil['gas_sf'])
+            self.kappa_gas_sf = self._kappa_co(gas_sf_aligned_kappa, kappa_rad_in)
+            
+            # Finding gas_sf unit vector within kappa_rad_in, finding angle between it and z and returning matrix for this
+            gas_nsf_spin_kappa, _, _ = self._find_spin(data_nil['gas_nsf'], kappa_rad_in, 'gas_nsf')
+            _ , matrix = self._orientate(orientate_to_axis, gas_nsf_spin_kappa)
+            # Orientate entire galaxy according to matrix above, use this to find kappa
+            gas_nsf_aligned_kappa  = self._rotate_galaxy(matrix, data_nil['gas_nsf'])
+            self.kappa_gas_nsf = self._kappa_co(gas_nsf_aligned_kappa, kappa_rad_in)
         
             if not quiet:
                 print('KAPPA', self.kappa)
@@ -524,13 +558,22 @@ class Subhalo:
                     tmp_particles.append(particle_x)
                     tmp_mass.append(mass_x)
                     tmp_coms.append(self._centre_of_mass(self.data[parttype_name], rad))
+                    
                 
                 self.spins[parttype_name]     = tmp_spins 
                 self.particles[parttype_name] = tmp_particles
                 self.particles[parttype_name + '_mass'] = tmp_mass
                 self.coms[parttype_name]      = tmp_coms
                 
-            #--------------------    
+            #--------------------  
+            # Find 3D distance between C.o.M components (stored in existing self.coms)
+            for parttype_name in [['stars', 'gas'], ['stars', 'gas_sf'], ['stars', 'gas_nsf'], ['gas_sf', 'gas_nsf']]:
+                tmp_distance = []
+                for coord1, coord2 in zip(self.coms[parttype_name[0]], self.coms[parttype_name[1]]):
+                    tmp_distance.append(np.linalg.norm(coord1 - coord2))
+                self.coms['%s_%s' %(parttype_name[0], parttype_name[1])] = tmp_distance
+             
+            #----------------------
             # Find 3D misalignment angles
             self.mis_angles = {}
             self.mis_angles['rad'] = spin_rad_in
@@ -763,7 +806,6 @@ class Subhalo:
         K_rot = np.sum(0.5 * np.square(L[:,2] / rad_projected) / arr['Mass'][mask])
         
         return K_rot/K_tot
-        
         
     def _centre_of_mass(self, arr, radius):
         # Compute distance to centre and mask all within stelhalfrad

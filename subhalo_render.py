@@ -6,6 +6,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt 
 import matplotlib.colors as colors
 import matplotlib.cm as cm
+from tqdm import tqdm
 from mpl_toolkits.mplot3d import Axes3D
 from subhalo_main import Subhalo_Extract, Subhalo
 from graphformat import graphformat
@@ -19,23 +20,25 @@ snapNum = 28
     
 #1, 4, 7, 16
 #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
-def galaxy_render(GroupNumList = np.array([4]),
+def galaxy_render(GroupNumList = np.array([3]),
                   SubGroupNum  = 0, 
-                  particles    = 100,    #5000,10000
+                  particles    = 10000,    #5000,10000
                   minangle     = 0,
                   maxangle     = 0, 
                   stepangle    = 30, 
-                  spin_rad_in  = np.arange(1.0, 10.5, 1.0),     # multiples of rad
-                  trim_rad_in  = np.array([2]),     # trim particles # multiples of rad, num [pkpc]
+                    spin_rad_in  = np.array([2.0]),    #np.arange(1.0, 10.5, 0.5),     # multiples of rad
+                    use_angle_in = 2.0,                 # for print function          
+                    trim_rad_in  = np.array([10]),     # trim particles # multiples of rad, num [pkpc]
                   kappa_rad_in = 30,                            # calculate kappa for this radius [pkpc]
                   align_rad_in = False, #False                    # align galaxy to stellar vector in. this radius [pkpc]
-                  boxradius_in = 10,                # boxradius of render
+                    boxradius_in = 50,                # boxradius of render
                   root_file = 'trial_plots',        # 'trial_plots' or 'plots'
-                  print_galaxy = True,              # print galaxy stats in chat
-                  txt_file     = False,              # create a txt file with print data
-                  stars        = True,
-                  gas_sf       = True,
-                  gas_nsf      = True,
+                    print_galaxy       = False,              # print galaxy stats in chat
+                    print_galaxy_short = False,
+                    txt_file     = False,              # create a txt file with print data
+                      stars        = False,
+                      gas_sf       = True,
+                      gas_nsf      = True,
                   orientate_to_axis = 'z',          
                   viewing_angle     = 0,            # Keep as 0
                   plot_spin_vectors = True,
@@ -43,10 +46,10 @@ def galaxy_render(GroupNumList = np.array([4]),
                   centre_of_pot     = True, 
                   centre_of_mass    = True,
                   axis              = True,
-                  savefig           = False,
-                  plotshow          = True):
+                    savefig           = False,
+                    plotshow          = True):
         
-    for GroupNum in GroupNumList:         
+    for GroupNum in tqdm(GroupNumList):         
         # Initial extraction of galaxy data
         galaxy = Subhalo_Extract(mySims, dataDir, snapNum, GroupNum, SubGroupNum)
         
@@ -84,6 +87,7 @@ def galaxy_render(GroupNumList = np.array([4]),
                                             align_rad,              #align_rad = False
                                             orientate_to_axis,
                                             quiet=True)
+
                                                                     
         # Print galaxy properties
         if print_galaxy == True:
@@ -91,7 +95,10 @@ def galaxy_render(GroupNumList = np.array([4]),
             print('STELLAR MASS [Msun]:    %.3f' %np.log10(subhalo.stelmass))       # [Msun]
             print('HALFMASS RAD [pkpc]:    %.3f' %subhalo.halfmass_rad)             # [pkpc]
             print('KAPPA:                  %.2f' %subhalo.kappa)
+            print('KAPPA GAS SF:           %.2f' %subhalo.kappa_gas_sf)
             print('KAPPA RAD CALC [pkpc]:  %s'   %str(kappa_rad_in))
+            mask = np.where(np.array(subhalo.coms['hmr'] == use_angle_in))
+            print('C.O.M %s HMR STARS-SF [pkpc]:  %.2f' %(str(use_angle_in), subhalo.coms['stars_gas_sf'][int(mask[0])]))
             print(' HALF-\tANGLES (STARS-)\t\t\tPARTICLE COUNT\t\t\tMASS')
             print(' RAD\tGAS\tSF\tNSF\tSF-NSF\tSTARS\tGAS\tSF\tNSF\tSTARS\tGAS\tSF\tNSF')
             for i in np.arange(0, len(spin_rad_in), 1):
@@ -100,8 +107,9 @@ def galaxy_render(GroupNumList = np.array([4]),
             print('CENTRE [pMpc]:      [%.5f,\t%.5f,\t%.5f]' %(subhalo.centre[0]/1000, subhalo.centre[1]/1000, subhalo.centre[2]/1000))        # [pkpc]
             print('PERC VEL [pkm/s]:   [%.5f,\t%.5f,\t%.5f]' %(subhalo.perc_vel[0], subhalo.perc_vel[1], subhalo.perc_vel[2]))  # [pkm/s]
             #print('VIEWING ANGLES: ', end='')
-        
-    
+        elif print_galaxy_short == True:
+            print('GN:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(str(subhalo.gn), subhalo.halfmass_rad, subhalo.kappa, subhalo.kappa_gas_sf)) 
+             
         # Graph initialising and base formatting
         graphformat(8, 11, 11, 11, 11, 5, 5)
         fig = plt.figure() 
@@ -226,7 +234,7 @@ def galaxy_render(GroupNumList = np.array([4]),
         # Create txt file with output for that galaxy
         if txt_file == True:
             dash = '-' * 100
-            f = open("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render.txt" %(str(root_file), str(GroupNum)), 'w+')
+            f = open("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_gn%s.txt" %(str(root_file), str(GroupNum), str(GroupNum)), 'w+')
             f.write(dash)
             f.write('\nGROUP NUMBER:           %s' %str(subhalo.gn))
             f.write('\nSUBGROUP NUMBER:        %s' %str(subhalo.sgn))
@@ -238,8 +246,28 @@ def galaxy_render(GroupNumList = np.array([4]),
             f.write('\n' + dash)
             f.write('\nHALFMASS RAD:           %.3f   \t[pkpc]' %subhalo.halfmass_rad)   # [pkpc]
             f.write('\n' + dash)
-            f.write('\nKAPPA:                  %.2f' %subhalo.kappa)  
+            f.write('\nKAPPA:                  %.2f' %subhalo.kappa)
+            f.write('\nKAPPA GAS:              %.2f' %subhalo.kappa_gas)   
+            f.write('\nKAPPA GAS SF:           %.2f' %subhalo.kappa_gas_sf)  
+            f.write('\nKAPPA GAS NSF:          %.2f' %subhalo.kappa_gas_nsf)  
             f.write('\nKAPPA RADIUS CALC:      %s     \t\t[pkpc]' %str(kappa_rad_in))
+            f.write('\n' + dash)
+            f.write('\nCENTRE OF MASS [pkpc]:')
+            f.write('\nHALF-\tCOORDINATE')
+            f.write('\nRAD\tSTARS\t\t\tGAS\t\t\tSF\t\t\tNSF')
+            i = 0
+            while i < len(subhalo.coms['rad']):
+                with np.errstate(divide="ignore"):
+                    f.write('\n%.1f\t[%.2f, %.2f, %.2f]\t[%.2f, %.2f, %.2f]\t[%.2f, %.2f, %.2f]\t[%.2f, %.2f, %.2f]' %(subhalo.coms['hmr'][i], subhalo.coms['stars'][i][0], subhalo.coms['stars'][i][1], subhalo.coms['stars'][i][2], subhalo.coms['gas'][i][0], subhalo.coms['gas'][i][1], subhalo.coms['gas'][i][2], subhalo.coms['gas_sf'][i][0], subhalo.coms['gas_sf'][i][1], subhalo.coms['gas_sf'][i][2], subhalo.coms['gas_nsf'][i][0], subhalo.coms['gas_nsf'][i][1], subhalo.coms['gas_nsf'][i][2]))
+                i += 1
+            f.write('\n\nCENTRE OF MASS DISTANCE [pkpc]:')
+            f.write('\nHALF-\tDISTANCE (STARS-)')
+            f.write('\nRAD\tGAS\tSF\tNSF\tSF-NSF')
+            i = 0
+            while i < len(subhalo.coms['rad']):
+                with np.errstate(divide="ignore"):
+                    f.write('\n%.1f\t%.1f\t%.1f\t%.1f\t%.1f' %(subhalo.coms['hmr'][i], subhalo.coms['stars_gas'][i], subhalo.coms['stars_gas_sf'][i], subhalo.coms['stars_gas_nsf'][i], subhalo.coms['gas_sf_gas_nsf'][i]))        
+                i += 1
             f.write('\n' + dash)
             f.write('\nMISALIGNMENT ANGLES [deg]:')
             f.write('\nHALF-\tANGLES (STARS-)\t\t\tPARTICLE COUNT\t\t\tMASS')
@@ -250,8 +278,8 @@ def galaxy_render(GroupNumList = np.array([4]),
                     f.write('\n%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%i\t%i\t%i\t%i\t%.1f\t%.1f\t%.1f\t%.1f' %(subhalo.mis_angles['hmr'][i], subhalo.mis_angles['stars_gas_angle'][i], subhalo.mis_angles['stars_gas_sf_angle'][i], subhalo.mis_angles['stars_gas_nsf_angle'][i], subhalo.mis_angles['gas_sf_gas_nsf_angle'][i], subhalo.particles['stars'][i], subhalo.particles['gas'][i], subhalo.particles['gas_sf'][i], subhalo.particles['gas_nsf'][i], np.log10(subhalo.particles['stars_mass'][i]), np.log10(subhalo.particles['gas_mass'][i]), np.log10(subhalo.particles['gas_sf_mass'][i]), np.log10(subhalo.particles['gas_nsf_mass'][i])))        
                 i += 1
             f.write('\n' + dash)
-            f.write('\nCENTRE:          [%.5f,\t%.5f,\t%.5f]\t[pMpc]\n' %(subhalo.centre[0]/1000, subhalo.centre[1]/1000, subhalo.centre[2]/1000))                                 # [pMpc]
-            f.write('PERC VELOCITY:   [%.5f,\t%.5f,\t%.5f]\t[pkm/s]\n' %(subhalo.perc_vel[0], subhalo.perc_vel[1], subhalo.perc_vel[2]))
+            f.write('\nLOCATION OF CENTRE:   [%.5f,\t%.5f,\t%.5f]\t[pMpc]' %(subhalo.centre[0]/1000, subhalo.centre[1]/1000, subhalo.centre[2]/1000))                                 # [pMpc]
+            f.write('\nPERC VELOCITY:        [%.5f,\t%.5f,\t%.5f]\t[pkm/s]' %(subhalo.perc_vel[0], subhalo.perc_vel[1], subhalo.perc_vel[2]))
             f.write('\n' + dash)
             
             f.close()

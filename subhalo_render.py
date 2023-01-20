@@ -1,13 +1,16 @@
 import h5py
 import numpy as np
+import pandas as pd
 import random
 import math
+import csv
 import matplotlib as mpl
 import matplotlib.pyplot as plt 
 import matplotlib.colors as colors
 import matplotlib.cm as cm
 from tqdm import tqdm
 from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.widgets import Button
 from subhalo_main import Subhalo_Extract, Subhalo
 from graphformat import graphformat
 
@@ -18,36 +21,52 @@ dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_028_z000
 mySims = np.array([('RefL0012N0188', 12)])   
 snapNum = 28
     
-#1, 4, 7, 16
+""" 
+PURPOSE
+-------
+- Can visualise a galaxy as a scatter graph in 3D and render side-on images of it
+- Can do this for X particles or all of them
+- Render boxsize uses fixed aperture (say 100pkpc), but can also trim particle data to within x*HMR
+- Galaxy is automatically centred, and velocity adjusted
+- Can also orientate the galaxy to a given axis, based on the angular momentum vector calculated at a given distance. This is used in the calculation of kappa at 30pkpc
+
+"""
 #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
-def galaxy_render(GroupNumList = np.array([3]),
-                  SubGroupNum  = 0, 
-                  particles    = 10000,    #5000,10000
-                  minangle     = 0,
-                  maxangle     = 0, 
-                  stepangle    = 30, 
-                    spin_rad_in  = np.array([2.0]),    #np.arange(1.0, 10.5, 0.5),     # multiples of rad
-                    use_angle_in = 2.0,                 # for print function          
-                    trim_rad_in  = np.array([10]),     # trim particles # multiples of rad, num [pkpc]
-                  kappa_rad_in = 30,                            # calculate kappa for this radius [pkpc]
-                  align_rad_in = False, #False                    # align galaxy to stellar vector in. this radius [pkpc]
-                    boxradius_in = 50,                # boxradius of render
-                  root_file = 'trial_plots',        # 'trial_plots' or 'plots'
+def galaxy_render(manual_GroupNumList = np.array([4]),
+                    SubGroupNum       = 0, 
+                          spin_rad_in           = np.array([1.0, 1.5, 2.0]),    # np.arange(1.0, 10.5, 0.5),     # multiples of rad
+                          kappa_rad_in          = 30,                           # Calculate kappa for this radius [pkpc]
+                          angle_selection       = [['stars', 'gas_sf']],        # list of angles to find analytically [[stars, gas], [stars, gas_sf] ...]
+                    align_rad_in          = False,                              # Align galaxy to stellar vector in. this radius [pkpc]
+                    orientate_to_axis='z',                                      # Keep as 'z'
+                    viewing_angle=0,                                            # Keep as 0                 
+                  minangle  = 0,
+                  maxangle  = 0, 
+                  stepangle = 30,
+                    use_angle_in = 2.0,                 # for print function 
+                    boxradius_in = 50,                  # boxradius of render
+                    plot_spin_vectors = True,
+                      spin_vector_rad = 2.0,            # radius of spinvector to display (in hmr)
+                    centre_of_pot     = True,           # Plot most bound object (default centre)
+                    centre_of_mass    = True,           # Plot total centre of mass
+                    axis              = True,           # Plot small axis below galaxy
+                          particles             = 10000,
+                          trim_rad_in           = np.array([10]),     # WILL PLOT LOWEST VALUE. trim particles # multiples of rad, num [pkpc], found in subhalo.data[hmr]    
+                          stars                 = False,
+                          gas_sf                = True,
+                          gas_nsf               = True,
+                  root_file = '/Users/c22048063/Documents/EAGLE/trial_plots',        # 'trial_plots' or 'plots'
                     print_galaxy       = False,              # print galaxy stats in chat
-                    print_galaxy_short = False,
-                    txt_file     = False,              # create a txt file with print data
-                      stars        = False,
-                      gas_sf       = True,
-                      gas_nsf      = True,
-                  orientate_to_axis = 'z',          
-                  viewing_angle     = 0,            # Keep as 0
-                  plot_spin_vectors = True,
-                    spin_vector_rad   = 2.0,      # radius of spinvector to display (in hmr)
-                  centre_of_pot     = True, 
-                  centre_of_mass    = True,
-                  axis              = True,
-                    savefig           = False,
-                    plotshow          = True):
+                    print_galaxy_short = True,
+                    txt_file           = False,              # create a txt file with print data
+                    showfig        = True,
+                    savefig        = False,
+                      savefigtxt       = '',                # added txt to append to end of savefile
+                    debug = False):
+        
+        
+    # Converting names of variables for consistency
+    GroupNumList = manual_GroupNumList    
         
     for GroupNum in tqdm(GroupNumList):         
         # Initial extraction of galaxy data
@@ -63,14 +82,12 @@ def galaxy_render(GroupNumList = np.array([3]),
             kappa_rad = 2*galaxy.halfmass_rad
         else:
             kappa_rad = kappa_rad_in
-            
         if align_rad_in == 'rad':
             align_rad = galaxy.halfmass_rad
         elif align_rad_in == 'tworad':
             align_rad = 2*galaxy.halfmass_rad
         else:
             align_rad = align_rad_in
-            
         if boxradius_in == 'rad':
             boxradius = galaxy.halfmass_rad
         elif boxradius_in == 'tworad':
@@ -80,6 +97,7 @@ def galaxy_render(GroupNumList = np.array([3]),
             
         # Galaxy will be rotated to calc_kappa_rad's stellar spin value
         subhalo = Subhalo(galaxy.halfmass_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas,
+                                            angle_selection,
                                             viewing_angle,
                                             spin_rad,
                                             trim_rad, 
@@ -87,8 +105,12 @@ def galaxy_render(GroupNumList = np.array([3]),
                                             align_rad,              #align_rad = False
                                             orientate_to_axis,
                                             quiet=True)
-
-                                                                    
+        
+        if debug == True:
+            print(' ')
+            print(subhalo.mis_angles.items()) 
+            print(' ')                       
+                                        
         # Print galaxy properties
         if print_galaxy == True:
             print('\nGROUP NUMBER:           %s' %str(subhalo.gn)) 
@@ -116,17 +138,17 @@ def galaxy_render(GroupNumList = np.array([3]),
         ax = Axes3D(fig, auto_add_to_figure=False, box_aspect=[1,1,1])
         fig.add_axes(ax, computed_zorder=False)
         
-        # Plot formatting
-        ax.set_facecolor('xkcd:black')
-        ax.w_xaxis.pane.fill = False
-        ax.w_yaxis.pane.fill = False
-        ax.w_zaxis.pane.fill = False
-        ax.grid(False)
-        ax.set_xlim(-boxradius, boxradius)
-        ax.set_ylim(-boxradius, boxradius)
-        ax.set_zlim(-boxradius, boxradius)
-        
-        def plot_rand_scatter(dict_name, part_type, color):
+        def plot_rand_scatter(dict_name, part_type, color, debug=False):
+            # Plot formatting
+            ax.set_facecolor('xkcd:black')
+            ax.w_xaxis.pane.fill = False
+            ax.w_yaxis.pane.fill = False
+            ax.w_zaxis.pane.fill = False
+            ax.grid(False)
+            ax.set_xlim(-boxradius, boxradius)
+            ax.set_ylim(-boxradius, boxradius)
+            ax.set_zlim(-boxradius, boxradius)
+            
             # Keep same seed
             np.random.seed(42)
             
@@ -140,7 +162,17 @@ def galaxy_render(GroupNumList = np.array([3]),
             ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=0.02, alpha=0.9, c=color, zorder=4)
            
         
-        def plot_spin_vector(dict_name, part_type, rad, color):
+        def plot_spin_vector(dict_name, part_type, rad, color, debug=False):
+            # Plot formatting
+            ax.set_facecolor('xkcd:black')
+            ax.w_xaxis.pane.fill = False
+            ax.w_yaxis.pane.fill = False
+            ax.w_zaxis.pane.fill = False
+            ax.grid(False)
+            ax.set_xlim(-boxradius, boxradius)
+            ax.set_ylim(-boxradius, boxradius)
+            ax.set_zlim(-boxradius, boxradius)
+            
             mask = np.where(dict_name['hmr'] == rad)
             
             arrow = dict_name[part_type][int(min(mask))]
@@ -148,6 +180,44 @@ def galaxy_render(GroupNumList = np.array([3]),
             # Plot original stars spin vector
             ax.quiver(0, 0, 0, arrow[0]*boxradius*0.6, arrow[1]*boxradius*0.6, arrow[2]*boxradius*0.6, color=color, alpha=1, linewidth=1, zorder=50)
 
+        # Buttons for stars, gas_sf, gas_nsf
+        class Index:
+            def starss(self, event):
+                plot_rand_scatter(subhalo.data['%s' %str(trim_rad_in[0])], 'stars', 'lightyellow')
+                plot_spin_vector(subhalo.spins, 'stars', spin_vector_rad, 'r')
+                ax.set_xlim(-boxradius, boxradius)
+            def gas_sfs(self, event):
+                plot_rand_scatter(subhalo.data['%s' %str(trim_rad_in[0])], 'gas_sf', 'cyan')
+                plot_spin_vector(subhalo.spins, 'gas_sf', spin_vector_rad, 'darkturquoise')
+                ax.set_xlim(-boxradius, boxradius)
+            def gas_nsfs(self, event):
+                plot_rand_scatter(subhalo.data['%s' %str(trim_rad_in[0])], 'gas_nsf', 'royalblue')
+                plot_spin_vector(subhalo.spins, 'gas_nsf', spin_vector_rad, 'blue')   
+                ax.set_xlim(-boxradius, boxradius)
+                
+            def plot_clear(self, event):
+                ax.cla()
+                # Plot formatting
+                ax.set_facecolor('xkcd:black')
+                ax.w_xaxis.pane.fill = False
+                ax.w_yaxis.pane.fill = False
+                ax.w_zaxis.pane.fill = False
+                ax.grid(False)
+                ax.set_xlim(-boxradius, boxradius)
+                ax.set_ylim(-boxradius, boxradius)
+                ax.set_zlim(-boxradius, boxradius)
+                
+        callback = Index()      
+        bclear = Button(fig.add_axes([0.01, 0.92, 0.12, 0.03]), 'CLEAR')
+        bstars = Button(fig.add_axes([0.01, 0.96, 0.12, 0.03]), 'Stars')
+        bgassf = Button(fig.add_axes([0.13, 0.96, 0.12, 0.03]), 'Gas SF')
+        bgasnsf = Button(fig.add_axes([0.25, 0.96, 0.12, 0.03]), 'Gas NSF')
+        bstars.on_clicked(callback.starss)
+        bgassf.on_clicked(callback.gas_sfs)
+        bgasnsf.on_clicked(callback.gas_nsfs)
+        bclear.on_clicked(callback.plot_clear)
+        
+        
         # Plot scatters and spin vectors   
         if not align_rad:
             if stars:
@@ -208,25 +278,25 @@ def galaxy_render(GroupNumList = np.array([3]),
 
             if savefig:
                 if (stars == True) & (gas_sf == True) & (gas_nsf == True) & (align_rad_in == False):
-                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_all_rad%s_spin%s_angle%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in[0]), str(spin_vector_rad), str(ii)), dpi=300)
+                    plt.savefig("%s/galaxy_%s/render_all_rad%s_spin%s_angle%s%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in[0]), str(spin_vector_rad), str(ii), savefigtxt), dpi=300)
                 elif (stars == True) & (gas_sf == False) & (gas_nsf == False) & (align_rad_in == False):
-                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_s_rad%s_spin%s_angle%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in[0]), str(spin_vector_rad), str(ii)), dpi=300)
+                    plt.savefig("%s/galaxy_%s/render_s_rad%s_spin%s_angle%s%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in[0]), str(spin_vector_rad), str(ii), savefigtxt), dpi=300)
                 elif (stars == False) & (gas_sf == True) & (gas_nsf == True) & (align_rad_in == False):
-                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_sf_nsf_rad%s_spin%s_angle%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in[0]), str(spin_vector_rad), str(ii)), dpi=300)
+                    plt.savefig("%s/galaxy_%s/render_sf_nsf_rad%s_spin%s_angle%s%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in[0]), str(spin_vector_rad), str(ii), savefigtxt), dpi=300)
                 elif (stars == False) & (gas_sf == True) & (gas_nsf == False) & (align_rad_in == False):
-                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_sf_rad%s_spin%s_angle%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in[0]), str(spin_vector_rad), str(ii)), dpi=300)
+                    plt.savefig("%s/galaxy_%s/render_sf_rad%s_spin%s_angle%s%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in[0]), str(spin_vector_rad), str(ii), savefigtxt), dpi=300)
                 elif (stars == False) & (gas_sf == False) & (gas_nsf == True) & (align_rad_in == False):
-                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_nsf_rad%s_spin%s_angle%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in[0]), str(spin_vector_rad), str(ii)), dpi=300)
+                    plt.savefig("%s/galaxy_%s/render_nsf_rad%s_spin%s_angle%s%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in[0]), str(spin_vector_rad), str(ii), savefigtxt), dpi=300)
                 elif (stars == True) & (gas_sf == True) & (gas_nsf == True):
-                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_rot_all_rad%s_spin%s_angle%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in[0]), str(spin_vector_rad), str(ii)), dpi=300)
+                    plt.savefig("%s/galaxy_%s/render_rot_all_rad%s_spin%s_angle%s%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in[0]), str(spin_vector_rad), str(ii), savefigtxt), dpi=300)
                 elif (stars == True) & (gas_sf == False) & (gas_nsf == False):
-                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_rot_s_rad%s_spin%s_angle%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in[0]), str(spin_vector_rad), str(ii)), dpi=300)
+                    plt.savefig("%s/galaxy_%s/render_rot_s_rad%s_spin%s_angle%s%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in[0]), str(spin_vector_rad), str(ii), savefigtxt), dpi=300)
                 elif (stars == False) & (gas_sf == True) & (gas_nsf == False):
-                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_rot_sf_rad%s_spin%s_angle%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in[0]), str(spin_vector_rad), str(ii)), dpi=300)
+                    plt.savefig("%s/galaxy_%s/render_rot_sf_rad%s_spin%s_angle%s%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in[0]), str(spin_vector_rad), str(ii), savefigtxt), dpi=300)
                 elif (stars == False) & (gas_sf == False) & (gas_nsf == True):
-                    plt.savefig("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_rot_nsf_rad%s_spin%s_angle%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in[0]), str(spin_vector_rad), str(ii)), dpi=300)
+                    plt.savefig("%s/galaxy_%s/render_rot_nsf_rad%s_spin%s_angle%s%s.jpeg" %(str(root_file), str(GroupNum), str(trim_rad_in[0]), str(spin_vector_rad), str(ii), savefigtxt), dpi=300)
 
-        if plotshow:
+        if showfig:
             plt.show()
             
         plt.close()
@@ -234,7 +304,7 @@ def galaxy_render(GroupNumList = np.array([3]),
         # Create txt file with output for that galaxy
         if txt_file == True:
             dash = '-' * 100
-            f = open("/Users/c22048063/Documents/EAGLE/%s/galaxy_%s/render_gn%s.txt" %(str(root_file), str(GroupNum), str(GroupNum)), 'w+')
+            f = open("%s/galaxy_%s/render_gn%s.txt" %(str(root_file), str(GroupNum), str(GroupNum)), 'w+')
             f.write(dash)
             f.write('\nGROUP NUMBER:           %s' %str(subhalo.gn))
             f.write('\nSUBGROUP NUMBER:        %s' %str(subhalo.sgn))

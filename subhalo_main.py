@@ -1,7 +1,13 @@
 import h5py
 import numpy as np
 import math
+import random
 import astropy.units as u
+import matplotlib as mpl
+import matplotlib.pyplot as plt 
+import pandas as pd
+from tqdm import tqdm
+from time import sleep
 from astropy.constants import G
 import eagleSqlTools as sql
 from pyread_eagle import EagleSnapshot
@@ -314,7 +320,7 @@ Output Parameters
         
 .data, .data_align:    dictionary
     Has aligned/rotated values for 'stars', 'gas', 'gas_sf', 'gas_nsf':
-        [hmr]                       - multiples of hmr, ei. '1.0'
+        [hmr]                       - multiples of hmr, ei. '1.0' that data was trimmed to
             ['Coordinates']         - [pkpc]
             ['Velocity']            - [pkm/s]
             ['Mass']                - [Msun]
@@ -360,15 +366,21 @@ Output Parameters
         ['gas_sf_gas_nsf'] - [pkpc] distance in 3D
 .mis_angles, .mis_angles_align:     dictionary
     Has aligned/rotated misalignment angles between stars 
-    and X within spin_rad_in's:
+    and X within spin_rad_in's. Errors given by iterations,
+    which defults to 1000.
         ['rad']            - [pkpc]
         ['hmr']            - multiples of halfmass_rad
         ['stars_gas_angle']      - [deg]
         ['stars_gas_sf_angle']   - [deg]
         ['stars_gas_nsf_angle']  - [deg]
         ['gas_sf_gas_nsf_angle'] - [deg]
+        ['stars_gas_angle_err']      - [lo, hi] [deg]       ^
+        ['stars_gas_sf_angle_err']   - [lo, hi] [deg]
+        ['stars_gas_nsf_angle_err']  - [lo, hi] [deg]       (assuming it was passed into _main)
+        ['gas_sf_gas_nsf_angle_err'] - [lo, hi] [deg]       ^
 .mis_angles_proj                    dictionary
-    Has projected misalignment angles:
+    Has projected misalignment angles. Errors given by iterations,
+    which defults to 1000.
         ['x']
         ['y']
         ['z']
@@ -378,18 +390,33 @@ Output Parameters
             ['stars_gas_sf_angle']   - [deg]
             ['stars_gas_nsf_angle']  - [deg]
             ['gas_sf_gas_nsf_angle'] - [deg]
+            ['stars_gas_angle_err']      - [lo, hi] [deg]       ^
+            ['stars_gas_sf_angle_err']   - [lo, hi] [deg]
+            ['stars_gas_nsf_angle_err']  - [lo, hi] [deg]       (assuming it was passed into _main)
+            ['gas_sf_gas_nsf_angle_err'] - [lo, hi] [deg]       ^
+        
+        
+        
         
 """
 class Subhalo:
     
     def __init__(self, halfmass_rad, centre, centre_mass, perc_vel, stars, gas, 
+                            angle_selection,
                             viewing_angle,
                             spin_rad_in, 
                             trim_rad_in, 
                             kappa_rad_in,
                             align_rad_in, 
                             orientate_to_axis,
-                            quiet=True):
+                            quiet=True,
+                            debug=False):
+        
+        
+        #angle_selection = [['stars', 'gas'], ['stars', 'gas_sf'], ['stars', 'gas_nsf'], ['gas_sf', 'gas_nsf']]
+        #angle_selection = [['stars', 'gas_sf']]
+        self.debug = debug
+        
         
         # Create masks for starforming and non-starforming gas
         self.mask_sf        = np.nonzero(gas['StarFormationRate'])          
@@ -573,43 +600,136 @@ class Subhalo:
                     tmp_distance.append(np.linalg.norm(coord1 - coord2))
                 self.coms['%s_%s' %(parttype_name[0], parttype_name[1])] = tmp_distance
              
+            #------------------------------------------------
+            # Create 1000 random spin iterations for each rad
+            """ structure
+            Will be structured as:
+            spins_rand['2.0']['stars'] .. from then [[ x, y, z], [x, y, z], ... ]
+            """
+            iterations = 1000 
+            
+            # for each radius...
+            spins_rand = {}
+            for rad_i in spin_rad_in:
+                spins_rand.update({'%s' %str(rad_i/self.halfmass_rad): {}})
+                
+                # for each particle type...
+                for parttype_name in ['stars', 'gas_sf']:
+                    tmp_spins = []    
+                    
+                    # ...append 1000 random spin iterations
+                    for j in range(iterations):
+                        spin_i, _, _ = self._find_spin(self.data[parttype_name], rad_i, parttype_name, random_sample=True)
+                        tmp_spins.append(spin_i)
+                    spins_rand['%s' %str(rad_i/self.halfmass_rad)]['%s' %parttype_name] = np.stack(tmp_spins)
+            
+                        
+            if self.debug:   
+                print(spins_rand.keys())        
+                print(spins_rand['2.0']['stars'])
+                print(spins_rand['2.0']['stars'][:,0])
+                print(' ')
+                print(spins_rand['2.0']['stars'][:,[0,1]])
+            
+            
             #----------------------
-            # Find 3D misalignment angles
+            # Find 3D misalignment angles + errors
             self.mis_angles = {}
             self.mis_angles['rad'] = spin_rad_in
             self.mis_angles['hmr'] = spin_rad_in/self.halfmass_rad
-            for parttype_name in [['stars', 'gas'], ['stars', 'gas_sf'], ['stars', 'gas_nsf'], ['gas_sf', 'gas_nsf']]:
+            for parttype_name in angle_selection:   #[['stars', 'gas'], ['stars', 'gas_sf'], ['stars', 'gas_nsf'], ['gas_sf', 'gas_nsf']]:
                 tmp_angles = []
-                for i in np.arange(0, len(self.spins['stars']), 1):
-                    tmp_angles.append(self._misalignment_angle(self.spins[parttype_name[0]][i], self.spins[parttype_name[1]][i]))
+                tmp_errors = []
+                for i, hmr_i in zip(np.arange(0, len(self.spins['stars']), 1), spin_rad_in/self.halfmass_rad):
+                    # analytical angle
+                    angle = self._misalignment_angle(self.spins[parttype_name[0]][i], self.spins[parttype_name[1]][i])
+                    tmp_angles.append(angle)
+                    
+                    # uncertainty
+                    tmp_errors_array = []
+                    for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i][parttype_name[0]], spins_rand['%s' %hmr_i][parttype_name[1]]):
+                        tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
+                    tmp_errors.append(np.percentile(tmp_errors_array, [16, 84]))
+                    
+                    if self.debug:
+                        print('\nHMR_i ', hmr_i)
+                        print('percentiles: ', np.percentile(tmp_errors_array, [16, 84]))
+                        print('angle: ', angle)
+                        plt.hist(tmp_errors_array, 100)
+                        plt.show()
+                        plt.close()
+                    
                 self.mis_angles['%s_%s_angle' %(parttype_name[0], parttype_name[1])] = tmp_angles
+                self.mis_angles['%s_%s_angle_err' %(parttype_name[0], parttype_name[1])] = tmp_errors
                 
-            # Find 2D projected misalignment angles
+            
+            
+            #-----------------------
+            # Find 2D projected misalignment angles + errors (Taking random spins, projecting them)
             self.mis_angles_proj = {'x': {}, 'y': {}, 'z': {}}
             for viewing_axis_i in ['x', 'y', 'z']:
                 self.mis_angles_proj[viewing_axis_i]['rad'] = spin_rad_in
                 self.mis_angles_proj[viewing_axis_i]['hmr'] = spin_rad_in/self.halfmass_rad
                 
                 if viewing_axis_i == 'x':
-                    for parttype_name in [['stars', 'gas'], ['stars', 'gas_sf'], ['stars', 'gas_nsf'], ['gas_sf', 'gas_nsf']]:
+                    for parttype_name in angle_selection:
                         tmp_angles = []
-                        for i in np.arange(0, len(self.spins['stars']), 1):
-                            tmp_angles.append(self._misalignment_angle(np.array([self.spins[parttype_name[0]][i][1], self.spins[parttype_name[0]][i][2]]), np.array([self.spins[parttype_name[1]][i][1], self.spins[parttype_name[1]][i][2]])))
+                        tmp_errors = []
+                        for i, hmr_i in zip(np.arange(0, len(self.spins['stars']), 1), spin_rad_in/self.halfmass_rad):
+                            angle = self._misalignment_angle(np.array([self.spins[parttype_name[0]][i][1], self.spins[parttype_name[0]][i][2]]), np.array([self.spins[parttype_name[1]][i][1], self.spins[parttype_name[1]][i][2]]))
+                            tmp_angles.append(angle)
+                            
+                            # uncertainty
+                            tmp_errors_array = []
+                            for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i][parttype_name[0]][:,[1, 2]], spins_rand['%s' %hmr_i][parttype_name[1]][:, [1, 2]]):
+                                tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
+                            tmp_errors.append(np.percentile(tmp_errors_array, [16, 84]))
+                            
                         self.mis_angles_proj['x']['%s_%s_angle' %(parttype_name[0], parttype_name[1])] = tmp_angles
+                        self.mis_angles_proj['x']['%s_%s_angle_err' %(parttype_name[0], parttype_name[1])] = tmp_errors
+                        
                 if viewing_axis_i == 'y':
-                    for parttype_name in [['stars', 'gas'], ['stars', 'gas_sf'], ['stars', 'gas_nsf'], ['gas_sf', 'gas_nsf']]:
+                    for parttype_name in angle_selection:
                         tmp_angles = []
-                        for i in np.arange(0, len(self.spins['stars']), 1):
+                        tmp_errors = []
+                        for i, hmr_i in zip(np.arange(0, len(self.spins['stars']), 1), spin_rad_in/self.halfmass_rad):
                             tmp_angles.append(self._misalignment_angle(np.array([self.spins[parttype_name[0]][i][0], self.spins[parttype_name[0]][i][2]]), np.array([self.spins[parttype_name[1]][i][0], self.spins[parttype_name[1]][i][2]])))
+                            
+                            # uncertainty
+                            tmp_errors_array = []
+                            for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i][parttype_name[0]][:,[0, 2]], spins_rand['%s' %hmr_i][parttype_name[1]][:, [0, 2]]):
+                                tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
+                            tmp_errors.append(np.percentile(tmp_errors_array, [16, 84]))
+                            
                         self.mis_angles_proj['y']['%s_%s_angle' %(parttype_name[0], parttype_name[1])] = tmp_angles
+                        self.mis_angles_proj['y']['%s_%s_angle_err' %(parttype_name[0], parttype_name[1])] = tmp_errors
+                        
                 if viewing_axis_i == 'z':
-                    for parttype_name in [['stars', 'gas'], ['stars', 'gas_sf'], ['stars', 'gas_nsf'], ['gas_sf', 'gas_nsf']]:
+                    for parttype_name in angle_selection:
                         tmp_angles = []
-                        for i in np.arange(0, len(self.spins['stars']), 1):
-                            tmp_angles.append(self._misalignment_angle(np.array([self.spins[parttype_name[0]][i][0], self.spins[parttype_name[0]][i][1]]), np.array([self.spins[parttype_name[1]][i][0], self.spins[parttype_name[1]][i][1]])))
+                        tmp_errors = []
+                        for i, hmr_i in zip(np.arange(0, len(self.spins['stars']), 1), spin_rad_in/self.halfmass_rad):
+                            angle = self._misalignment_angle(np.array([self.spins[parttype_name[0]][i][0], self.spins[parttype_name[0]][i][1]]), np.array([self.spins[parttype_name[1]][i][0], self.spins[parttype_name[1]][i][1]]))
+                            tmp_angles.append(angle)
+                            
+                            # uncertainty
+                            tmp_errors_array = []
+                            for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i][parttype_name[0]][:,[0, 1]], spins_rand['%s' %hmr_i][parttype_name[1]][:, [0, 1]]):
+                                tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
+                            tmp_errors.append(np.percentile(tmp_errors_array, [16, 84]))
+                            
+                            if debug:
+                                print('\nHMR_i ', hmr_i)
+                                print('percentiles: ', np.percentile(tmp_errors_array, [16, 84]))
+                                print('angle: ', angle)
+                                plt.hist(tmp_errors_array, 100)
+                                plt.show()
+                                plt.close()
+                            
                         self.mis_angles_proj['z']['%s_%s_angle' %(parttype_name[0], parttype_name[1])] = tmp_angles
+                        self.mis_angles_proj['z']['%s_%s_angle_err' %(parttype_name[0], parttype_name[1])] = tmp_errors
                 
-            
+
             #---------------------
             if len(trim_rad_in) > 0:
                 tmp_data = {}
@@ -648,7 +768,7 @@ class Subhalo:
             
         return newData
         
-    def _find_spin(self, arr, radius, desc):
+    def _find_spin(self, arr, radius, desc, random_sample=False):
         # Compute distance to centre and mask all within stelhalfrad
         r  = np.linalg.norm(arr['Coordinates'], axis=1)
         mask = np.where(r <= radius)
@@ -657,19 +777,52 @@ class Subhalo:
         #r = r[mask]
         #print("Total %s particles in %.5f kpc: %i\n"%(desc, radius*1000, len(r)))
         
-        # Finding spin angular momentum vector of each individual particle of gas and stars, where [:, None] is done to allow multiplaction of N3*N1 array. Equation D.25
-        L  = np.cross(arr['Coordinates'][mask] * arr['Mass'][:, None][mask], arr['Velocity'][mask])
+        if random_sample:
+            #
+            if self.debug:
+                print('\ntotal particle count', len(arr['Mass'][:, None]))
+            
+            # Mask within radius
+            tmp_coords = arr['Coordinates'][mask]
+            tmp_mass = arr['Mass'][:, None][mask]
+            tmp_velocity = arr['Velocity'][mask]
+            
+            if self.debug:
+                print('radius', radius)
+                print('particle count in rad', len(tmp_mass))
+            
+            # Making a random mask of (now cropped) data points... 50% = 0.5
+            random_mask = np.random.choice(tmp_coords.shape[0], int(np.ceil(tmp_coords.shape[0] * 0.5)), replace=False)
+            
+            # Applying mask
+            tmp_coords = tmp_coords[random_mask]
+            tmp_mass   = tmp_mass[random_mask]
+            tmp_velocity = tmp_velocity[random_mask]
+            
+            if self.debug:
+                print('particle count in rad masked', len(tmp_mass))
+            
+            # Finding spin angular momentum vector of each particle
+            L = np.cross(tmp_coords * tmp_mass, tmp_velocity)
+            
+            # Summing for total angular momentum and dividing by mass to get the spin vectors
+            with np.errstate(divide='ignore', invalid='ignore'):
+                spin = np.sum(L, axis=0)/np.sum(tmp_mass)
+            
+        else:
+            # Finding spin angular momentum vector of each individual particle of gas and stars, where [:, None] is done to allow multiplaction of N3*N1 array. Equation D.25
+            L  = np.cross(arr['Coordinates'][mask] * arr['Mass'][:, None][mask], arr['Velocity'][mask])
         
-        # Summing for total angular momentum and dividing by mass to get the spin vectors
-        with np.errstate(divide='ignore', invalid='ignore'):
-            spin = np.sum(L, axis=0)/np.sum(arr['Mass'][mask])
+            # Summing for total angular momentum and dividing by mass to get the spin vectors
+            with np.errstate(divide='ignore', invalid='ignore'):
+                spin = np.sum(L, axis=0)/np.sum(arr['Mass'][mask])
         
         # Expressing as unit vector
         spin_unit = spin / np.linalg.norm(spin)
         
         # OUTPUTS UNIT VECTOR OF SPIN, PARTICLE COUNT WITHIN RAD, MASS WITHIN RAD 
         return spin_unit, len(r[mask]), np.sum(arr['Mass'][mask])
-        
+            
     def _misalignment_angle(self, angle1, angle2):
         # Find the misalignment angle
         angle = np.rad2deg(np.arccos(np.clip(np.dot(angle1/np.linalg.norm(angle1), angle2/np.linalg.norm(angle2)), -1.0, 1.0)))     # [deg]

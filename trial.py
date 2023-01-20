@@ -24,6 +24,16 @@ x = np.array([1, 2, 3, 4, 5, 6])
 y = np.array([1, 1, 1, 1, 1, 1])
 err = np.array([1, 4, 4, 2, 2, 2])
 
+def abcd(x, y, printa=False):
+    xy = x + y
+    
+    if printa:
+        print(xy)
+    else:
+        print('didnt print')
+        
+abcd(4, 5)
+abcd(3, 2, printa=True)
     
     
         

@@ -1,10 +1,13 @@
 import h5py
 import numpy as np
 import random
+import inspect
 import matplotlib as mpl
 import matplotlib.pyplot as plt 
 import matplotlib.colors as colors
 import matplotlib.cm as cm
+import csv
+import json
 from tqdm import tqdm
 from matplotlib.ticker import PercentFormatter
 from subhalo_main import Subhalo_Extract, Subhalo
@@ -81,27 +84,53 @@ class Sample:
         return myData
 
 
-def plot_misalignment_angle(galaxy_mass_limit = 1e9,
-                            manual_GroupNumList = [],           # manually enter galaxy gns we want
-                              use_angle_in    = 2.0,              # multiples of rad
-                            plot_angle_type = np.array(['stars_gas_sf']),  #np.array(['stars_gas', 'stars_gas_sf', 'stars_gas_nsf']),
-                            plot_2D_3D      = '2D',             #or use '3D'. DEFAULT 2D
-                            viewing_axis    = 'z',              #will ignore if '3D' above. DEFAULT z
-                              gas_sf_min_particles = 20,         # minimum gas sf particles to use galaxy
-                              com_min_distance  = 2.0,              # minimum distance between stars and gas_sf c.o.m
-                            plot_single     = True,                        # whether to create single plots
-                                savefig   = False,
-                                showfig   = True,  
-                                savefig_txt = '',            #extra savefile txt                    
-                            spin_rad_in     = np.array([2.0]), #np.arange(1, 3, 0.5),    # multiples of rad
-                            trim_rad_in     = np.array([100]),                 # keep as 100
-                            kappa_rad_in    = 30,                              # calculate kappa for this radius [pkpc]
-                            align_rad_in    = False,                           # keep on False              
-                            root_file = 'trial_plots',
+""" 
+DESCRIPTION
+-----------
+- Connects to the SQL database to sample galaxies with stellar mass of 10^9 (about 1000 star particles see Casanueva)
+- Finds the total angular momentum of a specific particle type within a given radius, outputs this as a table
+- Currently just takes ‘2D + axis’ or ‘3D’ as options for angle, with a mass requirement. 
+   - Can also manually take a manual_GroupNumList which will override the above. This list is kicked out as a print ‘Subhalos plotted’ from subhalo_pa.py
+
+
+SAMPLE:
+------
+	Min. galaxy mass 1e9   (galaxy_mass_limit = 1e9)
+	Min. sf particle count of 20 within 2 HMR.  (gas_sf_min_particles = 20)
+	2D projected angle within 2 HMR (plot_2D_3D = ‘2D’)
+	Viewing axis z
+	C.o.M max distance of 2.0 pkpc
+        •  	Misangle_2D_stars_gas_sf_rad2_part20_com2.0_axz.jpeg
+
+
+"""
+#1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
+def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter galaxy gns we want
+                              SubGroupNum       = 0,
+                              galaxy_mass_limit         = 10**9.5,                              # for use in SAMPLE
+                                    spin_rad_in         = np.array([2.0]), #np.arange(1, 3, 0.5),    # multiples of hmr
+                                    trim_rad_in         = np.array([100]),                  # keep as 100
+                                    kappa_rad_in        = 30,                               # calculate kappa for this radius [pkpc]
+                                    angle_selection     = [['stars', 'gas_sf']],            # list of angles to find analytically [[ , ], [ , ] ...]
+                              align_rad_in        = False,                            # keep on False
+                              orientate_to_axis = 'z',                              # Keep as z
+                              viewing_angle = 0,                                    # Keep as 0
+                            plot_single     = True,                        # whether to create single plots. KEEP ON TRUE
+                              viewing_axis         = 'z',               # will ignore if '3D' above. DEFAULT z
+                              com_min_distance     = 2.0,               # minimum distance between stars and gas_sf c.o.m
+                              gas_sf_min_particles = 20,                # minimum gas sf particles to use galaxy
+                              plot_2D_3D           = '2D',              #or use '3D'. DEFAULT 2D
+                                    use_angle_in        = 2.0,                          # multiples of rad
+                                    plot_angle_type     = np.array(['stars_gas_sf']),   #np.array(['stars_gas', 'stars_gas_sf', 'stars_gas_nsf']),
+                            root_file = '/Users/c22048063/Documents/EAGLE/trial_plots',
                               print_galaxy       = False,
                               print_galaxy_short = False,
-                            orientate_to_axis = 'z',     # keep as z
-                            viewing_angle = 0):            # keep as 0
+                              csv_file           = True,              # .csv file will ALL data
+                                csv_name = 'data_misalignment',
+                              showfig   = True,
+                              savefig   = False,  
+                                savefig_txt = '',            #extra savefile txt
+                              debug = False):            
                             
     # creates a list of applicable gn (and sgn) to sample. To include satellite galaxies, use 'yes'
     sample = Sample(mySims, snapNum, galaxy_mass_limit, 'no')
@@ -117,7 +146,7 @@ def plot_misalignment_angle(galaxy_mass_limit = 1e9,
     else:
         GroupNumList = sample.GroupNum
     
-    SubGroupNum = 0
+    
     for GroupNum in tqdm(GroupNumList):
         # Initial extraction of galaxy data
         galaxy = Subhalo_Extract(mySims, dataDir, snapNum, GroupNum, SubGroupNum)
@@ -142,6 +171,7 @@ def plot_misalignment_angle(galaxy_mass_limit = 1e9,
     
         # Galaxy will be rotated to calc_kappa_rad's stellar spin value
         subhalo = Subhalo(galaxy.halfmass_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas,
+                                            angle_selection,
                                             viewing_angle,
                                             spin_rad,
                                             trim_rad, 
@@ -179,8 +209,9 @@ def plot_misalignment_angle(galaxy_mass_limit = 1e9,
         all_particles['%s' %str(GroupNum)] = subhalo.particles
         all_misanglesproj['%s' %str(subhalo.gn)] = subhalo.mis_angles_proj
         
-        all_general = {'%s' %str(subhalo.gn): {'stelmass':[], 'gasmass':[], 'gasmass_sf':[], 'gasmass_nsf':[], 'halfmass_rad':[], 'kappa':[], 'kappa_gas':[], 'kappa_gas_sf':[], 'kappa_gas_nsf':[]}}
+        all_general.update({'%s' %str(subhalo.gn): {'gn':[], 'stelmass':[], 'gasmass':[], 'gasmass_sf':[], 'gasmass_nsf':[], 'halfmass_rad':[], 'kappa':[], 'kappa_gas':[], 'kappa_gas_sf':[], 'kappa_gas_nsf':[]}})
         
+        all_general['%s' %str(subhalo.gn)]['gn']            = subhalo.gn
         all_general['%s' %str(subhalo.gn)]['stelmass']      = subhalo.stelmass
         all_general['%s' %str(subhalo.gn)]['gasmass']       = subhalo.gasmass
         all_general['%s' %str(subhalo.gn)]['gasmass_sf']    = subhalo.gasmass_sf
@@ -193,7 +224,7 @@ def plot_misalignment_angle(galaxy_mass_limit = 1e9,
         #---------------------------------
         
         
-    def _plot_single(quiet=1):
+    def _plot_single(quiet=0, debug=False):
         for plot_angle_type_i in plot_angle_type:
             # Collect values to plot
             misalignment_angle = []
@@ -221,14 +252,20 @@ def plot_misalignment_angle(galaxy_mass_limit = 1e9,
                 else:
                     GroupNumNotPlot.append([GroupNum, 'sf part: %i' %all_particles['%s' %str(GroupNum)]['gas_sf'][int(mask_sf[0])]])
         
-            
+            if debug == True:
+                print('\nmisalignment angle: ', misalignment_angle)
+                print('projected angle: %s ' %viewing_axis, projected_angle)
+                
             # Print statements
             print('\nInitial sample:    ', len(GroupNumList))
-            print(' ', GroupNumList)
+            if not quiet:
+                print(' ', GroupNumList)
             print('\nFinal sample:   ', len(GroupNumPlot))
-            print(' ', GroupNumPlot)  
+            if not quiet:
+                print(' ', GroupNumPlot)  
             print('\nNot in sample:   ', len(GroupNumNotPlot)) 
-            print(' ', GroupNumNotPlot)
+            if not quiet:
+                print(' ', GroupNumNotPlot)
             print('\n\n==========================================')
             print('Spin radius, axis:   %.1f [pkpc], %s' %(use_angle_in, viewing_axis))
             print('Min. stellar mass:   %.1f [log10 M*]' %np.log10(galaxy_mass_limit))
@@ -264,10 +301,6 @@ def plot_misalignment_angle(galaxy_mass_limit = 1e9,
                 plt.errorbar(np.arange(5, 181, 10), hist_n/len(GroupNumPlot), xerr=None, yerr=np.sqrt(hist_n)/len(GroupNumPlot), ecolor='k', ls='none', capsize=4, elinewidth=1, markeredgewidth=1)
             
             
-            if not quiet:
-                print('\nmisalignment angle: ', misalignment_angle)
-                print('projected angle: %s ' %viewing_axis, projected_angle)
-            
             # General formatting
             plt.gca().yaxis.set_major_formatter(PercentFormatter(1))
             ax.set_xlim(0, 180)
@@ -289,18 +322,46 @@ def plot_misalignment_angle(galaxy_mass_limit = 1e9,
     
             if savefig == True:
                 if plot_2D_3D == '2D':
-                    plt.savefig("/Users/c22048063/Documents/EAGLE/trial_plots/Misangle_2D_%s_rad%s_part%s_com%s_ax%s%s.jpeg" %(plot_angle_type_i, str(int(use_angle_in)), str(gas_sf_min_particles), str(com_min_distance), viewing_axis, savefig_txt), format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
+                    plt.savefig("%s/Misangle_2D_%s_rad%s_part%s_com%s_ax%s%s.jpeg" %(root_file, plot_angle_type_i, str(int(use_angle_in)), str(gas_sf_min_particles), str(com_min_distance), viewing_axis, savefig_txt), format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
                 elif plot_2D_3D == '3D':
-                    plt.savefig("/Users/c22048063/Documents/EAGLE/trial_plots/Misangle_3D_%s_rad%s_part%s_com%s%s.jpeg" %(plot_angle_type_i, str(int(use_angle_in)), str(gas_sf_min_particles), str(com_min_distance), savefig_txt), format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
+                    plt.savefig("%s/Misangle_3D_%s_rad%s_part%s_com%s%s.jpeg" %(root_file, plot_angle_type_i, str(int(use_angle_in)), str(gas_sf_min_particles), str(com_min_distance), savefig_txt), format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
             if showfig == True:
                 plt.show()
             plt.close()
             
-
     #-------------------------
     if plot_single == True:
         _plot_single()
-    #-------------------------    
+    #------------------------- 
+    
+    if csv_file: 
+        # Converting numpy arrays to lists. When reading, may need to simply convert list back to np.array() (easy)
+        class NumpyEncoder(json.JSONEncoder):
+            """ Special json encoder for numpy types """
+            def default(self, obj):
+                if isinstance(obj, np.integer):
+                    return int(obj)
+                elif isinstance(obj, np.floating):
+                    return float(obj)
+                elif isinstance(obj, np.ndarray):
+                    return obj.tolist()
+                return json.JSONEncoder.default(self, obj)
+                       
+        # Combining all dictionaries
+        csv_dict = {'all_general': all_general, 'all_misangles': all_misangles, 'all_misanglesproj': all_misanglesproj, 'all_coms': all_coms, 'all_particles': all_particles}
+        csv_dict.update({'function_input': str(inspect.signature(plot_misalignment_angle))})
+        
+        # Writing one massive JSON file
+        json.dump(csv_dict, open('%s/%s.csv' %(root_file, csv_name), 'w'), cls=NumpyEncoder)
+        
+        # Reading JSON file
+        """dict_new = json.load(open('%s/%s.csv' %(root_file, csv_name), 'r'))
+        # example nested dictionaries
+        new_general = dict_new['all_general']
+        new_misanglesproj = dict_new['all_misanglesproj']
+        # example accessing function input
+        function_input = dict_new['function_input']
+        print(dict_new['all_general']['4'].items())"""
         
 #------------------------  
 plot_misalignment_angle()

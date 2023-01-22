@@ -14,6 +14,13 @@ from pyread_eagle import EagleSnapshot
 from read_dataset_tools import read_dataset, read_dataset_dm_mass, read_header
 
 
+
+#check ALL aexp, hexp units. Current works
+#make copy of file
+#not updated velocity, but done c.o.m. check units
+
+
+
 """ 
 Purpose
 -------
@@ -96,32 +103,57 @@ Output Parameters
 If centre_galaxy == True; 'Coordinates' - .centre, 'Velocity' - .perc_vel
 """
 class Subhalo_Extract:
-    
-    def __init__(self, sim, data_dir, snapNum, gn, sgn, centre_galaxy=True, load_region_length=2):       # cMpc/h
+    def __init__(self, sim, data_dir, snapNum, gn, sgn, 
+                            centre_galaxy=True, 
+                            load_region_length=2,   # cMpc/h 
+                            nfiles=16, 
+                            debug=True):       
+                            
+                            
         # Assigning subhalo properties
         self.gn           = gn
         self.sgn          = sgn
         
         # Load information from the header
-        self.a, self.h, self.boxsize = read_header(data_dir) # units of scale factor, h, and L [cMpc/h]    ASSUMES Z=0 I THINK
+        self.a, self.h, self.boxsize = read_header(data_dir) # units of scale factor, h, and L [cMpc/h]    
         
         # For a given gn and sgn, run sql query on SubFind catalogue
         myData = self._query(sim, snapNum)
         
+        
+        """# Loop over each file and extract the data.
+        for i in range(nfiles):
+            f = h5py.File(data_dir, 'r')
+            tmp = f['PartType4/Coordinates']
+
+            # Get conversion factors.
+            self.cgs     = f['PartType4/Coordinates'].attrs.get('CGSConversionFactor')
+            self.aexp    = f['PartType4/Coordinates'].attrs.get('aexp-scale-exponent')
+            self.hexp    = f['PartType4/Coordinates'].attrs.get('h-scale-exponent')
+
+            f.close()"""
+        
+        
         # Assiging subhalo properties
         self.stelmass     = myData['stelmass']                                                                  # [Msun]
         self.gasmass      = myData['gasmass']                                                                   # [Msun]
-        self.halfmass_rad = myData['rad']                                                                       # [pkpc]
-        self.centre       = np.array([myData['x'], myData['y'], myData['z']]) * u.Mpc.to(u.kpc)                 # [pkpc]
-        self.centre_mass  = np.array([myData['x_mass'], myData['y_mass'], myData['z_mass']]) * u.Mpc.to(u.kpc)  # [pkpc]
+        self.halfmass_rad = myData['rad'] * self.a**self.aexp                                                                       # [pkpc]
+        self.centre       = np.array([myData['x'], myData['y'], myData['z']]) * u.Mpc.to(u.kpc) #* self.a**self.aexp                # [pkpc]
+        self.centre_mass  = np.array([myData['x_mass'], myData['y_mass'], myData['z_mass']]) * u.Mpc.to(u.kpc) #* self.a**self.aexp   # [pkpc]
         self.perc_vel     = np.array([myData['vel_x'], myData['vel_y'], myData['vel_z']])                       # [pkm/s]
-        
         
         # Load data for stars and gas in non-centred units
         # Msun, pkpc, and pkpc/s
         self.stars        = self._read_galaxy(data_dir, 4, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length) 
         self.gas          = self._read_galaxy(data_dir, 0, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length)
         
+        if debug:
+            print('_main DEBUG')
+            print(np.log10(self.stelmass))
+            print(np.log10(self.gasmass))
+            print(self.halfmass_rad)
+            
+            
         if centre_galaxy == True:
             self.stars['Coordinates'] = self.stars['Coordinates'] - self.centre
             self.gas['Coordinates']   = self.gas['Coordinates'] - self.centre
@@ -165,19 +197,29 @@ class Subhalo_Extract:
             
             return myData    
         
-    def _read_galaxy(self, data_dir, itype, gn, sgn, centre, load_region_length):
+    def _read_galaxy(self, data_dir, itype, gn, sgn, centre, load_region_length, debug=True):
         """ For a given galaxy (defined by its GroupNumber and SubGroupNumber)
         extract the coordinates, velocty, and mass of all particles of a selected type.
         Coordinates are then wrapped around the centre to account for periodicity."""
-
+        
+        # Find exponentials to convert from cMpc to pm (cgs)
+        if debug:
+            print('_read_galaxy debug')
+            print(self.a)
+            print(self.aexp)
+            print(self.h)
+            print(self.hexp)
+            print(self.boxsize)
+            
         # Where we store all the data
         data = {}
+        
         
         # Initialize read_eagle module.
         eagle_data = EagleSnapshot(data_dir)
         
         # Put centre into pMpc -> cMpc/h units.
-        centre_cMpc = centre*self.h
+        centre_cMpc = centre/((self.h**self.hexp) * (self.a**self.aexp))
 
         # Select region to load, a 'load_region_length' cMpc/h cube centred on 'centre'.
         region = np.array([
@@ -435,6 +477,14 @@ class Subhalo:
         self.perc_vel       = perc_vel                              # [pkm/s]
         self.viewing_angle  = viewing_angle                         # [deg]
         
+        print('_main debug')
+        print(len(gas['Mass']))
+        print(stars['Coordinates'])
+        print(np.mean(stars['Coordinates'][:,0]))
+        print(np.mean(stars['Coordinates'][:,1]))
+        print(np.mean(stars['Coordinates'][:,2]))
+        print(self.centre)
+            
         # Create dataset of star-forming and non-star-forming gas
         gas_sf = {}
         gas_nsf = {}

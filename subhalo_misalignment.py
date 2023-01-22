@@ -8,18 +8,19 @@ import matplotlib.colors as colors
 import matplotlib.cm as cm
 import csv
 import json
+from datetime import datetime
 from tqdm import tqdm
 from matplotlib.ticker import PercentFormatter
 from subhalo_main import Subhalo_Extract, Subhalo
 import eagleSqlTools as sql
 from graphformat import graphformat
 
-# Directories of data hdf5 file(s)
-dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_028_z000p000/snap_028_z000p000.0.hdf5'
-
 # list of simulations
 mySims = np.array([('RefL0012N0188', 12)])   
 snapNum = 28
+
+# Directories of data hdf5 file(s)
+dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_0%s_z000p000/snap_0%s_z000p000.0.hdf5' %(snapNum, snapNum)
 
 """ 
 Will extract all galaxies with specified stellar
@@ -53,10 +54,10 @@ class Sample:
                            FROM \
                              %s_Subhalo as SH \
                            WHERE \
-        			         SH.SnapNum = 28 \
+        			         SH.SnapNum = %i \
                              and SH.MassType_Star >= %f \
                            ORDER BY \
-        			         SH.MassType_Star desc'%(sim_name, self.mstar_limit)
+        			         SH.MassType_Star desc'%(sim_name, snapNum, self.mstar_limit)
             
             # Execute query.
             myData = sql.execute_query(con, myQuery)
@@ -131,20 +132,22 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
                               savefig   = False,  
                                 savefig_txt = '',            #extra savefile txt
                               debug = False):            
-                            
-    # creates a list of applicable gn (and sgn) to sample. To include satellite galaxies, use 'yes'
-    sample = Sample(mySims, snapNum, galaxy_mass_limit, 'no')
     
+                            
+    # use manual input if values given, else use sample with mstar_limit
+    if len(manual_GroupNumList) > 0:
+        GroupNumList = manual_GroupNumList
+    else:
+        # creates a list of applicable gn (and sgn) to sample. To include satellite galaxies, use 'yes'
+        sample = Sample(mySims, snapNum, galaxy_mass_limit, 'no')
+        GroupNumList = sample.GroupNum
+    
+    # Create dictionaries to collect for csv
     all_misangles     = {}
     all_coms          = {}
     all_particles     = {}
     all_misanglesproj = {}
     all_general       = {}
-    
-    if len(manual_GroupNumList) > 0:
-        GroupNumList = manual_GroupNumList
-    else:
-        GroupNumList = sample.GroupNum
     
     
     for GroupNum in tqdm(GroupNumList):
@@ -352,7 +355,7 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
         csv_dict.update({'function_input': str(inspect.signature(plot_misalignment_angle))})
         
         # Writing one massive JSON file
-        json.dump(csv_dict, open('%s/%s.csv' %(root_file, csv_name), 'w'), cls=NumpyEncoder)
+        json.dump(csv_dict, open('%s/%s_%s.csv' %(root_file, csv_name, str(datetime.now())), 'w'), cls=NumpyEncoder)
         
         # Reading JSON file
         """dict_new = json.load(open('%s/%s.csv' %(root_file, csv_name), 'r'))

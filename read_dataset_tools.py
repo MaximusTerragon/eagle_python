@@ -9,7 +9,7 @@ def read_dataset(data_dir, itype, att, nfiles=16):
 
     # Loop over each file and extract the data.
     for i in range(nfiles):
-        f = h5py.File('/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_028_z000p000/snap_028_z000p000.%i.hdf5'%i, 'r')
+        f = h5py.File(data_dir, 'r')
         tmp = f['PartType%i/%s'%(itype, att)][...]
         data.append(tmp)
 

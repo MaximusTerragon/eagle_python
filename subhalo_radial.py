@@ -8,18 +8,21 @@ import matplotlib.colors as colors
 import matplotlib.cm as cm
 import csv
 import json
+from datetime import datetime
 from tqdm import tqdm
 from matplotlib.ticker import PercentFormatter
 from subhalo_main import Subhalo_Extract, Subhalo
 import eagleSqlTools as sql
 from graphformat import graphformat
 
-# Directories of data hdf5 file(s)
-dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_028_z000p000/snap_028_z000p000.0.hdf5'
 
 # list of simulations
 mySims = np.array([('RefL0012N0188', 12)])   
 snapNum = 28
+
+# Directories of data hdf5 file(s)
+dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_0%s_z000p000/snap_0%s_z000p000.0.hdf5' %(snapNum, snapNum)
+
 
 """  
 DESCRIPTION
@@ -290,7 +293,7 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
         csv_dict.update({'function_input': str(inspect.signature(plot_radial_misalignment))})
         
         # Writing one massive JSON file
-        json.dump(csv_dict, open('%s/%s.csv' %(root_file, csv_name), 'w'), cls=NumpyEncoder)
+        json.dump(csv_dict, open('%s/%s_%s.csv' %(root_file, csv_name, str(datetime.now())), 'w'), cls=NumpyEncoder)
         
         """# Reading JSON file
         dict_new = json.load(open('%s/%s.csv' %(root_file, csv_name), 'r'))

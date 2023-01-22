@@ -14,12 +14,15 @@ from matplotlib.widgets import Button
 from subhalo_main import Subhalo_Extract, Subhalo
 from graphformat import graphformat
 
-# Directories of data hdf5 file(s)
-dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_028_z000p000/snap_028_z000p000.0.hdf5'
 
 # list of simulations
 mySims = np.array([('RefL0012N0188', 12)])   
-snapNum = 28
+snapNum = 27
+
+# Directories of data hdf5 file(s)
+dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_0%s_z000p101/snap_0%s_z000p101.0.hdf5' %(snapNum, snapNum)
+#dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_0%s_z000p000/snap_0%s_z000p000.0.hdf5' %(snapNum, snapNum)
+  
     
 """ 
 PURPOSE
@@ -180,22 +183,22 @@ def galaxy_render(manual_GroupNumList = np.array([4]),
             # Plot original stars spin vector
             ax.quiver(0, 0, 0, arrow[0]*boxradius*0.6, arrow[1]*boxradius*0.6, arrow[2]*boxradius*0.6, color=color, alpha=1, linewidth=1, zorder=50)
 
+        #--------------------------------------------
         # Buttons for stars, gas_sf, gas_nsf
         class Index:
-            def starss(self, event):
+            def stars_button(self, event):
                 plot_rand_scatter(subhalo.data['%s' %str(trim_rad_in[0])], 'stars', 'lightyellow')
                 plot_spin_vector(subhalo.spins, 'stars', spin_vector_rad, 'r')
-                ax.set_xlim(-boxradius, boxradius)
-            def gas_sfs(self, event):
+                fig.canvas.draw_idle()
+            def gas_sf_button(self, event):
                 plot_rand_scatter(subhalo.data['%s' %str(trim_rad_in[0])], 'gas_sf', 'cyan')
                 plot_spin_vector(subhalo.spins, 'gas_sf', spin_vector_rad, 'darkturquoise')
-                ax.set_xlim(-boxradius, boxradius)
-            def gas_nsfs(self, event):
+                fig.canvas.draw_idle()
+            def gas_nsf_button(self, event):
                 plot_rand_scatter(subhalo.data['%s' %str(trim_rad_in[0])], 'gas_nsf', 'royalblue')
                 plot_spin_vector(subhalo.spins, 'gas_nsf', spin_vector_rad, 'blue')   
-                ax.set_xlim(-boxradius, boxradius)
-                
-            def plot_clear(self, event):
+                fig.canvas.draw_idle()
+            def plot_clear_button(self, event):
                 ax.cla()
                 # Plot formatting
                 ax.set_facecolor('xkcd:black')
@@ -206,17 +209,40 @@ def galaxy_render(manual_GroupNumList = np.array([4]),
                 ax.set_xlim(-boxradius, boxradius)
                 ax.set_ylim(-boxradius, boxradius)
                 ax.set_zlim(-boxradius, boxradius)
-                
-        callback = Index()      
-        bclear = Button(fig.add_axes([0.01, 0.92, 0.12, 0.03]), 'CLEAR')
-        bstars = Button(fig.add_axes([0.01, 0.96, 0.12, 0.03]), 'Stars')
-        bgassf = Button(fig.add_axes([0.13, 0.96, 0.12, 0.03]), 'Gas SF')
-        bgasnsf = Button(fig.add_axes([0.25, 0.96, 0.12, 0.03]), 'Gas NSF')
-        bstars.on_clicked(callback.starss)
-        bgassf.on_clicked(callback.gas_sfs)
-        bgasnsf.on_clicked(callback.gas_nsfs)
-        bclear.on_clicked(callback.plot_clear)
+                fig.canvas.draw_idle()
+            def com_button(self, event):
+                ax.scatter(subhalo.centre_mass[0] - subhalo.centre[0], subhalo.centre_mass[1] - subhalo.centre[1], subhalo.centre_mass[2] - subhalo.centre[2], c='purple', s=3, zorder=10)
+                fig.canvas.draw_idle()
+            def cop_button(self, event):
+                ax.scatter(0, 0, 0, c='pink', s=3, zorder=10)
+                fig.canvas.draw_idle()
+            def auto_rotate(self, event):
+                fig.canvas.draw_idle()
+                for ii in np.arange(ax.azim, ax.azim+360, 1):
+                    ax.view_init(elev=ax.elev, azim=ii)
+                    plt.pause(0.01)
+                    ax.set_zlim(-boxradius, boxradius)
+                    fig.canvas.draw_idle()
         
+        callback = Index()     
+         
+        bclear  = Button(fig.add_axes([0.01, 0.88, 0.12, 0.03]), 'CLEAR', color='red', hovercolor='red')
+        bstars  = Button(fig.add_axes([0.01, 0.96, 0.12, 0.03]), 'STARS', color='yellow', hovercolor='yellow')
+        bgassf  = Button(fig.add_axes([0.13, 0.96, 0.12, 0.03]), 'GAS SF', color='cyan', hovercolor='cyan')
+        bgasnsf = Button(fig.add_axes([0.25, 0.96, 0.12, 0.03]), 'GAS NSF', color='royalblue', hovercolor='royalblue')
+        bcom    = Button(fig.add_axes([0.01, 0.92, 0.12, 0.03]), 'C.O.M')
+        bcop    = Button(fig.add_axes([0.13, 0.92, 0.12, 0.03]), 'C.O.P')
+        brotate = Button(fig.add_axes([0.83, 0.96, 0.18, 0.03]), 'ROTATE 360', color='limegreen', hovercolor='darkgreen')
+    
+        
+        bstars.on_clicked(callback.stars_button)
+        bgassf.on_clicked(callback.gas_sf_button)
+        bgasnsf.on_clicked(callback.gas_nsf_button)
+        bclear.on_clicked(callback.plot_clear_button)
+        bcom.on_clicked(callback.com_button)
+        bcop.on_clicked(callback.cop_button)
+        brotate.on_clicked(callback.auto_rotate)
+        #--------------------------------------------
         
         # Plot scatters and spin vectors   
         if not align_rad:

@@ -25,11 +25,13 @@ from graphformat import graphformat
 
 # list of simulations
 mySims = np.array([('RefL0012N0188', 12)])   
-snapNum = 28
+snapNum = 27
 
 # Directories of data hdf5 file(s)
-dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_0%s_z000p000/snap_0%s_z000p000.0.hdf5' %(snapNum, snapNum)
-
+dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_0%s_z000p101/snap_0%s_z000p101.0.hdf5' %(snapNum, snapNum)
+#dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_0%s_z000p000/snap_0%s_z000p000.0.hdf5' %(snapNum, snapNum)
+ 
+ 
 # Register stuff
 register_sauron_colormap()
 
@@ -178,7 +180,7 @@ def _weight_histo(gn,
                   quiet=1, 
                   plot=0,
                   colormap='coolwarm',
-                  debug=True):
+                  debug=False):
                  
     # Assign x, y, and z values for histogram2d depending on viewing axis
     if viewing_axis == 'x':
@@ -406,7 +408,7 @@ SAMPLE:
 """
 
 #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
-def velocity_projection(manual_GroupNumList = np.array([1, 2, 3, 4, 10]), 
+def velocity_projection(manual_GroupNumList = np.array([]), 
                           SubGroupNum       = 0,
                           galaxy_mass_limit          = 10**9.5,                     # Used in sample
                                 spin_rad_in          = np.array([2.0]),         # np.arange(1.0, 2.5, 0.5), np.array([2.0]) 
@@ -430,17 +432,17 @@ def velocity_projection(manual_GroupNumList = np.array([1, 2, 3, 4, 10]),
                                 angle_type_in        = ['stars_gas_sf'],        # PA misalignment angles to be found ['stars_gas', 'stars_gas_sf', 'stars_gas_nsf', 'gas_sf_gas_nsf']
                         root_file = '/Users/c22048063/Documents/EAGLE/trial_plots',      
                           print_galaxy       = False,           # Print detailed galaxy stats in chat
-                          print_galaxy_short = False,           # Print single-line galaxy stats
+                          print_galaxy_short = True,           # Print single-line galaxy stats
                           txt_file           = False,             # .txt file for individual galaxy with all results
                           csv_file           = True,              # .csv file will ALL data
                             csv_name = 'data_pa',
-                          showfig        = True,
+                          showfig        = False,
                           savefig        = True,                 # Whether to save and/or show figures
-                            savefigtxt       = '_TEST',                # added txt to append to end of savefile
+                            savefigtxt       = '_snap27',                # added txt to append to end of savefile
                           debug = False,
                                 pa_angle_type_in            = 'voronoi',             # which pa angles to use: '2dhist', 'voronoi', 'both'... compare will use either or both and compare to 3D
-                                  plot_2dhist_graph           = True, 
-                                  plot_voronoi_graph          = True,
+                                  plot_2dhist_graph           = False, 
+                                  plot_voronoi_graph          = False,
                                   plot_2dhist_pafit_graph     = False,
                                   plot_voronoi_pafit_graph    = False,
                                 pa_compare                  = False,               # plot the voronoi and 2dhist data pa_fit comparison for single galaxy
@@ -1539,16 +1541,19 @@ def velocity_projection(manual_GroupNumList = np.array([1, 2, 3, 4, 10]),
         GroupNumPlot    = []
         GroupNumNotPlot = []
         
+        # Pick first item in list to make hmr masks
+        mask_GroupNum = list(all_general.keys())[0]
+        
         # Find row for which hmr = pa_compare_use_rad_in (=2.). Use any galaxy for the mask, here i use first entry [0]
-        mask = np.where(np.array(all_paangles['%s' %str(GroupNumList[0])][mis_pa_compare_type_in]['0']['hmr']) == mis_pa_compare_use_rad_in)
+        mask = np.where(np.array(all_paangles['%s' %mask_GroupNum][mis_pa_compare_type_in]['0']['hmr']) == mis_pa_compare_use_rad_in)
         for GroupNum in GroupNumList:
             
             # min. sf particle requirement. THIS SHOUD BE REDUNDANT, BUT WILL DO ANYWAY. Essentially means we miss most of the math.nan appending, though some will remain from failed 4 2dhisto points, or vor fail.
-            mask_sf = np.where(all_particles['%s' %str(GroupNumList[0])]['hmr'] == mis_pa_compare_use_rad_in)
+            mask_sf = np.where(all_particles['%s' %mask_GroupNum]['hmr'] == mis_pa_compare_use_rad_in)
             if all_particles['%s' %str(GroupNum)]['gas_sf'][int(mask_sf[0])] >= gas_sf_min_particles:
                 
                 # min. com distance requirement
-                mask_com = np.where(all_coms['%s' %str(GroupNumList[0])]['hmr'] == mis_pa_compare_use_rad_in)
+                mask_com = np.where(all_coms['%s' %mask_GroupNum]['hmr'] == mis_pa_compare_use_rad_in)
                 if all_coms['%s' %str(GroupNum)]['stars_gas_sf'][int(mask_com[0])] <= com_min_distance:
                     
                     # Collect list of GroupNums plotted and not plotted
@@ -1658,16 +1663,19 @@ def velocity_projection(manual_GroupNumList = np.array([1, 2, 3, 4, 10]),
         GroupNumPlot    = []
         GroupNumNotPlot = []
         
+        # Pick first item in list to make hmr masks
+        mask_GroupNum = list(all_general.keys())[0]
+        
         # Find row for which hmr = pa_compare_use_rad_in (=2.). Use any galaxy for the mask, here i use first entry [0]
-        mask = np.where(np.array(all_paangles['%s' %str(GroupNumList[0])][mis_pa_compare_type_in]['0']['hmr']) == mis_pa_compare_use_rad_in)
+        mask = np.where(np.array(all_paangles['%s' %mask_GroupNum][mis_pa_compare_type_in]['0']['hmr']) == mis_pa_compare_use_rad_in)
         for GroupNum in GroupNumList:
             
             # min. sf particle requirement. THIS SHOUD BE REDUNDANT, BUT WILL DO ANYWAY. Essentially means we miss most of the math.nan appending, though some will remain from failed 4 2dhisto points, or vor fail.
-            mask_sf = np.where(all_particles['%s' %str(GroupNumList[0])]['hmr'] == mis_pa_compare_use_rad_in)
+            mask_sf = np.where(all_particles['%s' %mask_GroupNum]['hmr'] == mis_pa_compare_use_rad_in)
             if all_particles['%s' %str(GroupNum)]['gas_sf'][int(mask_sf[0])] >= gas_sf_min_particles:
                 
                 # min. com distance requirement
-                mask_com = np.where(all_coms['%s' %str(GroupNumList[0])]['hmr'] == mis_pa_compare_use_rad_in)
+                mask_com = np.where(all_coms['%s' %mask_GroupNum]['hmr'] == mis_pa_compare_use_rad_in)
                 if all_coms['%s' %str(GroupNum)]['stars_gas_sf'][int(mask_com[0])] <= com_min_distance:
                     
                     # Collect list of GroupNums plotted and not plotted

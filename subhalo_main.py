@@ -107,40 +107,52 @@ class Subhalo_Extract:
                             centre_galaxy=True, 
                             load_region_length=2,   # cMpc/h 
                             nfiles=16, 
-                            debug=True):       
+                            debug=False):       
                             
                             
         # Assigning subhalo properties
         self.gn           = gn
         self.sgn          = sgn
         
-        # Load information from the header
+        #----------------------------------------------------
+        # Load information from the header for this snapshot to find a, aexp, h, hexp, boxsize
         self.a, self.h, self.boxsize = read_header(data_dir) # units of scale factor, h, and L [cMpc/h]    
         
-        # For a given gn and sgn, run sql query on SubFind catalogue
-        myData = self._query(sim, snapNum)
-        
-        
-        """# Loop over each file and extract the data.
+        # Distances:    [cMpc/h] * a^1 *h^-1 -> [pMpc]. [pMpc/h] * h^-1 -> [pMpc], [cMpc/h] * h^-1 -> [cMpc]
+        # Velocity:     [cx/sh] * a^0.5 * h^0 -> [x/s]
+        # Mass:         [Mass/h] * a^0 * h*-1 -> [Mass]
         for i in range(nfiles):
             f = h5py.File(data_dir, 'r')
             tmp = f['PartType4/Coordinates']
 
             # Get conversion factors.
-            self.cgs     = f['PartType4/Coordinates'].attrs.get('CGSConversionFactor')
             self.aexp    = f['PartType4/Coordinates'].attrs.get('aexp-scale-exponent')
             self.hexp    = f['PartType4/Coordinates'].attrs.get('h-scale-exponent')
 
-            f.close()"""
+            f.close()
         
+        if debug:
+            print('a        ', self.a)
+            print('aexp     ', self.aexp)
+            print('h        ', self.h)
+            print('hexp     ', self.hexp)
+            print('boxsize  [cMpc/h]', self.boxsize)
+            print('boxsize  [cMpc]  ', self.boxsize/self.h)
+            print('boxsize  [pMpc]  ', self.boxsize*self.a**1)
+        #----------------------------------------------------
+        
+        # For a given gn and sgn, run sql query on SubFind catalogue
+        myData = self._query(sim, snapNum)
         
         # Assiging subhalo properties
-        self.stelmass     = myData['stelmass']                                                                  # [Msun]
-        self.gasmass      = myData['gasmass']                                                                   # [Msun]
-        self.halfmass_rad = myData['rad'] * self.a**self.aexp                                                                       # [pkpc]
-        self.centre       = np.array([myData['x'], myData['y'], myData['z']]) * u.Mpc.to(u.kpc) #* self.a**self.aexp                # [pkpc]
-        self.centre_mass  = np.array([myData['x_mass'], myData['y_mass'], myData['z_mass']]) * u.Mpc.to(u.kpc) #* self.a**self.aexp   # [pkpc]
-        self.perc_vel     = np.array([myData['vel_x'], myData['vel_y'], myData['vel_z']])                       # [pkm/s]
+        self.stelmass     = myData['stelmass']            # [Msun]
+        self.gasmass      = myData['gasmass']             # [Msun]
+        self.halfmass_rad = myData['rad']                 # [pkpc]
+        
+        # These were all originally in cMpc, converted to pMpc through self.a and self.aexp
+        self.centre       = np.array([myData['x'], myData['y'], myData['z']]) * u.Mpc.to(u.kpc) * self.a**self.aexp                 # [pkpc]
+        self.centre_mass  = np.array([myData['x_mass'], myData['y_mass'], myData['z_mass']]) * u.Mpc.to(u.kpc) * self.a**self.aexp  # [pkpc]
+        self.perc_vel     = np.array([myData['vel_x'], myData['vel_y'], myData['vel_z']]) * self.a**0.5                             # [pkm/s]
         
         # Load data for stars and gas in non-centred units
         # Msun, pkpc, and pkpc/s
@@ -202,24 +214,14 @@ class Subhalo_Extract:
         extract the coordinates, velocty, and mass of all particles of a selected type.
         Coordinates are then wrapped around the centre to account for periodicity."""
         
-        # Find exponentials to convert from cMpc to pm (cgs)
-        if debug:
-            print('_read_galaxy debug')
-            print(self.a)
-            print(self.aexp)
-            print(self.h)
-            print(self.hexp)
-            print(self.boxsize)
-            
         # Where we store all the data
         data = {}
-        
         
         # Initialize read_eagle module.
         eagle_data = EagleSnapshot(data_dir)
         
-        # Put centre into pMpc -> cMpc/h units.
-        centre_cMpc = centre/((self.h**self.hexp) * (self.a**self.aexp))
+        # Put centre from pMpc -> cMpc/h units.
+        centre_cMpc = centre * self.a**-1 * self.h
 
         # Select region to load, a 'load_region_length' cMpc/h cube centred on 'centre'.
         region = np.array([
@@ -264,7 +266,7 @@ class Subhalo_Extract:
         
         # Periodic wrap coordinates around centre (in proper units). 
         # boxsize converted from cMpc/h -> pMpc
-        boxsize = self.boxsize/self.h       # [pkpc]
+        boxsize = self.boxsize * self.h**-1 * self.a**1       # [pkpc]
         data['Coordinates'] = np.mod(data['Coordinates']-centre+0.5*boxsize, boxsize) + centre-0.5*boxsize
         
         # Converting to pkpc
@@ -477,13 +479,20 @@ class Subhalo:
         self.perc_vel       = perc_vel                              # [pkm/s]
         self.viewing_angle  = viewing_angle                         # [deg]
         
-        print('_main debug')
+        # Test galaxy position and mean centred
+        """print('_main subhalo DEBUG')
         print(len(gas['Mass']))
         print(stars['Coordinates'])
         print(np.mean(stars['Coordinates'][:,0]))
         print(np.mean(stars['Coordinates'][:,1]))
         print(np.mean(stars['Coordinates'][:,2]))
         print(self.centre)
+        print(' ')
+        print(stars['Velocity'])
+        print(np.mean(stars['Velocity'][:,0]))
+        print(np.mean(stars['Velocity'][:,1]))
+        print(np.mean(stars['Velocity'][:,2]))"""
+
             
         # Create dataset of star-forming and non-star-forming gas
         gas_sf = {}
@@ -607,11 +616,25 @@ class Subhalo:
                 
         # SPIN VECTORS AND ROTATE
         if len(spin_rad_in) > 0:
-            # Find rotation matrix to rotate galaxy
+            # Find rotation matrix to rotate entire galaxy depending on viewing_angle
             matrix = self._rotate_around_axis('z', 360. - viewing_angle)
         
             self.data = {}
             for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
+                print('aaaaa', parttype_name)
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
                 self.data['%s'%parttype_name] = self._rotate_galaxy(matrix, data_nil[parttype_name])
 
             # Find aligned spin vectors and particle count within radius
@@ -963,12 +986,30 @@ class Subhalo:
         return new_data
         
     def _rotate_coords(self, matrix, coords):
+        
+        
+        
+        
+        
+        
+        
+        
+        print('rotate coords len', len(coords))
+        
+        
+        
+        
+        
+        
+        
+        
         # Compute new coords after rotation
         rotation = []
         for coord in coords:
             rotation.append(np.dot(matrix, coord))
         
-        rotation = np.stack(rotation)
+        if len(rotation) > 0:
+            rotation = np.stack(rotation)
         
         return rotation
         

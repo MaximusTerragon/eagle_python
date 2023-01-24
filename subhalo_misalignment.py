@@ -15,13 +15,16 @@ from subhalo_main import Subhalo_Extract, Subhalo
 import eagleSqlTools as sql
 from graphformat import graphformat
 
+
 # list of simulations
 mySims = np.array([('RefL0012N0188', 12)])   
 snapNum = 28
 
 # Directories of data hdf5 file(s)
+#dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_0%s_z000p101/snap_0%s_z000p101.0.hdf5' %(snapNum, snapNum)
 dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_0%s_z000p000/snap_0%s_z000p000.0.hdf5' %(snapNum, snapNum)
-
+ 
+ 
 """ 
 Will extract all galaxies with specified stellar
 mass greater than given, and return gn + sgn
@@ -110,9 +113,9 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
                               SubGroupNum       = 0,
                               galaxy_mass_limit         = 10**9.5,                              # for use in SAMPLE
                                     spin_rad_in         = np.array([2.0]), #np.arange(1, 3, 0.5),    # multiples of hmr
-                                    trim_rad_in         = np.array([100]),                  # keep as 100
-                                    kappa_rad_in        = 30,                               # calculate kappa for this radius [pkpc]
                                     angle_selection     = [['stars', 'gas_sf']],            # list of angles to find analytically [[ , ], [ , ] ...]
+                              kappa_rad_in        = 30,                               # calculate kappa for this radius [pkpc]
+                              trim_rad_in         = np.array([100]),                  # keep as 100
                               align_rad_in        = False,                            # keep on False
                               orientate_to_axis = 'z',                              # Keep as z
                               viewing_angle = 0,                                    # Keep as 0
@@ -163,8 +166,7 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
         elif kappa_rad_in == 'tworad':
             kappa_rad = 2*galaxy.halfmass_rad
         else:
-            kappa_rad = kappa_rad_in
-            
+            kappa_rad = kappa_rad_in     
         if align_rad_in == 'rad':
             align_rad = galaxy.halfmass_rad
         elif align_rad_in == 'tworad':
@@ -235,16 +237,19 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
             GroupNumPlot       = []
             GroupNumNotPlot    = []
             
+            # Pick first item in list to make hmr masks
+            mask_GroupNum = list(all_general.keys())[0]
+            
             # Selection criteria
-            mask = np.where(all_misangles['%s' %str(GroupNumList[0])]['hmr'] == use_angle_in)
+            mask = np.where(all_misangles['%s' %mask_GroupNum]['hmr'] == use_angle_in)
             for GroupNum in GroupNumList:
                 
                 # min. sf particle requirement
-                mask_sf = np.where(all_particles['%s' %str(GroupNumList[0])]['hmr'] == use_angle_in)
+                mask_sf = np.where(all_particles['%s' %mask_GroupNum]['hmr'] == use_angle_in)
                 if all_particles['%s' %str(GroupNum)]['gas_sf'][int(mask_sf[0])] >= gas_sf_min_particles:
                     
                     # min. com distance requirement
-                    mask_com = np.where(all_coms['%s' %str(GroupNumList[0])]['hmr'] == use_angle_in)
+                    mask_com = np.where(all_coms['%s' %mask_GroupNum]['hmr'] == use_angle_in)
                     if all_coms['%s' %str(GroupNum)]['stars_gas_sf'][int(mask_com[0])] <= com_min_distance:
                         misalignment_angle.append(all_misangles['%s' %str(GroupNum)]['%s_angle' %plot_angle_type_i][int(mask[0])])
                         projected_angle.append(all_misanglesproj['%s' %str(GroupNum)][viewing_axis]['%s_angle' %plot_angle_type_i][int(mask[0])])
@@ -254,7 +259,7 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
                         GroupNumNotPlot.append([GroupNum, 'com: %.2f' %all_coms['%s' %str(GroupNum)]['stars_gas_sf'][int(mask_com[0])]])
                 else:
                     GroupNumNotPlot.append([GroupNum, 'sf part: %i' %all_particles['%s' %str(GroupNum)]['gas_sf'][int(mask_sf[0])]])
-        
+            
             if debug == True:
                 print('\nmisalignment angle: ', misalignment_angle)
                 print('projected angle: %s ' %viewing_axis, projected_angle)

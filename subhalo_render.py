@@ -17,11 +17,11 @@ from graphformat import graphformat
 
 # list of simulations
 mySims = np.array([('RefL0012N0188', 12)])   
-snapNum = 27
+snapNum = 28
 
 # Directories of data hdf5 file(s)
-dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_0%s_z000p101/snap_0%s_z000p101.0.hdf5' %(snapNum, snapNum)
-#dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_0%s_z000p000/snap_0%s_z000p000.0.hdf5' %(snapNum, snapNum)
+#dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_0%s_z000p101/snap_0%s_z000p101.0.hdf5' %(snapNum, snapNum)
+dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_0%s_z000p000/snap_0%s_z000p000.0.hdf5' %(snapNum, snapNum)
   
     
 """ 
@@ -34,6 +34,7 @@ PURPOSE
 - Can also orientate the galaxy to a given axis, based on the angular momentum vector calculated at a given distance. This is used in the calculation of kappa at 30pkpc
 
 """
+#1, 2, 3, 4, 5, 6, 7, 9, 8, 10, 11, 14, 12, 15, 13, 19, 20, 16, 21, 23, 25 
 #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
 def galaxy_render(manual_GroupNumList = np.array([4]),
                     SubGroupNum       = 0, 

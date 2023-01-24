@@ -18,17 +18,9 @@ def read_dataset(data_dir, itype, att, nfiles=16):
         aexp    = f['PartType%i/%s'%(itype, att)].attrs.get('aexp-scale-exponent')
         hexp    = f['PartType%i/%s'%(itype, att)].attrs.get('h-scale-exponent')
         
-
         # Get expansion factor and Hubble parameter from the header.
         a       = f['Header'].attrs.get('Time')
         h       = f['Header'].attrs.get('HubbleParam')
-        
-        #print(f['PartType%i/%s'%(itype, att)].attrs.get('VarDescription'))
-        #print(cgs)
-        #print(aexp)
-        #print(hexp)
-        #print(a)
-        #print(h)
 
         f.close()
 

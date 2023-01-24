@@ -21,8 +21,9 @@ mySims = np.array([('RefL0012N0188', 12)])
 snapNum = 28
 
 # Directories of data hdf5 file(s)
+#dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_0%s_z000p101/snap_0%s_z000p101.0.hdf5' %(snapNum, snapNum)
 dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_0%s_z000p000/snap_0%s_z000p000.0.hdf5' %(snapNum, snapNum)
-
+ 
 
 """  
 DESCRIPTION

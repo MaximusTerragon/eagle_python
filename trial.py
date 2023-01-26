@@ -12,56 +12,14 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import scipy as sp
 import vorbin
+from scipy import stats
 
 from read_dataset_tools import read_dataset, read_dataset_dm_mass, read_header
 from pafit.fit_kinematic_pa import fit_kinematic_pa
 from plotbin.sauron_colormap import register_sauron_colormap
 from vorbin.voronoi_2d_binning import voronoi_2d_binning
 
-
-
-x = np.array([1, 2, 3, 4, 5, 6])
-y = np.array([1, 1, 1, 1, 1, 1])
-err = np.array([1, 4, 4, 2, 2, 2])
-
-def abcd(x, y, printa=False):
-    xy = x + y
-    
-    if printa:
-        print(xy)
-    else:
-        print('didnt print')
-        
-abcd(4, 5)
-abcd(3, 2, printa=True)
-    
-    
-        
-
-
-
-#plt.scatter(x, y)
-#plt.show()
-
-"""rad = 1
-def function1(a = 1, 
-              b = 2*rad, 
-              c = 3):
-    
-     rad = 8235
-              
-     egg = a + b + c
-              
-     return egg
-     
-x = function1()
-
-print(x)"""
-
-
-
-
-"""#stars_x = np.array([-3, -2, -2, -2, -1, -1, -1, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3])
+#stars_x = np.array([-3, -2, -2, -2, -1, -1, -1, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3])
 #stars_y = np.array([-2, 1, 0, -1, 1, 0, -1, 1, 0, -1, 1, -1, 0, 1, 0, 2, 2])
 #stars_vel = np.array([-50, -10, -20, -15, 5, -10, 5, 0, 5, 10, -5, 40, 30, 20, 20, 50, 40])
 #stars_mass = np.array([10, 5, 10, 10, 10, 10, 5, 10, 10, 10, 5, 10, 5, 10, 10, 10, 10])
@@ -72,7 +30,7 @@ N = 100
 bins = 20
 
 # Target number of pixels
-target_pixels = 10
+target_pixels = 5
 pixsize = 10/bins
 
 np.random.seed(11111)
@@ -95,7 +53,8 @@ plt.colorbar(im1, label='velocity')
 #    plt.annotate(txt, (stars_x[i], stars_y[i]), fontsize=6)
 plt.xlim(-5, 5)
 plt.ylim(-5, 5)
-plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/trial_scatter.jpeg', dpi=300)
+#plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/trial_scatter.jpeg', dpi=300)
+plt.show()
 plt.close()
 
 
@@ -111,13 +70,16 @@ plt.scatter(stars_x, stars_y, c=stars_vel, cmap='coolwarm', s=0.5*stars_mass**2)
 #for i, txt in enumerate(np.round(stars_vel,1)):
 #    plt.annotate(txt, (stars_x[i], stars_y[i]), fontsize=6)
     
-plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/trial_counts.jpeg', dpi=300)
+#plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/trial_counts.jpeg', dpi=300)
+plt.show()
 plt.close()
 
 
 
 # Histogram that measures total velocity in those bins
 vel_weighted, _, _ = np.histogram2d(stars_y, stars_x, weights=stars_vel*stars_mass/np.mean(stars_mass), bins=(xbins, ybins))
+vel_std, _, _, _ = stats.binned_statistic_2d(stars_y, stars_x, stars_vel*stars_mass/np.mean(stars_mass), statistic='std', bins=(xbins, ybins))
+
 
 # Account for numbers within hist, if divide by 0 then use 0
 vel_weighted = np.divide(vel_weighted, counts_stars, out=np.zeros_like(vel_weighted), where=counts_stars!=0)
@@ -131,14 +93,21 @@ plt.scatter(stars_x, stars_y, c=stars_vel*stars_mass/np.mean(stars_mass), cmap='
 #for i, txt in enumerate(np.round((stars_vel*stars_mass/np.mean(stars_mass)),1)):
 #    plt.annotate(txt, (stars_x[i], stars_y[i]), fontsize=6)
 
-plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/trial_velweighted.jpeg', dpi=300)
+#plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/trial_velweighted.jpeg', dpi=300)
+plt.show()
+plt.close()
+
+
+# plot std
+im3 = plt.pcolormesh(xbins, ybins, vel_std, cmap='inferno')
+plt.colorbar(im3, label='std')
+plt.tight_layout()
+plt.show()
 plt.close()
 
 
 
-
-
-# Convert hist data to coords + value
+"""# Convert hist data to coords + value
 i, j = np.nonzero(counts_stars)                               # find indexes of non-0 bins
 a = np.array((xbins[:-1] + 0.5*(xbins[1] - xbins[0]))[i])     # convert bin to centred coords
 b = np.array((ybins[:-1] + 0.5*(ybins[1] - ybins[0]))[j])     # convert bin to centred coords
@@ -243,16 +212,11 @@ plt.ylim(-5, 5)
 plt.scatter(stars_x, stars_y, c=stars_vel, cmap='Greys')
 
 # colorbar
-plt.colorbar(mapper)
-"""
+plt.colorbar(mapper)"""
 
 
 
-
-
-
-""" 
-N = 10000
+"""N = 10000
 x = np.random.uniform(0, 10, N)
 y = np.random.uniform(0, 10, N)
 z = x
@@ -273,6 +237,60 @@ plt.colorbar(m3, ax=ax3)
 ax3.set_title('mean values')
 plt.tight_layout()
 plt.show()
+"""
+
+
+
+"""rad = 1
+def function1(a = 1, 
+              b = 2*rad, 
+              c = 3):
+    
+     rad = 8235
+              
+     egg = a + b + c
+              
+     return egg
+     
+x = function1()
+
+print(x)
+"""
+
+
+
+
+"""
+"""
+
+
+
+
+
+
+""" 
+x = np.array([1, 2, 3, 4, 5, 6])
+y = np.array([1, 1, 1, 1, 1, 1])
+err = np.array([1, 4, 4, 2, 2, 2])
+
+def abcd(x, y, printa=False):
+    xy = x + y
+    
+    if printa:
+        print(xy)
+    else:
+        print('didnt print')
+        
+abcd(4, 5)
+abcd(3, 2, printa=True)
+    
+    
+        
+
+
+
+#plt.scatter(x, y)
+#plt.show()
 
 """
 """ 

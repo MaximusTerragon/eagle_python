@@ -120,6 +120,7 @@ def fit_kinematic_pa(x, y, vel, debug=False, nsteps=361,
     chi2 = np.empty_like(angles)
     for j, ang in enumerate(angles):
         velSym = symmetrize_velfield(x, y, vel, sym=1, pa=ang)
+        #reduced chi squared
         chi2[j] = np.sum(((vel - velSym)/dvel)**2)
         if debug:
             print('Ang: %5.1f, chi2/DOF: %.4g' % (ang, chi2[j]/nbins))

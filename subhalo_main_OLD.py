@@ -97,28 +97,20 @@ Output Parameters
 
 If centre_galaxy == True; 'Coordinates' - .centre, 'Velocity' - .perc_vel
 """
-# Extracts the particle and SQL data
 class Subhalo_Extract:
     def __init__(self, sim, data_dir, snapNum, gn, sgn, 
                             centre_galaxy=True, 
-                            load_region_length=2.0,   # cMpc/h 
+                            load_region_length=0.5,   # cMpc/h 
                             nfiles=16, 
-                            debug=False,
-                            print_progress=True):       
+                            debug=False):       
                             
-        # Begining time
-        time_start = time.time()
-        
+                            
         # Assigning subhalo properties
         self.gn           = gn
         self.sgn          = sgn
         
         #----------------------------------------------------
         # Load information from the header for this snapshot to find a, aexp, h, hexp, boxsize
-        if print_progress:
-            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-            print('Reading header')
-            time_start = time.time()
         self.a, self.h, self.boxsize = read_header(data_dir) # units of scale factor, h, and L [cMpc/h]    
         
         # Distances:    [cMpc/h] * a^1 *h^-1 -> [pMpc]. [pMpc/h] * h^-1 -> [pMpc], [cMpc/h] * h^-1 -> [cMpc]
@@ -145,10 +137,6 @@ class Subhalo_Extract:
         #----------------------------------------------------
         
         # For a given gn and sgn, run sql query on SubFind catalogue
-        if print_progress:
-            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-            print('Subhalo query')
-            time_start = time.time()
         myData = self._query(sim, snapNum)
         
         # Assiging subhalo properties
@@ -163,10 +151,6 @@ class Subhalo_Extract:
         
         # Load data for stars and gas in non-centred units
         # Msun, pkpc, and pkpc/s
-        if print_progress:
-            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-            print('Reading particle data _read_galaxy')
-            time_start = time.time()
         self.stars        = self._read_galaxy(data_dir, 4, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length) 
         self.gas          = self._read_galaxy(data_dir, 0, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length)
         
@@ -184,7 +168,7 @@ class Subhalo_Extract:
             self.gas['Velocity']   = self.gas['Velocity'] - self.perc_vel
 
 
-    def _query(self, sim, snapNum, debug=False):
+    def _query(self, sim, snapNum):
         # This uses the eagleSqlTools module to connect to the database with your username and password.
         # If the password is not given, the module will prompt for it.
         con = sql.connect("lms192", password="dhuKAP62")
@@ -220,7 +204,7 @@ class Subhalo_Extract:
             
             return myData    
         
-    def _read_galaxy(self, data_dir, itype, gn, sgn, centre, load_region_length, debug=False):
+    def _read_galaxy(self, data_dir, itype, gn, sgn, centre, load_region_length, debug=True):
         """ For a given galaxy (defined by its GroupNumber and SubGroupNumber)
         extract the coordinates, velocty, and mass of all particles of a selected type.
         Coordinates are then wrapped around the centre to account for periodicity."""
@@ -454,11 +438,10 @@ Output Parameters
         
         
 """
-# Finds the values we are after
 class Subhalo:
     
     def __init__(self, halfmass_rad, centre, centre_mass, perc_vel, stars, gas, 
-                            angle_selection,    #angle_selection = [['stars', 'gas'], ['stars', 'gas_sf'], ['stars', 'gas_nsf'], ['gas_sf', 'gas_nsf']]
+                            angle_selection,
                             viewing_angle,
                             spin_rad_in, 
                             trim_rad_in, 
@@ -466,18 +449,15 @@ class Subhalo:
                             align_rad_in, 
                             orientate_to_axis,
                             quiet=True,
-                            debug=False,
-                            print_progress=True):
+                            debug=False):
         
         
-        time_start = time.time()
+        #angle_selection = [['stars', 'gas'], ['stars', 'gas_sf'], ['stars', 'gas_nsf'], ['gas_sf', 'gas_nsf']]
+        #angle_selection = [['stars', 'gas_sf']]
+        self.debug = debug
         
         
         # Create masks for starforming and non-starforming gas
-        if print_progress:
-            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-            print('Masking gas_sf and gas_nsf')
-            time_start = time.time()
         self.mask_sf        = np.nonzero(gas['StarFormationRate'])          
         self.mask_nsf       = np.where(gas['StarFormationRate'] == 0)
         
@@ -494,7 +474,21 @@ class Subhalo:
         self.perc_vel       = perc_vel                              # [pkm/s]
         self.viewing_angle  = viewing_angle                         # [deg]
         
-        #-------------------------------------------------------------  
+        # Test galaxy position and mean centred
+        """print('_main subhalo DEBUG')
+        print(len(gas['Mass']))
+        print(stars['Coordinates'])
+        print(np.mean(stars['Coordinates'][:,0]))
+        print(np.mean(stars['Coordinates'][:,1]))
+        print(np.mean(stars['Coordinates'][:,2]))
+        print(self.centre)
+        print(' ')
+        print(stars['Velocity'])
+        print(np.mean(stars['Velocity'][:,0]))
+        print(np.mean(stars['Velocity'][:,1]))
+        print(np.mean(stars['Velocity'][:,2]))"""
+
+            
         # Create dataset of star-forming and non-star-forming gas
         gas_sf = {}
         gas_nsf = {}
@@ -509,15 +503,9 @@ class Subhalo:
         
         if not quiet:
             print('HALFMASS RAD', self.halfmass_rad)
-        #--------------------------------------------------------------
-          
+            
         # KAPPA
         if kappa_rad_in:
-            if print_progress:
-                print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                print('Finding kappa star')
-                time_start = time.time()
-                
             # Finding star unit vector within kappa_rad_in, finding angle between it and z and returning matrix for this
             stars_spin_kappa, _, _ = self._find_spin(data_nil['stars'], kappa_rad_in, 'stars')
             _ , matrix = self._orientate(orientate_to_axis, stars_spin_kappa)
@@ -526,22 +514,12 @@ class Subhalo:
             self.kappa = self._kappa_co(stars_aligned_kappa, kappa_rad_in) 
             
             # Finding gas unit vector within kappa_rad_in, finding angle between it and z and returning matrix for this
-            if print_progress:
-                print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                print('Finding kappa gas')
-                time_start = time.time()
-                
             gas_spin_kappa, _, _ = self._find_spin(data_nil['gas'], kappa_rad_in, 'gas')
             _ , matrix = self._orientate(orientate_to_axis, gas_spin_kappa)
             # Orientate entire galaxy according to matrix above, use this to find kappa
             gas_aligned_kappa  = self._rotate_galaxy(matrix, data_nil['gas'])
             self.kappa_gas = self._kappa_co(gas_aligned_kappa, kappa_rad_in)
             
-            if print_progress:
-                print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                print('Finding kappa gas_sf')
-                time_start = time.time()
-                
             # Finding gas_sf unit vector within kappa_rad_in, finding angle between it and z and returning matrix for this
             gas_sf_spin_kappa, _, _ = self._find_spin(data_nil['gas_sf'], kappa_rad_in, 'gas_sf')
             _ , matrix = self._orientate(orientate_to_axis, gas_sf_spin_kappa)
@@ -549,11 +527,6 @@ class Subhalo:
             gas_sf_aligned_kappa  = self._rotate_galaxy(matrix, data_nil['gas_sf'])
             self.kappa_gas_sf = self._kappa_co(gas_sf_aligned_kappa, kappa_rad_in)
             
-            if print_progress:
-                print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                print('Finding kappa gas_nsf')
-                time_start = time.time()
-                
             # Finding gas_sf unit vector within kappa_rad_in, finding angle between it and z and returning matrix for this
             gas_nsf_spin_kappa, _, _ = self._find_spin(data_nil['gas_nsf'], kappa_rad_in, 'gas_nsf')
             _ , matrix = self._orientate(orientate_to_axis, gas_nsf_spin_kappa)
@@ -564,7 +537,6 @@ class Subhalo:
             if not quiet:
                 print('KAPPA', self.kappa)
 
-        #===================
         # ALIGN GALAXY
         if align_rad_in:
             # Large-scale stellar spin vector used to align galaxy
@@ -633,8 +605,7 @@ class Subhalo:
                 for i in np.arange(0, len(self.mis_angles_align['rad']), 1):
                     with np.errstate(divide='ignore', invalid='ignore'):
                         print(' %.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%i\t%i\t%i\t%i\t%.1f\t%.1f\t%.1f\t%.1f' %(self.mis_angles_align['hmr'][i], self.mis_angles_align['stars_gas'][i], self.mis_angles_align['stars_gas_sf'][i], self.mis_angles_align['stars_gas_nsf'][i], self.mis_angles_align['gas_sf_gas_nsf'][i], self.particles_align['stars'][i], self.particles_align['gas'][i], self.particles_align['gas_sf'][i], self.particles_align['gas_nsf'][i], np.log10(self.particles_align['stars_mass'][i]), np.log10(self.particles_align['gas_mass'][i]), np.log10(self.particles_align['gas_sf_mass'][i]), np.log10(self.particles_align['gas_nsf_mass'][i])))               
-        #==================
-              
+                
         # SPIN VECTORS AND ROTATE
         if len(spin_rad_in) > 0:
             # Find rotation matrix to rotate entire galaxy depending on viewing_angle if viewing_axis is not 0
@@ -643,6 +614,12 @@ class Subhalo:
         
                 self.data = {}
                 for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
+                    print('Particle count %s : %i' %(parttype_name, len(data_nil[parttype_name]['Mass'])))
+                
+                
+                
+                
+                
                     self.data['%s'%parttype_name] = self._rotate_galaxy(matrix, data_nil[parttype_name])
             else:
                 self.data = data_nil
@@ -663,11 +640,6 @@ class Subhalo:
                 tmp_mass = []
                 tmp_coms = []
                 for rad in spin_rad_in:
-                    if print_progress:
-                        print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                        print('Finding spins, particles%s %s' %(str(parttype_name), str(rad)))
-                        time_start = time.time()
-                        
                     spin_x, particle_x, mass_x = self._find_spin(self.data[parttype_name], rad, parttype_name)
                     tmp_spins.append(spin_x)
                     tmp_particles.append(particle_x)
@@ -683,11 +655,6 @@ class Subhalo:
             #--------------------  
             # Find 3D distance between C.o.M components (stored in existing self.coms)
             for parttype_name in [['stars', 'gas'], ['stars', 'gas_sf'], ['stars', 'gas_nsf'], ['gas_sf', 'gas_nsf']]:
-                if print_progress:
-                    print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                    print('Finding coms %s' %str(parttype_name))
-                    time_start = time.time()
-                    
                 tmp_distance = []
                 for coord1, coord2 in zip(self.coms[parttype_name[0]], self.coms[parttype_name[1]]):
                     tmp_distance.append(np.linalg.norm(coord1 - coord2))
@@ -708,10 +675,6 @@ class Subhalo:
                 
                 # for each particle type...
                 for parttype_name in np.unique(angle_selection):
-                    if print_progress:
-                        print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                        print('Creating spins_rand %s' %str(parttype_name))
-                        time_start = time.time()
                     tmp_spins = []    
                     
                     # ...append 1000 random spin iterations
@@ -721,7 +684,7 @@ class Subhalo:
                     spins_rand['%s' %str(rad_i/self.halfmass_rad)]['%s' %parttype_name] = np.stack(tmp_spins)
             
                         
-            if debug:   
+            if self.debug:   
                 print(spins_rand.keys())        
                 print(spins_rand['2.0']['stars'])
                 print(spins_rand['2.0']['stars'][:,0])
@@ -729,13 +692,8 @@ class Subhalo:
                 print(spins_rand['2.0']['stars'][:,[0,1]])
             
             
-            #-------------------------------------
+            #----------------------
             # Find 3D misalignment angles + errors
-            if print_progress:
-                print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                print('Finding 3D misalignment angles')
-                time_start = time.time()
-                
             self.mis_angles = {}
             self.mis_angles['rad'] = spin_rad_in
             self.mis_angles['hmr'] = spin_rad_in/self.halfmass_rad
@@ -753,7 +711,7 @@ class Subhalo:
                         tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
                     tmp_errors.append(np.percentile(tmp_errors_array, [16, 84]))
                     
-                    if debug:
+                    if self.debug:
                         print('\nHMR_i ', hmr_i)
                         print('percentiles: ', np.percentile(tmp_errors_array, [16, 84]))
                         print('angle: ', angle)
@@ -766,13 +724,8 @@ class Subhalo:
                 
             
             
-            #-------------------------------------------------
-            # Find 2D projected misalignment angles + errors 
-            if print_progress:
-                print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                print('Finding 2D projected angles')
-                time_start = time.time()
-                
+            #-----------------------
+            # Find 2D projected misalignment angles + errors (Taking random spins, projecting them)
             self.mis_angles_proj = {'x': {}, 'y': {}, 'z': {}}
             for viewing_axis_i in ['x', 'y', 'z']:
                 self.mis_angles_proj[viewing_axis_i]['rad'] = spin_rad_in
@@ -837,12 +790,8 @@ class Subhalo:
                         self.mis_angles_proj['z']['%s_%s_angle_err' %(parttype_name[0], parttype_name[1])] = tmp_errors
                 
 
-            #--------------------------------
+            #---------------------
             if len(trim_rad_in) > 0:
-                if print_progress:
-                    print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                    print('Trimming datasets to trim_rad_in')
-                    time_start = time.time()
                 tmp_data = {}
                 for rad in trim_rad_in:
                     tmp_data.update({'%s' %str(rad): {}})
@@ -852,7 +801,7 @@ class Subhalo:
                         tmp_data['%s' %str(rad)]['%s' %parttype_name] = self._trim_within_rad(self.data[parttype_name], rad*self.halfmass_rad)
                     
                 self.data = tmp_data
-            #--------------------------------
+            #---------------------
             
             
             if not quiet:
@@ -867,11 +816,8 @@ class Subhalo:
                 print('GASMASS_SF', np.log10(self.gasmass_sf))
                 print('GASMASS_NSF', np.log10(self.gasmass_nsf))
 
-            if print_progress:
-                print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                print('FINISHED EXTRACTION')
 
-    def _trim_within_rad(self, arr, radius, debug=False):
+    def _trim_within_rad(self, arr, radius):
         # Compute distance to centre and mask all within trim_rad
         r  = np.linalg.norm(arr['Coordinates'], axis=1)
         mask = np.where(r <= radius)
@@ -882,7 +828,7 @@ class Subhalo:
             
         return newData
         
-    def _find_spin(self, arr, radius, desc, random_sample=False, debug=False):
+    def _find_spin(self, arr, radius, desc, random_sample=False):
         # Compute distance to centre and mask all within stelhalfrad
         r  = np.linalg.norm(arr['Coordinates'], axis=1)
         mask = np.where(r <= radius)
@@ -893,7 +839,7 @@ class Subhalo:
         
         if random_sample:
             #
-            if debug:
+            if self.debug:
                 print('\ntotal particle count', len(arr['Mass'][:, None]))
             
             # Mask within radius
@@ -901,7 +847,7 @@ class Subhalo:
             tmp_mass = arr['Mass'][:, None][mask]
             tmp_velocity = arr['Velocity'][mask]
             
-            if debug:
+            if self.debug:
                 print('radius', radius)
                 print('particle count in rad', len(tmp_mass))
             
@@ -913,7 +859,7 @@ class Subhalo:
             tmp_mass   = tmp_mass[random_mask]
             tmp_velocity = tmp_velocity[random_mask]
             
-            if debug:
+            if self.debug:
                 print('particle count in rad masked', len(tmp_mass))
             
             # Finding spin angular momentum vector of each particle
@@ -937,13 +883,13 @@ class Subhalo:
         # OUTPUTS UNIT VECTOR OF SPIN, PARTICLE COUNT WITHIN RAD, MASS WITHIN RAD 
         return spin_unit, len(r[mask]), np.sum(arr['Mass'][mask])
             
-    def _misalignment_angle(self, angle1, angle2, debug=False):
+    def _misalignment_angle(self, angle1, angle2):
         # Find the misalignment angle
         angle = np.rad2deg(np.arccos(np.clip(np.dot(angle1/np.linalg.norm(angle1), angle2/np.linalg.norm(angle2)), -1.0, 1.0)))     # [deg]
         
         return angle
     
-    def _rotation_matrix(self, axis, theta, debug=False):
+    def _rotation_matrix(self, axis, theta):
         '''Return the rotation matrix associated with counterclockwise rotation about
         the user specified axis by theta radians.'''
         
@@ -973,7 +919,7 @@ class Subhalo:
                          [2*(bc-ad), aa+cc-bb-dd, 2*(cd+ab)],
                          [2*(bd+ac), 2*(cd-ab), aa+dd-bb-cc]])
                         
-    def _orientate(self, axis, attribute, debug=False):
+    def _orientate(self, axis, attribute):
         # Finds angle given a defined x, y, z axis:
         if axis == 'z':
             # Compute angle between star spin and z axis
@@ -1010,7 +956,7 @@ class Subhalo:
             
         return angle, matrix
         
-    def _rotate_galaxy(self, matrix, data, debug=False):
+    def _rotate_galaxy(self, matrix, data):
         """ For a given set of galaxy data, work out the rotated coordinates 
         and other data centred on [0, 0, 0], accounting for the perculiar 
         velocity of the galaxy"""
@@ -1026,7 +972,23 @@ class Subhalo:
         
         return new_data
         
-    def _rotate_coords(self, matrix, coords, debug=False):
+    def _rotate_coords(self, matrix, coords):
+        
+        
+        
+        
+        
+        
+        
+        
+        #print('rotate coords len', len(coords))
+        
+        
+        
+        
+        
+        
+        
         
         # Compute new coords after rotation
         rotation = []
@@ -1038,7 +1000,7 @@ class Subhalo:
         
         return rotation
         
-    def _rotate_around_axis(self, axis, angle, debug=False):
+    def _rotate_around_axis(self, axis, angle):
         # Finds angle given a defined x, y, z axis:
         if axis == 'z':
             # Rotate around z-axis
@@ -1057,7 +1019,7 @@ class Subhalo:
 
         return matrix
         
-    def _kappa_co(self, arr, radius, debug=False):
+    def _kappa_co(self, arr, radius):
         # Compute distance to centre and mask all within stelhalfrad
         r  = np.linalg.norm(arr['Coordinates'], axis=1)
         mask = np.where(r <= radius)
@@ -1076,7 +1038,7 @@ class Subhalo:
         
         return K_rot/K_tot
         
-    def _centre_of_mass(self, arr, radius, debug=False):
+    def _centre_of_mass(self, arr, radius):
         # Compute distance to centre and mask all within stelhalfrad
         r  = np.linalg.norm(arr['Coordinates'], axis=1)
         mask = np.where(r <= radius)

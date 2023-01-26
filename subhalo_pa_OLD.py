@@ -523,13 +523,15 @@ def velocity_projection(manual_GroupNumList = np.array([]),
             all_paangles['%s' %str(GroupNum)]['voronoi']['%s' %str(viewing_angle_i)] = {'rad':[], 'hmr':[], 'stars_gas_angle':[], 'stars_gas_angle_err':[], 'stars_gas_sf_angle':[], 'stars_gas_sf_angle_err':[], 'stars_gas_nsf_angle':[], 'stars_gas_nsf_angle_err':[], 'gas_sf_gas_nsf_angle':[], 'gas_sf_gas_nsf_angle_err':[]}
         
         #--------------------------------
-        
         # Initial extraction of galaxy data
         galaxy = Subhalo_Extract(mySims, dataDir, snapNum, GroupNum, SubGroupNum)
         
+        #------------------------------------------
+        # Tweaking inputs so we have less of them. trim_rad_in = spin_rad_in for this file
         spin_rad = spin_rad_in * galaxy.halfmass_rad
         trim_rad = trim_rad_in
-            
+        
+        # detection of 'rad' as input:
         if kappa_rad_in == 'rad':
             kappa_rad = galaxy.halfmass_rad
         elif kappa_rad_in == 'tworad':
@@ -549,12 +551,13 @@ def velocity_projection(manual_GroupNumList = np.array([]),
         else:
             boxradius = boxradius_in
         
+        
         """ INPUTS:
         spin_rad        HMR array of spins we want
         trim_rad        (same as spin_rad)
         kappa_rad       FALSE or float of pkpc in which to find kappa
         align_rad       FLASE or float of pkpc in which to rotate galaxy to align it to z
-            
+        angle_selection = [['stars', 'gas_sf']]
         orientate_to_axis='z',                                # Keep as 'z'
         viewing_angle=0,                                      # Keep as 0
             
@@ -565,7 +568,8 @@ def velocity_projection(manual_GroupNumList = np.array([]),
         gas_sf_min_particles = 100,                     # Minimum gas sf particles to use galaxy.  DEFAULT 100
         particle_list_in     = ['stars', 'gas_sf'],     # PA fits to be found
         angle_type_in        = ['stars_gas_sf'],        # PA misalignment angles to be found ['stars_gas', 'stars_gas_sf', 'stars_gas_nsf', 'gas_sf_gas_nsf']
-            
+
+        
         """
         
         # int count to broadcast print statements of each galaxy
@@ -581,6 +585,7 @@ def velocity_projection(manual_GroupNumList = np.array([]),
                                                 kappa_rad, 
                                                 align_rad,              #align_rad = False
                                                 orientate_to_axis,
+                                                
                                                 quiet=True)
         
                 

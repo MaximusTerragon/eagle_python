@@ -48,13 +48,13 @@ SAMPLE:
 
 """
 #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
-def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # manually enter galaxy gns we want
+def plot_radial_misalignment(manual_GroupNumList = np.array([4]),           # manually enter galaxy gns we want
                                SubGroupNum = 0,
                                galaxy_mass_limit            = 10**9.5,                         # for print 
-                                     spin_rad_in            = np.arange(0.5, 2.1, 0.5),    # multiples of rad
+                                     spin_rad_in            = np.arange(0.5, 10.1, 0.25),    # multiples of rad
                                      kappa_rad_in           = 30,                          # calculate kappa for this radius [pkpc]     
                                      trim_rad_in            = np.array([100]),             # keep as 100
-                                     angle_selection        = [['stars', 'gas_sf']],       # list of angles to find analytically [[ , ], [ , ] ...]
+                                     angle_selection        = [['stars', 'gas'], ['stars', 'gas_sf']],       # list of angles to find analytically [[ , ], [ , ] ...]
                                align_rad_in      = False,                           # keep on False   
                                orientate_to_axis = 'z',                             # keep as z
                                viewing_angle     = 0,                               #keep as 0  
@@ -63,16 +63,16 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
                                com_min_distance     = 10.0,         # minimum distance between stars and gas_sf c.o.m
                                gas_sf_min_particles = 20,           # minimum gas sf particles to use galaxy
                                plot_2D_3D           = '2D',                # whether to plot 2D or 3D angle
-                                     plot_angle_type        = 'stars_gas_sf',         
+                                     plot_angle_type        = ['stars_gas_sf', 'stars_gas'],         
                                      rad_type_plot          = 'hmr',               # 'rad' whether to use absolute distance or hmr 
                              root_file = '/Users/c22048063/Documents/EAGLE/trial_plots',
                                print_galaxy       = False,
                                print_galaxy_short = True,
-                               csv_file = True,                     # whether to create a csv file of used data
+                               csv_file = False,                     # whether to create a csv file of used data
                                  csv_name = 'data_radial',          # name of .csv file
-                               savefig = False,
-                               showfig = False,  
-                                 savefigtxt = '', 
+                               savefig = True,
+                               showfig = True,  
+                                 savefigtxt = '_withgas', 
                                debug = False):         
                             
     # create dictionaries
@@ -165,57 +165,77 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
         def _plot_single(quiet=1, debug=False):
             
             # Initialise figure
-            plt.figure()
             graphformat(8, 11, 11, 11, 11, 3.75, 3)
-            plt.xlim(min(spin_rad_in), max(spin_rad_in))
-            plt.xticks(np.arange(min(spin_rad_in), max(spin_rad_in)+1, 1))
+            fig, axs = plt.subplots(nrows=2, ncols=1, gridspec_kw={'height_ratios': [4, 1]}, figsize=(4.5, 5), sharex=True, sharey=False)
+            
+            axs[0].set_xlim(min(spin_rad_in), max(spin_rad_in))
+            axs[0].set_xticks(np.arange(min(spin_rad_in), max(spin_rad_in)+1, 1))
             
             
             # formatting 
             if rad_type_plot == 'hmr':
-                plt.xlabel('Halfmass rad')
+                axs[1].set_xlabel('Halfmass rad')
             elif rad_type_plot == 'rad':
-                plt.xlabel('Distance from centre [pkpc]')
-            plt.ylabel('3D projected angle')
-            plt.ylim(0, 180)
+                axs[1].set_xlabel('Distance from centre [pkpc]')
+            axs[0].set_ylabel('3D projected angle')
+            axs[1].set_ylabel('f$_{gas_{sf}/gas_{tot}}$')
+            axs[0].set_ylim(0, 180)
+            axs[1].set_ylim(0, 1)
             
-            # Collect values to plot
-            rad_points    = []
-            pa_points     = []
-            pa_points_lo  = []
-            pa_points_hi  = []
             
             # Plots 3D projected misalignment angle from a viewing axis
             if plot_2D_3D == '2D':
-                for i in np.arange(0, len(all_misanglesproj['%s' %str(subhalo.gn)][viewing_axis]['%s' %rad_type_plot]), 1):
+                plot_count = 0
+                for plot_angle_type_i in plot_angle_type:
+                    # Collect values to plot
+                    rad_points    = []
+                    gas_sf_frac   = []
+                    pa_points     = []
+                    pa_points_lo  = []
+                    pa_points_hi  = []
                     
-                    # min. sf particle requirement
-                    if all_particles['%s' %str(GroupNum)]['gas_sf'][i] >= gas_sf_min_particles:
+                    for i in np.arange(0, len(all_misanglesproj['%s' %str(subhalo.gn)][viewing_axis]['%s' %rad_type_plot]), 1):
                     
-                        # min. com distance requirement
-                        if all_coms['%s' %str(GroupNum)]['stars_gas_sf'][i] <= com_min_distance:
-                            rad_points.append(all_misanglesproj['%s' %str(subhalo.gn)][viewing_axis]['%s' %rad_type_plot][i])
-                            pa_points.append(all_misanglesproj['%s' %str(subhalo.gn)][viewing_axis]['%s_angle' %plot_angle_type][i])
+                        # min. sf particle requirement
+                        if all_particles['%s' %str(GroupNum)]['gas_sf'][i] >= gas_sf_min_particles:
+                    
+                            # min. com distance requirement
+                            if all_coms['%s' %str(GroupNum)]['stars_gas_sf'][i] <= com_min_distance:
+                                rad_points.append(all_misanglesproj['%s' %str(subhalo.gn)][viewing_axis]['%s' %rad_type_plot][i])
+                                pa_points.append(all_misanglesproj['%s' %str(subhalo.gn)][viewing_axis]['%s_angle' %plot_angle_type_i][i])
                             
-                            # lower and higher, where error is [lo, hi] in _misanglesproj[...]
-                            pa_points_lo.append(all_misanglesproj['%s' %str(subhalo.gn)][viewing_axis]['%s_angle_err' %plot_angle_type][i][0])
-                            pa_points_hi.append(all_misanglesproj['%s' %str(subhalo.gn)][viewing_axis]['%s_angle_err' %plot_angle_type][i][1])
-                            
+                                # lower and higher, where error is [lo, hi] in _misanglesproj[...]
+                                pa_points_lo.append(all_misanglesproj['%s' %str(subhalo.gn)][viewing_axis]['%s_angle_err' %plot_angle_type_i][i][0])
+                                pa_points_hi.append(all_misanglesproj['%s' %str(subhalo.gn)][viewing_axis]['%s_angle_err' %plot_angle_type_i][i][1])
+                                
+                                if plot_count == 0:
+                                    # Gas sf fraction
+                                    gas_sf_frac.append(all_particles['%s' %str(subhalo.gn)]['gas_sf_mass'][i]  / all_particles['%s' %str(subhalo.gn)]['gas_mass'][i])
                 
-                if debug == True:
-                    print('\nrad ', rad_points)
-                    print('proj', pa_points)
-                    print('lo', pa_points_lo)
-                    print('hi', pa_points_hi)
+                    if debug == True:
+                        print('\nrad ', rad_points)
+                        print('proj', pa_points)
+                        print('lo', pa_points_lo)
+                        print('hi', pa_points_hi)
                 
-                # Plot scatter and errorbars
-                #plt.errorbar(rad_points, pa_points, xerr=None, yerr=pa_points_err, label='2D projected', alpha=0.8, ms=2, capsize=4, elinewidth=1, markeredgewidth=1)
-                plt.plot(rad_points, pa_points, label='2D projected', alpha=1.0, ms=2, lw=1)
-                plt.fill_between(rad_points, pa_points_lo, pa_points_hi, alpha=0.3, facecolor='grey')
+                    # Plot scatter and errorbars
+                    #plt.errorbar(rad_points, pa_points, xerr=None, yerr=pa_points_err, label='2D projected', alpha=0.8, ms=2, capsize=4, elinewidth=1, markeredgewidth=1)
+                    if plot_angle_type_i == 'stars_gas':
+                        axs[0].plot(rad_points, pa_points, label='Total gas', alpha=1.0, ms=2, lw=1)
+                    if plot_angle_type_i == 'stars_gas_sf':
+                        axs[0].plot(rad_points, pa_points, label='Star-forming gas', alpha=1.0, ms=2, lw=1)
+                    axs[0].fill_between(rad_points, pa_points_lo, pa_points_hi, alpha=0.3)
+                    
+                    if plot_count == 0:
+                        # Plot star forming fraction
+                        axs[1].plot(rad_points, gas_sf_frac)
+                    
+                    plot_count = plot_count+1
+                    
                 
                 # Formatting 
-                plt.title('Radial 2D\nGroupNum %s: %s, particles: %i, com: %.1f, ax: %s' %(str(subhalo.gn), plot_angle_type, gas_sf_min_particles, com_min_distance, viewing_axis))
-                plt.legend()
+                axs[0].set_title('Radial 2D\nGroupNum %s: %s, particles: %i, com: %.1f, ax: %s' %(str(subhalo.gn), plot_angle_type, gas_sf_min_particles, com_min_distance, viewing_axis))
+                axs[0].legend()
                 plt.tight_layout()
                 
                 # savefig
@@ -228,6 +248,12 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
                 
             # Plots analytical misalignment angle in 3D space
             if plot_2D_3D == '3D':
+                # Collect values to plot
+                rad_points    = []
+                pa_points     = []
+                pa_points_lo  = []
+                pa_points_hi  = []
+                
                 for i in np.arange(0, len(all_misangles['%s' %str(subhalo.gn)][viewing_axis]['%s' %rad_type_plot]), 1):
                     
                     # min. sf particle requirement

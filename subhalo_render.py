@@ -4,6 +4,7 @@ import pandas as pd
 import random
 import math
 import csv
+import astropy.units as u
 import matplotlib as mpl
 import matplotlib.pyplot as plt 
 import matplotlib.colors as colors
@@ -48,14 +49,14 @@ def galaxy_render(manual_GroupNumList = np.array([4]),
                   maxangle  = 0, 
                   stepangle = 30,
                     use_angle_in = 2.0,                 # for print function 
-                    boxradius_in = 50,                  # boxradius of render
+                    boxradius_in = 1000,                  # boxradius of render
                     plot_spin_vectors = True,
                       spin_vector_rad = 2.0,            # radius of spinvector to display (in hmr)
                     centre_of_pot     = True,           # Plot most bound object (default centre)
                     centre_of_mass    = True,           # Plot total centre of mass
                     axis              = True,           # Plot small axis below galaxy
                           particles             = 10000,
-                          trim_rad_in           = np.array([10]),     # WILL PLOT LOWEST VALUE. trim particles # multiples of rad, num [pkpc], found in subhalo.data[hmr]    
+                          trim_rad_in           = np.array([1000]),     # WILL PLOT LOWEST VALUE. trim particles # multiples of rad, num [pkpc], found in subhalo.data[hmr]    
                           stars                 = False,
                           gas_sf                = True,
                           gas_nsf               = True,
@@ -217,6 +218,21 @@ def galaxy_render(manual_GroupNumList = np.array([4]),
             def cop_button(self, event):
                 ax.scatter(0, 0, 0, c='pink', s=3, zorder=10)
                 fig.canvas.draw_idle()
+            def load_region(self, event):
+                load_region_cMpc = 0.15
+                load_region = 0.5 * load_region_cMpc * u.Mpc.to(u.kpc) * 0.6777**-1. * 1.0**1.
+                
+                # Plotting verticies of loaded region
+                ax.scatter(-load_region, -load_region, -load_region, s=3, c='lime')
+                ax.scatter(-load_region, -load_region,  load_region, s=3, c='lime')
+                ax.scatter( load_region, -load_region, -load_region, s=3, c='lime')
+                ax.scatter( load_region, -load_region,  load_region, s=3, c='lime')
+                ax.scatter(-load_region,  load_region, -load_region, s=3, c='lime')
+                ax.scatter(-load_region,  load_region,  load_region, s=3, c='lime')
+                ax.scatter( load_region,  load_region, -load_region, s=3, c='lime')
+                ax.scatter( load_region,  load_region,  load_region, s=3, c='lime')
+                
+                fig.canvas.draw_idle()
             def auto_rotate(self, event):
                 fig.canvas.draw_idle()
                 for ii in np.arange(ax.azim, ax.azim+360, 1):
@@ -234,7 +250,7 @@ def galaxy_render(manual_GroupNumList = np.array([4]),
         bcom    = Button(fig.add_axes([0.01, 0.92, 0.12, 0.03]), 'C.O.M')
         bcop    = Button(fig.add_axes([0.13, 0.92, 0.12, 0.03]), 'C.O.P')
         brotate = Button(fig.add_axes([0.83, 0.96, 0.18, 0.03]), 'ROTATE 360', color='limegreen', hovercolor='darkgreen')
-    
+        bregion = Button(fig.add_axes([0.25, 0.92, 0.18, 0.03]), 'LOAD REGION')
         
         bstars.on_clicked(callback.stars_button)
         bgassf.on_clicked(callback.gas_sf_button)
@@ -243,6 +259,7 @@ def galaxy_render(manual_GroupNumList = np.array([4]),
         bcom.on_clicked(callback.com_button)
         bcop.on_clicked(callback.cop_button)
         brotate.on_clicked(callback.auto_rotate)
+        bregion.on_clicked(callback.load_region)
         #--------------------------------------------
         
         # Plot scatters and spin vectors   

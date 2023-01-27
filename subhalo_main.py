@@ -105,7 +105,7 @@ class Subhalo_Extract:
                             load_region_length=2.0,   # cMpc/h 
                             nfiles=16, 
                             debug=False,
-                            print_progress=True):       
+                            print_progress=False):       
                             
         # Begining time
         time_start = time.time()
@@ -378,7 +378,7 @@ quiet:  boolean
 Output Parameters
 -----------------
 
-.general: dictionary that also contains each of these:
+.general: dictionary that also contains most of these:
 .gn: int
     GroupNumber of galaxy
 .sgn: int
@@ -405,9 +405,6 @@ Output Parameters
 .viewing_angle:     [deg]
     Angle by which we will rotate the galaxy, can be
     0
-
-.mask_sf, mask_nsf:     array
-    Used to mask gas for starforming and non-starforming
 .kappa:
     Kappa calculated when galaxy orientated from 
     kappa_rad_in
@@ -420,7 +417,11 @@ Output Parameters
 .kappa_gas_nsf:
     Kappa calculated when galaxy orientated from 
     kappa_rad_in
-        
+
+.flags: array
+    Has all flags for when conditions fail. Will have len(self.flags) == 0 
+    if galaxy is good to go
+              
 .data, .data_align:    dictionary
     Has aligned/rotated values for 'stars', 'gas', 'gas_sf', 'gas_nsf':
         [hmr]                       - multiples of hmr, ei. '1.0' that data was trimmed to
@@ -522,7 +523,7 @@ class Subhalo:
                             find_uncertainties,
                             quiet=True,
                             debug=False,
-                            print_progress=True):
+                            print_progress=False):
         
         
         time_start = time.time()
@@ -586,7 +587,12 @@ class Subhalo:
         for general_name, general_item in zip(['gn', 'sgn', 'GalaxyID', 'stelmass', 'gasmass', 'gasmass_sf', 'gasmass_nsf', 'halfmass_rad', 'centre', 'centre_mass'], [self.gn, self.sgn, self.GalaxyID, self.stelmass, self.gasmass, self.gasmass_sf, self.gasmass_nsf, self.halfmass_rad, self.centre, self.centre_mass]):
             self.general[general_name] = general_item
             
-            
+        self.data       = {}
+        self.spins      = {}
+        self.particles  = {}
+        self.coms       = {}
+        self.mis_angles = {}
+        self.mis_angles_proj = {}
         #--------------------------------------------------------------
         # Start of basic flags: particle counts and coms
         
@@ -646,7 +652,6 @@ class Subhalo:
                 if viewing_angle != 0:
                     matrix = self._rotate_around_axis('z', 360. - viewing_angle)
         
-                    self.data = {}
                     for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
                         self.data['%s'%parttype_name] = self._rotate_galaxy(matrix, data_nil[parttype_name])
                 else:
@@ -660,9 +665,6 @@ class Subhalo:
                     print('Finding spins, particles, COMs')
                     time_start = time.time()
                     
-                self.spins     = {}
-                self.particles = {}
-                self.coms      = {}
                 self.spins['rad']     = spin_rad_in
                 self.spins['hmr']     = spin_rad_in/self.halfmass_rad
                 self.particles['rad'] = spin_rad_in
@@ -744,7 +746,6 @@ class Subhalo:
                     print('Finding 3D misalignment angles')
                     time_start = time.time()
                 
-                self.mis_angles = {}
                 self.mis_angles['rad'] = spin_rad_in
                 self.mis_angles['hmr'] = spin_rad_in/self.halfmass_rad
                 for parttype_name in angle_selection:   #[['stars', 'gas'], ['stars', '_nsf'], ['gas_sf', 'gas_nsf']]:
@@ -965,7 +966,6 @@ class Subhalo:
                 _ , matrix = self._orientate('z', stars_spin_align)
             
                 # Orientate entire galaxy according to matrix above
-                self.data_align = {}
                 for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
                     self.data_align['%s'%parttype_name] = self._rotate_galaxy(matrix, data_nil[parttype_name])
                 

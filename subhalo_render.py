@@ -39,27 +39,31 @@ PURPOSE
 #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
 def galaxy_render(manual_GroupNumList = np.array([4]),
                     SubGroupNum       = 0, 
-                          spin_rad_in           = np.array([1.0, 1.5, 2.0]),    # np.arange(1.0, 10.5, 0.5),     # multiples of rad
-                          kappa_rad_in          = 30,                           # Calculate kappa for this radius [pkpc]
-                          angle_selection       = [['stars', 'gas_sf']],        # list of angles to find analytically [[stars, gas], [stars, gas_sf] ...]
-                    align_rad_in          = False,                              # Align galaxy to stellar vector in. this radius [pkpc]
-                    orientate_to_axis='z',                                      # Keep as 'z'
-                    viewing_angle=0,                                            # Keep as 0                 
-                  minangle  = 0,
-                  maxangle  = 0, 
-                  stepangle = 30,
-                    use_angle_in = 2.0,                 # for print function 
-                    boxradius_in = 1000,                  # boxradius of render
-                    plot_spin_vectors = True,
-                      spin_vector_rad = 2.0,            # radius of spinvector to display (in hmr)
-                    centre_of_pot     = True,           # Plot most bound object (default centre)
-                    centre_of_mass    = True,           # Plot total centre of mass
-                    axis              = True,           # Plot small axis below galaxy
-                          particles             = 10000,
-                          trim_rad_in           = np.array([1000]),     # WILL PLOT LOWEST VALUE. trim particles # multiples of rad, num [pkpc], found in subhalo.data[hmr]    
-                          stars                 = False,
-                          gas_sf                = True,
-                          gas_nsf               = True,
+                  spin_rad_in           = np.array([2.0]),              # multiples of rad
+                  kappa_rad_in          = 30,                           # Calculate kappa for this radius [pkpc]
+                  aperture_rad_in       = 50,                           # trim all data to this maximum value
+                  align_rad_in          = False,                              # Align galaxy to stellar vector in. this radius [pkpc]
+                  orientate_to_axis='z',                                      # Keep as 'z'
+                  viewing_angle=0,                                            # Keep as 0
+                    minangle  = 0,
+                    maxangle  = 0, 
+                    stepangle = 30,
+                  plot_spin_vectors = True,
+                    spin_vector_rad = 2.0,            # radius of spinvector to display (in hmr)
+                  centre_of_pot     = True,           # Plot most bound object (default centre)
+                  centre_of_mass    = True,           # Plot total centre of mass
+                  axis              = True,           # Plot small axis below galaxy
+                      boxradius_in          = 50,                  # boxradius of render [kpc]
+                      particles             = 10000,
+                      trim_rad_in           = np.array([1000]),     # WILL PLOT LOWEST VALUE. trim particles # multiples of rad, num [pkpc], found in subhalo.data[hmr]    
+                      stars                 = False,
+                      gas_sf                = True,
+                      gas_nsf               = True,                                                                    
+                  find_uncertainties = False,                   # LEAVE THESE. whether to find 2D and 3D uncertainties
+                  viewing_axis = 'z',                           # Which axis to view galaxy from.  DEFAULT 'z'
+                  com_min_distance = 10000,                      # [pkpc] min distance between sfgas and stars.  DEFAULT 2.0 
+                  gas_sf_min_particles = 0,                     # Minimum gas sf particles to use galaxy.  DEFAULT 100
+                  angle_type_in = ['stars_gas', 'stars_gas_sf', 'stars_gas_nsf'],             # PA fits and PA misalignment angles to be found ['stars_gas', 'stars_gas_sf', 'stars_gas_nsf', 'gas_sf_gas_nsf']. Particles making up this data will be automatically found, ei. stars_gas_sf = stars and gas_sf   
                   root_file = '/Users/c22048063/Documents/EAGLE/trial_plots',        # 'trial_plots' or 'plots'
                     print_galaxy       = False,              # print galaxy stats in chat
                     print_galaxy_short = True,
@@ -72,7 +76,37 @@ def galaxy_render(manual_GroupNumList = np.array([4]),
         
     # Converting names of variables for consistency
     GroupNumList = manual_GroupNumList    
-        
+    
+    #-----------------------------------------------------------
+    # making particle_list_in and angle_selection obsolete:
+    particle_list_in = []
+    angle_selection  = []
+    if 'stars_gas' in angle_type_in:
+        if 'stars' not in particle_list_in:
+            particle_list_in.append('stars')
+        if 'gas' not in particle_list_in:
+            particle_list_in.append('gas')
+        angle_selection.append(['stars', 'gas'])
+    if 'stars_gas_sf' in angle_type_in:
+        if 'stars' not in particle_list_in:
+            particle_list_in.append('stars')
+        if 'gas_sf' not in particle_list_in:
+            particle_list_in.append('gas_sf')
+        angle_selection.append(['stars', 'gas_sf'])
+    if 'stars_gas_nsf' in angle_type_in:
+        if 'stars' not in particle_list_in:
+            particle_list_in.append('stars')
+        if 'gas_nsf' not in particle_list_in:
+            particle_list_in.append('gas_nsf')
+        angle_selection.append(['stars', 'gas_nsf'])
+    if 'gas_sf_gas_nsf' in angle_type_in:
+        if 'gas_sf' not in particle_list_in:
+            particle_list_in.append('gas_sf')
+        if 'gas_nsf' not in particle_list_in:
+            particle_list_in.append('gas_nsf')
+        angle_selection.append(['gas_sf', 'gas_nsf'])
+    
+    
     for GroupNum in tqdm(GroupNumList):         
         # Initial extraction of galaxy data
         galaxy = Subhalo_Extract(mySims, dataDir, snapNum, GroupNum, SubGroupNum)
@@ -80,6 +114,7 @@ def galaxy_render(manual_GroupNumList = np.array([4]),
         # Detect keywords of rad, tworad. All in [pkpc]
         spin_rad = spin_rad_in * galaxy.halfmass_rad
         trim_rad = trim_rad_in
+        aperture_rad = aperture_rad_in
             
         if kappa_rad_in == 'rad':
             kappa_rad = galaxy.halfmass_rad
@@ -101,14 +136,21 @@ def galaxy_render(manual_GroupNumList = np.array([4]),
             boxradius = boxradius_in
             
         # Galaxy will be rotated to calc_kappa_rad's stellar spin value
-        subhalo = Subhalo(galaxy.halfmass_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas,
+        subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.stelmass, galaxy.gasmass, galaxy.GalaxyID, galaxy.halfmass_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas,
                                             angle_selection,
                                             viewing_angle,
                                             spin_rad,
                                             trim_rad, 
                                             kappa_rad, 
+                                            aperture_rad,
                                             align_rad,              #align_rad = False
                                             orientate_to_axis,
+                                            viewing_axis,
+                                            com_min_distance,
+                                            gas_sf_min_particles,
+                                            particle_list_in,
+                                            angle_type_in,
+                                            find_uncertainties,
                                             quiet=True)
         
         if debug == True:
@@ -124,16 +166,8 @@ def galaxy_render(manual_GroupNumList = np.array([4]),
             print('KAPPA:                  %.2f' %subhalo.kappa)
             print('KAPPA GAS SF:           %.2f' %subhalo.kappa_gas_sf)
             print('KAPPA RAD CALC [pkpc]:  %s'   %str(kappa_rad_in))
-            mask = np.where(np.array(subhalo.coms['hmr'] == use_angle_in))
-            print('C.O.M %s HMR STARS-SF [pkpc]:  %.2f' %(str(use_angle_in), subhalo.coms['stars_gas_sf'][int(mask[0])]))
-            print(' HALF-\tANGLES (STARS-)\t\t\tPARTICLE COUNT\t\t\tMASS')
-            print(' RAD\tGAS\tSF\tNSF\tSF-NSF\tSTARS\tGAS\tSF\tNSF\tSTARS\tGAS\tSF\tNSF')
-            for i in np.arange(0, len(spin_rad_in), 1):
-                with np.errstate(divide='ignore', invalid='ignore'):
-                    print(' %.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%i\t%i\t%i\t%i\t%.1f\t%.1f\t%.1f\t%.1f' %(subhalo.mis_angles['hmr'][i], subhalo.mis_angles['stars_gas_angle'][i], subhalo.mis_angles['stars_gas_sf_angle'][i], subhalo.mis_angles['stars_gas_nsf_angle'][i], subhalo.mis_angles['gas_sf_gas_nsf_angle'][i], subhalo.particles['stars'][i], subhalo.particles['gas'][i], subhalo.particles['gas_sf'][i], subhalo.particles['gas_nsf'][i], np.log10(subhalo.particles['stars_mass'][i]), np.log10(subhalo.particles['gas_mass'][i]), np.log10(subhalo.particles['gas_sf_mass'][i]), np.log10(subhalo.particles['gas_nsf_mass'][i])))        
-            print('CENTRE [pMpc]:      [%.5f,\t%.5f,\t%.5f]' %(subhalo.centre[0]/1000, subhalo.centre[1]/1000, subhalo.centre[2]/1000))        # [pkpc]
-            print('PERC VEL [pkm/s]:   [%.5f,\t%.5f,\t%.5f]' %(subhalo.perc_vel[0], subhalo.perc_vel[1], subhalo.perc_vel[2]))  # [pkm/s]
-            #print('VIEWING ANGLES: ', end='')
+            mask = np.where(np.array(subhalo.coms['hmr'] == min(spin_rad_in)))
+            print('C.O.M %s HMR STARS-SF [pkpc]:  %.2f' %(str(min(spin_rad_in)), subhalo.coms['stars_gas_sf'][int(mask[0])]))
         elif print_galaxy_short == True:
             print('GN:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(str(subhalo.gn), subhalo.halfmass_rad, subhalo.kappa, subhalo.kappa_gas_sf)) 
              

@@ -54,12 +54,15 @@ class Sample:
                              SH.GroupNumber, \
                              SH.SubGroupNumber \
                            FROM \
-                             %s_Subhalo as SH \
+                             %s_Subhalo as SH, \
+                             %s_Aperture as AP \
                            WHERE \
         			         SH.SnapNum = %i \
-                             and SH.MassType_Star >= %f \
+                             and AP.Mass_Star >= %f \
+                             and AP.ApertureSize = 30 \
+                             and SH.GalaxyID = AP.GalaxyID \
                            ORDER BY \
-        			         SH.MassType_Star desc'%(sim_name, snapNum, self.mstar_limit)
+        			         AP.Mass_Star desc'%(sim_name, sim_name, snapNum, self.mstar_limit)
             
             # Execute query.
             myData = sql.execute_query(con, myQuery)
@@ -73,13 +76,16 @@ class Sample:
                              SH.GroupNumber, \
                              SH.SubGroupNumber \
                            FROM \
-                             %s_Subhalo as SH \
+                             %s_Subhalo as SH, \
+                             %s_Aperture as AP \
                            WHERE \
-        			         SH.SnapNum = 28 \
-                             and SH.MassType_Star >= %f \
+        			         SH.SnapNum = %i \
+                             and AP.Mass_star >= %f \
                              and SH.SubGroupNumber = 0 \
+                             and AP.ApertureSize = 30 \
+                             and SH.GalaxyID = AP.GalaxyID \
                            ORDER BY \
-        			         SH.MassType_Star desc'%(sim_name, self.mstar_limit)
+        			         AP.Mass_Star desc'%(sim_name, sim_name, snapNum, self.mstar_limit)
     
             # Execute query.
             myData = sql.execute_query(con, myQuery)

@@ -48,7 +48,7 @@ SAMPLE:
 
 """
 #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
-def plot_radial_misalignment(manual_GroupNumList = np.array([4]),           # manually enter galaxy gns we want
+def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # manually enter galaxy gns we want
                                SubGroupNum = 0,
                                galaxy_mass_limit            = 10**9.5,                         # for print 
                                      spin_rad_in            = np.arange(0.5, 10.1, 0.25),    # multiples of rad

@@ -324,6 +324,9 @@ subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.stelmass, galaxy.gasmass, galaxy
                                                 find_uncertainties,
                                                 quiet=True)
 
+If find_uncertainties = False, will append NaNs to uncertainties... so can
+        safely plot.
+
 Input Parameters
 ----------------
 
@@ -718,7 +721,7 @@ class Subhalo:
             
                     # for each radius...
                     spins_rand = {}
-                    for rad_i in spin_rad_in:
+                    for rad_i in tqdm(spin_rad_in):
                         spins_rand.update({'%s' %str(rad_i/self.halfmass_rad): {}})
                 
                         # for each particle type...
@@ -726,7 +729,7 @@ class Subhalo:
                             tmp_spins = []    
                     
                             # ...append 1000 random spin iterations
-                            for j in range(iterations):
+                            for jjjj in range(iterations):
                                 spin_i, _, _ = self._find_spin(self.data[parttype_name], rad_i, parttype_name, random_sample=True)
                                 tmp_spins.append(spin_i)
                             spins_rand['%s' %str(rad_i/self.halfmass_rad)]['%s' %parttype_name] = np.stack(tmp_spins)

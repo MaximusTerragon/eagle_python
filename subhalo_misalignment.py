@@ -337,7 +337,7 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
             
             #------------------------------------------------
             # Graph initialising and base formatting
-            graphformat(8, 11, 11, 11, 11, 3.15, 3.15)
+            graphformat(8, 11, 11, 11, 11, 5.80, 2.55)
             fig, ax = plt.subplots(1, 1, figsize=[5.80, 2.55])
         
             # Labels
@@ -352,7 +352,6 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
                 plot_color = 'indigo'
             
             
-            #GROUPNUMLIST USED AS SAMPLE SIZE, CHANGE THIS
             if plot_2D_3D == '2D':
                 # Plot data as histogram (outer lines + fill)
                 plt.hist(projected_angle, weights=np.ones(len(GroupNumPlot))/len(GroupNumPlot), bins=np.arange(0, 181, 10), histtype='bar', edgecolor='none', facecolor=plot_color, alpha=0.1)
@@ -384,8 +383,7 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
                 ax.set_xlabel('Stellar-gas misalignment')
             ax.set_ylabel('Percentage of galaxies')
             ax.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='both', width=0.8, length=2)
-            ax.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='both', width=0.8, length=2)
-            plt.tight_layout()
+            
             
             """if plot_2D_3D == '2D':
                 plt.suptitle("L%s: %s Misalignment\nmass: %.1f, type: 2D, hmr: %s, ax: %s, \nparticles: %s, com: %s, galaxies: %s/%s" %(str(mySims[0][1]), angle_type_in_i, np.log10(galaxy_mass_limit), str(min(spin_rad_in)), viewing_axis, str(gas_sf_min_particles), str(com_min_distance), len(GroupNumPlot), len(sample.GroupNum)))
@@ -400,11 +398,15 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
             legend_elements = [Line2D([0], [0], marker=' ', color='w')]
             ax.legend(handles=legend_elements, labels=label, loc='upper right', frameon=False, labelspacing=0.1, fontsize=8, labelcolor=[plot_color], handlelength=0)
               
+            # other 
+            plt.tight_layout()
+            
+            # Savefig
             if savefig == True:
                 if plot_2D_3D == '2D':
-                    plt.savefig("%s/MisAngleHist_2D_mass%s_%s_rad%s_part%s_com%s_ax%s%s.%s" %(root_file, np.log10(galaxy_mass_limit), angle_type_in_i, str(int(min(spin_rad_in))), str(gas_sf_min_particles), str(com_min_distance), viewing_axis, savefig_txt, file_format), format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
+                    plt.savefig("%s/MisAngleHist_2D_mass%s_%s_rad%s_part%s_com%s_ax%s%s.%s" %(root_file, np.log10(galaxy_mass_limit), angle_type_in_i, str(int(min(spin_rad_in))), str(gas_sf_min_particles), str(com_min_distance), viewing_axis, savefig_txt, file_format), format=file_format, bbox_inches='tight', pad_inches=0.2, dpi=300)
                 elif plot_2D_3D == '3D':
-                    plt.savefig("%s/MisAngleHist_3D_mass%s_%s_rad%s_part%s_com%s%s.%s" %(root_file, np.log10(galaxy_mass_limit), angle_type_in_i, str(int(min(spin_rad_in))), str(gas_sf_min_particles), str(com_min_distance), savefig_txt, file_format), format='jpeg', bbox_inches='tight', pad_inches=0.2, dpi=300)
+                    plt.savefig("%s/MisAngleHist_3D_mass%s_%s_rad%s_part%s_com%s%s.%s" %(root_file, np.log10(galaxy_mass_limit), angle_type_in_i, str(int(min(spin_rad_in))), str(gas_sf_min_particles), str(com_min_distance), savefig_txt, file_format), format=file_format, bbox_inches='tight', pad_inches=0.2, dpi=300)
             if showfig == True:
                 plt.show()
             plt.close()

@@ -37,9 +37,9 @@ PURPOSE
 """
 #1, 2, 3, 4, 5, 6, 7, 9, 8, 10, 11, 14, 12, 15, 13, 19, 20, 16, 21, 23, 25 
 #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
-def galaxy_render(manual_GroupNumList = np.array([4]),
+def galaxy_render(manual_GroupNumList = np.array([1]),
                     SubGroupNum       = 0, 
-                  spin_rad_in           = np.array([2.0]),              # multiples of rad
+                  spin_rad_in           = np.array([8.0]),              # multiples of rad
                   kappa_rad_in          = 30,                           # Calculate kappa for this radius [pkpc]
                   aperture_rad_in       = 50,                           # trim all data to this maximum value
                   align_rad_in          = False,                              # Align galaxy to stellar vector in. this radius [pkpc]
@@ -49,16 +49,16 @@ def galaxy_render(manual_GroupNumList = np.array([4]),
                     maxangle  = 0, 
                     stepangle = 30,
                   plot_spin_vectors = True,
-                    spin_vector_rad = 2.0,            # radius of spinvector to display (in hmr)
+                    spin_vector_rad = 8.0,            # radius of spinvector to display (in hmr)
                   centre_of_pot     = True,           # Plot most bound object (default centre)
                   centre_of_mass    = True,           # Plot total centre of mass
                   axis              = True,           # Plot small axis below galaxy
                       boxradius_in          = 50,                  # boxradius of render [kpc]
-                      particles             = 10000,
+                      particles             = 5000,
                       trim_rad_in           = np.array([1000]),     # WILL PLOT LOWEST VALUE. trim particles # multiples of rad, num [pkpc], found in subhalo.data[hmr]    
-                      stars                 = False,
+                      stars                 = True,
                       gas_sf                = True,
-                      gas_nsf               = True,                                                                    
+                      gas_nsf               = True,    
                   find_uncertainties = False,                   # LEAVE THESE. whether to find 2D and 3D uncertainties
                   viewing_axis = 'z',                           # Which axis to view galaxy from.  DEFAULT 'z'
                   com_min_distance = 10000,                      # [pkpc] min distance between sfgas and stars.  DEFAULT 2.0 
@@ -177,6 +177,7 @@ def galaxy_render(manual_GroupNumList = np.array([4]),
         ax = Axes3D(fig, auto_add_to_figure=False, box_aspect=[1,1,1])
         fig.add_axes(ax, computed_zorder=False)
         
+        
         def plot_rand_scatter(dict_name, part_type, color, debug=False):
             # Plot formatting
             ax.set_facecolor('xkcd:black')
@@ -274,6 +275,22 @@ def galaxy_render(manual_GroupNumList = np.array([4]),
                     plt.pause(0.01)
                     ax.set_zlim(-boxradius, boxradius)
                     fig.canvas.draw_idle()
+            def view_x(self, event):
+                fig.canvas.draw_idle()
+                ax.view_init(elev=0, azim=0)
+                ax.set_zlim(-boxradius, boxradius)
+                fig.canvas.draw_idle()
+            def view_y(self, event):
+                fig.canvas.draw_idle()
+                ax.view_init(elev=0, azim=90)
+                ax.set_zlim(-boxradius, boxradius)
+                fig.canvas.draw_idle()
+            def view_z(self, event):
+                fig.canvas.draw_idle()
+                ax.view_init(elev=90, azim=0)
+                ax.set_zlim(-boxradius, boxradius)
+                fig.canvas.draw_idle()
+                
         
         callback = Index()     
          
@@ -283,8 +300,11 @@ def galaxy_render(manual_GroupNumList = np.array([4]),
         bgasnsf = Button(fig.add_axes([0.25, 0.96, 0.12, 0.03]), 'GAS NSF', color='royalblue', hovercolor='royalblue')
         bcom    = Button(fig.add_axes([0.01, 0.92, 0.12, 0.03]), 'C.O.M')
         bcop    = Button(fig.add_axes([0.13, 0.92, 0.12, 0.03]), 'C.O.P')
-        brotate = Button(fig.add_axes([0.83, 0.96, 0.18, 0.03]), 'ROTATE 360', color='limegreen', hovercolor='darkgreen')
+        brotate = Button(fig.add_axes([0.81, 0.96, 0.18, 0.03]), 'ROTATE 360', color='limegreen', hovercolor='darkgreen')
         bregion = Button(fig.add_axes([0.25, 0.92, 0.18, 0.03]), 'LOAD REGION')
+        bviewx  = Button(fig.add_axes([0.81, 0.92, 0.05, 0.03]), 'x')
+        bviewy  = Button(fig.add_axes([0.87, 0.92, 0.05, 0.03]), 'y')
+        bviewz  = Button(fig.add_axes([0.93, 0.92, 0.05, 0.03]), 'z')
         
         bstars.on_clicked(callback.stars_button)
         bgassf.on_clicked(callback.gas_sf_button)
@@ -294,6 +314,9 @@ def galaxy_render(manual_GroupNumList = np.array([4]),
         bcop.on_clicked(callback.cop_button)
         brotate.on_clicked(callback.auto_rotate)
         bregion.on_clicked(callback.load_region)
+        bviewx.on_clicked(callback.view_x)
+        bviewy.on_clicked(callback.view_y)
+        bviewz.on_clicked(callback.view_z)
         #--------------------------------------------
         
         # Plot scatters and spin vectors   
@@ -302,6 +325,7 @@ def galaxy_render(manual_GroupNumList = np.array([4]),
                 plot_rand_scatter(subhalo.data['%s' %str(trim_rad_in[0])], 'stars', 'lightyellow')
                 if plot_spin_vectors:
                     plot_spin_vector(subhalo.spins, 'stars', spin_vector_rad, 'r')
+                    plot_spin_vector(subhalo.spins, 'gas', spin_vector_rad, 'lime')
             if gas_sf:
                 plot_rand_scatter(subhalo.data['%s' %str(trim_rad_in[0])], 'gas_sf', 'cyan')
                 if plot_spin_vectors:
@@ -336,6 +360,12 @@ def galaxy_render(manual_GroupNumList = np.array([4]),
             ax.quiver(0, 0, -boxradius, 0, boxradius/3, 0, color='g', linewidth=0.5)
             ax.quiver(0, 0, -boxradius, 0, 0, boxradius/3, color='b', linewidth=0.5)
                           
+        
+        
+        
+            
+        
+        
         
         for ii in np.arange(minangle, maxangle+1, stepangle):
             #print(ii , end=' ')                 # [deg]

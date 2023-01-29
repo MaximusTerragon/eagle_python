@@ -620,7 +620,7 @@ class Subhalo:
                 tmp_particle_count = len(self._trim_within_rad(data_nil['%s' %parttype_i], min(spin_rad_in))['Mass'])
                 
                 if tmp_particle_count < gas_sf_min_particles:
-                    self.flags.append('%i %s particles in %s' %(tmp_particle_count, parttype_i, str(min(spin_rad_in))))
+                    self.flags.append('%i %s particles in %.2f pkpc (%.2f rad)' %(tmp_particle_count, parttype_i, min(spin_rad_in), min(spin_rad_in)/self.halfmass_rad))
         
         # Flag galaxy if CoM requirement not met between stars and gas_sf (if included)
         if len(self.flags) == 0:
@@ -721,7 +721,7 @@ class Subhalo:
             
                     # for each radius...
                     spins_rand = {}
-                    for rad_i in tqdm(spin_rad_in):
+                    for rad_i in spin_rad_in:
                         spins_rand.update({'%s' %str(rad_i/self.halfmass_rad): {}})
                 
                         # for each particle type...

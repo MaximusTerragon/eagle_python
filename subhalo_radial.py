@@ -67,7 +67,7 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
                                      gas_sf_min_particles    = 20,                     # Minimum gas sf particles to use galaxy.  DEFAULT 100
                                      angle_type_in           = np.array(['stars_gas', 'stars_gas_sf']),       # analytical results for constituent particles will be found. ei., stars_gas_sf will mean stars and gas_sf properties will be found, and the angles between them                                                           
                             plot_single = True,                    # whether to create single plots. Keep on TRUE
-                                     plot_2D_3D           = '3D',                # whether to plot 2D or 3D angle
+                                     plot_2D_3D           = '2D',                # whether to plot 2D or 3D angle
                                      rad_type_plot        = 'hmr',               # 'rad' whether to use absolute distance or hmr 
                              root_file = '/Users/c22048063/Documents/EAGLE/plots',
                              file_format = 'png',
@@ -376,25 +376,27 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
                     axs[0].set_xlim(0, max(spin_rad_in*subhalo.halfmass_rad))
                     axs[0].set_xticks(np.arange(0, max(spin_rad_in*subhalo.halfmass_rad)+1, 5))
                     axs[1].set_xlabel('Radial distance from centre [pkpc]')
-            
                 axs[0].set_ylabel('Stellar-gas misalignment')
                 axs[1].set_ylabel('f$_{gas_{sf}/gas_{tot}}$')
                 axs[0].set_yticks(np.arange(0, 181, 30))
                 axs[1].set_yticks(np.arange(0, 1.1, 0.5))
                 axs[0].set_ylim(0, 180)
                 axs[1].set_ylim(0, 1)
-                
                 axs[0].set_title('GalaxyID: %i' %subhalo.GalaxyID)
+                
+                # Annotations
+                
+                # Legend
                 axs[0].legend(loc='lower right', frameon=False, labelspacing=0.1, fontsize=9, labelcolor='linecolor', handlelength=0)
                 for ax in axs:
                     ax.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='both', width=0.8, length=2)
                 
-                # other
+                # Other
                 plt.tight_layout()
                 axs[0].grid(alpha=0.3)
                 axs[1].grid(alpha=0.3)
                 
-                # savefig
+                # Savefig
                 if savefig == True:
                     plt.savefig('%s/Radial3D_gn%s_id%s_mass%s_%s_part%s_com%s_%s.%s' %(str(root_file), str(subhalo.gn), str(subhalo.GalaxyID), str('%.2f' %np.log10(subhalo.stelmass)), angle_type_in, str(gas_sf_min_particles), str(com_min_distance), savefigtxt, file_format), format='%s' %file_format, dpi=300, bbox_inches='tight', pad_inches=0.2)
                 if showfig == True:
@@ -423,7 +425,7 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
                 return json.JSONEncoder.default(self, obj)
                 
         # Combining all dictionaries
-        csv_dict = {'all_general': all_general, 'all_misangles': all_misangles, 'all_misanglesproj': all_misanglesproj, 'all_coms': all_coms, 'all_particles': all_particles}
+        csv_dict = {'all_flags': all_flags, 'all_general': all_general, 'all_misangles': all_misangles, 'all_misanglesproj': all_misanglesproj, 'all_coms': all_coms, 'all_particles': all_particles}
         csv_dict.update({'function_input': str(inspect.signature(plot_radial_misalignment))})
         
         # Writing one massive JSON file

@@ -122,8 +122,9 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
     all_misangles     = {}          # has all 3d angles
     all_particles     = {}          # has all the particle count and mass within rad
     all_misanglesproj = {}   # has all 2d projected angles from 3d when given a viewing axis and viewing_angle = 0
+        
     
-    
+    #=================================================================== 
     GroupNumList = manual_GroupNumList
     for GroupNum in tqdm(GroupNumList):
         
@@ -206,6 +207,36 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
             print('GN:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(str(subhalo.gn), subhalo.halfmass_rad, subhalo.kappa, subhalo.kappa_gas_sf)) 
                 
         
+        #===================================================================
+        if csv_file: 
+            # Converting numpy arrays to lists. When reading, may need to simply convert list back to np.array() (easy)
+            class NumpyEncoder(json.JSONEncoder):
+                """ Special json encoder for numpy types """
+                def default(self, obj):
+                    if isinstance(obj, np.integer):
+                        return int(obj)
+                    elif isinstance(obj, np.floating):
+                        return float(obj)
+                    elif isinstance(obj, np.ndarray):
+                        return obj.tolist()
+                    return json.JSONEncoder.default(self, obj)
+                
+            # Combining all dictionaries
+            csv_dict = {'all_flags': all_flags, 'all_general': all_general, 'all_misangles': all_misangles, 'all_misanglesproj': all_misanglesproj, 'all_coms': all_coms, 'all_particles': all_particles}
+            csv_dict.update({'function_input': str(inspect.signature(plot_radial_misalignment))})
+        
+            # Writing one massive JSON file
+            json.dump(csv_dict, open('%s/%s_%s.csv' %(root_file, csv_name, str(datetime.now())), 'w'), cls=NumpyEncoder)
+        
+            """# Reading JSON file
+            dict_new = json.load(open('%s/%s.csv' %(root_file, csv_name), 'r'))
+            # example nested dictionaries
+            new_general = dict_new['all_general']
+            new_misanglesproj = dict_new['all_misanglesproj']
+            # example accessing function input
+            function_input = dict_new['function_input']"""
+            
+        #===================================================================
         # Plot for a single galaxy showing how misalignment angle varies with increasing radius
         def _plot_single(quiet=1, debug=False):
             
@@ -411,33 +442,7 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
     #-------------------------
       
 
-    if csv_file: 
-        # Converting numpy arrays to lists. When reading, may need to simply convert list back to np.array() (easy)
-        class NumpyEncoder(json.JSONEncoder):
-            """ Special json encoder for numpy types """
-            def default(self, obj):
-                if isinstance(obj, np.integer):
-                    return int(obj)
-                elif isinstance(obj, np.floating):
-                    return float(obj)
-                elif isinstance(obj, np.ndarray):
-                    return obj.tolist()
-                return json.JSONEncoder.default(self, obj)
-                
-        # Combining all dictionaries
-        csv_dict = {'all_flags': all_flags, 'all_general': all_general, 'all_misangles': all_misangles, 'all_misanglesproj': all_misanglesproj, 'all_coms': all_coms, 'all_particles': all_particles}
-        csv_dict.update({'function_input': str(inspect.signature(plot_radial_misalignment))})
-        
-        # Writing one massive JSON file
-        json.dump(csv_dict, open('%s/%s_%s.csv' %(root_file, csv_name, str(datetime.now())), 'w'), cls=NumpyEncoder)
-        
-        """# Reading JSON file
-        dict_new = json.load(open('%s/%s.csv' %(root_file, csv_name), 'r'))
-        # example nested dictionaries
-        new_general = dict_new['all_general']
-        new_misanglesproj = dict_new['all_misanglesproj']
-        # example accessing function input
-        function_input = dict_new['function_input']"""
+    
                 
                 
           

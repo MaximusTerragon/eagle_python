@@ -708,6 +708,9 @@ class Subhalo:
                 #------------------------------------------------
                 # Create 1000 random spin iterations for each rad
                 if find_uncertainties:
+                    
+                    use_percentiles = 5
+                    
                     if print_progress:
                         print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
                         print('Creating spins_rand')
@@ -764,11 +767,11 @@ class Subhalo:
                             tmp_errors_array = []
                             for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i][parttype_name[0]], spins_rand['%s' %hmr_i][parttype_name[1]]):
                                 tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
-                            tmp_errors.append(np.percentile(tmp_errors_array, [16, 84]))
+                            tmp_errors.append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
                     
                             if debug:
                                 print('\nHMR_i ', hmr_i)
-                                print('percentiles: ', np.percentile(tmp_errors_array, [16, 84]))
+                                print('percentiles: ', np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
                                 print('angle: ', angle)
                                 plt.hist(tmp_errors_array, 100)
                                 plt.show()
@@ -805,7 +808,7 @@ class Subhalo:
                                     tmp_errors_array = []
                                     for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i][parttype_name[0]][:,[1, 2]], spins_rand['%s' %hmr_i][parttype_name[1]][:, [1, 2]]):
                                         tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
-                                    tmp_errors.append(np.percentile(tmp_errors_array, [16, 84]))
+                                    tmp_errors.append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
                                 else:
                                     tmp_errors.append([math.nan, math.nan])
                                 
@@ -824,7 +827,7 @@ class Subhalo:
                                     tmp_errors_array = []
                                     for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i][parttype_name[0]][:,[0, 2]], spins_rand['%s' %hmr_i][parttype_name[1]][:, [0, 2]]):
                                         tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
-                                    tmp_errors.append(np.percentile(tmp_errors_array, [16, 84]))
+                                    tmp_errors.append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
                                 else:
                                     tmp_errors.append([math.nan, math.nan])
                                 
@@ -844,11 +847,11 @@ class Subhalo:
                                     tmp_errors_array = []
                                     for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i][parttype_name[0]][:,[0, 1]], spins_rand['%s' %hmr_i][parttype_name[1]][:, [0, 1]]):
                                         tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
-                                    tmp_errors.append(np.percentile(tmp_errors_array, [16, 84]))
+                                    tmp_errors.append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
                             
                                     if debug:
                                         print('\nHMR_i ', hmr_i)
-                                        print('percentiles: ', np.percentile(tmp_errors_array, [16, 84]))
+                                        print('percentiles: ', np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
                                         print('angle: ', angle)
                                         plt.hist(tmp_errors_array, 100)
                                         plt.show()

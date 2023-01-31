@@ -285,7 +285,39 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
         elif print_galaxy_short == True:
             print('GN:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(str(subhalo.gn), subhalo.halfmass_rad, subhalo.kappa, subhalo.kappa_gas_sf)) 
             
+    
+    #=====================================
+    if csv_file: 
+        # Converting numpy arrays to lists. When reading, may need to simply convert list back to np.array() (easy)
+        class NumpyEncoder(json.JSONEncoder):
+            """ Special json encoder for numpy types """
+            def default(self, obj):
+                if isinstance(obj, np.integer):
+                    return int(obj)
+                elif isinstance(obj, np.floating):
+                    return float(obj)
+                elif isinstance(obj, np.ndarray):
+                    return obj.tolist()
+                return json.JSONEncoder.default(self, obj)
+                       
+        # Combining all dictionaries
+        csv_dict = {'all_general': all_general, 'all_misangles': all_misangles, 'all_misanglesproj': all_misanglesproj, 'all_coms': all_coms, 'all_particles': all_particles, 'all_flags': all_flags}
+        csv_dict.update({'function_input': str(inspect.signature(plot_misalignment_angle))})
         
+        # Writing one massive JSON file
+        json.dump(csv_dict, open('%s/%s_%s.csv' %(root_file, csv_name, str(datetime.now())), 'w'), cls=NumpyEncoder)
+        
+        # Reading JSON file
+        """dict_new = json.load(open('%s/%s.csv' %(root_file, csv_name), 'r'))
+        # example nested dictionaries
+        new_general = dict_new['all_general']
+        new_misanglesproj = dict_new['all_misanglesproj']
+        # example accessing function input
+        function_input = dict_new['function_input']
+        print(dict_new['all_general']['4'].items())"""
+        
+        
+    #=====================================  
     def _plot_single(quiet=0, debug=False):
         for angle_type_in_i in angle_type_in:
             # Collect values to plot
@@ -416,34 +448,7 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
         _plot_single()
     #------------------------- 
     
-    if csv_file: 
-        # Converting numpy arrays to lists. When reading, may need to simply convert list back to np.array() (easy)
-        class NumpyEncoder(json.JSONEncoder):
-            """ Special json encoder for numpy types """
-            def default(self, obj):
-                if isinstance(obj, np.integer):
-                    return int(obj)
-                elif isinstance(obj, np.floating):
-                    return float(obj)
-                elif isinstance(obj, np.ndarray):
-                    return obj.tolist()
-                return json.JSONEncoder.default(self, obj)
-                       
-        # Combining all dictionaries
-        csv_dict = {'all_general': all_general, 'all_misangles': all_misangles, 'all_misanglesproj': all_misanglesproj, 'all_coms': all_coms, 'all_particles': all_particles, 'all_flags': all_flags}
-        csv_dict.update({'function_input': str(inspect.signature(plot_misalignment_angle))})
-        
-        # Writing one massive JSON file
-        json.dump(csv_dict, open('%s/%s_%s.csv' %(root_file, csv_name, str(datetime.now())), 'w'), cls=NumpyEncoder)
-        
-        # Reading JSON file
-        """dict_new = json.load(open('%s/%s.csv' %(root_file, csv_name), 'r'))
-        # example nested dictionaries
-        new_general = dict_new['all_general']
-        new_misanglesproj = dict_new['all_misanglesproj']
-        # example accessing function input
-        function_input = dict_new['function_input']
-        print(dict_new['all_general']['4'].items())"""
+    
         
 #------------------------  
 plot_misalignment_angle()

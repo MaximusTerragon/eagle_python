@@ -139,8 +139,8 @@ def fit_kinematic_pa(x, y, vel, debug=False, nsteps=361,
     
     #print('angBest', angBest)
     
-    if angBest < 0:		#range is from -180 to +180, so if negative will add 180 to bring in range 0 to 360
-        angBest += 180
+    #if angBest < 0:		#range is from -180 to +180, so if negative will add 360 to bring in range 0 to 360
+    #    angBest += 360
     
     # Will find angle from y-axis to negative
     ang = [0,np.pi] + np.radians(angBest)

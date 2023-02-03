@@ -135,7 +135,7 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
                                     angle_type_in           = np.array(['stars_gas']),       # analytical results for constituent particles will be found. ei., stars_gas_sf will mean stars and gas_sf properties will be found, and the angles between them                                                           
                             plot_single = True,                      # keep on true
                                     plot_2D_3D              = '2D',                     #or use '3D'. DEFAULT 2D
-                            root_file = '/Users/c22048063/Documents/EAGLE/plots',
+                            root_file = '/Users/c22048063/Documents/EAGLE/trial_plots',
                             file_format = 'png',
                               print_galaxy       = False,
                               print_galaxy_short = False,
@@ -143,7 +143,7 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
                               csv_file           = False,              # .csv file will ALL data
                                 csv_name = 'data_misalignment',
                               showfig   = True,
-                              savefig   = True,  
+                              savefig   = False,  
                                 savefig_txt = '',            #extra savefile txt
                               debug = False):            
     

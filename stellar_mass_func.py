@@ -122,9 +122,11 @@ def _stellar_mass_func(galaxy_mass_limit = 10**9,               # Mass limit of 
                          root_file = '/Users/c22048063/Documents/EAGLE/plots',
                          file_format = 'png',
                          csv_load       = False,              # .csv file will ALL data
-                           csv_name = 'data_misalignment_2023-01-23 14:31:20.481086',       #FIND IN LINUX, mac is weird
+                           csv_name_load = 'data_misalignment_2023-01-23 14:31:20.481086',       #FIND IN LINUX, mac is weird
+                         csv_file       = True,
+                           csv_name = 'stellar_mass_func_L25',
                          showfig   = True,
-                         savefig   = False,  
+                         savefig   = True,  
                            savefigtxt = '',            #extra savefile txt
                          quiet = True,
                          debug = False):
@@ -176,7 +178,7 @@ def _stellar_mass_func(galaxy_mass_limit = 10**9,               # Mass limit of 
     if csv_load:
         
         # Load existing sample
-        dict_new = json.load(open(r'%s/%s.csv' %(root_file, csv_name), 'r'))
+        dict_new = json.load(open(r'%s/%s.csv' %(root_file, csv_load_name), 'r'))
         
         all_misangles       = dict_new['all_misangles']
         all_coms            = dict_new['all_coms']
@@ -288,9 +290,36 @@ def _stellar_mass_func(galaxy_mass_limit = 10**9,               # Mass limit of 
                 
             #-------------------------------------------------------------------    
             
-            
-        #add sample requirements
-    
+    #================================================
+    if csv_file: 
+            # Converting numpy arrays to lists. When reading, may need to simply convert list back to np.array() (easy)
+            class NumpyEncoder(json.JSONEncoder):
+                """ Special json encoder for numpy types """
+                def default(self, obj):
+                    if isinstance(obj, np.integer):
+                        return int(obj)
+                    elif isinstance(obj, np.floating):
+                        return float(obj)
+                    elif isinstance(obj, np.ndarray):
+                        return obj.tolist()
+                    return json.JSONEncoder.default(self, obj)
+                       
+            # Combining all dictionaries
+            csv_dict = {'all_general': all_general, 'all_misangles': all_misangles, 'all_misanglesproj': all_misanglesproj, 'all_coms': all_coms, 'all_particles': all_particles, 'all_flags': all_flags}
+            csv_dict.update({'function_input': str(inspect.signature(_stellar_mass_func))})
+        
+            # Writing one massive JSON file
+            json.dump(csv_dict, open('%s/%s_%s.csv' %(root_file, csv_name, str(datetime.now())), 'w'), cls=NumpyEncoder)
+        
+            # Reading JSON file
+            """dict_new = json.load(open('%s/%s.csv' %(root_file, csv_name), 'r'))
+            # example nested dictionaries
+            new_general = dict_new['all_general']
+            new_misanglesproj = dict_new['all_misanglesproj']
+            # example accessing function input
+            function_input = dict_new['function_input']
+            print(dict_new['all_general']['4'].items())"""    
+    #================================================
     
     # Collect values to plot
     stelmass_hist      = []
@@ -344,6 +373,7 @@ def _stellar_mass_func(galaxy_mass_limit = 10**9,               # Mass limit of 
     ### General formatting
     plt.xlim(7, 12.5)
     plt.ylim(-5, -0.5)
+    plt.yticks(np.arange(-5, 0, 0.5))
     plt.xlabel(r'log$_{10}$ M$_{*}$ [M$_{\odot}$]')
     plt.ylabel(r'log$_{10}$ dn/dlog$_{10}$(M$_{*}$) [cMpc$^{-3}$]')
     plt.xticks(np.arange(7, 12.5, 1))

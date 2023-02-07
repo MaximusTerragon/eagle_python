@@ -241,7 +241,7 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
         def _plot_single(quiet=1, debug=False):
             
             # Initialise figure
-            graphformat(8, 11, 11, 11, 11, 3.15, 3.15)
+            graphformat(8, 11, 11, 9, 11, 3.15, 3.15)
             fig, axs = plt.subplots(nrows=2, ncols=1, gridspec_kw={'height_ratios': [3, 1]}, figsize=(3.15, 3.15), sharex=True, sharey=False)
             
             
@@ -290,9 +290,9 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
                     # Plot scatter and errorbars
                     #plt.errorbar(rad_points, pa_points, xerr=None, yerr=pa_points_err, label='2D projected', alpha=0.8, ms=2, capsize=4, elinewidth=1, markeredgewidth=1)
                     if angle_type_in_i == 'stars_gas':
-                        axs[0].plot(rad_points, pa_points, label='Total gas', alpha=1.0, ms=2, lw=1)
+                        axs[0].plot(rad_points, pa_points, label='Gas', alpha=1.0, ms=2, lw=1)
                     if angle_type_in_i == 'stars_gas_sf':
-                        axs[0].plot(rad_points, pa_points, label='Star-forming gas', alpha=1.0, ms=2, lw=1)
+                        axs[0].plot(rad_points, pa_points, label='SF gas', alpha=1.0, ms=2, lw=1)
                     axs[0].fill_between(rad_points, pa_points_lo, pa_points_hi, alpha=0.3)
                     
                     if plot_count == 0:
@@ -386,9 +386,9 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
                     # Plot scatter and errorbars
                     #plt.errorbar(rad_points, pa_points, xerr=None, yerr=pa_points_err, label='2D projected', alpha=0.8, ms=2, capsize=4, elinewidth=1, markeredgewidth=1)
                     if angle_type_in_i == 'stars_gas':
-                        axs[0].plot(rad_points, pa_points, label='Total gas', alpha=1.0, ms=2, lw=1)
+                        axs[0].plot(rad_points, pa_points, label='Gas', alpha=1.0, ms=2, lw=1)
                     if angle_type_in_i == 'stars_gas_sf':
-                        axs[0].plot(rad_points, pa_points, label='Star-forming gas', alpha=1.0, ms=2, lw=1)
+                        axs[0].plot(rad_points, pa_points, label='SF gas', alpha=1.0, ms=2, lw=1)
                     axs[0].fill_between(rad_points, pa_points_lo, pa_points_hi, alpha=0.3)
                     
                     if plot_count == 0:
@@ -410,7 +410,8 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
                 axs[0].set_ylabel('Stellar-gas misalignment')
                 axs[1].set_ylabel('f$_{gas_{sf}/gas_{tot}}$')
                 axs[0].set_yticks(np.arange(0, 181, 30))
-                axs[1].set_yticks(np.arange(0, 1.1, 0.5))
+                axs[1].set_yticks(np.arange(0, 1.1, 0.25))
+                axs[1].set_yticklabels(['0', '', '', '', '1'])
                 axs[0].set_ylim(0, 180)
                 axs[1].set_ylim(0, 1)
                 axs[0].set_title('GalaxyID: %i' %subhalo.GalaxyID)

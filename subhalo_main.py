@@ -709,7 +709,7 @@ class Subhalo:
                 # Create 1000 random spin iterations for each rad
                 if find_uncertainties:
                     
-                    use_percentiles = 5
+                    use_percentiles = 32
                     
                     if print_progress:
                         print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))

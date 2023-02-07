@@ -132,18 +132,18 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
                                     viewing_axis            = 'z',                     # Which axis to view galaxy from.  DEFAULT 'z'
                                     com_min_distance        = 2.0,                     # [pkpc] min distance between sfgas and stars.  DEFAULT 2.0 
                                     gas_sf_min_particles    = 20,                     # Minimum gas sf particles to use galaxy.  DEFAULT 100
-                                    angle_type_in           = np.array(['stars_gas']),       # analytical results for constituent particles will be found. ei., stars_gas_sf will mean stars and gas_sf properties will be found, and the angles between them                                                           
+                                    angle_type_in           = np.array(['stars_gas_sf']),       # analytical results for constituent particles will be found. ei., stars_gas_sf will mean stars and gas_sf properties will be found, and the angles between them                                                           
                             plot_single = True,                      # keep on true
                                     plot_2D_3D              = '2D',                     #or use '3D'. DEFAULT 2D
-                            root_file = '/Users/c22048063/Documents/EAGLE/trial_plots',
+                            root_file = '/Users/c22048063/Documents/EAGLE/plots',
                             file_format = 'png',
                               print_galaxy       = False,
                               print_galaxy_short = False,
                               print_progress     = False,
                               csv_file           = False,              # .csv file will ALL data
                                 csv_name = 'data_misalignment',
-                              showfig   = True,
-                              savefig   = False,  
+                              showfig   = False,
+                              savefig   = True,  
                                 savefig_txt = '',            #extra savefile txt
                               debug = False):            
     
@@ -369,18 +369,18 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
             
             #------------------------------------------------
             # Graph initialising and base formatting
-            graphformat(8, 11, 11, 11, 11, 5.80, 2.55)
+            graphformat(8, 11, 11, 9, 11, 5.80, 2.55)
             fig, ax = plt.subplots(1, 1, figsize=[5.80, 2.55])
         
             # Labels
             if 'stars_gas' in angle_type_in:
-                label = ['Total gas']
+                label = ['Gas']
                 plot_color = 'dodgerblue'
             if 'stars_gas_sf' in angle_type_in:
-                label = ['Star-forming gas']
+                label = ['SF gas']
                 plot_color = 'darkorange'
             if 'stars_gas_nsf' in angle_type_in:
-                label = ['Non-star-forming gas']
+                label = ['NSF gas']
                 plot_color = 'indigo'
             
             
@@ -400,7 +400,7 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
                 
                 
                 
-                # Add poisson errors to each bin (sqrt N)
+                # Add poisson errors to each bin (sqrt N)graphformat(8, 11, 11, 9, 11,
                 hist_n, _ = np.histogram(misalignment_angle, bins=np.arange(0, 181, 10), range=(0, 180))
                 plt.errorbar(np.arange(5, 181, 10), hist_n/len(GroupNumPlot), xerr=None, yerr=np.sqrt(hist_n)/len(GroupNumPlot), ecolor=plot_color, ls='none', capsize=4, elinewidth=1, markeredgewidth=1)
             

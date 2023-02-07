@@ -16,12 +16,13 @@ from graphformat import graphformat
 
 
 # list of simulations
-mySims = np.array([('RefL0012N0188', 12)])   
+#mySims = np.array([('RefL0012N0188', 12)])   
+mySims = np.array([('RefL0100N1504', 100)])   
 snapNum = 28
 
 # Directories of data hdf5 file(s)
 #dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_0%s_z000p101/snap_0%s_z000p101.0.hdf5' %(snapNum, snapNum)
-dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_0%s_z000p000/snap_0%s_z000p000.0.hdf5' %(snapNum, snapNum)
+#dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_0%s_z000p000/snap_0%s_z000p000.0.hdf5' %(snapNum, snapNum)
  
 
 """ 
@@ -119,15 +120,15 @@ def _stellar_mass_func(galaxy_mass_limit = 10**9,               # Mass limit of 
                        plot_single     = True,                        # whether to create single plots. KEEP ON TRUE
                                hist_bin_width          = 0.2,         # Msun
                          print_progress = True,
-                         root_file = '/Users/c22048063/Documents/EAGLE/plots',
+                         root_file = '/Users/c22048063/Documents/EAGLE/serpens_plots/trial_plots/tests',
                          file_format = 'png',
-                         csv_load       = False,              # .csv file will ALL data
-                           csv_name_load = 'data_misalignment_2023-01-23 14:31:20.481086',       #FIND IN LINUX, mac is weird
-                         csv_file       = True,
+                         csv_load       = True,              # .csv file will ALL data
+                           csv_load_name = 'data_pa_L100_2023-02-05 00:23:20.406924_voronoi',       #FIND IN LINUX, mac is weird
+                         csv_file       = False,
                            csv_name = 'stellar_mass_func_L25',
                          showfig   = True,
                          savefig   = True,  
-                           savefigtxt = '',            #extra savefile txt
+                           savefigtxt = '_L100_voronoisample',            #extra savefile txt
                          quiet = True,
                          debug = False):
             
@@ -136,7 +137,7 @@ def _stellar_mass_func(galaxy_mass_limit = 10**9,               # Mass limit of 
     
     # Initialise figure
     # Graph initialising and base formatting
-    graphformat(8, 11, 11, 11, 11, 3.15, 3.15)
+    graphformat(8, 11, 11, 9, 11, 3.15, 3.15)
     fig, ax = plt.subplots(1, 1, figsize=[3.15, 2.9])
     
     #-----------------------------------------
@@ -183,13 +184,15 @@ def _stellar_mass_func(galaxy_mass_limit = 10**9,               # Mass limit of 
         all_misangles       = dict_new['all_misangles']
         all_coms            = dict_new['all_coms']
         all_particles       = dict_new['all_particles']
-        all_misanglesproj   = dict_new['all_general']
+        all_misanglesproj   = dict_new['all_misanglesproj']
         all_general         = dict_new['all_general']
-        all_flags           = dict_new['all_general']
+        all_flags           = dict_new['all_flags']
 
         # these will all be lists, they need to be transformed into arrays
         print('LOADED CSV:')
         print(dict_new['function_input'])
+        
+        GroupNumList = all_general.keys()
           
     if not csv_load:
         # creates a list of applicable gn (and sgn) to sample. To include satellite galaxies, use 'yes'
@@ -332,7 +335,7 @@ def _stellar_mass_func(galaxy_mass_limit = 10**9,               # Mass limit of 
             # If not flagged in extraction process...
             stelmass_hist.append(float(all_general['%s' %str(GroupNum)]['stelmass']))
             GroupNumPlot.append(GroupNum)
-            
+        
         else:
             GroupNumNotPlot.append(GroupNum)
     

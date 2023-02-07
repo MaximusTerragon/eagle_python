@@ -229,7 +229,7 @@ def _weight_histo(gn,
     if plot:
         # Plot 2d histogram
         plt.figure()
-        graphformat(8, 11, 11, 11, 11, 5, 4)
+        graphformat(8, 11, 11, 9, 11, 5, 4)
         im = plt.pcolormesh(xbins, ybins, vel_weighted, cmap=colormap, vmin=-200, vmax=200)
         plt.colorbar(im, label='mass-weighted mean velocity', extend='both')
         
@@ -395,7 +395,7 @@ def _voronoi_tessalate(gn,
     # Call 2d voronoi binning (don't plot)
     if plot:
         plt.figure()
-        graphformat(8, 11, 11, 11, 11, 5, 4)
+        graphformat(8, 11, 11, 9, 11, 5, 4)
         _, x_gen, y_gen, _, _, bin_count, vel, _, _ = voronoi_2d_binning(points[:,0], points[:,1], points_vel, points_num, target_particles, plot=1, quiet=quiet, pixelsize=(2*boxradius/pixel), sn_func=None)
         plt.savefig('%s/gn_%s_vorbin_output_%s_%s_%s_angle_%s.jpeg' %(str(root_file), str(gn), str(particle_type), str(trim_rad_in), str(viewing_axis), str(viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.5)
         plt.close()
@@ -471,9 +471,9 @@ def velocity_projection(manual_GroupNumList = np.array([]),
                             savefigtxt       = '',                # added txt to append to end of savefile
                           debug = False,
                                 pa_angle_type_in            = '2dhist',             # which pa angles to use: '2dhist', 'voronoi', 'both'... compare will use either or both and compare to 3D
-                                  plot_2dhist_graph           = True, 
+                                  plot_2dhist_graph           = False, 
                                   plot_voronoi_graph          = False,
-                                  plot_2dhist_pafit_graph     = True,
+                                  plot_2dhist_pafit_graph     = False,
                                   plot_voronoi_pafit_graph    = False,
                                 pa_compare                  = False,               # plot the voronoi and 2dhist data pa_fit comparison for single galaxy
                                     pa_compare_angle_type_in  = 'stars_gas_sf',        # which misangle to compare 
@@ -708,7 +708,7 @@ def velocity_projection(manual_GroupNumList = np.array([]),
                 # Function to plot 2dhist-fed data (splinter from _weight_histo)
                 def _plot_2dhist(colormap='coolwarm', quiet=1, debug=False):
                     # Initialise figure
-                    graphformat(8, 11, 11, 11, 11, 3.75, 3)
+                    graphformat(8, 11, 11, 9, 11, 3.75, 3)
                     fig, axs = plt.subplots(nrows=1, ncols=len(particle_list_in), gridspec_kw={'width_ratios': [1, 1.22]}, figsize=(6.5, 3.15), sharex=True, sharey=True)
                     
                     if local_boxradius == True:
@@ -789,7 +789,7 @@ def velocity_projection(manual_GroupNumList = np.array([]),
                 # Function to plot voronoi-fed data (splinter from _voronoi_tessalate)
                 def _plot_voronoi(colormap='coolwarm', quiet=1, debug=False):
                     # Initialise figure
-                    graphformat(8, 11, 11, 11, 11, 3.75, 3)
+                    graphformat(8, 11, 11, 9, 11, 3.75, 3)
                     fig, axs = plt.subplots(nrows=1, ncols=len(particle_list_in), figsize=(4.5*len(particle_list_in), 4), sharex=True, sharey=True)
                 
                     if local_boxradius == True:
@@ -1286,7 +1286,7 @@ def velocity_projection(manual_GroupNumList = np.array([]),
             
             # Initialise figure
             plt.figure()
-            graphformat(8, 11, 11, 11, 11, 3.75, 3)
+            graphformat(8, 11, 11, 9, 11, 3.75, 3)
                 
             # Plot scatter and error bars for both 2dhist and voronoi
             plt.errorbar(np.arange(minangle, maxangle+1, stepangle), hist_points, xerr=None, yerr=hist_points_err, label='2dhist', alpha=0.6, ls='none', ms=2, capsize=4, elinewidth=1, markeredgewidth=1)
@@ -1328,7 +1328,7 @@ def velocity_projection(manual_GroupNumList = np.array([]),
             
             # Initialise figure
             plt.figure()
-            graphformat(8, 11, 11, 11, 11, 3.75, 3)
+            graphformat(8, 11, 11, 9, 11, 3.75, 3)
             plt.xlim(min(spin_rad_in), max(spin_rad_in))
             plt.xticks(np.arange(min(spin_rad_in), max(spin_rad_in)+1, 1))
             
@@ -1691,7 +1691,7 @@ def velocity_projection(manual_GroupNumList = np.array([]),
             
         
         # Initialise figure
-        graphformat(8, 11, 11, 11, 11, 3.15, 2.90)
+        graphformat(8, 11, 11, 9, 11, 3.15, 2.90)
         plt.figure()
 
         # Labels
@@ -1828,7 +1828,7 @@ def velocity_projection(manual_GroupNumList = np.array([]),
         
         #-------------------------------------------------
         # Graph initialising and base formatting
-        graphformat(8, 11, 11, 11, 11, 5.80, 2.55)
+        graphformat(8, 11, 11, 9, 11, 5.80, 2.55)
         
         # Labels
         if 'stars_gas' in angle_type_in:

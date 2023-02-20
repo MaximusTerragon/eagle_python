@@ -153,12 +153,14 @@ class Subhalo_Extract:
         myData = self._query(sim, snapNum)
         
         # Assiging subhalo properties
-        self.stelmass_tot     = myData['stelmass_tot']            # [Msun]
-        self.gasmass_tot      = myData['gasmass_tot']             # [Msun]
+        self.GalaxyID         = myData['GalaxyID']
         self.stelmass         = myData['stelmass']            # [Msun]
         self.gasmass          = myData['gasmass']             # [Msun]
         self.halfmass_rad     = myData['rad']                 # [pkpc]
-        self.GalaxyID         = myData['GalaxyID']
+        self.ellipticity      = myData['ellip']
+        self.triaxial         = myData['triax']
+        self.kappa_new        = myData['kappa']
+        self.disp_ani         = myData['dispani']
         
         # These were all originally in cMpc, converted to pMpc through self.a and self.aexp
         self.centre       = np.array([myData['x'], myData['y'], myData['z']]) * u.Mpc.to(u.kpc) * self.a**self.aexp                 # [pkpc]
@@ -201,12 +203,14 @@ class Subhalo_Extract:
     
             # Construct and execute query for each simulation. This query returns properties for a single galaxy
             myQuery = 'SELECT \
-                        SH.MassType_Star as stelmass_tot, \
-                        SH.MassType_Gas as gasmass_tot, \
+                        SH.GalaxyID as GalaxyID, \
                         AP.Mass_Star as stelmass, \
                         AP.Mass_Gas as gasmass, \
-                        SH.HalfMassRad_Star as rad, \
-                        SH.GalaxyID as GalaxyID, \
+                        SI.R_halfmass30 as rad, \
+                        MK.Ellipticity as ellip, \
+                        MK.Triaxiality as triax, \
+                        MK.KappaCoRot as kappa, \
+                        MK.DispAnisotropy as dispani, \
                         SH.CentreOfPotential_x as x, \
                         SH.CentreOfPotential_y as y, \
                         SH.CentreOfPotential_z as z, \
@@ -218,15 +222,19 @@ class Subhalo_Extract:
                         SH.Velocity_z as vel_z \
                        FROM \
         			     %s_Subhalo as SH, \
-        			     %s_Aperture as AP \
+        			     %s_Aperture as AP, \
+                         %s_MorphoKinem as MK, \
+                         %s_Sizes as SI \
                        WHERE \
         			     SH.SnapNum = %i \
                          and SH.GroupNumber = %i \
                          and SH.SubGroupNumber = %i \
                          and AP.ApertureSize = 30 \
                          and SH.GalaxyID = AP.GalaxyID \
+                         and SH.GalaxyID = MK.GalaxyID \
+                         and SH.GalaxyID = SI.GalaxyID \
                       ORDER BY \
-        			     SH.MassType_Star desc'%(sim_name, sim_name, snapNum, self.gn, self.sgn)
+        			     SH.MassType_Star desc'%(sim_name, sim_name, sim_name, sim_name, snapNum, self.gn, self.sgn)
 	
             # Execute query.
             myData = sql.execute_query(con, myQuery)
@@ -1226,17 +1234,20 @@ class Subhalo:
         r  = np.linalg.norm(arr['Coordinates'], axis=1)
         mask = np.where(r <= radius)
         
+        
         # Compute angular momentum within specified radius
         L  = np.cross(arr['Coordinates'][mask] * arr['Mass'][:, None][mask], arr['Velocity'][mask])
+        # Mask for co-rotating (L_z >= 0)
+        L_mask = np.where(L[:,2] >= 0)
         
         # Projected radius along disk within specified radius
-        rad_projected = np.linalg.norm(arr['Coordinates'][:,:2][mask], axis=1)
+        rad_projected = np.linalg.norm(arr['Coordinates'][:,:2][mask][L_mask], axis=1)
+        
+        # Kinetic energy of ordered co-rotation (using only angular momentum in z-axis)
+        K_rot = np.sum(0.5 * np.square(L[:,2][L_mask] / rad_projected) / arr['Mass'][mask][L_mask])
         
         # Total kinetic energy of stars
         K_tot = np.sum(0.5 * arr['Mass'][mask] * np.square(np.linalg.norm(arr['Velocity'][mask], axis=1)))
-        
-        # Kinetic energy of ordered co-rotation (using only angular momentum in z-axis)
-        K_rot = np.sum(0.5 * np.square(L[:,2] / rad_projected) / arr['Mass'][mask])
         
         return K_rot/K_tot
         

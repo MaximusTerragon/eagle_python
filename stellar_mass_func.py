@@ -137,7 +137,7 @@ def _stellar_mass_func(galaxy_mass_limit = 10**9,               # Mass limit of 
     
     # Initialise figure
     # Graph initialising and base formatting
-    graphformat(8, 11, 11, 9, 11, 3.15, 3.15)
+    graphformat(8, 11, 11, 9, 11, 4.5, 3.75)
     fig, ax = plt.subplots(1, 1, figsize=[3.15, 2.9])
     
     #-----------------------------------------
@@ -209,7 +209,7 @@ def _stellar_mass_func(galaxy_mass_limit = 10**9,               # Mass limit of 
         
         for GroupNum in tqdm(GroupNumList):
             # Initial extraction of galaxy data
-            galaxy = Subhalo_Extract(mySims, dataDir, snapNum, GroupNum, SubGroupNum)
+            galaxy = Subhalo_Extract(mySims, dataDir, snapNum, GroupNum, SubGroupNum, aperture_rad_in, viewing_axis)
             
             #-------------------------------------------------------------------
             # Automating some later variables to avoid putting them in manually
@@ -264,7 +264,7 @@ def _stellar_mass_func(galaxy_mass_limit = 10**9,               # Mass limit of 
             #------------------------------------------------------------------
             
             # Galaxy will be rotated to calc_kappa_rad's stellar spin value
-            subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.stelmass, galaxy.gasmass, galaxy.GalaxyID, galaxy.halfmass_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas,
+            subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.GalaxyID, galaxy.stelmass, galaxy.gasmass, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, galaxy.MorphoKinem,
                                                 angle_selection,
                                                 viewing_angle,
                                                 spin_rad,

@@ -572,8 +572,8 @@ def velocity_projection(manual_GroupNumList = np.array([]),
             time_start = time.time()
             
         # Initial extraction of galaxy data
-        galaxy = Subhalo_Extract(mySims, dataDir, snapNum, GroupNum, SubGroupNum)
-
+        galaxy = Subhalo_Extract(mySims, dataDir, snapNum, GroupNum, SubGroupNum, aperture_rad_in, viewing_axis)
+        
         
         #-------------------------------------------------------------------
         # Automating some later variables to avoid putting them in manually
@@ -638,7 +638,7 @@ def velocity_projection(manual_GroupNumList = np.array([]),
                 time_start = time.time()
                 
             # If we want the original values, enter 0 for viewing angle
-            subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.stelmass, galaxy.gasmass, galaxy.GalaxyID, galaxy.halfmass_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas,
+            subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.GalaxyID, galaxy.stelmass, galaxy.gasmass, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, galaxy.MorphoKinem,
                                                 angle_selection,
                                                 viewing_angle,
                                                 spin_rad,
@@ -680,7 +680,7 @@ def velocity_projection(manual_GroupNumList = np.array([]),
                     print('\nGROUP NUMBER:           %s' %str(subhalo.gn)) 
                     print('GALAXY ID:              %i' %subhalo.GalaxyID)
                     print('STELLAR MASS [Msun]:    %.3f' %np.log10(subhalo.stelmass))
-                    print('HALFMASS RAD [pkpc]:    %.3f' %subhalo.halfmass_rad)        
+                    print('HALFMASS RAD [pkpc]:    %.3f' %subhalo.halfmass_rad_proj)        
                     print('KAPPA:                  %.2f' %subhalo.kappa)
                     print('KAPPA GAS SF:           %.2f' %subhalo.kappa_gas_sf)
                     print('KAPPA RAD CALC [pkpc]:  %s'   %str(kappa_rad_in))
@@ -688,7 +688,7 @@ def velocity_projection(manual_GroupNumList = np.array([]),
                     print('C.O.M 2HMR STARS-SF [pkpc]:  %.2f' %subhalo.coms['stars_gas_sf'][int(mask[0])])
                     #print('VIEWING ANGLES: ', end='')
                 elif print_galaxy_short == True:
-                    print('GN:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(str(subhalo.gn), subhalo.halfmass_rad, subhalo.kappa, subhalo.kappa_gas_sf)) 
+                    print('GN:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(str(subhalo.gn), subhalo.halfmass_rad_proj, subhalo.kappa, subhalo.kappa_gas_sf)) 
                     
             # Print galaxy properties
             if print_galaxy == True:
@@ -708,11 +708,11 @@ def velocity_projection(manual_GroupNumList = np.array([]),
                 # Function to plot 2dhist-fed data (splinter from _weight_histo)
                 def _plot_2dhist(colormap='coolwarm', quiet=1, debug=False):
                     # Initialise figure
-                    graphformat(8, 11, 11, 9, 11, 3.75, 3)
+                    graphformat(8, 11, 11, 9, 11, 4.5, 3.75)
                     fig, axs = plt.subplots(nrows=1, ncols=len(particle_list_in), gridspec_kw={'width_ratios': [1, 1.22]}, figsize=(6.5, 3.15), sharex=True, sharey=True)
                     
                     if local_boxradius == True:
-                        boxradius = 1.5*trim_rad_i*subhalo.halfmass_rad
+                        boxradius = 1.5*trim_rad_i*subhalo.halfmass_rad_proj
                 
                     ### 2D HISTO ROUTINE
                     j = 0
@@ -730,7 +730,7 @@ def velocity_projection(manual_GroupNumList = np.array([]),
                                 print('Particle count: %i' %subhalo.particles[particle_list_in_i][int(np.where(subhalo.particles['hmr'] == trim_rad_i)[0])])
                             
                         # Extract points
-                        _, _, _, xbins, ybins, vel_weighted = _weight_histo(subhalo.gn, root_file, subhalo.data['%s' %str(trim_rad_i)], particle_list_in_i, viewing_angle, viewing_axis, resolution, boxradius, trim_rad_i*subhalo.halfmass_rad)
+                        _, _, _, xbins, ybins, vel_weighted = _weight_histo(subhalo.gn, root_file, subhalo.data['%s' %str(trim_rad_i)], particle_list_in_i, viewing_angle, viewing_axis, resolution, boxradius, trim_rad_i*subhalo.halfmass_rad_proj)
                         
                         # Remove 0s and replace with nans
                         vel_weighted[vel_weighted == 0] = math.nan
@@ -748,7 +748,8 @@ def velocity_projection(manual_GroupNumList = np.array([]),
                         axs[j].plot([-999, -999], [-999, -998], c='k', label=label)
                     
                         # Graph formatting 
-                        axs[j].set_xlabel('Position [pkpc]')
+                        axs[j].set_xlabel('$x$ [pkpc]')
+                        axs[0].set_xlabel('$y$ [pkpc]')
                         axs[j].set_xlim(-boxradius, boxradius)
                         axs[j].set_ylim(-boxradius, boxradius)
                         axs[j].set_xticks([-20, -10, 0, 10, 20])
@@ -764,7 +765,7 @@ def velocity_projection(manual_GroupNumList = np.array([]),
                 
                     # Annotation
                     plt.suptitle('GalaxyID: %i' %subhalo.GalaxyID)
-                    #axs[0].text(-boxradius, boxradius+1, 'resolution: %s pkpc, trim_rad: %s pkpc, hmr: %s pkpc, axis: %s, angle: %s' %(str(resolution), str(trim_rad_i), str(subhalo.halfmass_rad), viewing_axis, str(viewing_angle)), fontsize=8)
+                    #axs[0].text(-boxradius, boxradius+1, 'resolution: %s pkpc, trim_rad: %s pkpc, hmr: %s pkpc, axis: %s, angle: %s' %(str(resolution), str(trim_rad_i), str(subhalo.halfmass_rad_proj), viewing_axis, str(viewing_angle)), fontsize=8)
                     
                     # Legend
                     for ax in axs:
@@ -789,11 +790,11 @@ def velocity_projection(manual_GroupNumList = np.array([]),
                 # Function to plot voronoi-fed data (splinter from _voronoi_tessalate)
                 def _plot_voronoi(colormap='coolwarm', quiet=1, debug=False):
                     # Initialise figure
-                    graphformat(8, 11, 11, 9, 11, 3.75, 3)
+                    graphformat(8, 11, 11, 9, 11, 4.5, 3.75)
                     fig, axs = plt.subplots(nrows=1, ncols=len(particle_list_in), figsize=(4.5*len(particle_list_in), 4), sharex=True, sharey=True)
                 
                     if local_boxradius == True:
-                        boxradius = 1.5*trim_rad_i*subhalo.halfmass_rad
+                        boxradius = 1.5*trim_rad_i*subhalo.halfmass_rad_proj
                         
                     ### VORONOI TESSALATION ROUTINE
                     j = 0
@@ -812,7 +813,7 @@ def velocity_projection(manual_GroupNumList = np.array([]),
                             
                         
                         # Defining break for less than 4 pixels due to fitpa requireing min. of 4. This is run on 2dhisto as voronoi uses it
-                        _, _, vel_bin_particle_check, _, _, _ = _weight_histo(subhalo.gn, root_file, subhalo.data['%s' %str(trim_rad_i)], particle_list_in_i, viewing_angle, viewing_axis, resolution, boxradius, trim_rad_i*subhalo.halfmass_rad)
+                        _, _, vel_bin_particle_check, _, _, _ = _weight_histo(subhalo.gn, root_file, subhalo.data['%s' %str(trim_rad_i)], particle_list_in_i, viewing_angle, viewing_axis, resolution, boxradius, trim_rad_i*subhalo.halfmass_rad_proj)
                         # Defining break for less than 4 pixels due to fitpa requireing min. of 4
                         if len(vel_bin_particle_check) < 4:
                             print('Not enough 2dhisto bins to voronoi plot')
@@ -822,7 +823,7 @@ def velocity_projection(manual_GroupNumList = np.array([]),
                             continue
                             
                         # Extract points
-                        points_particle, vel_bin_particle, vor = _voronoi_tessalate(subhalo.gn, root_file, subhalo.data['%s' %str(trim_rad_i)], particle_list_in_i, viewing_angle, viewing_axis, resolution, target_particles, boxradius, trim_rad_i*subhalo.halfmass_rad)
+                        points_particle, vel_bin_particle, vor = _voronoi_tessalate(subhalo.gn, root_file, subhalo.data['%s' %str(trim_rad_i)], particle_list_in_i, viewing_angle, viewing_axis, resolution, target_particles, boxradius, trim_rad_i*subhalo.halfmass_rad_proj)
                 
                         if debug == True:
                             print('points_particle', points_particle)
@@ -861,7 +862,7 @@ def velocity_projection(manual_GroupNumList = np.array([]),
                     axs[0].set_ylabel('y-axis [pkpc]')
                 
                     # Annotation
-                    axs[0].text(-boxradius, boxradius+1, 'resolution: %s pkpc, trim_rad: %s, target particles: %s, hmr: %s' %(str(resolution), str(trim_rad_i), str(target_particles), str(subhalo.halfmass_rad)), fontsize=8)
+                    axs[0].text(-boxradius, boxradius+1, 'resolution: %s pkpc, trim_rad: %s, target particles: %s, hmr: %s' %(str(resolution), str(trim_rad_i), str(target_particles), str(subhalo.halfmass_rad_proj)), fontsize=8)
                             
                     # Colorbar
                     cax = plt.axes([0.92, 0.11, 0.015, 0.77])
@@ -894,11 +895,11 @@ def velocity_projection(manual_GroupNumList = np.array([]),
                 # Function to plot pa_fit 2dhist-fed data and/or pa angles between components    
                 def _pa_fit_2dhist(plot=plot_2dhist_pafit_graph, quiet=1, debug=False):
                     # Append to dictionary
-                    all_pafit['%s' %str(subhalo.gn)]['2dhist']['%s' %str(viewing_angle)]['rad'].append(trim_rad_i*subhalo.halfmass_rad)
+                    all_pafit['%s' %str(subhalo.gn)]['2dhist']['%s' %str(viewing_angle)]['rad'].append(trim_rad_i*subhalo.halfmass_rad_proj)
                     all_pafit['%s' %str(subhalo.gn)]['2dhist']['%s' %str(viewing_angle)]['hmr'].append(trim_rad_i)
                     
                     if local_boxradius == True:
-                        boxradius = 1.5*trim_rad_i*subhalo.halfmass_rad
+                        boxradius = 1.5*trim_rad_i*subhalo.halfmass_rad_proj
                         
                     for particle_list_in_i in particle_list_in:
                         # Check particle count before 2dhisto
@@ -920,7 +921,7 @@ def velocity_projection(manual_GroupNumList = np.array([]),
                             
                         
                         # Extract points
-                        points_particle, _, vel_bin_particle, _, _, _ = _weight_histo(subhalo.gn, root_file, subhalo.data['%s' %str(trim_rad_i)], particle_list_in_i, viewing_angle, viewing_axis, resolution, boxradius, trim_rad_i*subhalo.halfmass_rad)
+                        points_particle, _, vel_bin_particle, _, _, _ = _weight_histo(subhalo.gn, root_file, subhalo.data['%s' %str(trim_rad_i)], particle_list_in_i, viewing_angle, viewing_axis, resolution, boxradius, trim_rad_i*subhalo.halfmass_rad_proj)
                         
                         if debug == True:
                             print('points_particle', points_particle)
@@ -965,7 +966,7 @@ def velocity_projection(manual_GroupNumList = np.array([]),
                             plt.close()
                         
                     # Append to dictionary
-                    all_paangles['%s' %str(subhalo.gn)]['2dhist']['%s' %str(viewing_angle)]['rad'].append(trim_rad_i*subhalo.halfmass_rad)
+                    all_paangles['%s' %str(subhalo.gn)]['2dhist']['%s' %str(viewing_angle)]['rad'].append(trim_rad_i*subhalo.halfmass_rad_proj)
                     all_paangles['%s' %str(subhalo.gn)]['2dhist']['%s' %str(viewing_angle)]['hmr'].append(trim_rad_i)
                      
                     # Finding misalignment angles and errors
@@ -1033,11 +1034,11 @@ def velocity_projection(manual_GroupNumList = np.array([]),
                 # Function to plot pa_fit voronoi-fed data and/or pa angles between components 
                 def _pa_fit_voronoi(plot=plot_voronoi_pafit_graph, quiet=1, debug=False):
                     # Append to dictionary
-                    all_pafit['%s' %str(subhalo.gn)]['voronoi']['%s' %str(viewing_angle)]['rad'].append(trim_rad_i*subhalo.halfmass_rad)
+                    all_pafit['%s' %str(subhalo.gn)]['voronoi']['%s' %str(viewing_angle)]['rad'].append(trim_rad_i*subhalo.halfmass_rad_proj)
                     all_pafit['%s' %str(subhalo.gn)]['voronoi']['%s' %str(viewing_angle)]['hmr'].append(trim_rad_i)
                     
                     if local_boxradius == True:
-                        boxradius = 1.5*trim_rad_i*subhalo.halfmass_rad
+                        boxradius = 1.5*trim_rad_i*subhalo.halfmass_rad_proj
                         
                     for particle_list_in_i in particle_list_in:
                         
@@ -1061,7 +1062,7 @@ def velocity_projection(manual_GroupNumList = np.array([]),
                         #--------------------------------
                         # Checks for fail
                         # Defining break for less than 4 pixels due to fitpa requireing min. of 4. This is run on 2dhisto as voronoi uses it
-                        _, points_num_check, vel_bin_particle_check, _, _, _ = _weight_histo(subhalo.gn, root_file, subhalo.data['%s' %str(trim_rad_i)], particle_list_in_i, viewing_angle, viewing_axis, resolution, boxradius, trim_rad_i*subhalo.halfmass_rad)
+                        _, points_num_check, vel_bin_particle_check, _, _, _ = _weight_histo(subhalo.gn, root_file, subhalo.data['%s' %str(trim_rad_i)], particle_list_in_i, viewing_angle, viewing_axis, resolution, boxradius, trim_rad_i*subhalo.halfmass_rad_proj)
                         
                         if debug == True:
                             print('len(points_num_check)', len(points_num_check))
@@ -1100,7 +1101,7 @@ def velocity_projection(manual_GroupNumList = np.array([]),
                         
                         
                         # Extract points
-                        points_particle, vel_bin_particle, vor = _voronoi_tessalate(subhalo.gn, root_file, subhalo.data['%s' %str(trim_rad_i)], particle_list_in_i, viewing_angle, viewing_axis, resolution, target_particles, boxradius, trim_rad_i*subhalo.halfmass_rad)
+                        points_particle, vel_bin_particle, vor = _voronoi_tessalate(subhalo.gn, root_file, subhalo.data['%s' %str(trim_rad_i)], particle_list_in_i, viewing_angle, viewing_axis, resolution, target_particles, boxradius, trim_rad_i*subhalo.halfmass_rad_proj)
                         
                         if debug == True:
                             #print('points_particle', points_particle)
@@ -1144,7 +1145,7 @@ def velocity_projection(manual_GroupNumList = np.array([]),
                         all_pafit['%s' %str(subhalo.gn)]['voronoi']['%s' %str(viewing_angle)]['%s_angle_err' %particle_list_in_i].append(angle_err_particle)
 
                     # Append rad to dictionary
-                    all_paangles['%s' %str(subhalo.gn)]['voronoi']['%s' %str(viewing_angle)]['rad'].append(trim_rad_i*subhalo.halfmass_rad)
+                    all_paangles['%s' %str(subhalo.gn)]['voronoi']['%s' %str(viewing_angle)]['rad'].append(trim_rad_i*subhalo.halfmass_rad_proj)
                     all_paangles['%s' %str(subhalo.gn)]['voronoi']['%s' %str(viewing_angle)]['hmr'].append(trim_rad_i)
                     
                     # Finding misalignment angles and errors
@@ -1286,7 +1287,7 @@ def velocity_projection(manual_GroupNumList = np.array([]),
             
             # Initialise figure
             plt.figure()
-            graphformat(8, 11, 11, 9, 11, 3.75, 3)
+            graphformat(8, 11, 11, 9, 11, 4.5, 3.75)
                 
             # Plot scatter and error bars for both 2dhist and voronoi
             plt.errorbar(np.arange(minangle, maxangle+1, stepangle), hist_points, xerr=None, yerr=hist_points_err, label='2dhist', alpha=0.6, ls='none', ms=2, capsize=4, elinewidth=1, markeredgewidth=1)
@@ -1328,7 +1329,7 @@ def velocity_projection(manual_GroupNumList = np.array([]),
             
             # Initialise figure
             plt.figure()
-            graphformat(8, 11, 11, 9, 11, 3.75, 3)
+            graphformat(8, 11, 11, 9, 11, 4.5, 3.75)
             plt.xlim(min(spin_rad_in), max(spin_rad_in))
             plt.xticks(np.arange(min(spin_rad_in), max(spin_rad_in)+1, 1))
             
@@ -1499,10 +1500,16 @@ def velocity_projection(manual_GroupNumList = np.array([]),
         ['gasmass_sf']    - subhalo.gasmass_sf
         ['gasmass_nsf']   - subhalo.gasmass_nsf
         ['halfmass_rad']  - subhalo.halfmass_rad
-        ['kappa']         - subhalo.kappa               (if not flagged)
+        ['halfmass_rad_proj']  - subhalo.kappa_stars,_proj
+        ['kappa_stars']         - subhalo.kappa               (if not flagged)
         ['kappa_gas']     - subhalo.kappa_gas           (if not flagged)
         ['kappa_gas_sf']  - subhalo.kappa_gas_sf        (if not flagged)
         ['kappa_gas_nsf'] - subhalo.kappa_gas_nsf       (if not flagged)
+        ['ellip']               - stellar ellipticity
+        ['triax']               - stellar triaxiality
+        ['disp_ani']            - stellar dispersion anisotropy
+        ['rot_to_disp_ratio']   - stellar rotation-to-dispersion ratio 
+        ['disc_to_total']       - stellar disc-to-total ratio from counter-rotation
     
     all_flags[GroupNum]
         [arrays of any flags raised during Subhalo()]       - Will have len(all_flags[GroupNum]) == 0 if all good at particle stage
@@ -1691,7 +1698,7 @@ def velocity_projection(manual_GroupNumList = np.array([]),
             
         
         # Initialise figure
-        graphformat(8, 11, 11, 9, 11, 3.15, 2.90)
+        graphformat(8, 11, 11, 9, 11, 4.5, 3.75)
         plt.figure()
 
         # Labels

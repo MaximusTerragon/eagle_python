@@ -37,11 +37,11 @@ PURPOSE
 """
 #1, 2, 3, 4, 5, 6, 7, 9, 8, 10, 11, 14, 12, 15, 13, 19, 20, 16, 21, 23, 25 
 #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
-def galaxy_render(manual_GroupNumList = np.array([1]),
+def galaxy_render(manual_GroupNumList = np.array([22]),
                     SubGroupNum       = 0, 
-                  spin_rad_in           = np.array([8.0]),              # multiples of rad
+                  spin_rad_in           = np.array([2.0]),              # multiples of rad
                   kappa_rad_in          = 30,                           # Calculate kappa for this radius [pkpc]
-                  aperture_rad_in       = 50,                           # trim all data to this maximum value
+                  aperture_rad_in       = 30,                           # trim all data to this maximum value
                   align_rad_in          = False,                              # Align galaxy to stellar vector in. this radius [pkpc]
                   orientate_to_axis='z',                                      # Keep as 'z'
                   viewing_angle=0,                                            # Keep as 0
@@ -49,9 +49,9 @@ def galaxy_render(manual_GroupNumList = np.array([1]),
                     maxangle  = 0, 
                     stepangle = 30,
                   plot_spin_vectors = True,
-                    spin_vector_rad = 8.0,            # radius of spinvector to display (in hmr)
+                    spin_vector_rad = 2.0,            # radius of spinvector to display (in hmr)
                   centre_of_pot     = True,           # Plot most bound object (default centre)
-                  centre_of_mass    = True,           # Plot total centre of mass
+                  centre_of_mass    = False,           # Plot total centre of mass
                   axis              = True,           # Plot small axis below galaxy
                       boxradius_in          = 50,                  # boxradius of render [kpc]
                       particles             = 5000,
@@ -59,6 +59,8 @@ def galaxy_render(manual_GroupNumList = np.array([1]),
                       stars                 = True,
                       gas_sf                = True,
                       gas_nsf               = True,    
+                      dark_matter           = True,
+                      black_holes           = True,
                   find_uncertainties = False,                   # LEAVE THESE. whether to find 2D and 3D uncertainties
                   viewing_axis = 'z',                           # Which axis to view galaxy from.  DEFAULT 'z'
                   com_min_distance = 10000,                      # [pkpc] min distance between sfgas and stars.  DEFAULT 2.0 
@@ -109,34 +111,34 @@ def galaxy_render(manual_GroupNumList = np.array([1]),
     
     for GroupNum in tqdm(GroupNumList):         
         # Initial extraction of galaxy data
-        galaxy = Subhalo_Extract(mySims, dataDir, snapNum, GroupNum, SubGroupNum)
+        galaxy = Subhalo_Extract(mySims, dataDir, snapNum, GroupNum, SubGroupNum, aperture_rad_in, viewing_axis)
         
         # Detect keywords of rad, tworad. All in [pkpc]
-        spin_rad = spin_rad_in * galaxy.halfmass_rad
+        spin_rad = spin_rad_in * galaxy.halfmass_rad_proj
         trim_rad = trim_rad_in
         aperture_rad = aperture_rad_in
             
         if kappa_rad_in == 'rad':
-            kappa_rad = galaxy.halfmass_rad
+            kappa_rad = galaxy.halfmass_rad_proj
         elif kappa_rad_in == 'tworad':
-            kappa_rad = 2*galaxy.halfmass_rad
+            kappa_rad = 2*galaxy.halfmass_rad_proj
         else:
             kappa_rad = kappa_rad_in
         if align_rad_in == 'rad':
-            align_rad = galaxy.halfmass_rad
+            align_rad = galaxy.halfmass_rad_proj
         elif align_rad_in == 'tworad':
-            align_rad = 2*galaxy.halfmass_rad
+            align_rad = 2*galaxy.halfmass_rad_proj
         else:
             align_rad = align_rad_in
         if boxradius_in == 'rad':
-            boxradius = galaxy.halfmass_rad
+            boxradius = galaxy.halfmass_rad_proj
         elif boxradius_in == 'tworad':
-            boxradius = 2*galaxy.halfmass_rad
+            boxradius = 2*galaxy.halfmass_rad_proj
         else:
             boxradius = boxradius_in
             
         # Galaxy will be rotated to calc_kappa_rad's stellar spin value
-        subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.stelmass, galaxy.gasmass, galaxy.GalaxyID, galaxy.halfmass_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas,
+        subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.GalaxyID, galaxy.stelmass, galaxy.gasmass, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, galaxy.MorphoKinem,
                                             angle_selection,
                                             viewing_angle,
                                             spin_rad,
@@ -153,6 +155,55 @@ def galaxy_render(manual_GroupNumList = np.array([1]),
                                             find_uncertainties,
                                             quiet=True)
         
+        
+        
+        
+        
+        
+        
+        
+        
+        min_inclination = 20
+        if min_inclination:
+            def _misalignment_angle(angle1, angle2, debug=False):
+                # Find the misalignment angle
+                angle = np.rad2deg(np.arccos(np.clip(np.dot(angle1/np.linalg.norm(angle1), angle2/np.linalg.norm(angle2)), -1.0, 1.0)))     # [deg]
+        
+                return angle
+        
+            # Mask correct integer (formatting weird but works)
+            mask_rad = int(np.where(np.array(subhalo.spins['hmr']) == min(spin_rad_in))[0])
+            print('spins: ', subhalo.spins['stars'][mask_rad])
+            if viewing_axis == 'x':
+                angle = _misalignment_angle([1, 0, 0], subhalo.spins['stars'][mask_rad])
+                print(angle)
+                
+                if angle < min_inclination:
+                    print('\nVOID: Inclination: %.2f deg' %angle)
+                    #all_flags['%s' %str(subhalo.gn)].append('Inclination: %.2f' %angle)
+            if viewing_axis == 'y':
+                angle = _misalignment_angle([0, 1, 0], subhalo.spins['stars'][mask_rad])
+                print(angle)
+                
+                if angle < min_inclination:
+                    print('\nVOID: Inclination: %.2f deg' %angle)
+                    #all_flags['%s' %str(subhalo.gn)].append('Inclination: %.2f' %angle)
+            if viewing_axis == 'z':
+                angle = _misalignment_angle([0, 0, 1], subhalo.spins['stars'][mask_rad])
+                print(angle)
+                
+                if angle < min_inclination:
+                    print('\nVOID: Inclination: %.2f deg' %angle)
+                    #all_flags['%s' %str(subhalo.gn)].append('Inclination: %.2f' %angle)
+        
+        
+        
+        
+        
+        
+        
+        
+        
         if debug == True:
             print(' ')
             print(subhalo.mis_angles.items()) 
@@ -162,14 +213,14 @@ def galaxy_render(manual_GroupNumList = np.array([1]),
         if print_galaxy == True:
             print('\nGROUP NUMBER:           %s' %str(subhalo.gn)) 
             print('STELLAR MASS [Msun]:    %.3f' %np.log10(subhalo.stelmass))       # [Msun]
-            print('HALFMASS RAD [pkpc]:    %.3f' %subhalo.halfmass_rad)             # [pkpc]
+            print('HALFMASS RAD [pkpc]:    %.3f' %subhalo.halfmass_rad_proj)             # [pkpc]
             print('KAPPA:                  %.2f' %subhalo.kappa)
             print('KAPPA GAS SF:           %.2f' %subhalo.kappa_gas_sf)
             print('KAPPA RAD CALC [pkpc]:  %s'   %str(kappa_rad_in))
             mask = np.where(np.array(subhalo.coms['hmr'] == min(spin_rad_in)))
             print('C.O.M %s HMR STARS-SF [pkpc]:  %.2f' %(str(min(spin_rad_in)), subhalo.coms['stars_gas_sf'][int(mask[0])]))
         elif print_galaxy_short == True:
-            print('GN:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(str(subhalo.gn), subhalo.halfmass_rad, subhalo.kappa, subhalo.kappa_gas_sf)) 
+            print('GN:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(str(subhalo.gn), subhalo.halfmass_rad_proj, subhalo.kappa_old, subhalo.kappa_gas_sf)) 
              
         # Graph initialising and base formatting
         graphformat(8, 11, 11, 11, 11, 5, 5)
@@ -199,7 +250,10 @@ def galaxy_render(manual_GroupNumList = np.array([1]),
                 coords = dict_name[part_type]['Coordinates'][np.random.choice(dict_name[part_type]['Coordinates'].shape[0], particles, replace=False), :]
             
             # Plot scatter
-            ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=0.02, alpha=0.9, c=color, zorder=4)
+            if part_type == 'bh':
+                ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=10, alpha=1, c=color, zorder=4)
+            else:
+                ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=0.02, alpha=0.9, c=color, zorder=4)
            
         
         def plot_spin_vector(dict_name, part_type, rad, color, debug=False):
@@ -214,7 +268,7 @@ def galaxy_render(manual_GroupNumList = np.array([1]),
             ax.set_zlim(-boxradius, boxradius)
             
             mask = np.where(dict_name['hmr'] == rad)
-            
+                        
             arrow = dict_name[part_type][int(min(mask))]
             
             # Plot original stars spin vector
@@ -235,6 +289,12 @@ def galaxy_render(manual_GroupNumList = np.array([1]),
                 plot_rand_scatter(subhalo.data['%s' %str(trim_rad_in[0])], 'gas_nsf', 'royalblue')
                 plot_spin_vector(subhalo.spins, 'gas_nsf', spin_vector_rad, 'blue')   
                 fig.canvas.draw_idle()
+            def dm_button(self, event):
+                plot_rand_scatter(subhalo.data['%s' %str(trim_rad_in[0])], 'dm', 'saddlebrown')
+                fig.canvas.draw_idle()
+            def bh_button(self, event):
+                plot_rand_scatter(subhalo.data['%s' %str(trim_rad_in[0])], 'bh', 'blueviolet')
+                fig.canvas.draw_idle()
             def plot_clear_button(self, event):
                 ax.cla()
                 # Plot formatting
@@ -248,10 +308,10 @@ def galaxy_render(manual_GroupNumList = np.array([1]),
                 ax.set_zlim(-boxradius, boxradius)
                 fig.canvas.draw_idle()
             def com_button(self, event):
-                ax.scatter(subhalo.centre_mass[0] - subhalo.centre[0], subhalo.centre_mass[1] - subhalo.centre[1], subhalo.centre_mass[2] - subhalo.centre[2], c='purple', s=3, zorder=10)
+                ax.scatter(subhalo.centre_mass[0] - subhalo.centre[0], subhalo.centre_mass[1] - subhalo.centre[1], subhalo.centre_mass[2] - subhalo.centre[2], c='purple', marker='x', s=20, zorder=10)
                 fig.canvas.draw_idle()
             def cop_button(self, event):
-                ax.scatter(0, 0, 0, c='pink', s=3, zorder=10)
+                ax.scatter(0, 0, 0, c='pink', s=20, zorder=10, marker='x')
                 fig.canvas.draw_idle()
             def load_region(self, event):
                 load_region_cMpc = 0.15
@@ -298,6 +358,8 @@ def galaxy_render(manual_GroupNumList = np.array([1]),
         bstars  = Button(fig.add_axes([0.01, 0.96, 0.12, 0.03]), 'STARS', color='yellow', hovercolor='yellow')
         bgassf  = Button(fig.add_axes([0.13, 0.96, 0.12, 0.03]), 'GAS SF', color='cyan', hovercolor='cyan')
         bgasnsf = Button(fig.add_axes([0.25, 0.96, 0.12, 0.03]), 'GAS NSF', color='royalblue', hovercolor='royalblue')
+        bdm     = Button(fig.add_axes([0.37, 0.96, 0.12, 0.03]), 'DM', color='saddlebrown', hovercolor='saddlebrown')
+        bbh     = Button(fig.add_axes([0.49, 0.96, 0.12, 0.03]), 'BH', color='blueviolet', hovercolor='blueviolet')
         bcom    = Button(fig.add_axes([0.01, 0.92, 0.12, 0.03]), 'C.O.M')
         bcop    = Button(fig.add_axes([0.13, 0.92, 0.12, 0.03]), 'C.O.P')
         brotate = Button(fig.add_axes([0.81, 0.96, 0.18, 0.03]), 'ROTATE 360', color='limegreen', hovercolor='darkgreen')
@@ -309,6 +371,8 @@ def galaxy_render(manual_GroupNumList = np.array([1]),
         bstars.on_clicked(callback.stars_button)
         bgassf.on_clicked(callback.gas_sf_button)
         bgasnsf.on_clicked(callback.gas_nsf_button)
+        bdm.on_clicked(callback.dm_button)
+        bbh.on_clicked(callback.bh_button)
         bclear.on_clicked(callback.plot_clear_button)
         bcom.on_clicked(callback.com_button)
         bcop.on_clicked(callback.cop_button)

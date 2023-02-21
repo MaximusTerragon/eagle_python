@@ -143,7 +143,7 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
                               csv_file           = False,              # .csv file will ALL data
                                 csv_name = 'data_misalignment',
                               showfig   = False,
-                              savefig   = True,  
+                              savefig   = False,  
                                 savefig_txt = '',            #extra savefile txt
                               debug = False):            
     
@@ -215,7 +215,7 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
             time_start = time.time()
             
         # Initial extraction of galaxy data
-        galaxy = Subhalo_Extract(mySims, dataDir, snapNum, GroupNum, SubGroupNum)
+        galaxy = Subhalo_Extract(mySims, dataDir, snapNum, GroupNum, SubGroupNum, aperture_rad_in, viewing_axis)
         
         #-------------------------------------------------------------------
         # Automating some later variables to avoid putting them in manually
@@ -244,7 +244,7 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
             time_start = time.time()
             
         # If we want the original values, enter 0 for viewing angle
-        subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.stelmass, galaxy.gasmass, galaxy.GalaxyID, galaxy.halfmass_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas,
+        subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.GalaxyID, galaxy.stelmass, galaxy.gasmass, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, galaxy.MorphoKinem,
                                             angle_selection,
                                             viewing_angle,
                                             spin_rad,
@@ -261,6 +261,9 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
                                             find_uncertainties,
                                             quiet=True)
                                             
+        #print('kappa_databa: ', subhalo.general['kappa_stars'])
+        #print('kappa_manual: ', subhalo.general['kappa_old'])
+        
         
         #--------------------------------
         # Collecting all relevant particle info for galaxy
@@ -276,14 +279,14 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
         if print_galaxy == True:
             print('\nGROUP NUMBER:           %s' %str(subhalo.gn)) 
             print('STELLAR MASS [Msun]:    %.3f' %np.log10(subhalo.stelmass))       # [Msun]
-            print('HALFMASS RAD [pkpc]:    %.3f' %subhalo.halfmass_rad)             # [pkpc]
+            print('HALFMASS RAD [pkpc]:    %.3f' %subhalo.halfmass_rad_proj)             # [pkpc]
             print('KAPPA:                  %.2f' %subhalo.kappa)
             print('KAPPA GAS SF:           %.2f' %subhalo.kappa_gas_sf)
             print('KAPPA RAD CALC [pkpc]:  %s'   %str(kappa_rad_in))
             mask = np.where(np.array(subhalo.coms['hmr'] == min(spin_rad_in)))
             print('C.O.M %s HMR STARS-SF [pkpc]:  %.2f' %(str(min(spin_rad_in)), subhalo.coms['stars_gas_sf'][int(mask[0])]))
         elif print_galaxy_short == True:
-            print('GN:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(str(subhalo.gn), subhalo.halfmass_rad, subhalo.kappa, subhalo.kappa_gas_sf)) 
+            print('GN:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(str(subhalo.gn), subhalo.halfmass_rad_proj, subhalo.kappa_stars, subhalo.kappa_gas_sf)) 
             
     
     #=====================================
@@ -369,7 +372,7 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
             
             #------------------------------------------------
             # Graph initialising and base formatting
-            graphformat(8, 11, 11, 9, 11, 5.80, 2.55)
+            graphformat(8, 11, 11, 9, 11, 4.5, 3.75)
             fig, ax = plt.subplots(1, 1, figsize=[5.80, 2.55])
         
             # Labels
@@ -442,6 +445,15 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
             if showfig == True:
                 plt.show()
             plt.close()
+            
+        
+        
+            for GroupNum in GroupNumList:
+                if len(all_flags['%s' %str(GroupNum)]) == 0:
+                    print('KAPPAS: %.3f  %.3f' %(all_general['%s' %GroupNum]['kappa'], all_general['%s' %GroupNum]['kappa_star']))
+            
+        
+        
             
     #-------------------------
     if plot_single == True:

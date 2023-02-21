@@ -133,7 +133,7 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
             time_start = time.time()
         
         # Initial extraction of galaxy data
-        galaxy = Subhalo_Extract(mySims, dataDir, snapNum, GroupNum, SubGroupNum)
+        galaxy = Subhalo_Extract(mySims, dataDir, snapNum, GroupNum, SubGroupNum, aperture_rad_in, viewing_axis)
         
         #-------------------------------------------------------------------
         # Automating some later variables to avoid putting them in manually
@@ -166,7 +166,7 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
             
         # Galaxy will be rotated to calc_kappa_rad's stellar spin value
         with np.errstate(divide='ignore', invalid='ignore'):
-            subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.stelmass, galaxy.gasmass, galaxy.GalaxyID, galaxy.halfmass_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas,
+            subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.GalaxyID, galaxy.stelmass, galaxy.gasmass, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, galaxy.MorphoKinem,
                                                 angle_selection,
                                                 viewing_angle,
                                                 spin_rad,
@@ -204,7 +204,7 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
             mask = np.where(np.array(subhalo.coms['hmr'] == min(spin_rad_in)))
             print('C.O.M %s HMR STARS-SF [pkpc]:  %.2f' %(str(min(spin_rad_in)), subhalo.coms['stars_gas_sf'][int(mask[0])]))
         elif print_galaxy_short == True:
-            print('GN:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(str(subhalo.gn), subhalo.halfmass_rad, subhalo.kappa, subhalo.kappa_gas_sf)) 
+            print('GN:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(str(subhalo.gn), subhalo.halfmass_rad_proj, subhalo.kappa, subhalo.kappa_gas_sf)) 
                 
         
         #===================================================================
@@ -241,7 +241,7 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
         def _plot_single(quiet=1, debug=False):
             
             # Initialise figure
-            graphformat(8, 11, 11, 9, 11, 3.15, 3.15)
+            graphformat(8, 11, 11, 9, 11, 4.5, 3.75)
             fig, axs = plt.subplots(nrows=2, ncols=1, gridspec_kw={'height_ratios': [3, 1]}, figsize=(3.15, 3.15), sharex=True, sharey=False)
             
             
@@ -308,8 +308,8 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
                     axs[0].set_xticks(np.arange(0, max(spin_rad_in)+1, 1))
                     axs[1].set_xlabel('Stellar half-mass radius')
                 if rad_type_plot == 'rad':
-                    axs[0].set_xlim(0, max(spin_rad_in*subhalo.halfmass_rad))
-                    axs[0].set_xticks(np.arange(0, max(spin_rad_in*subhalo.halfmass_rad)+1, 5))
+                    axs[0].set_xlim(0, max(spin_rad_in*subhalo.halfmass_rad_proj))
+                    axs[0].set_xticks(np.arange(0, max(spin_rad_in*subhalo.halfmass_rad_proj)+1, 5))
                     axs[1].set_xlabel('Radial distance from centre [pkpc]')
             
                 axs[0].set_ylabel('Stellar-gas PA misalignment')
@@ -404,8 +404,8 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
                     axs[0].set_xticks(np.arange(0, max(spin_rad_in)+1, 1))
                     axs[1].set_xlabel('Stellar half-mass radius')
                 if rad_type_plot == 'rad':
-                    axs[0].set_xlim(0, max(spin_rad_in*subhalo.halfmass_rad))
-                    axs[0].set_xticks(np.arange(0, max(spin_rad_in*subhalo.halfmass_rad)+1, 5))
+                    axs[0].set_xlim(0, max(spin_rad_in*subhalo.halfmass_rad_proj))
+                    axs[0].set_xticks(np.arange(0, max(spin_rad_in*subhalo.kappa_stars,_proj)+1, 5))
                     axs[1].set_xlabel('Radial distance from centre [pkpc]')
                 axs[0].set_ylabel('Stellar-gas misalignment')
                 axs[1].set_ylabel('f$_{gas_{sf}/gas_{tot}}$')

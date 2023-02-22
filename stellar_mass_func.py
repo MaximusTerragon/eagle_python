@@ -116,6 +116,7 @@ def _stellar_mass_func(galaxy_mass_limit = 10**9,               # Mass limit of 
                                viewing_axis            = 'z',                           # SAMPLE Which axis to view galaxy from.  DEFAULT 'z'
                                com_min_distance        = 2.0,                           # SAMPLE [pkpc] min distance between sfgas and stars.  DEFAULT 2.0 
                                gas_sf_min_particles    = 20,                            # SAMPLE Minimum gas sf particles to use galaxy.  DEFAULT 100
+                               min_inclination         = 0,                             # Minimum inclination toward viewing axis [deg] DEFAULT 0
                                angle_type_in           = np.array(['stars_gas_sf']),    # SAMPLE analytical results for constituent particles will be found. ei., stars_gas_sf will mean stars and gas_sf properties will be found, and the angles between them                                                           
                        plot_single     = True,                        # whether to create single plots. KEEP ON TRUE
                                hist_bin_width          = 0.2,         # Msun
@@ -245,20 +246,20 @@ def _stellar_mass_func(galaxy_mass_limit = 10**9,               # Mass limit of 
                     particle_list_in.append('gas_nsf')
                 angle_selection.append(['gas_sf', 'gas_nsf'])
             
-            spin_rad = spin_rad_in * galaxy.halfmass_rad        #pkpc
+            spin_rad = spin_rad_in * galaxy.halfmass_rad_proj        #pkpc
             trim_rad = trim_rad_in                              #rads
             aperture_rad = aperture_rad_in
             
             if kappa_rad_in == 'rad':
-                kappa_rad = galaxy.halfmass_rad
+                kappa_rad = galaxy.halfmass_rad_proj
             elif kappa_rad_in == 'tworad':
-                kappa_rad = 2*galaxy.halfmass_rad
+                kappa_rad = 2*galaxy.halfmass_rad_proj
             else:
                 kappa_rad = kappa_rad_in
             if align_rad_in == 'rad':
-                align_rad = galaxy.halfmass_rad
+                align_rad = galaxy.halfmass_rad_proj
             elif align_rad_in == 'tworad':
-                align_rad = 2*galaxy.halfmass_rad
+                align_rad = 2*galaxy.halfmass_rad_proj
             else:
                 align_rad = align_rad_in  
             #------------------------------------------------------------------
@@ -279,6 +280,7 @@ def _stellar_mass_func(galaxy_mass_limit = 10**9,               # Mass limit of 
                                                 particle_list_in,
                                                 angle_type_in,
                                                 find_uncertainties,
+                                                min_inclination,
                                                 quiet=True)
         
             

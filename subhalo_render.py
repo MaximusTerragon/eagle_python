@@ -37,7 +37,8 @@ PURPOSE
 """
 #1, 2, 3, 4, 5, 6, 7, 9, 8, 10, 11, 14, 12, 15, 13, 19, 20, 16, 21, 23, 25 
 #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
-def galaxy_render(manual_GroupNumList = np.array([22]),
+#1  2  4  3  6  5  7  9 16 14 11  8 13 12 15 18 10 20 22 24 21
+def galaxy_render(manual_GroupNumList = np.array([1, 2, 4, 3, 6, 5, 7, 9, 16, 14, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21]),
                     SubGroupNum       = 0, 
                   spin_rad_in           = np.array([2.0]),              # multiples of rad
                   kappa_rad_in          = 30,                           # Calculate kappa for this radius [pkpc]
@@ -65,6 +66,7 @@ def galaxy_render(manual_GroupNumList = np.array([22]),
                   viewing_axis = 'z',                           # Which axis to view galaxy from.  DEFAULT 'z'
                   com_min_distance = 10000,                      # [pkpc] min distance between sfgas and stars.  DEFAULT 2.0 
                   gas_sf_min_particles = 0,                     # Minimum gas sf particles to use galaxy.  DEFAULT 100
+                  min_inclination = 0,                          # Minimum inclination toward viewing axis [deg] DEFAULT 0
                   angle_type_in = ['stars_gas', 'stars_gas_sf', 'stars_gas_nsf'],             # PA fits and PA misalignment angles to be found ['stars_gas', 'stars_gas_sf', 'stars_gas_nsf', 'gas_sf_gas_nsf']. Particles making up this data will be automatically found, ei. stars_gas_sf = stars and gas_sf   
                   root_file = '/Users/c22048063/Documents/EAGLE/trial_plots',        # 'trial_plots' or 'plots'
                     print_galaxy       = False,              # print galaxy stats in chat
@@ -153,56 +155,15 @@ def galaxy_render(manual_GroupNumList = np.array([22]),
                                             particle_list_in,
                                             angle_type_in,
                                             find_uncertainties,
+                                            min_inclination,
                                             quiet=True)
         
         
-        
-        
-        
-        
-        
-        
-        
-        min_inclination = 20
-        if min_inclination:
-            def _misalignment_angle(angle1, angle2, debug=False):
-                # Find the misalignment angle
-                angle = np.rad2deg(np.arccos(np.clip(np.dot(angle1/np.linalg.norm(angle1), angle2/np.linalg.norm(angle2)), -1.0, 1.0)))     # [deg]
-        
-                return angle
-        
-            # Mask correct integer (formatting weird but works)
-            mask_rad = int(np.where(np.array(subhalo.spins['hmr']) == min(spin_rad_in))[0])
-            print('spins: ', subhalo.spins['stars'][mask_rad])
-            if viewing_axis == 'x':
-                angle = _misalignment_angle([1, 0, 0], subhalo.spins['stars'][mask_rad])
-                print(angle)
-                
-                if angle < min_inclination:
-                    print('\nVOID: Inclination: %.2f deg' %angle)
-                    #all_flags['%s' %str(subhalo.gn)].append('Inclination: %.2f' %angle)
-            if viewing_axis == 'y':
-                angle = _misalignment_angle([0, 1, 0], subhalo.spins['stars'][mask_rad])
-                print(angle)
-                
-                if angle < min_inclination:
-                    print('\nVOID: Inclination: %.2f deg' %angle)
-                    #all_flags['%s' %str(subhalo.gn)].append('Inclination: %.2f' %angle)
-            if viewing_axis == 'z':
-                angle = _misalignment_angle([0, 0, 1], subhalo.spins['stars'][mask_rad])
-                print(angle)
-                
-                if angle < min_inclination:
-                    print('\nVOID: Inclination: %.2f deg' %angle)
-                    #all_flags['%s' %str(subhalo.gn)].append('Inclination: %.2f' %angle)
-        
-        
-        
-        
-        
-        
-        
-        
+        # Add filter to skip pafitting of galaxy if any basic condition not met
+        if len(subhalo.flags) != 0:
+            print('Subhalo skipped')
+            print(subhalo.flags)
+            continue
         
         if debug == True:
             print(' ')
@@ -220,7 +181,7 @@ def galaxy_render(manual_GroupNumList = np.array([22]),
             mask = np.where(np.array(subhalo.coms['hmr'] == min(spin_rad_in)))
             print('C.O.M %s HMR STARS-SF [pkpc]:  %.2f' %(str(min(spin_rad_in)), subhalo.coms['stars_gas_sf'][int(mask[0])]))
         elif print_galaxy_short == True:
-            print('GN:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(str(subhalo.gn), subhalo.halfmass_rad_proj, subhalo.kappa_old, subhalo.kappa_gas_sf)) 
+            print('GN:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(str(subhalo.gn), subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'], subhalo.general['kappa_gas_sf'])) 
              
         # Graph initialising and base formatting
         graphformat(8, 11, 11, 11, 11, 5, 5)
@@ -245,13 +206,14 @@ def galaxy_render(manual_GroupNumList = np.array([22]),
             
             # Selecting N (particles) sets of coordinates
             if dict_name[part_type]['Coordinates'].shape[0] <= particles:
-                coords = dict_name[part_type]['Coordinates'][np.random.choice(dict_name[part_type]['Coordinates'].shape[0], dict_name[part_type]['Coordinates'].shape[0], replace=False), :]
+                coords = dict_name[part_type]['Coordinates']
             else:
                 coords = dict_name[part_type]['Coordinates'][np.random.choice(dict_name[part_type]['Coordinates'].shape[0], particles, replace=False), :]
             
             # Plot scatter
             if part_type == 'bh':
-                ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=10, alpha=1, c=color, zorder=4)
+                bh_size = dict_name[part_type]['Mass']
+                ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=(bh_size/8e5)**(1/3), alpha=1, c=color, zorder=4)
             else:
                 ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=0.02, alpha=0.9, c=color, zorder=4)
            

@@ -112,7 +112,7 @@ def fit_kinematic_pa(x, y, vel, debug=False, nsteps=361,
 
     x, y, vel = map(np.ravel, [x, y, vel])
 
-    assert x.size == y.size == vel.size, 'Input vectors (x, y, vel) must have the same size'
+    assert x.size == y.size == vel.size == dvel.size, 'Input vectors (x, y, vel) must have the same size'
 
     nbins = x.size
     n = nsteps

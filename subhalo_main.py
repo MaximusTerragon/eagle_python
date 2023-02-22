@@ -666,6 +666,7 @@ class Subhalo:
                             particle_list_in,
                             angle_type_in,
                             find_uncertainties,
+                            min_inclination,
                             quiet=True,
                             debug=False,
                             print_progress=False):
@@ -687,7 +688,7 @@ class Subhalo:
         # Create data of raw (0 degree) data
         data_nil = {}
         for parttype, parttype_name in zip([stars, gas, dm, bh], ['stars', 'gas', 'dm', 'bh']):
-            data_nil['%s'%parttype_name] = self._trim_within_rad(parttype, aperture_rad_in)
+            data_nil['%s'%parttype_name] = parttype
         
         if not quiet:
             print('HALFMASS RAD PROJECTED', self.halfmass_rad_proj)
@@ -789,8 +790,7 @@ class Subhalo:
                 if np.linalg.norm(coord1 - coord2) > com_min_distance:
                     self.flags.append('stars-gas %.2f pkpc > %f' %(np.linalg.norm(coord1 - coord2), com_min_distance))  
              
-                     
-        # If galaxy passes above, run galaxy:
+        # Flag galaxy if inclination angle not met to requested viewing angle
         if len(self.flags) == 0:
             #============================
             # Galaxy in box calculations
@@ -823,288 +823,321 @@ class Subhalo:
                     tmp_particles = []
                     tmp_mass = []
                     tmp_coms = []
-                    for rad in spin_rad_in:
+                    for rad, i in zip(spin_rad_in, np.arange(len(spin_rad_in))):
                         spin_x, particle_x, mass_x = self._find_spin(self.data[parttype_name], rad, parttype_name)
                         tmp_spins.append(spin_x)
                         tmp_particles.append(particle_x)
                         tmp_mass.append(mass_x)
                         tmp_coms.append(self._centre_of_mass(self.data[parttype_name], rad))
-                    
+                        
+                        # this will automatically pick the smallest spin_rad_in and check for inclination
+                        if i == 0:
+                            if parttype_name == 'stars':
+                                if viewing_axis == 'x':
+                                    if print_progress:
+                                        print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+                                        print('Flagging inclination angle in radius')
+                                        time_start = time.time()
+                                        
+                                    angle_test = self._misalignment_angle([1, 0, 0], spin_x)
+                                    if (angle_test < min_inclination) or (angle_test > 180-min_inclination):
+                                        self.flags.append('min. inclination: %.2f deg' %angle_test)
+                                if viewing_axis == 'y':
+                                    if print_progress:
+                                        print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+                                        print('Flagging inclination angle in radius')
+                                        time_start = time.time()
+                                        
+                                    angle_test = self._misalignment_angle([0, 1, 0], spin_x)
+                                    if (angle_test < min_inclination) or (angle_test > 180-min_inclination):
+                                        self.flags.append('min. inclination: %.2f deg' %angle_test)
+                                if viewing_axis == 'z':
+                                    if print_progress:
+                                        print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+                                        print('Flagging inclination angle in radius')
+                                        time_start = time.time()
+                                        
+                                    angle_test = self._misalignment_angle([0, 0, 1], spin_x)
+                                    if (angle_test < min_inclination) or (angle_test > 180-min_inclination):
+                                        self.flags.append('min. inclination: %.2f deg' %angle_test)
+                                        
                     self.spins[parttype_name]     = tmp_spins 
                     self.particles[parttype_name] = tmp_particles
                     self.particles[parttype_name + '_mass'] = tmp_mass
                     self.coms[parttype_name]      = tmp_coms
+        
+        # If galaxy passes above, run galaxy:
+        if len(self.flags) == 0:
+            #-------------------------------------------------------------------------
+            # Find 3D distance between C.o.M components (stored in existing self.coms)
+            if print_progress:
+                print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+                print('Finding COMs distances')
+                time_start = time.time()
+            
+            for parttype_name in angle_selection:
+                tmp_distance = []
+                for coord1, coord2 in zip(self.coms[parttype_name[0]], self.coms[parttype_name[1]]):
+                    tmp_distance.append(np.linalg.norm(coord1 - coord2))
+                self.coms['%s_%s' %(parttype_name[0], parttype_name[1])] = tmp_distance
+            
+            
+            #------------------------------------------------
+            # Create 1000 random spin iterations for each rad
+            if find_uncertainties:
                 
-                #-------------------------------------------------------------------------
-                # Find 3D distance between C.o.M components (stored in existing self.coms)
+                use_percentiles = 32
+                
                 if print_progress:
                     print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                    print('Finding COMs distances')
+                    print('Creating spins_rand')
                     time_start = time.time()
                 
-                for parttype_name in angle_selection:
-                    tmp_distance = []
-                    for coord1, coord2 in zip(self.coms[parttype_name[0]], self.coms[parttype_name[1]]):
-                        tmp_distance.append(np.linalg.norm(coord1 - coord2))
-                    self.coms['%s_%s' %(parttype_name[0], parttype_name[1])] = tmp_distance
+                """ structure
+                Will be structured as:
+                spins_rand['2.0']['stars'] .. from then [[ x, y, z], [x, y, z], ... ]
+                """
+                iterations = 1000 
+        
+                # for each radius...
+                spins_rand = {}
+                for rad_i in spin_rad_in:
+                    spins_rand.update({'%s' %str(rad_i/self.halfmass_rad_proj): {}})
+            
+                    # for each particle type...
+                    for parttype_name in particle_list_in:
+                        tmp_spins = []    
                 
+                        # ...append 1000 random spin iterations
+                        for jjjj in range(iterations):
+                            spin_i, _, _ = self._find_spin(self.data[parttype_name], rad_i, parttype_name, random_sample=True)
+                            tmp_spins.append(spin_i)
+                        spins_rand['%s' %str(rad_i/self.halfmass_rad_proj)]['%s' %parttype_name] = np.stack(tmp_spins)
+         
+                if debug:   
+                    print(spins_rand.keys())        
+                    print(spins_rand['2.0']['stars'])
+                    print(spins_rand['2.0']['stars'][:,0])
+                    print(' ')
+                    print(spins_rand['2.0']['stars'][:,[0,1]])
+            
+            
+            #-------------------------------------
+            # Find 3D misalignment angles + errors
+            if print_progress:
+                print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+                print('Finding 3D misalignment angles')
+                time_start = time.time()
+            
+            self.mis_angles['rad'] = spin_rad_in
+            self.mis_angles['hmr'] = spin_rad_in/self.halfmass_rad_proj
+            for parttype_name in angle_selection:   #[['stars', 'gas'], ['stars', '_nsf'], ['gas_sf', 'gas_nsf']]:
+                tmp_angles = []
+                tmp_errors = []
+                for i, hmr_i in zip(np.arange(0, len(spin_rad_in), 1), spin_rad_in/self.halfmass_rad_proj):
+                    # analytical angle
+                    angle = self._misalignment_angle(self.spins[parttype_name[0]][i], self.spins[parttype_name[1]][i])
+                    tmp_angles.append(angle)
+                    
+                    if find_uncertainties:
+                        # uncertainty
+                        tmp_errors_array = []
+                        for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i][parttype_name[0]], spins_rand['%s' %hmr_i][parttype_name[1]]):
+                            tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
+                        tmp_errors.append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
                 
-                #------------------------------------------------
-                # Create 1000 random spin iterations for each rad
-                if find_uncertainties:
+                        if debug:
+                            print('\nHMR_i ', hmr_i)
+                            print('percentiles: ', np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            print('angle: ', angle)
+                            plt.hist(tmp_errors_array, 100)
+                            plt.show()
+                            plt.close()
+                    else:
+                        tmp_errors.append([math.nan, math.nan])
+                        
+                self.mis_angles['%s_%s_angle' %(parttype_name[0], parttype_name[1])] = tmp_angles
+                self.mis_angles['%s_%s_angle_err' %(parttype_name[0], parttype_name[1])] = tmp_errors
+            
+        
+            #-------------------------------------------------
+            # Find 2D projected misalignment angles + errors 
+            if print_progress:
+                print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+                print('Finding 2D projected angles')
+                time_start = time.time()
+            
+            self.mis_angles_proj = {'x': {}, 'y': {}, 'z': {}}
+            for viewing_axis_i in ['x', 'y', 'z']:
+                self.mis_angles_proj[viewing_axis_i]['rad'] = spin_rad_in
+                self.mis_angles_proj[viewing_axis_i]['hmr'] = spin_rad_in/self.halfmass_rad_proj
+            
+                if viewing_axis_i == 'x':
+                    for parttype_name in angle_selection:
+                        tmp_angles = []
+                        tmp_errors = []
+                        for i, hmr_i in zip(np.arange(0, len(spin_rad_in), 1), spin_rad_in/self.halfmass_rad_proj):
+                            angle = self._misalignment_angle(np.array([self.spins[parttype_name[0]][i][1], self.spins[parttype_name[0]][i][2]]), np.array([self.spins[parttype_name[1]][i][1], self.spins[parttype_name[1]][i][2]]))
+                            tmp_angles.append(angle)
+                        
+                            if find_uncertainties:
+                                # uncertainty
+                                tmp_errors_array = []
+                                for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i][parttype_name[0]][:,[1, 2]], spins_rand['%s' %hmr_i][parttype_name[1]][:, [1, 2]]):
+                                    tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
+                                tmp_errors.append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            else:
+                                tmp_errors.append([math.nan, math.nan])
+                            
+                        self.mis_angles_proj['x']['%s_%s_angle' %(parttype_name[0], parttype_name[1])] = tmp_angles
+                        self.mis_angles_proj['x']['%s_%s_angle_err' %(parttype_name[0], parttype_name[1])] = tmp_errors
                     
-                    use_percentiles = 32
+                if viewing_axis_i == 'y':
+                    for parttype_name in angle_selection:
+                        tmp_angles = []
+                        tmp_errors = []
+                        for i, hmr_i in zip(np.arange(0, len(spin_rad_in), 1), spin_rad_in/self.halfmass_rad_proj):
+                            tmp_angles.append(self._misalignment_angle(np.array([self.spins[parttype_name[0]][i][0], self.spins[parttype_name[0]][i][2]]), np.array([self.spins[parttype_name[1]][i][0], self.spins[parttype_name[1]][i][2]])))
+                        
+                            if find_uncertainties:
+                                # uncertainty
+                                tmp_errors_array = []
+                                for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i][parttype_name[0]][:,[0, 2]], spins_rand['%s' %hmr_i][parttype_name[1]][:, [0, 2]]):
+                                    tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
+                                tmp_errors.append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            else:
+                                tmp_errors.append([math.nan, math.nan])
+                            
+                        self.mis_angles_proj['y']['%s_%s_angle' %(parttype_name[0], parttype_name[1])] = tmp_angles
+                        self.mis_angles_proj['y']['%s_%s_angle_err' %(parttype_name[0], parttype_name[1])] = tmp_errors
                     
+                if viewing_axis_i == 'z':
+                    for parttype_name in angle_selection:
+                        tmp_angles = []
+                        tmp_errors = []
+                        for i, hmr_i in zip(np.arange(0, len(spin_rad_in), 1), spin_rad_in/self.halfmass_rad_proj):
+                            angle = self._misalignment_angle(np.array([self.spins[parttype_name[0]][i][0], self.spins[parttype_name[0]][i][1]]), np.array([self.spins[parttype_name[1]][i][0], self.spins[parttype_name[1]][i][1]]))
+                            tmp_angles.append(angle)
+                        
+                            if find_uncertainties:
+                                # uncertainty
+                                tmp_errors_array = []
+                                for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i][parttype_name[0]][:,[0, 1]], spins_rand['%s' %hmr_i][parttype_name[1]][:, [0, 1]]):
+                                    tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
+                                tmp_errors.append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                        
+                                if debug:
+                                    print('\nHMR_i ', hmr_i)
+                                    print('percentiles: ', np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                                    print('angle: ', angle)
+                                    plt.hist(tmp_errors_array, 100)
+                                    plt.show()
+                                    plt.close()
+                            else:
+                                tmp_errors.append([math.nan, math.nan])
+                        
+                        self.mis_angles_proj['z']['%s_%s_angle' %(parttype_name[0], parttype_name[1])] = tmp_angles
+                        self.mis_angles_proj['z']['%s_%s_angle_err' %(parttype_name[0], parttype_name[1])] = tmp_errors
+            
+            
+            #-------------------------------------------------
+            # KAPPA
+            if kappa_rad_in:
+                """if 'stars' in particle_list_in:
                     if print_progress:
                         print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                        print('Creating spins_rand')
+                        print('Finding kappa star')
                         time_start = time.time()
                     
-                    """ structure
-                    Will be structured as:
-                    spins_rand['2.0']['stars'] .. from then [[ x, y, z], [x, y, z], ... ]
-                    """
-                    iterations = 1000 
-            
-                    # for each radius...
-                    spins_rand = {}
-                    for rad_i in spin_rad_in:
-                        spins_rand.update({'%s' %str(rad_i/self.halfmass_rad_proj): {}})
-                
-                        # for each particle type...
-                        for parttype_name in particle_list_in:
-                            tmp_spins = []    
+                    # Finding star unit vector within kappa_rad_in, finding angle between it and z and returning matrix for this
+                    stars_spin_kappa, _, _ = self._find_spin(data_nil['stars'], kappa_rad_in, 'stars')
+                    _ , matrix = self._orientate(orientate_to_axis, stars_spin_kappa)
                     
-                            # ...append 1000 random spin iterations
-                            for jjjj in range(iterations):
-                                spin_i, _, _ = self._find_spin(self.data[parttype_name], rad_i, parttype_name, random_sample=True)
-                                tmp_spins.append(spin_i)
-                            spins_rand['%s' %str(rad_i/self.halfmass_rad_proj)]['%s' %parttype_name] = np.stack(tmp_spins)
-             
-                    if debug:   
-                        print(spins_rand.keys())        
-                        print(spins_rand['2.0']['stars'])
-                        print(spins_rand['2.0']['stars'][:,0])
-                        print(' ')
-                        print(spins_rand['2.0']['stars'][:,[0,1]])
-                
-                
-                #-------------------------------------
-                # Find 3D misalignment angles + errors
-                if print_progress:
-                    print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                    print('Finding 3D misalignment angles')
-                    time_start = time.time()
-                
-                self.mis_angles['rad'] = spin_rad_in
-                self.mis_angles['hmr'] = spin_rad_in/self.halfmass_rad_proj
-                for parttype_name in angle_selection:   #[['stars', 'gas'], ['stars', '_nsf'], ['gas_sf', 'gas_nsf']]:
-                    tmp_angles = []
-                    tmp_errors = []
-                    for i, hmr_i in zip(np.arange(0, len(spin_rad_in), 1), spin_rad_in/self.halfmass_rad_proj):
-                        # analytical angle
-                        angle = self._misalignment_angle(self.spins[parttype_name[0]][i], self.spins[parttype_name[1]][i])
-                        tmp_angles.append(angle)
-                        
-                        if find_uncertainties:
-                            # uncertainty
-                            tmp_errors_array = []
-                            for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i][parttype_name[0]], spins_rand['%s' %hmr_i][parttype_name[1]]):
-                                tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
-                            tmp_errors.append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                    # Orientate entire galaxy according to matrix above, use this to find kappa
+                    stars_aligned_kappa  = self._rotate_galaxy(matrix, data_nil['stars'])
+                    self.kappa_old = self._kappa_co(stars_aligned_kappa, kappa_rad_in) 
                     
-                            if debug:
-                                print('\nHMR_i ', hmr_i)
-                                print('percentiles: ', np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
-                                print('angle: ', angle)
-                                plt.hist(tmp_errors_array, 100)
-                                plt.show()
-                                plt.close()
-                        else:
-                            tmp_errors.append([math.nan, math.nan])
-                            
-                    self.mis_angles['%s_%s_angle' %(parttype_name[0], parttype_name[1])] = tmp_angles
-                    self.mis_angles['%s_%s_angle_err' %(parttype_name[0], parttype_name[1])] = tmp_errors
-                
-            
-                #-------------------------------------------------
-                # Find 2D projected misalignment angles + errors 
-                if print_progress:
-                    print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                    print('Finding 2D projected angles')
-                    time_start = time.time()
-                
-                self.mis_angles_proj = {'x': {}, 'y': {}, 'z': {}}
-                for viewing_axis_i in ['x', 'y', 'z']:
-                    self.mis_angles_proj[viewing_axis_i]['rad'] = spin_rad_in
-                    self.mis_angles_proj[viewing_axis_i]['hmr'] = spin_rad_in/self.halfmass_rad_proj
-                
-                    if viewing_axis_i == 'x':
-                        for parttype_name in angle_selection:
-                            tmp_angles = []
-                            tmp_errors = []
-                            for i, hmr_i in zip(np.arange(0, len(spin_rad_in), 1), spin_rad_in/self.halfmass_rad_proj):
-                                angle = self._misalignment_angle(np.array([self.spins[parttype_name[0]][i][1], self.spins[parttype_name[0]][i][2]]), np.array([self.spins[parttype_name[1]][i][1], self.spins[parttype_name[1]][i][2]]))
-                                tmp_angles.append(angle)
-                            
-                                if find_uncertainties:
-                                    # uncertainty
-                                    tmp_errors_array = []
-                                    for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i][parttype_name[0]][:,[1, 2]], spins_rand['%s' %hmr_i][parttype_name[1]][:, [1, 2]]):
-                                        tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
-                                    tmp_errors.append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
-                                else:
-                                    tmp_errors.append([math.nan, math.nan])
-                                
-                            self.mis_angles_proj['x']['%s_%s_angle' %(parttype_name[0], parttype_name[1])] = tmp_angles
-                            self.mis_angles_proj['x']['%s_%s_angle_err' %(parttype_name[0], parttype_name[1])] = tmp_errors
-                        
-                    if viewing_axis_i == 'y':
-                        for parttype_name in angle_selection:
-                            tmp_angles = []
-                            tmp_errors = []
-                            for i, hmr_i in zip(np.arange(0, len(spin_rad_in), 1), spin_rad_in/self.halfmass_rad_proj):
-                                tmp_angles.append(self._misalignment_angle(np.array([self.spins[parttype_name[0]][i][0], self.spins[parttype_name[0]][i][2]]), np.array([self.spins[parttype_name[1]][i][0], self.spins[parttype_name[1]][i][2]])))
-                            
-                                if find_uncertainties:
-                                    # uncertainty
-                                    tmp_errors_array = []
-                                    for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i][parttype_name[0]][:,[0, 2]], spins_rand['%s' %hmr_i][parttype_name[1]][:, [0, 2]]):
-                                        tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
-                                    tmp_errors.append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
-                                else:
-                                    tmp_errors.append([math.nan, math.nan])
-                                
-                            self.mis_angles_proj['y']['%s_%s_angle' %(parttype_name[0], parttype_name[1])] = tmp_angles
-                            self.mis_angles_proj['y']['%s_%s_angle_err' %(parttype_name[0], parttype_name[1])] = tmp_errors
-                        
-                    if viewing_axis_i == 'z':
-                        for parttype_name in angle_selection:
-                            tmp_angles = []
-                            tmp_errors = []
-                            for i, hmr_i in zip(np.arange(0, len(spin_rad_in), 1), spin_rad_in/self.halfmass_rad_proj):
-                                angle = self._misalignment_angle(np.array([self.spins[parttype_name[0]][i][0], self.spins[parttype_name[0]][i][1]]), np.array([self.spins[parttype_name[1]][i][0], self.spins[parttype_name[1]][i][1]]))
-                                tmp_angles.append(angle)
-                            
-                                if find_uncertainties:
-                                    # uncertainty
-                                    tmp_errors_array = []
-                                    for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i][parttype_name[0]][:,[0, 1]], spins_rand['%s' %hmr_i][parttype_name[1]][:, [0, 1]]):
-                                        tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
-                                    tmp_errors.append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
-                            
-                                    if debug:
-                                        print('\nHMR_i ', hmr_i)
-                                        print('percentiles: ', np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
-                                        print('angle: ', angle)
-                                        plt.hist(tmp_errors_array, 100)
-                                        plt.show()
-                                        plt.close()
-                                else:
-                                    tmp_errors.append([math.nan, math.nan])
-                            
-                            self.mis_angles_proj['z']['%s_%s_angle' %(parttype_name[0], parttype_name[1])] = tmp_angles
-                            self.mis_angles_proj['z']['%s_%s_angle_err' %(parttype_name[0], parttype_name[1])] = tmp_errors
-                
-                
-                #-------------------------------------------------
-                # KAPPA
-                if kappa_rad_in:
-                    if 'stars' in particle_list_in:
-                        if print_progress:
-                            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                            print('Finding kappa star')
-                            time_start = time.time()
-                        
-                        # Finding star unit vector within kappa_rad_in, finding angle between it and z and returning matrix for this
-                        stars_spin_kappa, _, _ = self._find_spin(data_nil['stars'], kappa_rad_in, 'stars')
-                        _ , matrix = self._orientate(orientate_to_axis, stars_spin_kappa)
-                        
-                        # Orientate entire galaxy according to matrix above, use this to find kappa
-                        stars_aligned_kappa  = self._rotate_galaxy(matrix, data_nil['stars'])
-                        self.kappa_old = self._kappa_co(stars_aligned_kappa, kappa_rad_in) 
-                        
-                        self.general.update({'kappa_old': self.kappa_old})
-            
-                    if 'gas' in particle_list_in:
-                        if print_progress:
-                            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                            print('Finding kappa gas')
-                            time_start = time.time()
-                    
-                        # Finding gas unit vector within kappa_rad_in, finding angle between it and z and returning matrix for this
-                        gas_spin_kappa, _, _ = self._find_spin(data_nil['gas'], kappa_rad_in, 'gas')
-                        _ , matrix = self._orientate(orientate_to_axis, gas_spin_kappa)
-                        
-                        # Orientate entire galaxy according to matrix above, use this to find kappa
-                        gas_aligned_kappa  = self._rotate_galaxy(matrix, data_nil['gas'])
-                        self.kappa_gas = self._kappa_co(gas_aligned_kappa, kappa_rad_in)
-                    
-                        self.general.update({'kappa_gas': self.kappa_gas})
-                    
-                    if 'gas_sf' in particle_list_in:
-                        if print_progress:
-                            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                            print('Finding kappa gas_sf')
-                            time_start = time.time()
-                
-                        # Finding gas_sf unit vector within kappa_rad_in, finding angle between it and z and returning matrix for this
-                        gas_sf_spin_kappa, _, _ = self._find_spin(data_nil['gas_sf'], kappa_rad_in, 'gas_sf')
-                        _ , matrix = self._orientate(orientate_to_axis, gas_sf_spin_kappa)
-                        
-                        # Orientate entire galaxy according to matrix above, use this to find kappa
-                        gas_sf_aligned_kappa  = self._rotate_galaxy(matrix, data_nil['gas_sf'])
-                        self.kappa_gas_sf = self._kappa_co(gas_sf_aligned_kappa, kappa_rad_in)
-                        
-                        self.general.update({'kappa_gas_sf': self.kappa_gas_sf})
-                    
-                    if 'gas_nsf' in particle_list_in:
-                        if print_progress:
-                            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                            print('Finding kappa gas_nsf')
-                            time_start = time.time()
-                
-                        # Finding gas_sf unit vector within kappa_rad_in, finding angle between it and z and returning matrix for this
-                        gas_nsf_spin_kappa, _, _ = self._find_spin(data_nil['gas_nsf'], kappa_rad_in, 'gas_nsf')
-                        _ , matrix = self._orientate(orientate_to_axis, gas_nsf_spin_kappa)
-                        
-                        # Orientate entire galaxy according to matrix above, use this to find kappa
-                        gas_nsf_aligned_kappa  = self._rotate_galaxy(matrix, data_nil['gas_nsf'])
-                        self.kappa_gas_nsf = self._kappa_co(gas_nsf_aligned_kappa, kappa_rad_in)
-                        
-                        self.general.update({'kappa_gas_nsf': self.kappa_gas_nsf})
-                        
-            
-                #--------------------------------
-                # Trimming data
-                if len(trim_rad_in) > 0:
+                    self.general.update({'kappa_old': self.kappa_old})"""
+        
+                if 'gas' in particle_list_in:
                     if print_progress:
                         print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                        print('Trimming datasets to trim_rad_in ', trim_rad_in)
+                        print('Finding kappa gas')
                         time_start = time.time()
-                    tmp_data = {}
-                    for rad in trim_rad_in:
-                        tmp_data.update({'%s' %str(rad): {}})
-                    
-                    for rad in trim_rad_in:
-                        for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf', 'dm', 'bh']:
-                            tmp_data['%s' %str(rad)]['%s' %parttype_name] = self._trim_within_rad(self.data[parttype_name], rad*self.halfmass_rad_proj)
-                    
-                    self.data = tmp_data
                 
+                    # Finding gas unit vector within kappa_rad_in, finding angle between it and z and returning matrix for this
+                    gas_spin_kappa, _, _ = self._find_spin(data_nil['gas'], kappa_rad_in, 'gas')
+                    _ , matrix = self._orientate(orientate_to_axis, gas_spin_kappa)
+                    
+                    # Orientate entire galaxy according to matrix above, use this to find kappa
+                    gas_aligned_kappa  = self._rotate_galaxy(matrix, data_nil['gas'])
+                    self.kappa_gas = self._kappa_co(gas_aligned_kappa, kappa_rad_in)
                 
-                #--------------------------------
-                # Print statements
-                if not quiet:
-                    print('GALAXY ID', self.GalaxyID)
-                    print('STELMASS', np.log10(self.stelmass))
-                    print('GASMASS', np.log10(self.gasmass))
-                    print('GASMASS_SF', np.log10(self.gasmass_sf))
-                    print('GASMASS_NSF', np.log10(self.gasmass_nsf))
+                    self.general.update({'kappa_gas': self.kappa_gas})
+                
+                if 'gas_sf' in particle_list_in:
+                    if print_progress:
+                        print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+                        print('Finding kappa gas_sf')
+                        time_start = time.time()
+            
+                    # Finding gas_sf unit vector within kappa_rad_in, finding angle between it and z and returning matrix for this
+                    gas_sf_spin_kappa, _, _ = self._find_spin(data_nil['gas_sf'], kappa_rad_in, 'gas_sf')
+                    _ , matrix = self._orientate(orientate_to_axis, gas_sf_spin_kappa)
+                    
+                    # Orientate entire galaxy according to matrix above, use this to find kappa
+                    gas_sf_aligned_kappa  = self._rotate_galaxy(matrix, data_nil['gas_sf'])
+                    self.kappa_gas_sf = self._kappa_co(gas_sf_aligned_kappa, kappa_rad_in)
+                    
+                    self.general.update({'kappa_gas_sf': self.kappa_gas_sf})
+                
+                if 'gas_nsf' in particle_list_in:
+                    if print_progress:
+                        print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+                        print('Finding kappa gas_nsf')
+                        time_start = time.time()
+            
+                    # Finding gas_sf unit vector within kappa_rad_in, finding angle between it and z and returning matrix for this
+                    gas_nsf_spin_kappa, _, _ = self._find_spin(data_nil['gas_nsf'], kappa_rad_in, 'gas_nsf')
+                    _ , matrix = self._orientate(orientate_to_axis, gas_nsf_spin_kappa)
+                    
+                    # Orientate entire galaxy according to matrix above, use this to find kappa
+                    gas_nsf_aligned_kappa  = self._rotate_galaxy(matrix, data_nil['gas_nsf'])
+                    self.kappa_gas_nsf = self._kappa_co(gas_nsf_aligned_kappa, kappa_rad_in)
+                    
+                    self.general.update({'kappa_gas_nsf': self.kappa_gas_nsf})
+                    
+        
+            #--------------------------------
+            # Trimming data
+            if len(trim_rad_in) > 0:
+                if print_progress:
+                    print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+                    print('Trimming datasets to trim_rad_in ', trim_rad_in)
+                    time_start = time.time()
+                tmp_data = {}
+                for rad in trim_rad_in:
+                    tmp_data.update({'%s' %str(rad): {}})
+                
+                for rad in trim_rad_in:
+                    for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf', 'dm', 'bh']:
+                        tmp_data['%s' %str(rad)]['%s' %parttype_name] = self._trim_within_rad(self.data[parttype_name], rad*self.halfmass_rad_proj)
+                
+                self.data = tmp_data
+            
+            
+            #--------------------------------
+            # Print statements
+            if not quiet:
+                print('GALAXY ID', self.GalaxyID)
+                print('STELMASS', np.log10(self.stelmass))
+                print('GASMASS', np.log10(self.gasmass))
+                print('GASMASS_SF', np.log10(self.gasmass_sf))
+                print('GASMASS_NSF', np.log10(self.gasmass_nsf))
 
-                if print_progress:
-                    print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                    print('FINISHED EXTRACTION')
+            if print_progress:
+                print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+                print('FINISHED EXTRACTION')
             #============================
             
             #============================

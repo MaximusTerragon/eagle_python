@@ -64,7 +64,8 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
                                      spin_rad_in             = np.arange(0.25, 10.01, 0.25),    # multiples of rad
                                      viewing_axis            = 'z',                     # Which axis to view galaxy from.  DEFAULT 'z'
                                      com_min_distance        = 2.0,                     # [pkpc] min distance between sfgas and stars. Min radius of spin_rad_in used
-                                     gas_sf_min_particles    = 20,                     # Minimum gas sf particles to use galaxy.  DEFAULT 100
+                                     gas_sf_min_particles    = 20,                      # Minimum gas sf particles to use galaxy.  DEFAULT 100
+                                     min_inclination         = 0,                       # Minimum inclination toward viewing axis [deg] DEFAULT 0
                                      angle_type_in           = np.array(['stars_gas', 'stars_gas_sf']),       # analytical results for constituent particles will be found. ei., stars_gas_sf will mean stars and gas_sf properties will be found, and the angles between them                                                           
                             plot_single = True,                    # whether to create single plots. Keep on TRUE
                                      plot_2D_3D           = '2D',                # whether to plot 2D or 3D angle
@@ -137,7 +138,7 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
         
         #-------------------------------------------------------------------
         # Automating some later variables to avoid putting them in manually
-        spin_rad = spin_rad_in * galaxy.halfmass_rad
+        spin_rad = spin_rad_in * galaxy.halfmass_rad_proj
         spin_rad = [x for x in spin_rad if x <= aperture_rad_in]
         if len(spin_rad) != len(spin_rad_in):
             print('Capped spin_rad (%s pkpc) at aperture radius (%s pkpc)' %(max(spin_rad), aperture_rad_in))
@@ -146,15 +147,15 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
         aperture_rad = aperture_rad_in
             
         if kappa_rad_in == 'rad':
-            kappa_rad = galaxy.halfmass_rad
+            kappa_rad = galaxy.halfmass_rad_proj
         elif kappa_rad_in == 'tworad':
-            kappa_rad = 2*galaxy.halfmass_rad
+            kappa_rad = 2*galaxy.halfmass_rad_proj
         else:
             kappa_rad = kappa_rad_in
         if align_rad_in == 'rad':
-            align_rad = galaxy.halfmass_rad
+            align_rad = galaxy.halfmass_rad_proj
         elif align_rad_in == 'tworad':
-            align_rad = 2*galaxy.halfmass_rad
+            align_rad = 2*galaxy.halfmass_rad_proj
         else:
             align_rad = align_rad_in  
         #------------------------------------------------------------------
@@ -181,6 +182,7 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
                                                 particle_list_in,
                                                 angle_type_in,
                                                 find_uncertainties,
+                                                min_inclination,
                                                 quiet=True)
         
         #--------------------------------
@@ -204,7 +206,7 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
             mask = np.where(np.array(subhalo.coms['hmr'] == min(spin_rad_in)))
             print('C.O.M %s HMR STARS-SF [pkpc]:  %.2f' %(str(min(spin_rad_in)), subhalo.coms['stars_gas_sf'][int(mask[0])]))
         elif print_galaxy_short == True:
-            print('GN:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(str(subhalo.gn), subhalo.halfmass_rad_proj, subhalo.kappa, subhalo.kappa_gas_sf)) 
+            print('GN:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(str(subhalo.gn), subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'], subhalo.general['kappa_gas_sf'])) 
                 
         
         #===================================================================

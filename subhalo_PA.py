@@ -194,7 +194,7 @@ def _weight_histo(gn,
                   quiet=1, 
                   plot=0,
                   colormap='coolwarm',
-                  debug=False):
+                  debug=True):
                  
     # Assign x, y, and z values for histogram2d depending on viewing axis
     if viewing_axis == 'x':
@@ -221,12 +221,12 @@ def _weight_histo(gn,
     vel_weighted       = np.divide(vel_weighted, counts, out=np.zeros_like(counts), where=counts!=0)
     
     # Find standard deviaion of each bin
-    vel_std, _, _, _ = stats.binned_statistic_2d(y_new, x_new, vel*data_type[particle_type]['Mass']/np.mean(data_type[particle_type]['Mass']), statistic='std', bins=(xbins, ybins))
+    vel_std_plot, _, _, _ = stats.binned_statistic_2d(y_new, x_new, vel*data_type[particle_type]['Mass']/np.mean(data_type[particle_type]['Mass']), statistic='std', bins=(xbins, ybins))
     
     if debug:
         # Print mean mass-weighted velocity of each bin
-        print(vel_weighted)
-        print('\nvarience', vel_std)
+        print('vel_weighted\n', vel_weighted)
+        print('\nvarience\n', vel_std_plot)
     
     if plot:
         # Plot 2d histogram
@@ -254,18 +254,23 @@ def _weight_histo(gn,
     points     = np.column_stack((b, a))
         
     if debug:
-        print(' ')
-        print(points)
-        print(points_num)
+        print('points')
+        #print(points)
+        #print(points_num)
         print(points_vel)
     
+    #print(vel_std)
+    vel_std = np.ndarray.flatten(vel_std_plot)
+    vel_std = vel_std[~np.isnan(vel_std)]
     
-    # plot std
-    im3 = plt.pcolormesh(xbins, ybins, vel_std, cmap='inferno')
+    print('new vel std', vel_std)
+    
+    """# plot std
+    im3 = plt.pcolormesh(xbins, ybins, vel_std_plot, cmap='inferno')
     plt.colorbar(im3, label='std')
     plt.tight_layout()
     plt.show()
-    plt.close()
+    plt.close()"""
     
     
     print('SIZE CHECKS')
@@ -277,7 +282,6 @@ def _weight_histo(gn,
     print(vel_weighted.size)
     print(vel_std.size)
     
-    print(vel_std)
     
     
     
@@ -447,7 +451,7 @@ SAMPLE:
 """
 
 #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
-def velocity_projection(manual_GroupNumList = np.array([]), 
+def velocity_projection(manual_GroupNumList = np.array([2]), 
                           SubGroupNum       = 0,
                           galaxy_mass_limit = 10**9,                     # Used in sample
                         kappa_rad_in    = 30,                 # calculate kappa for this radius [pkpc]
@@ -957,12 +961,12 @@ def velocity_projection(manual_GroupNumList = np.array([]),
                         
                         # Run pa_fit on 2dhist
                         if plot:
-                            angle_particle, angle_err_particle, velsyst_particle = fit_kinematic_pa(points_particle[:,0], points_particle[:,1], vel_bin_particle, dvel = vel_std, quiet=1, plot=1)
+                            angle_particle, angle_err_particle, velsyst_particle = fit_kinematic_pa(points_particle[:,0], points_particle[:,1], vel_bin_particle, dvel=vel_std, quiet=1, plot=1)
                             if savefig == True:
                                 plt.savefig('%s/gn_%s_PA_2dhist_%s_rad%s_ax%s_angle%s%s.jpeg' %(str(root_file), str(subhalo.gn), str(particle_list_in_i), str(trim_rad_i), str(viewing_axis), str(viewing_angle), savefigtxt), dpi=300, bbox_inches='tight', pad_inches=0.3)
                             
                         elif not plot:
-                            angle_particle, angle_err_particle, velsyst_particle = fit_kinematic_pa(points_particle[:,0], points_particle[:,1], vel_bin_particle, dvel = vel_std, quiet=1, plot=0)
+                            angle_particle, angle_err_particle, velsyst_particle = fit_kinematic_pa(points_particle[:,0], points_particle[:,1], vel_bin_particle, dvel=vel_std, quiet=1, plot=0)
                             
                             
                         if not quiet:

@@ -38,7 +38,7 @@ PURPOSE
 #1, 2, 3, 4, 5, 6, 7, 9, 8, 10, 11, 14, 12, 15, 13, 19, 20, 16, 21, 23, 25 
 #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
 #1  2  4  3  6  5  7  9 16 14 11  8 13 12 15 18 10 20 22 24 21
-def galaxy_render(manual_GroupNumList = np.array([1, 2, 4, 3, 6, 5, 7, 9, 16, 14, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21]),
+def galaxy_render(manual_GroupNumList = np.array([2]),
                     SubGroupNum       = 0, 
                   spin_rad_in           = np.array([2.0]),              # multiples of rad
                   kappa_rad_in          = 30,                           # Calculate kappa for this radius [pkpc]

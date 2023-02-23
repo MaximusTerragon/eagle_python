@@ -101,6 +101,7 @@ In particular, redistribution of the code is not allowed.
 
 import numpy as np
 import matplotlib.pyplot as plt
+import collections.abc
 
 from plotbin.symmetrize_velfield import symmetrize_velfield
 from plotbin.plot_velfield import plot_velfield
@@ -112,7 +113,16 @@ def fit_kinematic_pa(x, y, vel, debug=False, nsteps=361,
 
     x, y, vel = map(np.ravel, [x, y, vel])
 
-    assert x.size == y.size == vel.size == dvel.size, 'Input vectors (x, y, vel) must have the same size'
+    assert x.size == y.size == vel.size, 'Input vectors (x, y, vel) must have the same size'
+
+
+    print('pafit', dvel)
+
+
+    if isinstance(dvel, collections.abc.Sequence):
+        print('asdasdasdasdad', dvel)
+        assert x.size == y.size == vel.size == dvel.size, 'Input vectors (x, y, vel) must have the same size'
+        
 
     nbins = x.size
     n = nsteps
@@ -139,22 +149,19 @@ def fit_kinematic_pa(x, y, vel, debug=False, nsteps=361,
     
     #print('angBest', angBest)
     
-    #if angBest < 0:		#range is from -180 to +180, so if negative will add 360 to bring in range 0 to 360
-    #    angBest += 360
-    
     # Will find angle from y-axis to negative
     ang = [0,np.pi] + np.radians(angBest)
     mask = np.where(((np.arctan2(y,x) + np.pi) > ang[0]) & ((np.arctan2(y,x) + np.pi) < ang[1]))
     
-    #print('velSym mean: ', np.mean(velSym[mask]))
+    #print('white mean: ', np.mean(velSym[mask]))
     
     mask_other = np.array([i for i in np.arange(0, len(velSym), 1) if i not in mask[0]])
-    #print('velSym mean other: ', np.mean(velSym[mask_other]))
+    #print('black other: ', np.mean(velSym[mask_other]))
     
     #if (np.mean(velSym[mask]) < 0) & (np.mean(velSym[mask_other]) < 0):
-        #print('velSym double negative')
-        #if np.mean(velSym[mask]) > np.mean(velSym[mask_other]):
-            #print('velSym FLIPPED as greater negative exists')
+    #    print('velSym double negative')
+    #    if np.mean(velSym[mask]) > np.mean(velSym[mask_other]):
+    #       print('velSym FLIPPED as greater negative exists')
     #if (np.mean(velSym[mask]) > 0) & (np.mean(velSym[mask_other]) > 0):
         #print('velSym double positive')
         #if np.mean(velSym[mask]) < np.mean(velSym[mask_other]):

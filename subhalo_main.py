@@ -832,34 +832,33 @@ class Subhalo:
                         
                         # this will automatically pick the smallest spin_rad_in and check for inclination
                         if i == 0:
-                            if parttype_name == 'stars':
-                                if viewing_axis == 'x':
-                                    if print_progress:
-                                        print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                                        print('Flagging inclination angle in radius')
-                                        time_start = time.time()
-                                        
-                                    angle_test = self._misalignment_angle([1, 0, 0], spin_x)
-                                    if (angle_test < min_inclination) or (angle_test > 180-min_inclination):
-                                        self.flags.append('min. inclination: %.2f deg' %angle_test)
-                                if viewing_axis == 'y':
-                                    if print_progress:
-                                        print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                                        print('Flagging inclination angle in radius')
-                                        time_start = time.time()
-                                        
-                                    angle_test = self._misalignment_angle([0, 1, 0], spin_x)
-                                    if (angle_test < min_inclination) or (angle_test > 180-min_inclination):
-                                        self.flags.append('min. inclination: %.2f deg' %angle_test)
-                                if viewing_axis == 'z':
-                                    if print_progress:
-                                        print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                                        print('Flagging inclination angle in radius')
-                                        time_start = time.time()
-                                        
-                                    angle_test = self._misalignment_angle([0, 0, 1], spin_x)
-                                    if (angle_test < min_inclination) or (angle_test > 180-min_inclination):
-                                        self.flags.append('min. inclination: %.2f deg' %angle_test)
+                            if viewing_axis == 'x':
+                                if print_progress:
+                                    print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+                                    print('Flagging inclination angle in radius')
+                                    time_start = time.time()
+                                    
+                                angle_test = self._misalignment_angle([1, 0, 0], spin_x)
+                                if (angle_test < min_inclination) or (angle_test > 180-min_inclination):
+                                    self.flags.append('min. inclination %s: %.2f deg' %(parttype_name, angle_test))
+                            if viewing_axis == 'y':
+                                if print_progress:
+                                    print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+                                    print('Flagging inclination angle in radius')
+                                    time_start = time.time()
+                                    
+                                angle_test = self._misalignment_angle([0, 1, 0], spin_x)
+                                if (angle_test < min_inclination) or (angle_test > 180-min_inclination):
+                                    self.flags.append('min. inclination %s: %.2f deg' %(parttype_name, angle_test))
+                            if viewing_axis == 'z':
+                                if print_progress:
+                                    print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+                                    print('Flagging inclination angle in radius')
+                                    time_start = time.time()
+                                    
+                                angle_test = self._misalignment_angle([0, 0, 1], spin_x)
+                                if (angle_test < min_inclination) or (angle_test > 180-min_inclination):
+                                    self.flags.append('min. inclination %s: %.2f deg' %(parttype_name, angle_test))
                                         
                     self.spins[parttype_name]     = tmp_spins 
                     self.particles[parttype_name] = tmp_particles

@@ -78,9 +78,24 @@ def _sn_func(index, signal=None, noise=None):
     :return: scalar S/N or another quantity that needs to be equalized.
 
     """
+    def _pooled_std(ns, stdevs):
+        variences = stdevs**2
+        numerator=0
+        denominator=0
+        for n,var in zip(ns, variences):
+            numerator += (n-1)*var
+            denominator += (n-1)
+        result = numerator/denominator
+    
+    
     #sn = np.sum(signal[index])/np.sqrt(np.sum(noise[index]**2))
     sn       = np.sum(noise[index])
     velocity = np.sum(signal[index])
+    
+    #vel_std = _pooled_std(noise[index], )
+    
+    print('velocuty', signal[index])
+        
     
     #print("VEL", velocity)
     #print("SN", sn)
@@ -379,7 +394,7 @@ def _display_pixels(x, y, counts, pixelsize):
 
 def voronoi_2d_binning(x, y, signal, noise, target_sn, cvt=True, pixelsize=None,
                        plot=True, quiet=True, sn_func=None, wvt=True):
-    """
+    """ 
     VorBin Purpose
     --------------
 

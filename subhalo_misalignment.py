@@ -120,7 +120,7 @@ SAMPLE:
 #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
 def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter galaxy gns we want
                               SubGroupNum       = 0,
-                              galaxy_mass_limit         = 10**9.0,                              # for use in SAMPLE
+                              galaxy_mass_limit = 10**9.0,                              # for use in SAMPLE
                             kappa_rad_in        = 30,                               # calculate kappa for this radius [pkpc]
                             aperture_rad_in     = 30,                               # trim all data to this maximum value before calculations
                             align_rad_in        = False,                            # keep on False
@@ -132,9 +132,11 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
                                     viewing_axis            = 'z',                     # Which axis to view galaxy from.  DEFAULT 'z'
                                     com_min_distance        = 2.0,                     # [pkpc] min distance between sfgas and stars.  DEFAULT 2.0 
                                     gas_sf_min_particles    = 20,                     # Minimum gas sf particles to use galaxy.  DEFAULT 100
-                                    min_inclination = 0,                          # Minimum inclination toward viewing axis [deg] DEFAULT 0
+                                    min_inclination         = 0,                          # Minimum inclination toward viewing axis [deg] DEFAULT 0
+                                    projected_or_abs        = 'projected',              # 'projected' or 'abs'
                                     angle_type_in           = np.array(['stars_gas_sf']),       # analytical results for constituent particles will be found. ei., stars_gas_sf will mean stars and gas_sf properties will be found, and the angles between them                                                           
-                            plot_single = True,                      # keep on true
+                            plot_single = False,                      # keep on true
+                            plot_morphology = True,                     # whether to create separate plots for ETGs/LTGs
                                     plot_2D_3D              = '2D',                     #or use '3D'. DEFAULT 2D
                             root_file = '/Users/c22048063/Documents/EAGLE/plots',
                             file_format = 'png',
@@ -144,7 +146,7 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
                               csv_file           = False,              # .csv file will ALL data
                                 csv_name = 'data_misalignment',
                               showfig   = False,
-                              savefig   = False,  
+                              savefig   = True,  
                                 savefig_txt = '',            #extra savefile txt
                               debug = False):            
     
@@ -220,20 +222,26 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
         
         #-------------------------------------------------------------------
         # Automating some later variables to avoid putting them in manually
-        spin_rad = spin_rad_in * galaxy.halfmass_rad_proj
+        
+        if projected_or_abs == 'projected':
+            use_rad = galaxy.halfmass_rad_proj
+        elif projected_or_abs == 'abs':
+            use_rad = galaxy.halfmass_rad
+            
+        spin_rad = spin_rad_in * use_rad                            #pkpc
         trim_rad = trim_rad_in
         aperture_rad = aperture_rad_in
             
         if kappa_rad_in == 'rad':
-            kappa_rad = galaxy.halfmass_rad_proj
+            kappa_rad = use_rad
         elif kappa_rad_in == 'tworad':
-            kappa_rad = 2*galaxy.halfmass_rad_proj
+            kappa_rad = 2*use_rad
         else:
             kappa_rad = kappa_rad_in
         if align_rad_in == 'rad':
-            align_rad = galaxy.halfmass_rad_proj
+            align_rad = use_rad
         elif align_rad_in == 'tworad':
-            align_rad = 2*galaxy.halfmass_rad_proj
+            align_rad = 2*use_rad
         else:
             align_rad = align_rad_in  
         #------------------------------------------------------------------
@@ -245,7 +253,7 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
             time_start = time.time()
             
         # If we want the original values, enter 0 for viewing angle
-        subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.GalaxyID, galaxy.stelmass, galaxy.gasmass, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, galaxy.MorphoKinem,
+        subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.GalaxyID, galaxy.stelmass, galaxy.gasmass, galaxy.halfmass_rad, use_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, galaxy.MorphoKinem,
                                             angle_selection,
                                             viewing_angle,
                                             spin_rad,
@@ -260,6 +268,7 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
                                             particle_list_in,
                                             angle_type_in,
                                             find_uncertainties,
+                                            min_inclination,
                                             quiet=True)
                                             
         #print('kappa_databa: ', subhalo.general['kappa_stars'])
@@ -281,7 +290,7 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
             print('\nGROUP NUMBER:           %s' %str(subhalo.gn)) 
             print('STELLAR MASS [Msun]:    %.3f' %np.log10(subhalo.stelmass))       # [Msun]
             print('HALFMASS RAD [pkpc]:    %.3f' %subhalo.halfmass_rad_proj)             # [pkpc]
-            print('KAPPA:                  %.2f' %subhalo.kappa)
+            print('KAPPA:                  %.2f' %subhalo.kappa_stars)
             print('KAPPA GAS SF:           %.2f' %subhalo.kappa_gas_sf)
             print('KAPPA RAD CALC [pkpc]:  %s'   %str(kappa_rad_in))
             mask = np.where(np.array(subhalo.coms['hmr'] == min(spin_rad_in)))
@@ -374,7 +383,7 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
             #------------------------------------------------
             # Graph initialising and base formatting
             graphformat(8, 11, 11, 9, 11, 4.5, 3.75)
-            fig, ax = plt.subplots(1, 1, figsize=[5.80, 2.55])
+            fig, ax = plt.subplots(1, 1, figsize=[3.75, 3.75])
         
             # Labels
             if 'stars_gas' in angle_type_in:
@@ -447,11 +456,168 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
                 plt.show()
             plt.close()
             
-        
-        
+    #=====================================  
+    def _plot_morphology(quiet=0, debug=False):
+        for angle_type_in_i in angle_type_in:
+            # Collect values to plot
+            misalignment_angle_LTG = []
+            projected_angle_LTG    = []
+            misalignment_angle_ETG = []
+            projected_angle_ETG    = []
+            GroupNumPlot_LTG       = []
+            GroupNumPlot_ETG       = []
+            GroupNumNotPlot    = []
+            
+            
             for GroupNum in GroupNumList:
+                # If galaxy not flagged, use galaxy
                 if len(all_flags['%s' %str(GroupNum)]) == 0:
-                    print('KAPPAS: %.3f  %.3f' %(all_general['%s' %GroupNum]['kappa'], all_general['%s' %GroupNum]['kappa_star']))
+                    # Mask correct integer (formatting weird but works)
+                    mask_rad = int(np.where(np.array(all_misangles['%s' %GroupNum]['hmr']) == min(spin_rad_in))[0])
+                    
+                    if all_general['%s' %str(GroupNum)]['kappa_stars'] >= 0.40:
+                        misalignment_angle_LTG.append(all_misangles['%s' %str(GroupNum)]['%s_angle' %angle_type_in_i][mask_rad])
+                        projected_angle_LTG.append(all_misanglesproj['%s' %str(GroupNum)][viewing_axis]['%s_angle' %angle_type_in_i][mask_rad])
+                    
+                        GroupNumPlot_LTG.append(GroupNum)
+                    else:
+                        misalignment_angle_ETG.append(all_misangles['%s' %str(GroupNum)]['%s_angle' %angle_type_in_i][mask_rad])
+                        projected_angle_ETG.append(all_misanglesproj['%s' %str(GroupNum)][viewing_axis]['%s_angle' %angle_type_in_i][mask_rad])
+                    
+                        GroupNumPlot_ETG.append(GroupNum)
+                else:
+                    GroupNumNotPlot.append(GroupNum)
+                    
+            
+            if debug == True:
+                print('\nmisalignment angle: ', misalignment_angle)
+                print('projected angle: %s ' %viewing_axis, projected_angle)
+                
+            
+            # Print statements
+            print('\nInitial sample:    ', len(GroupNumList))
+            if not quiet:
+                print(' ', GroupNumList)
+            print('\nFinal sample ETG:   ', len(GroupNumPlot_ETG))
+            if not quiet:
+                print(' ', GroupNumPlot_ETG)  
+            print('\nFinal sample LTG:   ', len(GroupNumPlot_LTG))
+            if not quiet:
+                print(' ', GroupNumPlot_LTG)
+            print('\nNot in sample:   ', len(GroupNumNotPlot)) 
+            if not quiet:
+                print(' ', GroupNumNotPlot)
+            print('\n\n==========================================')
+            print('Spin radius, axis:   %.1f [pkpc], %s' %(min(spin_rad_in), viewing_axis))
+            print('Min. stellar mass:   %.1f [log10 M*]' %np.log10(galaxy_mass_limit))
+            print('Min. sf particles:   %i' %gas_sf_min_particles)
+            print('Min. c.o.m distance: %.1f [pkpc]' %com_min_distance)
+            print('---------------------------------------')
+            print('Initial sample:  ', len(GroupNumList))
+            print('Final sample:    ', len(GroupNumPlot_ETG)+len(GroupNumPlot_LTG))
+            print('Not in sample:   ', len(GroupNumNotPlot)) 
+            print('==========================================')
+            
+            #------------------------------------------------
+            # Graph initialising and base formatting
+            graphformat(8, 11, 11, 9, 11, 4.5, 3.75)
+            fig, axs = plt.subplots(1, 2, figsize=[7.5, 2.55], sharex=True, sharey=True)
+        
+            # Labels
+            if 'stars_gas' in angle_type_in:
+                label = ['Gas']
+                plot_color = 'dodgerblue'
+            if 'stars_gas_sf' in angle_type_in:
+                label = ['SF gas']
+                plot_color = 'darkorange'
+            if 'stars_gas_nsf' in angle_type_in:
+                label = ['NSF gas']
+                plot_color = 'indigo'
+            
+            
+            if plot_2D_3D == '2D':
+                # ETGs
+                # Plot data as histogram (outer lines + fill)
+                axs[0].hist(projected_angle_ETG, weights=np.ones(len(GroupNumPlot_ETG))/len(GroupNumPlot_ETG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor='none', facecolor=plot_color, alpha=0.1)
+                axs[0].hist(projected_angle_ETG, weights=np.ones(len(GroupNumPlot_ETG))/len(GroupNumPlot_ETG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor=plot_color, facecolor='none', alpha=1.0)
+                
+                # Add poisson errors to each bin (sqrt N)
+                hist_n, _ = np.histogram(projected_angle_ETG, bins=np.arange(0, 181, 10), range=(0, 180))
+                axs[0].errorbar(np.arange(5, 181, 10), hist_n/len(GroupNumPlot_ETG), xerr=None, yerr=np.sqrt(hist_n)/len(GroupNumPlot_ETG), ecolor=plot_color, ls='none', capsize=4, elinewidth=1, markeredgewidth=1)
+                
+                # LTGs
+                # Plot data as histogram (outer lines + fill)
+                axs[1].hist(projected_angle_LTG, weights=np.ones(len(GroupNumPlot_LTG))/len(GroupNumPlot_LTG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor='none', facecolor=plot_color, alpha=0.1)
+                axs[1].hist(projected_angle_LTG, weights=np.ones(len(GroupNumPlot_LTG))/len(GroupNumPlot_LTG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor=plot_color, facecolor='none', alpha=1.0)
+                
+                # Add poisson errors to each bin (sqrt N)
+                hist_n, _ = np.histogram(projected_angle_LTG, bins=np.arange(0, 181, 10), range=(0, 180))
+                axs[1].errorbar(np.arange(5, 181, 10), hist_n/len(GroupNumPlot_LTG), xerr=None, yerr=np.sqrt(hist_n)/len(GroupNumPlot_LTG), ecolor=plot_color, ls='none', capsize=4, elinewidth=1, markeredgewidth=1)
+                
+            elif plot_2D_3D == '3D':
+                # ETGs
+                # Plot data as histogram
+                axs[0].hist(misalignment_angle_ETG, weights=np.ones(len(GroupNumPlot_ETG))/len(GroupNumPlot_ETG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor='none', facecolor=plot_color, alpha=0.1)
+                axs[0].hist(misalignment_angle_ETG, weights=np.ones(len(GroupNumPlot_ETG))/len(GroupNumPlot_ETG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor=plot_color, facecolor='none', alpha=1.0)
+                
+                # Add poisson errors to each bin (sqrt N)graphformat(8, 11, 11, 9, 11,
+                hist_n, _ = np.histogram(misalignment_angle_ETG, bins=np.arange(0, 181, 10), range=(0, 180))
+                axs[0].errorbar(np.arange(5, 181, 10), hist_n/len(GroupNumPlot_ETG), xerr=None, yerr=np.sqrt(hist_n)/len(GroupNumPlot_ETG), ecolor=plot_color, ls='none', capsize=4, elinewidth=1, markeredgewidth=1)
+            
+                # LTGs
+                # Plot data as histogram
+                axs[1].hist(misalignment_angle_LTG, weights=np.ones(len(GroupNumPlot_LTG))/len(GroupNumPlot_LTG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor='none', facecolor=plot_color, alpha=0.1)
+                axs[1].hist(misalignment_angle_LTG, weights=np.ones(len(GroupNumPlot_LTG))/len(GroupNumPlot_LTG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor=plot_color, facecolor='none', alpha=1.0)
+                
+                # Add poisson errors to each bin (sqrt N)graphformat(8, 11, 11, 9, 11,
+                hist_n, _ = np.histogram(misalignment_angle_LTG, bins=np.arange(0, 181, 10), range=(0, 180))
+                axs[1].errorbar(np.arange(5, 181, 10), hist_n/len(GroupNumPlot_LTG), xerr=None, yerr=np.sqrt(hist_n)/len(GroupNumPlot_LTG), ecolor=plot_color, ls='none', capsize=4, elinewidth=1, markeredgewidth=1)
+            
+                
+            ### General formatting
+            plt.gca().yaxis.set_major_formatter(PercentFormatter(1))
+            for index, ax in enumerate(axs):
+                ax.set_xlim(0, 180)
+                ax.set_ylim(0, 1)
+                ax.set_xticks(np.arange(0, 181, step=30))
+                if plot_2D_3D == '2D':
+                    ax.set_xlabel('Stellar-gas PA misalignment')   #3D projected $\Psi$$_{gas-star}$
+                elif plot_2D_3D == '3D':
+                    ax.set_xlabel('Stellar-gas misalignment')
+                if index == 0:
+                    ax.set_ylabel('Percentage of subsample')
+                ax.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='both', width=0.8, length=2)
+            
+            
+                """if plot_2D_3D == '2D':
+                    plt.suptitle("L%s: %s Misalignment\nmass: %.1f, type: 2D, hmr: %s, ax: %s, \nparticles: %s, com: %s, galaxies: %s/%s" %(str(mySims[0][1]), angle_type_in_i, np.log10(galaxy_mass_limit), str(min(spin_rad_in)), viewing_axis, str(gas_sf_min_particles), str(com_min_distance), len(GroupNumPlot), len(sample.GroupNum)))
+                elif plot_2D_3D == '3D':
+                    plt.suptitle("L%s: %s Misalignment\nmass: %.1f, type: 3D, hmr: %s, \nparticles: %s, com: %s, galaxies: %s/%s" %(str(mySims[0][1]), angle_type_in_i, np.log10(galaxy_mass_limit), str(min(spin_rad_in)), str(gas_sf_min_particles), str(com_min_distance), len(GroupNumPlot), len(sample.GroupNum)))
+                """
+            
+                # Annotations
+                ax.axvline(30, ls='--', lw=1, c='k')
+            
+                # Legend
+                legend_elements = [Line2D([0], [0], marker=' ', color='w')]
+                axs[0].legend(handles=legend_elements, labels=['ETGs'], loc='upper right', frameon=False, labelspacing=0.1, fontsize=8, labelcolor=[plot_color], handlelength=0)
+                axs[1].legend(handles=legend_elements, labels=['LTGs'], loc='upper right', frameon=False, labelspacing=0.1, fontsize=8, labelcolor=[plot_color], handlelength=0)
+                
+              
+            # other 
+            plt.tight_layout()
+            
+            # Savefig
+            if savefig == True:
+                if plot_2D_3D == '2D':
+                    plt.savefig("%s/MisAngleHist_morph_2D_mass%s_%s_rad%s_part%s_com%s_ax%s%s.%s" %(root_file, np.log10(galaxy_mass_limit), angle_type_in_i, str(int(min(spin_rad_in))), str(gas_sf_min_particles), str(com_min_distance), viewing_axis, savefig_txt, file_format), format=file_format, bbox_inches='tight', pad_inches=0.2, dpi=300)
+                elif plot_2D_3D == '3D':
+                    plt.savefig("%s/MisAngleHist_morph_3D_mass%s_%s_rad%s_part%s_com%s%s.%s" %(root_file, np.log10(galaxy_mass_limit), angle_type_in_i, str(int(min(spin_rad_in))), str(gas_sf_min_particles), str(com_min_distance), savefig_txt, file_format), format=file_format, bbox_inches='tight', pad_inches=0.2, dpi=300)
+            if showfig == True:
+                plt.show()
+            plt.close()    
+        
+            
             
         
         
@@ -459,6 +625,8 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
     #-------------------------
     if plot_single == True:
         _plot_single()
+    if plot_morphology == True:
+        _plot_morphology()
     #------------------------- 
     
     

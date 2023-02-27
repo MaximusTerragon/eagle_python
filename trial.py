@@ -10,7 +10,7 @@ import matplotlib.colors as color
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt 
 import pandas as pd
-import scipy as sp
+import scipy
 import vorbin
 from scipy import stats
 
@@ -19,27 +19,25 @@ from pafit.fit_kinematic_pa import fit_kinematic_pa
 from plotbin.sauron_colormap import register_sauron_colormap
 from vorbin.voronoi_2d_binning import voronoi_2d_binning
 
-#stars_x = np.array([-3, -2, -2, -2, -1, -1, -1, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3])
-#stars_y = np.array([-2, 1, 0, -1, 1, 0, -1, 1, 0, -1, 1, -1, 0, 1, 0, 2, 2])
-#stars_vel = np.array([-50, -10, -20, -15, 5, -10, 5, 0, 5, 10, -5, 40, 30, 20, 20, 50, 40])
-#stars_mass = np.array([10, 5, 10, 10, 10, 10, 5, 10, 10, 10, 5, 10, 5, 10, 10, 10, 10])
-
-N = 100
+stars_x = np.array([-3, -2, -2, -2, -1, -1, -1, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3])
+stars_y = np.array([-2, 1, 0, -1, 1, 0, -1, 1, 0, -1, 1, -1, 0, 1, 0, 2, 2])
+stars_vel = np.array([-50, -10, -20, -15, 5, -10, 5, 0, 5, 10, -5, 40, 30, 20, 20, 50, 40])
+stars_mass = np.array([10, 5, 10, 10, 10, 10, 5, 10, 10, 10, 5, 10, 5, 10, 10, 10, 10])
 
 # Set bins of 2dhist diagram
-bins = 20
+bins = 7
 
 # Target number of pixels
 target_pixels = 5
-pixsize = 10/bins
 
-np.random.seed(11111)
-stars_x = np.random.normal(0, 1, N)
-np.random.seed(22222)
-stars_y = np.random.normal(0, 1, N)
-np.random.seed(33333)
-stars_vel = np.random.normal(0, 10, N)
-stars_mass = np.random.rand(N) * 10
+#N = 100
+#np.random.seed(11111)
+#stars_x = np.random.normal(0, 1, N)
+#np.random.seed(22222)
+#stars_y = np.random.normal(0, 1, N)
+#np.random.seed(33333)
+#stars_vel = np.random.normal(0, 10, N)
+#stars_mass = np.random.rand(N) * 10
 
 # N = 10
 #[-0.05, 1.13], mass=6.73, vel= -0.53, weight=0.97, vel_weighted = -0.514
@@ -49,8 +47,8 @@ stars_mass = np.random.rand(N) * 10
 # Scatter for visualisation
 im1 = plt.scatter(stars_x, stars_y, c=stars_vel, cmap='coolwarm', s=0.5*stars_mass**2)
 plt.colorbar(im1, label='velocity')
-#for i, txt in enumerate(np.round(stars_vel,1)):
-#    plt.annotate(txt, (stars_x[i], stars_y[i]), fontsize=6)
+for i, txt in enumerate(np.round(stars_vel,1)):
+    plt.annotate(txt, (stars_x[i], stars_y[i]), fontsize=6)
 plt.xlim(-5, 5)
 plt.ylim(-5, 5)
 #plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/trial_scatter.jpeg', dpi=300)
@@ -62,15 +60,61 @@ plt.close()
 # Histogram to bin by count
 counts_stars, xbins, ybins = np.histogram2d(stars_y, stars_x, bins=(bins, bins), range=[[-5,5],[-5,5]])
 
+
+
+
 # Plot histogram count
 im2 = plt.pcolormesh(xbins, ybins, counts_stars, cmap='Greens')
 plt.colorbar(im2, label='count')
 plt.scatter(stars_x, stars_y, c=stars_vel, cmap='coolwarm', s=0.5*stars_mass**2)
-
-#for i, txt in enumerate(np.round(stars_vel,1)):
-#    plt.annotate(txt, (stars_x[i], stars_y[i]), fontsize=6)
+for i, txt in enumerate(np.round(stars_vel,1)):
+    plt.annotate(txt, (stars_x[i], stars_y[i]), fontsize=6)
     
 #plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/trial_counts.jpeg', dpi=300)
+plt.show()
+plt.close()
+
+
+
+# Histogram that measures total velocity in those bins
+vel_weighted_2, _, _, binnumber = stats.binned_statistic_2d(stars_y, stars_x, stars_vel*stars_mass/np.mean(stars_mass), statistic='sum', bins=(xbins, ybins))
+
+print('NEW')
+points_vel = vel_weighted_2[np.nonzero(counts_stars)]
+points_num = counts_stars[np.nonzero(counts_stars)]
+i, j = np.nonzero(counts_stars)                                     # find indicies of non-0 bins
+a = np.array((xbins[:-1] + 0.5*(xbins[1] - xbins[0]))[i])     # convert bin to centred coords (x, y)
+b = np.array((ybins[:-1] + 0.5*(ybins[1] - ybins[0]))[j])
+points     = np.column_stack((b, a))
+print('NEW RESULT:') 
+print(points_vel)
+print(points_num)
+print(points)
+
+# grouping points by binnumber
+
+#sort small to large
+print(' ')
+print(binnumber)
+print(stars_vel)
+binnumber_sorted = binnumber[np.array(binnumber).argsort()]
+stars_vel_sorted = stars_vel[np.array(binnumber).argsort()]
+print(binnumber_sorted)
+print(stars_vel_sorted)
+stars_vel_split = np.split(stars_vel_sorted, np.where(np.diff(binnumber_sorted))[0]+1)
+print(stars_vel_split)
+print('SIZES')
+print(len(stars_vel_split))
+print(points_num.size)
+
+
+# Plot mass-weighted, 2d histogram mean
+im2 = plt.pcolormesh(xbins, ybins, vel_weighted_2, cmap='coolwarm', vmin=-50, vmax=50)
+plt.colorbar(im2, label='mass-weighted mean velocity')
+plt.scatter(stars_x, stars_y, c=stars_vel*stars_mass/np.mean(stars_mass), cmap='coolwarm', s=0.5*stars_mass**2)
+for i, txt in enumerate(np.round((stars_vel*stars_mass/np.mean(stars_mass)),1)):
+    plt.annotate(txt, (stars_x[i], stars_y[i]), fontsize=6)
+#plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/trial_velweighted.jpeg', dpi=300)
 plt.show()
 plt.close()
 
@@ -80,26 +124,42 @@ plt.close()
 vel_weighted, _, _ = np.histogram2d(stars_y, stars_x, weights=stars_vel*stars_mass/np.mean(stars_mass), bins=(xbins, ybins))
 vel_std, _, _, _ = stats.binned_statistic_2d(stars_y, stars_x, stars_vel*stars_mass/np.mean(stars_mass), statistic='std', bins=(xbins, ybins))
 
-
 # Account for numbers within hist, if divide by 0 then use 0
 vel_weighted = np.divide(vel_weighted, counts_stars, out=np.zeros_like(vel_weighted), where=counts_stars!=0)
-#print(vel_weighted)
+print('OLD')
+print(vel_weighted)
+
+# Convert histogram2d data into coords + value
+i, j = np.nonzero(counts_stars)                                     # find indicies of non-0 bins
+a = np.array((xbins[:-1] + 0.5*(xbins[1] - xbins[0]))[i])     # convert bin to centred coords (x, y)
+b = np.array((ybins[:-1] + 0.5*(ybins[1] - ybins[0]))[j])
+   
+# Stack coordinates and remove 0 bins
+points_vel = vel_weighted[np.nonzero(counts_stars)]
+points_num = counts_stars[np.nonzero(counts_stars)]           # number of particles within bins
+points     = np.column_stack((b, a))
+print('END RESULT:')
+print(points_vel)
+print(points_num)
+print(points)
 
 # Plot mass-weighted, 2d histogram mean
 im2 = plt.pcolormesh(xbins, ybins, vel_weighted, cmap='coolwarm', vmin=-50, vmax=50)
 plt.colorbar(im2, label='mass-weighted mean velocity')
-
 plt.scatter(stars_x, stars_y, c=stars_vel*stars_mass/np.mean(stars_mass), cmap='coolwarm', s=0.5*stars_mass**2)
-#for i, txt in enumerate(np.round((stars_vel*stars_mass/np.mean(stars_mass)),1)):
-#    plt.annotate(txt, (stars_x[i], stars_y[i]), fontsize=6)
-
+for i, txt in enumerate(np.round((stars_vel*stars_mass/np.mean(stars_mass)),1)):
+    plt.annotate(txt, (stars_x[i], stars_y[i]), fontsize=6)
 #plt.savefig('/Users/c22048063/Documents/EAGLE/trial_plots/trial_velweighted.jpeg', dpi=300)
 plt.show()
 plt.close()
 
 
+
+
+
 # plot std
 im3 = plt.pcolormesh(xbins, ybins, vel_std, cmap='inferno')
+plt.scatter(stars_x, stars_y, c=stars_vel*stars_mass/np.mean(stars_mass), cmap='coolwarm', s=0.5*stars_mass**2)
 plt.colorbar(im3, label='std')
 plt.tight_layout()
 plt.show()

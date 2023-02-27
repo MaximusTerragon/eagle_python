@@ -35,15 +35,15 @@ PURPOSE
 - Can also orientate the galaxy to a given axis, based on the angular momentum vector calculated at a given distance. This is used in the calculation of kappa at 30pkpc
 
 """
-#1, 2, 3, 4, 5, 6, 7, 9, 8, 10, 11, 14, 12, 15, 13, 19, 20, 16, 21, 23, 25 
 #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
-#1  2  4  3  6  5  7  9 16 14 11  8 13 12 15 18 10 20 22 24 21
-def galaxy_render(manual_GroupNumList = np.array([2]),
+#1, 2, 4, 3, 6, 5, 7, 9, 16, 14, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
+def galaxy_render(manual_GroupNumList = np.array([1, 2, 4, 3, 6, 5, 7, 9, 16, 14, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21]),
                     SubGroupNum       = 0, 
                   spin_rad_in           = np.array([2.0]),              # multiples of rad
                   kappa_rad_in          = 30,                           # Calculate kappa for this radius [pkpc]
                   aperture_rad_in       = 30,                           # trim all data to this maximum value
                   align_rad_in          = False,                              # Align galaxy to stellar vector in. this radius [pkpc]
+                  projected_or_abs      = 'projected',                  # 'projected' or 'abs'
                   orientate_to_axis='z',                                      # Keep as 'z'
                   viewing_angle=0,                                            # Keep as 0
                     minangle  = 0,
@@ -54,7 +54,7 @@ def galaxy_render(manual_GroupNumList = np.array([2]),
                   centre_of_pot     = True,           # Plot most bound object (default centre)
                   centre_of_mass    = False,           # Plot total centre of mass
                   axis              = True,           # Plot small axis below galaxy
-                      boxradius_in          = 50,                  # boxradius of render [kpc]
+                      boxradius_in          = 30,                  # boxradius of render [kpc], 'rad', 'tworad'
                       particles             = 5000,
                       trim_rad_in           = np.array([1000]),     # WILL PLOT LOWEST VALUE. trim particles # multiples of rad, num [pkpc], found in subhalo.data[hmr]    
                       stars                 = True,
@@ -63,7 +63,7 @@ def galaxy_render(manual_GroupNumList = np.array([2]),
                       dark_matter           = True,
                       black_holes           = True,
                   find_uncertainties = False,                   # LEAVE THESE. whether to find 2D and 3D uncertainties
-                  viewing_axis = 'z',                           # Which axis to view galaxy from.  DEFAULT 'z'
+                  viewing_axis = 'x',                           # Which axis to view galaxy from.  DEFAULT 'z'
                   com_min_distance = 10000,                      # [pkpc] min distance between sfgas and stars.  DEFAULT 2.0 
                   gas_sf_min_particles = 0,                     # Minimum gas sf particles to use galaxy.  DEFAULT 100
                   min_inclination = 0,                          # Minimum inclination toward viewing axis [deg] DEFAULT 0
@@ -115,32 +115,37 @@ def galaxy_render(manual_GroupNumList = np.array([2]),
         # Initial extraction of galaxy data
         galaxy = Subhalo_Extract(mySims, dataDir, snapNum, GroupNum, SubGroupNum, aperture_rad_in, viewing_axis)
         
+        if projected_or_abs == 'projected':
+            use_rad = galaxy.halfmass_rad_proj
+        elif projected_or_abs == 'abs':
+            use_rad = galaxy.halfmass_rad
+            
         # Detect keywords of rad, tworad. All in [pkpc]
-        spin_rad = spin_rad_in * galaxy.halfmass_rad_proj
+        spin_rad = spin_rad_in * use_rad                            #pkpc
         trim_rad = trim_rad_in
         aperture_rad = aperture_rad_in
             
         if kappa_rad_in == 'rad':
-            kappa_rad = galaxy.halfmass_rad_proj
+            kappa_rad = use_rad
         elif kappa_rad_in == 'tworad':
-            kappa_rad = 2*galaxy.halfmass_rad_proj
+            kappa_rad = 2*use_rad
         else:
             kappa_rad = kappa_rad_in
         if align_rad_in == 'rad':
-            align_rad = galaxy.halfmass_rad_proj
+            align_rad = use_rad
         elif align_rad_in == 'tworad':
-            align_rad = 2*galaxy.halfmass_rad_proj
+            align_rad = 2*use_rad
         else:
             align_rad = align_rad_in
         if boxradius_in == 'rad':
-            boxradius = galaxy.halfmass_rad_proj
+            boxradius = use_rad
         elif boxradius_in == 'tworad':
-            boxradius = 2*galaxy.halfmass_rad_proj
+            boxradius = 2*use_rad
         else:
             boxradius = boxradius_in
             
-        # Galaxy will be rotated to calc_kappa_rad's stellar spin value
-        subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.GalaxyID, galaxy.stelmass, galaxy.gasmass, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, galaxy.MorphoKinem,
+        # Galaxy will be rotated to calc_kappa_rad's stellar spin value. subhalo.halfmass_rad_proj will be EITHER abs or projected
+        subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.GalaxyID, galaxy.stelmass, galaxy.gasmass, galaxy.halfmass_rad, use_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, galaxy.MorphoKinem,
                                             angle_selection,
                                             viewing_angle,
                                             spin_rad,

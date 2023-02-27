@@ -116,11 +116,11 @@ def fit_kinematic_pa(x, y, vel, debug=False, nsteps=361,
     assert x.size == y.size == vel.size, 'Input vectors (x, y, vel) must have the same size'
 
 
-    print('pafit', dvel)
+    #print('pafit', dvel)
 
 
-    if isinstance(dvel, collections.abc.Sequence):
-        print('asdasdasdasdad', dvel)
+    if isinstance(dvel, collections.abc.Sequence) == True:
+        print('CHECK SETTINGS', dvel)
         assert x.size == y.size == vel.size == dvel.size, 'Input vectors (x, y, vel) must have the same size'
         
 

@@ -194,7 +194,7 @@ def _weight_histo(gn,
                   quiet=1, 
                   plot=0,
                   colormap='coolwarm',
-                  debug=True):
+                  debug=False):
                  
     # Assign x, y, and z values for histogram2d depending on viewing axis
     if viewing_axis == 'x':
@@ -216,12 +216,18 @@ def _weight_histo(gn,
     # Histogram to find counts in each bin
     counts, xbins, ybins = np.histogram2d(y_new, x_new, bins=(pixel, pixel), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
     
+    #vel_weighted, _, _ = np.histogram2d(y_new, x_new, weights=vel*data_type[particle_type]['Mass']/np.mean(data_type[particle_type]['Mass']), bins=(xbins, ybins), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
+    #vel_weighted       = np.divide(vel_weighted, counts, out=np.zeros_like(counts), where=counts!=0)
+    
     # Histogram to find total mass-weighted velocity in those bins, and account for number of values in each bin
-    vel_weighted, _, _ = np.histogram2d(y_new, x_new, weights=vel*data_type[particle_type]['Mass']/np.mean(data_type[particle_type]['Mass']), bins=(xbins, ybins), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
-    vel_weighted       = np.divide(vel_weighted, counts, out=np.zeros_like(counts), where=counts!=0)
+    vel_weighted, _, _, _ = stats.binned_statistic_2d(y_new, x_new, vel*data_type[particle_type]['Mass']/np.mean(data_type[particle_type]['Mass']), statistic='mean', bins=(xbins, ybins), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
     
     # Find standard deviaion of each bin
     vel_std_plot, _, _, _ = stats.binned_statistic_2d(y_new, x_new, vel*data_type[particle_type]['Mass']/np.mean(data_type[particle_type]['Mass']), statistic='std', bins=(xbins, ybins))
+    #print(vel_std)
+    vel_std = np.ndarray.flatten(vel_std_plot)
+    vel_std = vel_std[~np.isnan(vel_std)]
+    
     
     if debug:
         # Print mean mass-weighted velocity of each bin
@@ -249,21 +255,22 @@ def _weight_histo(gn,
     b = np.array((ybins[:-1] + 0.5*(ybins[1] - ybins[0]))[j])
     
     # Stack coordinates and remove 0 bins
-    points_vel = vel_weighted[np.nonzero(counts)]
-    points_num = counts[np.nonzero(counts)]            # number of particles within bins
+    points_vel = vel_weighted[~np.isnan(vel_weighted)]
+    points_num = counts[~np.isnan(vel_weighted)]            # number of particles within bins
     points     = np.column_stack((b, a))
         
     if debug:
         print('points')
-        #print(points)
-        #print(points_num)
+        print(points)
+        print(points_num)
         print(points_vel)
+        print(vel_std)
+    
+    
     
     #print(vel_std)
-    vel_std = np.ndarray.flatten(vel_std_plot)
-    vel_std = vel_std[~np.isnan(vel_std)]
+    #print('2dhist check vel_std ^')
     
-    print('new vel std', vel_std)
     
     """# plot std
     im3 = plt.pcolormesh(xbins, ybins, vel_std_plot, cmap='inferno')
@@ -271,20 +278,6 @@ def _weight_histo(gn,
     plt.tight_layout()
     plt.show()
     plt.close()"""
-    
-    
-    print('SIZE CHECKS')
-    print(points.size)
-    print(points_num.size)
-    print(points_vel.size)
-    print(xbins.size)
-    print(ybins.size)
-    print(vel_weighted.size)
-    print(vel_std.size)
-    
-    
-    
-    
     
     return points, points_num, points_vel, xbins, ybins, vel_weighted, vel_std
     
@@ -394,9 +387,31 @@ def _voronoi_tessalate(gn,
     # Histogram to find counts in each bin
     counts, xbins, ybins = np.histogram2d(y_new, x_new, bins=(pixel, pixel), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
     
+    
+    
+    
     # Histogram to find total mass-weighted velocity in those bins, and account for number of values in each bin
-    vel_weighted, _, _ = np.histogram2d(y_new, x_new, weights=vel*data_type[particle_type]['Mass']/np.mean(data_type[particle_type]['Mass']), bins=(xbins, ybins), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
+    #vel_weighted, _, _ = np.histogram2d(y_new, x_new, weights=vel*data_type[particle_type]['Mass']/np.mean(data_type[particle_type]['Mass']), bins=(xbins, ybins), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
+    
+    # Histogram to find TOTAL mass-weighted velocity in those bins, and account for number of values in each bin
+    vel_weighted, _, _, binnumber = stats.binned_statistic_2d(y_new, x_new, vel*data_type[particle_type]['Mass']/np.mean(data_type[particle_type]['Mass']), statistic='sum', bins=(xbins, ybins), range=[[-boxradius, boxradius], [-boxradius, boxradius]])
+    binnumber_sorted = binnumber[np.array(binnumber).argsort()]
+    vel_sorted       = vel*data_type[particle_type]['Mass']/np.mean(data_type[particle_type]['Mass'])
+    vel_sorted       = vel_sorted[np.array(binnumber.argsort())]
+    # Divide up each bin's stars into nested arrays, to feed into voronoi for easier std calculation on total bin basis
+    points_vel_split = np.split(vel_sorted, np.where(np.diff(binnumber_sorted))[0]+1)
+    
+    
 
+    # Find standard deviaion of each bin
+    #vel_std_plot, _, _, _ = stats.binned_statistic_2d(y_new, x_new, vel*data_type[particle_type]['Mass']/np.mean(data_type[particle_type]['Mass']), statistic='std', bins=(xbins, ybins))
+    #print(vel_std)
+    #points_std = np.ndarray.flatten(vel_std_plot)
+    #points_std = points_std[~np.isnan(points_std)]
+    #print(len(vel_weighted_for_std))
+    #print(len(points_std))
+    
+    
     # Convert histogram2d data into coords + value
     i, j = np.nonzero(counts)                                     # find indicies of non-0 bins
     a = np.array((xbins[:-1] + 0.5*(xbins[1] - xbins[0]))[i])     # convert bin to centred coords (x, y)
@@ -407,15 +422,25 @@ def _voronoi_tessalate(gn,
     points_num = counts[np.nonzero(counts)]           # number of particles within bins
     points     = np.column_stack((b, a))
 
+
+    
+    #print('points_vel and points_vel_split')
+    #print(len(points_vel))
+    #print(len(points_vel_split))
+    #print(points_vel)
+    #print(points_vel_split)
+
+
+
     # Call 2d voronoi binning (don't plot)
     if plot:
         plt.figure()
         graphformat(8, 11, 11, 9, 11, 5, 4)
-        _, x_gen, y_gen, _, _, bin_count, vel, _, _ = voronoi_2d_binning(points[:,0], points[:,1], points_vel, points_num, target_particles, plot=1, quiet=quiet, pixelsize=(2*boxradius/pixel), sn_func=None)
+        _, x_gen, y_gen, _, _, bin_count, vel, vel_std, _, _ = voronoi_2d_binning(points[:,0], points[:,1], points_vel, points_num, points_vel_split, target_particles, plot=1, quiet=quiet, pixelsize=(2*boxradius/pixel), sn_func=None)
         plt.savefig('%s/gn_%s_vorbin_output_%s_%s_%s_angle_%s.jpeg' %(str(root_file), str(gn), str(particle_type), str(trim_rad_in), str(viewing_axis), str(viewing_angle)), dpi=300, bbox_inches='tight', pad_inches=0.5)
         plt.close()
     if not plot:
-        _, x_gen, y_gen, _, _, bin_count, vel, _, _ = voronoi_2d_binning(points[:,0], points[:,1], points_vel, points_num, target_particles, plot=0, quiet=quiet, pixelsize=(2*boxradius/pixel), sn_func=None)
+        _, x_gen, y_gen, _, _, bin_count, vel, vel_std, _, _ = voronoi_2d_binning(points[:,0], points[:,1], points_vel, points_num, points_vel_split, target_particles, plot=0, quiet=quiet, pixelsize=(2*boxradius/pixel), sn_func=None)
     
     if not quiet:
         # print number of particles in each bin
@@ -428,7 +453,7 @@ def _voronoi_tessalate(gn,
     vor        = Voronoi(points_inf)
     #vor        = Voronoi(points)                    this can sometimes fail
     
-    return points, vel_bin, vor
+    return points, vel_bin, vel_std, vor
     
          
 """ 
@@ -451,9 +476,9 @@ SAMPLE:
 """
 
 #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
-def velocity_projection(manual_GroupNumList = np.array([2]), 
+def velocity_projection(manual_GroupNumList = np.array([]), 
                           SubGroupNum       = 0,
-                          galaxy_mass_limit = 10**9,                     # Used in sample
+                          galaxy_mass_limit = 10**9.0,                     # Used in sample
                         kappa_rad_in    = 30,                 # calculate kappa for this radius [pkpc]
                         aperture_rad_in = 30,                 # trim all data to this maximum value before calculations
                         align_rad_in    = False,                             # align galaxy to stellar vector in. this radius [pkpc]
@@ -470,26 +495,27 @@ def velocity_projection(manual_GroupNumList = np.array([2]),
                                 viewing_axis            = 'z',                     # Which axis to view galaxy from.  DEFAULT 'z'
                                 resolution              = 0.7,                     # Bin size for 2dhisto [pkpc].  DEFAULT 2.0
                                 target_particles        = 5,                       # Target voronoi bins.  DEFAULT 2.0
-                                min_bins                = 10,                       # Minimum number of bins for 2dhisto (and voronoi) to find pafit
+                                min_bins                = 4,                       # Minimum number of bins for 2dhisto (and voronoi) to find pafit
                                 com_min_distance        = 2.0,                     # [pkpc] min distance between sfgas and stars.  DEFAULT 2.0 
                                 gas_sf_min_particles    = 20,                     # Minimum gas sf particles to use galaxy.  DEFAULT 100
                                 min_inclination         = 15,                       # Minimum inclination toward viewing axis [deg] DEFAULT 0
+                                projected_or_abs        = 'projected',              # 'projected' or 'abs'
                                 angle_type_in           = ['stars_gas_sf'],        # PA fits and PA misalignment angles to be found ['stars_gas', 'stars_gas_sf', 'stars_gas_nsf', 'gas_sf_gas_nsf']. Particles making up this data will be automatically found, ei. stars_gas_sf = stars and gas_sf                                                                            
                         root_file = '/Users/c22048063/Documents/EAGLE/plots',      
                         file_format = 'png',
                           print_galaxy       = False,           # Print detailed galaxy stats in chat
                           print_galaxy_short = True,           # Print single-line galaxy stats
                           print_progress     = False,               # Whether to print progress of current task
-                          csv_file           = False,              # .csv file will ALL data
-                            csv_name = 'data_pa_NEW',
+                          csv_file           = True,              # .csv file will ALL data
+                            csv_name = 'data_pa_UPDATED',
                           showfig        = True,
-                          savefig        = False,                 # Whether to save and/or show figures
-                            savefigtxt       = '',                # added txt to append to end of savefile
+                          savefig        = True,                 # Whether to save and/or show figures
+                            savefigtxt       = '_UPDATED',                # added txt to append to end of savefile
                           debug = True,
-                                pa_angle_type_in            = '2dhist',             # which pa angles to use: '2dhist', 'voronoi', 'both'... compare will use either or both and compare to 3D
-                                  plot_2dhist_graph           = True, 
+                                pa_angle_type_in            = 'voronoi',             # which pa angles to use: '2dhist', 'voronoi', 'both'... compare will use either or both and compare to 3D
+                                  plot_2dhist_graph           = False, 
                                   plot_voronoi_graph          = False,
-                                  plot_2dhist_pafit_graph     = True,
+                                  plot_2dhist_pafit_graph     = False,
                                   plot_voronoi_pafit_graph    = False,
                                 pa_compare                  = False,               # plot the voronoi and 2dhist data pa_fit comparison for single galaxy
                                     pa_compare_angle_type_in  = 'stars_gas_sf',        # which misangle to compare 
@@ -499,7 +525,7 @@ def velocity_projection(manual_GroupNumList = np.array([2]),
                                     pa_radial_angle_type_in   = 'stars_gas_sf',         # which type of angle to use
                                 mis_pa_compare              = True,                # plot misangle - pafit for all selected galaxies
                                 mis_angle_histo             = False,                 # plot histogram of pafit misangles USES SAME _type_in, angle_type_in, _use_rad_in as above  
-                                    mis_pa_compare_type_in        = '2dhist',          # what to compare to 3D
+                                    mis_pa_compare_type_in        = 'voronoi',          # what to compare to 3D
                                     mis_pa_compare_angle_type_in  = 'stars_gas_sf',
                                     mis_pa_compare_use_rad_in     = 2.0):               # MAKE SURE THIS IS INCLUDED IN SPIN_RAD_IN
                         
@@ -590,29 +616,34 @@ def velocity_projection(manual_GroupNumList = np.array([2]),
         # Initial extraction of galaxy data
         galaxy = Subhalo_Extract(mySims, dataDir, snapNum, GroupNum, SubGroupNum, aperture_rad_in, viewing_axis)
         
-        
         #-------------------------------------------------------------------
         # Automating some later variables to avoid putting them in manually
-        spin_rad = spin_rad_in * galaxy.halfmass_rad_proj           #pkpc
+        
+        if projected_or_abs == 'projected':
+            use_rad = galaxy.halfmass_rad_proj
+        elif projected_or_abs == 'abs':
+            use_rad = galaxy.halfmass_rad
+            
+        spin_rad = spin_rad_in * use_rad                            #pkpc
         trim_rad = trim_rad_in                                      #rads
         aperture_rad = aperture_rad_in
             
         if kappa_rad_in == 'rad':
-            kappa_rad = galaxy.halfmass_rad_proj
+            kappa_rad = use_rad
         elif kappa_rad_in == 'tworad':
-            kappa_rad = 2*galaxy.halfmass_rad_proj
+            kappa_rad = 2*use_rad
         else:
             kappa_rad = kappa_rad_in
         if align_rad_in == 'rad':
-            align_rad = galaxy.halfmass_rad_proj
+            align_rad = use_rad
         elif align_rad_in == 'tworad':
-            align_rad = 2*galaxy.halfmass_rad_proj
+            align_rad = 2*use_rad
         else:
             align_rad = align_rad_in  
         if boxradius_in == 'rad':
-            boxradius = galaxy.halfmass_rad_proj
+            boxradius = use_rad
         elif boxradius_in == 'tworad':
-            boxradius = 2*galaxy.halfmass_rad_proj
+            boxradius = 2*use_rad
         else:
             boxradius = boxradius_in
         #------------------------------------------------------------------
@@ -654,7 +685,7 @@ def velocity_projection(manual_GroupNumList = np.array([2]),
                 time_start = time.time()
                 
             # If we want the original values, enter 0 for viewing angle
-            subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.GalaxyID, galaxy.stelmass, galaxy.gasmass, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, galaxy.MorphoKinem,
+            subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.GalaxyID, galaxy.stelmass, galaxy.gasmass, galaxy.halfmass_rad, use_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, galaxy.MorphoKinem,
                                                 angle_selection,
                                                 viewing_angle,
                                                 spin_rad,
@@ -839,7 +870,7 @@ def velocity_projection(manual_GroupNumList = np.array([2]),
                             continue
                             
                         # Extract points
-                        points_particle, vel_bin_particle, vor = _voronoi_tessalate(subhalo.gn, root_file, subhalo.data['%s' %str(trim_rad_i)], particle_list_in_i, viewing_angle, viewing_axis, resolution, target_particles, boxradius, trim_rad_i*subhalo.halfmass_rad_proj)
+                        points_particle, vel_bin_particle, vel_std_particle, vor = _voronoi_tessalate(subhalo.gn, root_file, subhalo.data['%s' %str(trim_rad_i)], particle_list_in_i, viewing_angle, viewing_axis, resolution, target_particles, boxradius, trim_rad_i*subhalo.halfmass_rad_proj)
                 
                         if debug == True:
                             print('points_particle', points_particle)
@@ -1117,7 +1148,7 @@ def velocity_projection(manual_GroupNumList = np.array([2]),
                         
                         
                         # Extract points
-                        points_particle, vel_bin_particle, vor = _voronoi_tessalate(subhalo.gn, root_file, subhalo.data['%s' %str(trim_rad_i)], particle_list_in_i, viewing_angle, viewing_axis, resolution, target_particles, boxradius, trim_rad_i*subhalo.halfmass_rad_proj)
+                        points_particle, vel_bin_particle, vel_std_particle, vor = _voronoi_tessalate(subhalo.gn, root_file, subhalo.data['%s' %str(trim_rad_i)], particle_list_in_i, viewing_angle, viewing_axis, resolution, target_particles, boxradius, trim_rad_i*subhalo.halfmass_rad_proj)
                         
                         if debug == True:
                             #print('points_particle', points_particle)
@@ -1136,16 +1167,16 @@ def velocity_projection(manual_GroupNumList = np.array([2]),
                             all_flags['%s' %str(subhalo.gn)].append('VOID: Not enough voronoi bins to pafit: %s, %s' %(particle_list_in_i, str(len(points_particle))))
                             
                             continue
-                        #--------------------------------
+                        #--------------------------------                
                             
                         # Run pa_fit on voronoi
                         if plot:
-                            angle_particle, angle_err_particle, velsyst_particle = fit_kinematic_pa(points_particle[:,0], points_particle[:,1], vel_bin_particle, quiet=1, plot=1)
+                            angle_particle, angle_err_particle, velsyst_particle = fit_kinematic_pa(points_particle[:,0], points_particle[:,1], vel_bin_particle, dvel=vel_std_particle, quiet=1, plot=1)
                             if savefig == True:
                                 plt.savefig('%s/gn_%s_PA_voronoi_%s_rad%s_ax%s_angle%s%s.jpeg' %(str(root_file), str(subhalo.gn), str(particle_list_in_i), str(trim_rad_i), str(viewing_axis), str(viewing_angle), savefigtxt), dpi=300, bbox_inches='tight', pad_inches=0.3)
                         
                         elif not plot:
-                            angle_particle, angle_err_particle, velsyst_particle = fit_kinematic_pa(points_particle[:,0], points_particle[:,1], vel_bin_particle, quiet=1, plot=0)
+                            angle_particle, angle_err_particle, velsyst_particle = fit_kinematic_pa(points_particle[:,0], points_particle[:,1], vel_bin_particle, dvel=vel_std_particle, quiet=1, plot=0)
                     
                         if not quiet:
                             print("PA voronoi %s: %.1f +/- %.1f" %(particle_list_in_i, angle_particle, angle_err_particle))
@@ -1154,6 +1185,14 @@ def velocity_projection(manual_GroupNumList = np.array([2]),
                             if showfig == True:
                                 plt.show()
                             plt.close()
+                        
+                        
+                        # Test for effect of implemented dvel
+                        #print('show dvel=10')
+                        #plt.figure()
+                        #angle_particle, angle_err_particle, velsyst_particle = fit_kinematic_pa(points_particle[:,0], points_particle[:,1], vel_bin_particle, dvel=10, quiet=1, plot=1)
+                        #plt.show()
+                        
                         
                         
                         # Append to dictionary
@@ -1678,7 +1717,7 @@ def velocity_projection(manual_GroupNumList = np.array([2]),
                 
                 GroupNumPlot.append(GroupNum)
                 stel_ani.append(all_general['%s' %str(GroupNum)]['disp_ani'])
-                print('SF PARTICLE COUNT: ', all_particles['%s' %str(GroupNum)]['gas_sf'])
+                #print('SF PARTICLE COUNT: ', all_particles['%s' %str(GroupNum)]['gas_sf'])
                 
             else:
                 GroupNumNotPlot.append(GroupNum)
@@ -1710,14 +1749,14 @@ def velocity_projection(manual_GroupNumList = np.array([2]),
         print('Min. c.o.m distance: %.1f [pkpc]' %com_min_distance)
         print('---------------------------------------')
         print('Initial sample:  ', len(GroupNumList))
-        print(stel_ani)
+        #print(stel_ani)
         print('Final sample:    ', len(GroupNumPlot))
         print('Not in sample:   ', len(GroupNumNotPlot)) 
         print('==========================================')
             
         
         # Initialise figure
-        graphformat(8, 11, 11, 9, 11, 4.5, 3.75)
+        graphformat(8, 11, 11, 9, 11, 3.75, 3.75)
         plt.figure()
 
         # Labels
@@ -1771,9 +1810,9 @@ def velocity_projection(manual_GroupNumList = np.array([2]),
         # Savefig
         if savefig == True:
             if useangle == '2D':
-                plt.savefig('%s/MisPAcompare_2D_mass%s_%s_%s_rad%s_part%s_com%s_bins%s_ax%s%s_%s/%s.%s' %(str(root_file), np.log10(galaxy_mass_limit), mis_pa_compare_angle_type_in, mis_pa_compare_type_in, str(mis_pa_compare_use_rad_in), str(gas_sf_min_particles), str(com_min_distance), str(min_bins), viewing_axis, savefigtxt, str(len(GroupNumPlot)), str(len(GroupNumList)), file_format), format=file_format, dpi=300, bbox_inches='tight', pad_inches=0.2)
+                plt.savefig('%s/MisPAcompare_2D_mass%s_%s_%s_rad%s_part%s_com%s_inc%s_bins%s_ax%s%s_%s-%s.%s' %(str(root_file), np.log10(galaxy_mass_limit), mis_pa_compare_angle_type_in, mis_pa_compare_type_in, str(mis_pa_compare_use_rad_in), str(gas_sf_min_particles), str(com_min_distance), str(min_inclination), str(min_bins), viewing_axis, savefigtxt, str(len(GroupNumPlot)), str(len(GroupNumList)), file_format), format=file_format, dpi=300, bbox_inches='tight', pad_inches=0.2)
             if useangle == '3D':
-                plt.savefig('%s/MisPAcompare_3D_mass%s_%s_%s_rad%s_part%s_com%s_bins%s_ax%s%s_%s/%s.%s' %(str(root_file), np.log10(galaxy_mass_limit), mis_pa_compare_angle_type_in, mis_pa_compare_type_in, str(mis_pa_compare_use_rad_in), str(gas_sf_min_particles), str(com_min_distance), str(min_bins), viewing_axis, savefigtxt, str(len(GroupNumPlot)), str(len(GroupNumList)), file_format), format=file_format, dpi=300, bbox_inches='tight', pad_inches=0.2)
+                plt.savefig('%s/MisPAcompare_3D_mass%s_%s_%s_rad%s_part%s_com%s_inc%s_bins%s_ax%s%s_%s-%s.%s' %(str(root_file), np.log10(galaxy_mass_limit), mis_pa_compare_angle_type_in, mis_pa_compare_type_in, str(mis_pa_compare_use_rad_in), str(gas_sf_min_particles), str(com_min_distance), str(min_inclination), str(min_bins), viewing_axis, savefigtxt, str(len(GroupNumPlot)), str(len(GroupNumList)), file_format), format=file_format, dpi=300, bbox_inches='tight', pad_inches=0.2)
         if showfig == True:
             plt.show()
         plt.close()

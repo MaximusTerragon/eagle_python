@@ -43,11 +43,12 @@ visualising it with a voronoi
 from time import perf_counter as clock
 import numpy as np
 import matplotlib.pyplot as plt
+import collections.abc
 from scipy import spatial, ndimage
 
 #----------------------------------------------------------------------------
 
-def _sn_func(index, signal=None, noise=None):
+def _sn_func(index, signal=None, noise=None, standev=None):
     """
     Default function to calculate the S/N of a bin with spaxels "index".
 
@@ -78,6 +79,9 @@ def _sn_func(index, signal=None, noise=None):
     :return: scalar S/N or another quantity that needs to be equalized.
 
     """
+    #sn = np.sum(signal[index])/np.sqrt(np.sum(noise[index]**2))
+    """ OLD METHOD FOR STD
+    # here ns = noise is the counts of each bin
     def _pooled_std(ns, stdevs):
         variences = stdevs**2
         numerator=0
@@ -86,19 +90,46 @@ def _sn_func(index, signal=None, noise=None):
             numerator += (n-1)*var
             denominator += (n-1)
         result = numerator/denominator
+    print('-----------\nCOUNT   ', sn)
+    if isinstance(index, np.int64):
+        print('check standev', standev[index])
+        vel_std = standev[index]
+        print('integer', index)
+    elif len(index) == 1:
+        vel_std = np.sum(standev[index])
+        print('length 1', index)
+    else:
+        print('check standev', standev[index])
+        vel_std = np.sum(_pooled_std(noise[index], standev[index]))     #np.sum used to converg [71.73693] into 71.736369
+        print('array', index)
+    """
     
-    
-    #sn = np.sum(signal[index])/np.sqrt(np.sum(noise[index]**2))
+    # here sn is the counts within each bin, standev is a nested index of individual spins. So standev[index] returns each velocity-weighted individual particle
     sn       = np.sum(noise[index])
     velocity = np.sum(signal[index])
     
-    #vel_std = _pooled_std(noise[index], )
+    #print('===============')
+    #print(velocity)
+    #print('index')
+    #print(index)
     
-    print('velocuty', signal[index])
-        
     
-    #print("VEL", velocity)
-    #print("SN", sn)
+    if isinstance(index, np.int64) == True:
+        vel_selection = []
+        vel_selection.append(standev[index])
+    else:
+        vel_selection = []
+        for i in index:
+            vel_selection.append(standev[i])
+    
+    #print(np.sum(np.concatenate(vel_selection).ravel()))
+    vel_std  = np.std(np.concatenate(vel_selection).ravel(), ddof=1)
+    
+    #print('vel_selection')
+    #print(np.concatenate(vel_selection).ravel())
+    #print('VELOCITY', velocity)
+    #print('STD     ', vel_std) 
+   
 
     # The following commented line illustrates, as an example, how one
     # would include the effect of spatial covariance using the empirical
@@ -107,7 +138,7 @@ def _sn_func(index, signal=None, noise=None):
     #
     # sn /= 1 + 1.07*np.log10(index.size)
 
-    return sn, velocity
+    return sn, velocity, vel_std
 
 #----------------------------------------------------------------------
 
@@ -146,7 +177,7 @@ def _roundness(x, y, pixelSize):
 
 #----------------------------------------------------------------------
 
-def _accretion(x, y, signal, noise, target_sn, pixelsize, quiet, sn_func):
+def _accretion(x, y, signal, noise, standev, target_sn, pixelsize, quiet, sn_func):
     """
     Implements steps (i)-(v) in section 5.1 of Cappellari & Copin (2003)
 
@@ -165,7 +196,7 @@ def _accretion(x, y, signal, noise, target_sn, pixelsize, quiet, sn_func):
             raise ValueError("Dataset is large: Provide `pixelsize`")
 
     currentBin = np.argmax(noise)  # Start from the pixel with highest S/N
-    SN, VEL = sn_func(currentBin, signal, noise)
+    SN, VEL, STD = sn_func(currentBin, signal, noise, standev)
 
     # Rough estimate of the expected final bins number.
     # This value is only used to give an idea of the expected
@@ -208,7 +239,7 @@ def _accretion(x, y, signal, noise, target_sn, pixelsize, quiet, sn_func):
             # the CANDIDATE pixel to the current bin
             #
             SNOld = SN
-            SN, VEL = sn_func(nextBin, signal, noise)
+            SN, VEL, STD = sn_func(nextBin, signal, noise, standev)
 
             # Break if any of these tests is true:
             # 1) The CANDIDATE pixel is disconnected from the current bin;
@@ -243,11 +274,11 @@ def _accretion(x, y, signal, noise, target_sn, pixelsize, quiet, sn_func):
         # the binned pixels, and start a new bin from that pixel.
         #
         unBinned = np.flatnonzero(classe == 0)
-        if sn_func(unBinned, signal, noise)[0] < target_sn:
+        if sn_func(unBinned, signal, noise, standev)[0] < target_sn:
             break  # Stops if the remaining pixels do not have enough capacity
         k = np.argmin((x[unBinned] - xBar)**2 + (y[unBinned] - yBar)**2)
         currentBin = unBinned[k]    # The bin is initially made of one pixel
-        SN, VEL = sn_func(currentBin, signal, noise)
+        SN, VEL, STD = sn_func(currentBin, signal, noise, standev)
 
     classe *= good  # Set to zero all bins that did not reach the target S/N
 
@@ -341,7 +372,7 @@ def _cvt_equal_mass(x, y, signal, noise, xnode, ynode, pixelsize, quiet, sn_func
 
 #-----------------------------------------------------------------------
 
-def _compute_useful_bin_quantities(x, y, signal, noise, xnode, ynode, scale, sn_func):
+def _compute_useful_bin_quantities(x, y, signal, noise, standev, xnode, ynode, scale, sn_func):
     """
     Recomputes (Weighted) Voronoi Tessellation of the pixels grid to make sure
     that the class number corresponds to the proper Voronoi generator.
@@ -361,11 +392,12 @@ def _compute_useful_bin_quantities(x, y, signal, noise, xnode, ynode, scale, sn_
     area = np.bincount(classe)
     sn  = np.empty_like(xnode)
     vel = np.empty_like(xnode)
+    std = np.empty_like(xnode)
     for k in good:
         index = np.flatnonzero(classe == k)   # index of pixels in bin k.
-        sn[k], vel[k] = sn_func(index, signal, noise)
+        sn[k], vel[k], std[k] = sn_func(index, signal, noise, standev)
 
-    return classe, xbar, ybar, sn, vel, area
+    return classe, xbar, ybar, sn, vel, std, area
 
 #-----------------------------------------------------------------------
 
@@ -392,7 +424,7 @@ def _display_pixels(x, y, counts, pixelsize):
 
 #----------------------------------------------------------------------
 
-def voronoi_2d_binning(x, y, signal, noise, target_sn, cvt=True, pixelsize=None,
+def voronoi_2d_binning(x, y, signal, noise, standev, target_sn, cvt=False, pixelsize=None,
                        plot=True, quiet=True, sn_func=None, wvt=True):
     """ 
     VorBin Purpose
@@ -599,7 +631,7 @@ def voronoi_2d_binning(x, y, signal, noise, target_sn, cvt=True, pixelsize=None,
     5. Merge the set of lower resolution bins with the higher resolution ones.
 
     """
-    assert x.size == y.size == signal.size == noise.size, \
+    assert x.size == y.size == signal.size == noise.size == len(standev), \
         'Input vectors (x, y, signal, noise) must have the same size'
     assert np.all((noise > 0) & np.isfinite(noise)), \
         'NOISE must be positive and finite'
@@ -609,7 +641,7 @@ def voronoi_2d_binning(x, y, signal, noise, target_sn, cvt=True, pixelsize=None,
 
     # Perform basic tests to catch common input errors
     #
-    if sn_func(np.flatnonzero(noise > 0), signal, noise)[0] < target_sn:
+    if sn_func(np.flatnonzero(noise > 0), signal, noise, standev)[0] < target_sn:
         raise ValueError("""Not enough S/N in the whole set of pixels.
             Many pixels may have noise but virtually no signal.
             They should not be included in the set to bin,
@@ -622,7 +654,7 @@ def voronoi_2d_binning(x, y, signal, noise, target_sn, cvt=True, pixelsize=None,
     if not quiet:
         print('Bin-accretion...')
     classe, pixelsize = _accretion(
-        x, y, signal, noise, target_sn, pixelsize, quiet, sn_func)
+        x, y, signal, noise, standev, target_sn, pixelsize, quiet, sn_func)
     if not quiet:
         print(np.max(classe), ' initial bins.')
         print('Reassign bad bins...')
@@ -639,8 +671,8 @@ def voronoi_2d_binning(x, y, signal, noise, target_sn, cvt=True, pixelsize=None,
             print(it, ' iterations.')
     else:
         scale = np.ones_like(xnode)
-    classe, xBar, yBar, sn, vel, area = _compute_useful_bin_quantities(
-        x, y, signal, noise, xnode, ynode, scale, sn_func)
+    classe, xBar, yBar, sn, vel, std, area = _compute_useful_bin_quantities(
+        x, y, signal, noise, standev, xnode, ynode, scale, sn_func)
     single = area == 1
     t3 = clock()
     if not quiet:
@@ -671,6 +703,6 @@ def voronoi_2d_binning(x, y, signal, noise, target_sn, cvt=True, pixelsize=None,
         plt.plot([np.min(rad), np.max(rad)], [target_sn, target_sn], ls='--', label='Target particles')
         plt.legend()
 
-    return classe, xnode, ynode, xBar, yBar, sn, vel, area, scale
+    return classe, xnode, ynode, xBar, yBar, sn, vel, std, area, scale
 
 #----------------------------------------------------------------------------

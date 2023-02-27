@@ -1087,7 +1087,7 @@ class Subhalo:
                     # Orientate entire galaxy according to matrix above, use this to find kappa
                     gas_sf_aligned_kappa  = self._rotate_galaxy(matrix, data_nil['gas_sf'])
                     self.kappa_gas_sf = self._kappa_co(gas_sf_aligned_kappa, kappa_rad_in)
-                    
+                                        
                     self.general.update({'kappa_gas_sf': self.kappa_gas_sf})
                 
                 if 'gas_nsf' in particle_list_in:

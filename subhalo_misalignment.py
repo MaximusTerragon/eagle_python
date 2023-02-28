@@ -143,192 +143,218 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
                               print_galaxy       = False,
                               print_galaxy_short = False,
                               print_progress     = False,
-                              csv_file           = False,              # .csv file will ALL data
+                              csv_load       = True,              # .csv file will ALL data
+                                csv_load_name = 'data_misalignment_2023-02-28 10:45:11.358603',       #FIND IN LINUX, mac is weird
+                              csv_file           = True,              # .csv file will ALL data
                                 csv_name = 'data_misalignment',
                               showfig   = False,
                               savefig   = True,  
-                                savefig_txt = '',            #extra savefile txt
+                                savefig_txt = '_new',            #extra savefile txt
                               debug = False):            
     
     
-    time_start = time.time()   
+    time_start = time.time()  
     
-    # use manual input if values given, else use sample with mstar_limit
-    if print_progress:
-        print('Creating sample')
-        time_start = time.time()
+    #-----------------------------------------
+    # Load our sample
+    if csv_load:
         
-    if len(manual_GroupNumList) > 0:
-        GroupNumList = manual_GroupNumList
-    else:
-        # creates a list of applicable gn (and sgn) to sample. To include satellite galaxies, use 'yes'
-        sample = Sample(mySims, snapNum, galaxy_mass_limit, 'no')
-        print("Sample length: ", len(sample.GroupNum))
-        print("  ", sample.GroupNum)
-        GroupNumList = sample.GroupNum
-    
-    
-    
-    #-------------------------------------------------------------------
-    # Automating some later variables to avoid putting them in manually
-    
-    # making particle_list_in and angle_selection obsolete:
-    particle_list_in = []
-    angle_selection  = []
-    if 'stars_gas' in angle_type_in:
-        if 'stars' not in particle_list_in:
-            particle_list_in.append('stars')
-        if 'gas' not in particle_list_in:
-            particle_list_in.append('gas')
-        angle_selection.append(['stars', 'gas'])
-    if 'stars_gas_sf' in angle_type_in:
-        if 'stars' not in particle_list_in:
-            particle_list_in.append('stars')
-        if 'gas_sf' not in particle_list_in:
-            particle_list_in.append('gas_sf')
-        angle_selection.append(['stars', 'gas_sf'])
-    if 'stars_gas_nsf' in angle_type_in:
-        if 'stars' not in particle_list_in:
-            particle_list_in.append('stars')
-        if 'gas_nsf' not in particle_list_in:
-            particle_list_in.append('gas_nsf')
-        angle_selection.append(['stars', 'gas_nsf'])
-    if 'gas_sf_gas_nsf' in angle_type_in:
-        if 'gas_sf' not in particle_list_in:
-            particle_list_in.append('gas_sf')
-        if 'gas_nsf' not in particle_list_in:
-            particle_list_in.append('gas_nsf')
-        angle_selection.append(['gas_sf', 'gas_nsf'])
-    #-------------------------------------------------------------------
-    
-    # Empty dictionaries to collect relevant data
-    all_flags         = {}          # has reason why galaxy failed sample
-    all_general       = {}          # has total masses, kappa, halfmassrad
-    all_coms          = {}
-    all_misangles     = {}          # has all 3d angles
-    all_particles     = {}          # has all the particle count and mass within rad
-    all_misanglesproj = {}   # has all 2d projected angles from 3d when given a viewing axis and viewing_angle = 0
-    
-    
-    for GroupNum in tqdm(GroupNumList):
+        # Load existing sample
+        dict_new = json.load(open(r'%s/%s.csv' %(root_file, csv_load_name), 'r'))
         
-        if print_progress:
-            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-            print('Extracting particle data Subhalo_Extract()')
-            time_start = time.time()
+        all_misangles       = dict_new['all_misangles']
+        all_coms            = dict_new['all_coms']
+        all_particles       = dict_new['all_particles']
+        all_misanglesproj   = dict_new['all_misanglesproj']
+        all_general         = dict_new['all_general']
+        all_flags           = dict_new['all_flags']
+
+        # these will all be lists, they need to be transformed into arrays
+        print('LOADED CSV:')
+        print(dict_new['function_input'])
+        
+        GroupNumList = all_general.keys()
+        
+    #------------------------------------------
+    if not csv_load:
+         # use manual input if values given, else use sample with mstar_limit
+         if print_progress:
+             print('Creating sample')
+             time_start = time.time()
+        
+         if len(manual_GroupNumList) > 0:
+             GroupNumList = manual_GroupNumList
+         else:
+             # creates a list of applicable gn (and sgn) to sample. To include satellite galaxies, use 'yes'
+             sample = Sample(mySims, snapNum, galaxy_mass_limit, 'no')
+             print("Sample length: ", len(sample.GroupNum))
+             print("  ", sample.GroupNum)
+             GroupNumList = sample.GroupNum
+    
+    
+    
+         #-------------------------------------------------------------------
+         # Automating some later variables to avoid putting them in manually
+    
+         # making particle_list_in and angle_selection obsolete:
+         particle_list_in = []
+         angle_selection  = []
+         if 'stars_gas' in angle_type_in:
+             if 'stars' not in particle_list_in:
+                 particle_list_in.append('stars')
+             if 'gas' not in particle_list_in:
+                 particle_list_in.append('gas')
+             angle_selection.append(['stars', 'gas'])
+         if 'stars_gas_sf' in angle_type_in:
+             if 'stars' not in particle_list_in:
+                 particle_list_in.append('stars')
+             if 'gas_sf' not in particle_list_in:
+                 particle_list_in.append('gas_sf')
+             angle_selection.append(['stars', 'gas_sf'])
+         if 'stars_gas_nsf' in angle_type_in:
+             if 'stars' not in particle_list_in:
+                 particle_list_in.append('stars')
+             if 'gas_nsf' not in particle_list_in:
+                 particle_list_in.append('gas_nsf')
+             angle_selection.append(['stars', 'gas_nsf'])
+         if 'gas_sf_gas_nsf' in angle_type_in:
+             if 'gas_sf' not in particle_list_in:
+                 particle_list_in.append('gas_sf')
+             if 'gas_nsf' not in particle_list_in:
+                 particle_list_in.append('gas_nsf')
+             angle_selection.append(['gas_sf', 'gas_nsf'])
+         #-------------------------------------------------------------------
+    
+         # Empty dictionaries to collect relevant data
+         all_flags         = {}          # has reason why galaxy failed sample
+         all_general       = {}          # has total masses, kappa, halfmassrad
+         all_coms          = {}
+         all_misangles     = {}          # has all 3d angles
+         all_particles     = {}          # has all the particle count and mass within rad
+         all_misanglesproj = {}   # has all 2d projected angles from 3d when given a viewing axis and viewing_angle = 0
+    
+    
+         for GroupNum in tqdm(GroupNumList):
+        
+             if print_progress:
+                 print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+                 print('Extracting particle data Subhalo_Extract()')
+                 time_start = time.time()
             
-        # Initial extraction of galaxy data
-        galaxy = Subhalo_Extract(mySims, dataDir, snapNum, GroupNum, SubGroupNum, aperture_rad_in, viewing_axis)
+             # Initial extraction of galaxy data
+             galaxy = Subhalo_Extract(mySims, dataDir, snapNum, GroupNum, SubGroupNum, aperture_rad_in, viewing_axis)
         
-        #-------------------------------------------------------------------
-        # Automating some later variables to avoid putting them in manually
+             #-------------------------------------------------------------------
+             # Automating some later variables to avoid putting them in manually
         
-        if projected_or_abs == 'projected':
-            use_rad = galaxy.halfmass_rad_proj
-        elif projected_or_abs == 'abs':
-            use_rad = galaxy.halfmass_rad
+             if projected_or_abs == 'projected':
+                 use_rad = galaxy.halfmass_rad_proj
+             elif projected_or_abs == 'abs':
+                 use_rad = galaxy.halfmass_rad
             
-        spin_rad = spin_rad_in * use_rad                            #pkpc
-        trim_rad = trim_rad_in
-        aperture_rad = aperture_rad_in
+             spin_rad = spin_rad_in * use_rad                            #pkpc
+             trim_rad = trim_rad_in
+             aperture_rad = aperture_rad_in
             
-        if kappa_rad_in == 'rad':
-            kappa_rad = use_rad
-        elif kappa_rad_in == 'tworad':
-            kappa_rad = 2*use_rad
-        else:
-            kappa_rad = kappa_rad_in
-        if align_rad_in == 'rad':
-            align_rad = use_rad
-        elif align_rad_in == 'tworad':
-            align_rad = 2*use_rad
-        else:
-            align_rad = align_rad_in  
-        #------------------------------------------------------------------
+             if kappa_rad_in == 'rad':
+                 kappa_rad = use_rad
+             elif kappa_rad_in == 'tworad':
+                 kappa_rad = 2*use_rad
+             else:
+                 kappa_rad = kappa_rad_in
+             if align_rad_in == 'rad':
+                 align_rad = use_rad
+             elif align_rad_in == 'tworad':
+                 align_rad = 2*use_rad
+             else:
+                 align_rad = align_rad_in  
+             #------------------------------------------------------------------
         
         
-        if print_progress:
-            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-            print('Running particle data analysis Subhalo()')
-            time_start = time.time()
+             if print_progress:
+                 print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+                 print('Running particle data analysis Subhalo()')
+                 time_start = time.time()
             
-        # If we want the original values, enter 0 for viewing angle
-        subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.GalaxyID, galaxy.stelmass, galaxy.gasmass, galaxy.halfmass_rad, use_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, galaxy.MorphoKinem,
-                                            angle_selection,
-                                            viewing_angle,
-                                            spin_rad,
-                                            trim_rad, 
-                                            kappa_rad, 
-                                            aperture_rad,
-                                            align_rad,              #align_rad = False
-                                            orientate_to_axis,
-                                            viewing_axis,
-                                            com_min_distance,
-                                            gas_sf_min_particles,
-                                            particle_list_in,
-                                            angle_type_in,
-                                            find_uncertainties,
-                                            min_inclination,
-                                            quiet=True)
+             # If we want the original values, enter 0 for viewing angle
+             subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.GalaxyID, galaxy.stelmass, galaxy.gasmass, galaxy.halfmass_rad, use_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, galaxy.MorphoKinem,
+                                                 angle_selection,
+                                                 viewing_angle,
+                                                 spin_rad,
+                                                 trim_rad, 
+                                                 kappa_rad, 
+                                                 aperture_rad,
+                                                 align_rad,              #align_rad = False
+                                                 orientate_to_axis,
+                                                 viewing_axis,
+                                                 com_min_distance,
+                                                 gas_sf_min_particles,
+                                                 particle_list_in,
+                                                 angle_type_in,
+                                                 find_uncertainties,
+                                                 min_inclination,
+                                                 quiet=True)
                                             
-        #print('kappa_databa: ', subhalo.general['kappa_stars'])
-        #print('kappa_manual: ', subhalo.general['kappa_old'])
+             #print('kappa_databa: ', subhalo.general['kappa_stars'])
+             #print('kappa_manual: ', subhalo.general['kappa_old'])
         
         
-        #--------------------------------
-        # Collecting all relevant particle info for galaxy
-        all_general['%s' %str(subhalo.gn)]       = subhalo.general
-        all_flags['%s' %str(subhalo.gn)]         = subhalo.flags
-        all_particles['%s' %str(subhalo.gn)]     = subhalo.particles
-        all_coms['%s' %str(subhalo.gn)]          = subhalo.coms
-        all_misangles['%s' %str(subhalo.gn)]     = subhalo.mis_angles
-        all_misanglesproj['%s' %str(subhalo.gn)] = subhalo.mis_angles_proj
-        #---------------------------------
+             #--------------------------------
+             # Collecting all relevant particle info for galaxy
+             all_general['%s' %str(subhalo.gn)]       = subhalo.general
+             all_flags['%s' %str(subhalo.gn)]         = subhalo.flags
+             all_particles['%s' %str(subhalo.gn)]     = subhalo.particles
+             all_coms['%s' %str(subhalo.gn)]          = subhalo.coms
+             all_misangles['%s' %str(subhalo.gn)]     = subhalo.mis_angles
+             all_misanglesproj['%s' %str(subhalo.gn)] = subhalo.mis_angles_proj
+             #---------------------------------
         
-        # Print galaxy properties
-        if print_galaxy == True:
-            print('\nGROUP NUMBER:           %s' %str(subhalo.gn)) 
-            print('STELLAR MASS [Msun]:    %.3f' %np.log10(subhalo.stelmass))       # [Msun]
-            print('HALFMASS RAD [pkpc]:    %.3f' %subhalo.halfmass_rad_proj)             # [pkpc]
-            print('KAPPA:                  %.2f' %subhalo.kappa_stars)
-            print('KAPPA GAS SF:           %.2f' %subhalo.kappa_gas_sf)
-            print('KAPPA RAD CALC [pkpc]:  %s'   %str(kappa_rad_in))
-            mask = np.where(np.array(subhalo.coms['hmr'] == min(spin_rad_in)))
-            print('C.O.M %s HMR STARS-SF [pkpc]:  %.2f' %(str(min(spin_rad_in)), subhalo.coms['stars_gas_sf'][int(mask[0])]))
-        elif print_galaxy_short == True:
-            print('GN:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(str(subhalo.gn), subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'], subhalo.general['kappa_gas_sf'])) 
+             # Print galaxy properties
+             if print_galaxy == True:
+                 print('\nGROUP NUMBER:           %s' %str(subhalo.gn)) 
+                 print('STELLAR MASS [Msun]:    %.3f' %np.log10(subhalo.stelmass))       # [Msun]
+                 print('HALFMASS RAD [pkpc]:    %.3f' %subhalo.halfmass_rad_proj)             # [pkpc]
+                 print('KAPPA:                  %.2f' %subhalo.kappa_stars)
+                 print('KAPPA GAS SF:           %.2f' %subhalo.kappa_gas_sf)
+                 print('KAPPA RAD CALC [pkpc]:  %s'   %str(kappa_rad_in))
+                 mask = np.where(np.array(subhalo.coms['hmr'] == min(spin_rad_in)))
+                 print('C.O.M %s HMR STARS-SF [pkpc]:  %.2f' %(str(min(spin_rad_in)), subhalo.coms['stars_gas_sf'][int(mask[0])]))
+             elif print_galaxy_short == True:
+                 print('GN:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(str(subhalo.gn), subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'], subhalo.general['kappa_gas_sf'])) 
             
     
-    #=====================================
-    if csv_file: 
-        # Converting numpy arrays to lists. When reading, may need to simply convert list back to np.array() (easy)
-        class NumpyEncoder(json.JSONEncoder):
-            """ Special json encoder for numpy types """
-            def default(self, obj):
-                if isinstance(obj, np.integer):
-                    return int(obj)
-                elif isinstance(obj, np.floating):
-                    return float(obj)
-                elif isinstance(obj, np.ndarray):
-                    return obj.tolist()
-                return json.JSONEncoder.default(self, obj)
+         #=====================================
+         if csv_file: 
+             # Converting numpy arrays to lists. When reading, may need to simply convert list back to np.array() (easy)
+             class NumpyEncoder(json.JSONEncoder):
+                 """ Special json encoder for numpy types """
+                 def default(self, obj):
+                     if isinstance(obj, np.integer):
+                         return int(obj)
+                     elif isinstance(obj, np.floating):
+                         return float(obj)
+                     elif isinstance(obj, np.ndarray):
+                         return obj.tolist()
+                     return json.JSONEncoder.default(self, obj)
                        
-        # Combining all dictionaries
-        csv_dict = {'all_general': all_general, 'all_misangles': all_misangles, 'all_misanglesproj': all_misanglesproj, 'all_coms': all_coms, 'all_particles': all_particles, 'all_flags': all_flags}
-        csv_dict.update({'function_input': str(inspect.signature(plot_misalignment_angle))})
+             # Combining all dictionaries
+             csv_dict = {'all_general': all_general, 'all_misangles': all_misangles, 'all_misanglesproj': all_misanglesproj, 'all_coms': all_coms, 'all_particles': all_particles, 'all_flags': all_flags}
+             csv_dict.update({'function_input': str(inspect.signature(plot_misalignment_angle))})
         
-        # Writing one massive JSON file
-        json.dump(csv_dict, open('%s/%s_%s.csv' %(root_file, csv_name, str(datetime.now())), 'w'), cls=NumpyEncoder)
+             # Writing one massive JSON file
+             json.dump(csv_dict, open('%s/%s_%s.csv' %(root_file, csv_name, str(datetime.now())), 'w'), cls=NumpyEncoder)
         
-        # Reading JSON file
-        """dict_new = json.load(open('%s/%s.csv' %(root_file, csv_name), 'r'))
-        # example nested dictionaries
-        new_general = dict_new['all_general']
-        new_misanglesproj = dict_new['all_misanglesproj']
-        # example accessing function input
-        function_input = dict_new['function_input']
-        print(dict_new['all_general']['4'].items())"""
+             # Reading JSON file
+             """dict_new = json.load(open('%s/%s.csv' %(root_file, csv_name), 'r'))
+             # example nested dictionaries
+             new_general = dict_new['all_general']
+             new_misanglesproj = dict_new['all_misanglesproj']
+             # example accessing function input
+             function_input = dict_new['function_input']
+             print(dict_new['all_general']['4'].items())"""
         
+         
+    
         
     #=====================================  
     def _plot_single(quiet=0, debug=False):
@@ -521,15 +547,18 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
             #------------------------------------------------
             # Graph initialising and base formatting
             graphformat(8, 11, 11, 9, 11, 4.5, 3.75)
-            fig, axs = plt.subplots(1, 2, figsize=[7.5, 2.55], sharex=True, sharey=True)
+            fig, axs = plt.subplots(1, 2, figsize=[7.5, 2.55], sharex=True, sharey=False)
+            plt.subplots_adjust(wspace=0.4, hspace=0.4)
         
             # Labels
             if 'stars_gas' in angle_type_in:
                 label = ['Gas']
                 plot_color = 'dodgerblue'
             if 'stars_gas_sf' in angle_type_in:
-                label = ['SF gas']
-                plot_color = 'darkorange'
+                label_ETG = ['ETG']
+                label_LTG = ['LTG']
+                plot_color_ETG = 'b'
+                plot_color_LTG = 'darkorange'
             if 'stars_gas_nsf' in angle_type_in:
                 label = ['NSF gas']
                 plot_color = 'indigo'
@@ -538,56 +567,58 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
             if plot_2D_3D == '2D':
                 # ETGs
                 # Plot data as histogram (outer lines + fill)
-                axs[0].hist(projected_angle_ETG, weights=np.ones(len(GroupNumPlot_ETG))/len(GroupNumPlot_ETG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor='none', facecolor=plot_color, alpha=0.1)
-                axs[0].hist(projected_angle_ETG, weights=np.ones(len(GroupNumPlot_ETG))/len(GroupNumPlot_ETG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor=plot_color, facecolor='none', alpha=1.0)
+                axs[0].hist(projected_angle_ETG, weights=np.ones(len(GroupNumPlot_ETG))/len(GroupNumPlot_ETG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor='none', facecolor=plot_color_ETG, alpha=0.1)
+                axs[0].hist(projected_angle_ETG, weights=np.ones(len(GroupNumPlot_ETG))/len(GroupNumPlot_ETG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor=plot_color_ETG, facecolor='none', alpha=1.0)
                 
                 # Add poisson errors to each bin (sqrt N)
                 hist_n, _ = np.histogram(projected_angle_ETG, bins=np.arange(0, 181, 10), range=(0, 180))
-                axs[0].errorbar(np.arange(5, 181, 10), hist_n/len(GroupNumPlot_ETG), xerr=None, yerr=np.sqrt(hist_n)/len(GroupNumPlot_ETG), ecolor=plot_color, ls='none', capsize=4, elinewidth=1, markeredgewidth=1)
+                axs[0].errorbar(np.arange(5, 181, 10), hist_n/len(GroupNumPlot_ETG), xerr=None, yerr=np.sqrt(hist_n)/len(GroupNumPlot_ETG), ecolor=plot_color_ETG, ls='none', capsize=4, elinewidth=1, markeredgewidth=1)
                 
                 # LTGs
                 # Plot data as histogram (outer lines + fill)
-                axs[1].hist(projected_angle_LTG, weights=np.ones(len(GroupNumPlot_LTG))/len(GroupNumPlot_LTG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor='none', facecolor=plot_color, alpha=0.1)
-                axs[1].hist(projected_angle_LTG, weights=np.ones(len(GroupNumPlot_LTG))/len(GroupNumPlot_LTG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor=plot_color, facecolor='none', alpha=1.0)
+                axs[1].hist(projected_angle_LTG, weights=np.ones(len(GroupNumPlot_LTG))/len(GroupNumPlot_LTG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor='none', facecolor=plot_color_LTG, alpha=0.1)
+                axs[1].hist(projected_angle_LTG, weights=np.ones(len(GroupNumPlot_LTG))/len(GroupNumPlot_LTG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor=plot_color_LTG, facecolor='none', alpha=1.0)
                 
                 # Add poisson errors to each bin (sqrt N)
                 hist_n, _ = np.histogram(projected_angle_LTG, bins=np.arange(0, 181, 10), range=(0, 180))
-                axs[1].errorbar(np.arange(5, 181, 10), hist_n/len(GroupNumPlot_LTG), xerr=None, yerr=np.sqrt(hist_n)/len(GroupNumPlot_LTG), ecolor=plot_color, ls='none', capsize=4, elinewidth=1, markeredgewidth=1)
+                axs[1].errorbar(np.arange(5, 181, 10), hist_n/len(GroupNumPlot_LTG), xerr=None, yerr=np.sqrt(hist_n)/len(GroupNumPlot_LTG), ecolor=plot_color_LTG, ls='none', capsize=4, elinewidth=1, markeredgewidth=1)
                 
             elif plot_2D_3D == '3D':
                 # ETGs
                 # Plot data as histogram
-                axs[0].hist(misalignment_angle_ETG, weights=np.ones(len(GroupNumPlot_ETG))/len(GroupNumPlot_ETG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor='none', facecolor=plot_color, alpha=0.1)
-                axs[0].hist(misalignment_angle_ETG, weights=np.ones(len(GroupNumPlot_ETG))/len(GroupNumPlot_ETG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor=plot_color, facecolor='none', alpha=1.0)
+                axs[0].hist(misalignment_angle_ETG, weights=np.ones(len(GroupNumPlot_ETG))/len(GroupNumPlot_ETG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor='none', facecolor=plot_color_ETG, alpha=0.1)
+                axs[0].hist(misalignment_angle_ETG, weights=np.ones(len(GroupNumPlot_ETG))/len(GroupNumPlot_ETG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor=plot_color_ETG, facecolor='none', alpha=1.0)
                 
                 # Add poisson errors to each bin (sqrt N)graphformat(8, 11, 11, 9, 11,
                 hist_n, _ = np.histogram(misalignment_angle_ETG, bins=np.arange(0, 181, 10), range=(0, 180))
-                axs[0].errorbar(np.arange(5, 181, 10), hist_n/len(GroupNumPlot_ETG), xerr=None, yerr=np.sqrt(hist_n)/len(GroupNumPlot_ETG), ecolor=plot_color, ls='none', capsize=4, elinewidth=1, markeredgewidth=1)
+                axs[0].errorbar(np.arange(5, 181, 10), hist_n/len(GroupNumPlot_ETG), xerr=None, yerr=np.sqrt(hist_n)/len(GroupNumPlot_ETG), ecolor=plot_color_ETG, ls='none', capsize=4, elinewidth=1, markeredgewidth=1)
             
                 # LTGs
                 # Plot data as histogram
-                axs[1].hist(misalignment_angle_LTG, weights=np.ones(len(GroupNumPlot_LTG))/len(GroupNumPlot_LTG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor='none', facecolor=plot_color, alpha=0.1)
-                axs[1].hist(misalignment_angle_LTG, weights=np.ones(len(GroupNumPlot_LTG))/len(GroupNumPlot_LTG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor=plot_color, facecolor='none', alpha=1.0)
+                axs[1].hist(misalignment_angle_LTG, weights=np.ones(len(GroupNumPlot_LTG))/len(GroupNumPlot_LTG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor='none', facecolor=plot_color_LTG, alpha=0.1)
+                axs[1].hist(misalignment_angle_LTG, weights=np.ones(len(GroupNumPlot_LTG))/len(GroupNumPlot_LTG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor=plot_color_LTG, facecolor='none', alpha=1.0)
                 
                 # Add poisson errors to each bin (sqrt N)graphformat(8, 11, 11, 9, 11,
                 hist_n, _ = np.histogram(misalignment_angle_LTG, bins=np.arange(0, 181, 10), range=(0, 180))
-                axs[1].errorbar(np.arange(5, 181, 10), hist_n/len(GroupNumPlot_LTG), xerr=None, yerr=np.sqrt(hist_n)/len(GroupNumPlot_LTG), ecolor=plot_color, ls='none', capsize=4, elinewidth=1, markeredgewidth=1)
+                axs[1].errorbar(np.arange(5, 181, 10), hist_n/len(GroupNumPlot_LTG), xerr=None, yerr=np.sqrt(hist_n)/len(GroupNumPlot_LTG), ecolor=plot_color_LTG, ls='none', capsize=4, elinewidth=1, markeredgewidth=1)
             
                 
             ### General formatting
-            plt.gca().yaxis.set_major_formatter(PercentFormatter(1))
+            
             for index, ax in enumerate(axs):
+                ax.yaxis.set_major_formatter(PercentFormatter(1, symbol=''))
                 ax.set_xlim(0, 180)
-                ax.set_ylim(0, 1)
+                #ax.set_ylim(0, 1)
                 ax.set_xticks(np.arange(0, 181, step=30))
                 if plot_2D_3D == '2D':
                     ax.set_xlabel('Stellar-gas PA misalignment')   #3D projected $\Psi$$_{gas-star}$
                 elif plot_2D_3D == '3D':
                     ax.set_xlabel('Stellar-gas misalignment')
                 if index == 0:
-                    ax.set_ylabel('Percentage of subsample')
+                    ax.set_ylabel('Percentage of galaxies')
                 ax.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='both', width=0.8, length=2)
-            
+                
+                
             
                 """if plot_2D_3D == '2D':
                     plt.suptitle("L%s: %s Misalignment\nmass: %.1f, type: 2D, hmr: %s, ax: %s, \nparticles: %s, com: %s, galaxies: %s/%s" %(str(mySims[0][1]), angle_type_in_i, np.log10(galaxy_mass_limit), str(min(spin_rad_in)), viewing_axis, str(gas_sf_min_particles), str(com_min_distance), len(GroupNumPlot), len(sample.GroupNum)))
@@ -600,8 +631,8 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
             
                 # Legend
                 legend_elements = [Line2D([0], [0], marker=' ', color='w')]
-                axs[0].legend(handles=legend_elements, labels=['ETGs'], loc='upper right', frameon=False, labelspacing=0.1, fontsize=8, labelcolor=[plot_color], handlelength=0)
-                axs[1].legend(handles=legend_elements, labels=['LTGs'], loc='upper right', frameon=False, labelspacing=0.1, fontsize=8, labelcolor=[plot_color], handlelength=0)
+                axs[0].legend(handles=legend_elements, labels=label_ETG, loc='upper right', frameon=False, labelspacing=0.1, fontsize=8, labelcolor=[plot_color_ETG], handlelength=0)
+                axs[1].legend(handles=legend_elements, labels=label_LTG, loc='upper right', frameon=False, labelspacing=0.1, fontsize=8, labelcolor=[plot_color_LTG], handlelength=0)
                 
               
             # other 

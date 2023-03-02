@@ -68,7 +68,7 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
                                      min_inclination         = 0,                       # Minimum inclination toward viewing axis [deg] DEFAULT 0
                                      projected_or_abs        = 'projected',              # 'projected' or 'abs'
                                      angle_type_in           = np.array(['stars_gas', 'stars_gas_sf']),       # analytical results for constituent particles will be found. ei., stars_gas_sf will mean stars and gas_sf properties will be found, and the angles between them                                                           
-                            plot_single = True,                    # whether to create single plots. Keep on TRUE
+                             plot_single = True,                    # whether to create single plots. Keep on TRUE
                                      plot_2D_3D           = '2D',                # whether to plot 2D or 3D angle
                                      rad_type_plot        = 'hmr',               # 'rad' whether to use absolute distance or hmr 
                              root_file = '/Users/c22048063/Documents/EAGLE/plots',
@@ -271,7 +271,7 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
  
     #===================================================================
     # Plot for a single galaxy showing how misalignment angle varies with increasing radius
-    def _plot_single(quiet=1, debug=True):
+    def _plot_single(quiet=1, debug=False):
         
         # Plots 3D projected misalignment angle from a viewing axis
         if plot_2D_3D == '2D':

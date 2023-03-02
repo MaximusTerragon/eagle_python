@@ -11,18 +11,34 @@ import json
 from datetime import datetime
 from tqdm import tqdm
 import eagleSqlTools as sql
-from subhalo_main import Subhalo_Extract, Subhalo
+from subhalo_main import Subhalo_Extract, Subhalo, ConvertID, CovertGN
 from graphformat import graphformat
 
 
 # list of simulations
-#mySims = np.array([('RefL0012N0188', 12)])   
-mySims = np.array([('RefL0100N1504', 100)])   
+mySims = np.array([('RefL0012N0188', 12)])   
+#mySims = np.array([('RefL0100N1504', 100)])   
 snapNum = 28
 
 # Directories of data hdf5 file(s)
+dataDir_main = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/'
+dataDir_dict = {}
+dataDir_dict['15'] = dataDir_main + 'snapshot_015_z002p012/snap_015_z002p012.0.hdf5'
+dataDir_dict['16'] = dataDir_main + 'snapshot_016_z001p737/snap_016_z001p737.0.hdf5'
+dataDir_dict['17'] = dataDir_main + 'snapshot_017_z001p487/snap_017_z001p487.0.hdf5'
+dataDir_dict['18'] = dataDir_main + 'snapshot_018_z001p259/snap_018_z001p259.0.hdf5'
+dataDir_dict['19'] = dataDir_main + 'snapshot_019_z001p004/snap_019_z001p004.0.hdf5'
+dataDir_dict['20'] = dataDir_main + 'snapshot_020_z000p865/snap_020_z000p865.0.hdf5'
+dataDir_dict['21'] = dataDir_main + 'snapshot_021_z000p736/snap_021_z000p736.0.hdf5'
+dataDir_dict['22'] = dataDir_main + 'snapshot_022_z000p615/snap_022_z000p615.0.hdf5'
+dataDir_dict['23'] = dataDir_main + 'snapshot_023_z000p503/snap_023_z000p503.0.hdf5'
+dataDir_dict['24'] = dataDir_main + 'snapshot_024_z000p366/snap_024_z000p366.0.hdf5'
+dataDir_dict['25'] = dataDir_main + 'snapshot_025_z000p271/snap_025_z000p271.0.hdf5'
+dataDir_dict['26'] = dataDir_main + 'snapshot_026_z000p183/snap_026_z000p183.0.hdf5'
+dataDir_dict['27'] = dataDir_main + 'snapshot_027_z000p101/snap_027_z000p101.0.hdf5'
+dataDir_dict['28'] = dataDir_main + 'snapshot_028_z000p000/snap_028_z000p000.0.hdf5'
 #dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_0%s_z000p101/snap_0%s_z000p101.0.hdf5' %(snapNum, snapNum)
-#dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_0%s_z000p000/snap_0%s_z000p000.0.hdf5' %(snapNum, snapNum)
+
  
 
 """ 
@@ -105,6 +121,7 @@ csv_load to compare this to.
 def _stellar_mass_func(galaxy_mass_limit = 10**9,               # Mass limit of sample
                        sql_mass_limit    = 10**8,               # Mass limit of SQL query    
                          SubGroupNum       = 0,
+                         snapNum           = 28,
                        kappa_rad_in        = 30,                               # calculate kappa for this radius [pkpc]
                        aperture_rad_in     = 30,                               # trim all data to this maximum value before calculations
                        align_rad_in        = False,                            # keep on False

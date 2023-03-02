@@ -12,18 +12,50 @@ import matplotlib.cm as cm
 from tqdm import tqdm
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.widgets import Button
-from subhalo_main import Subhalo_Extract, Subhalo
+from subhalo_main import Subhalo_Extract, Subhalo, ConvertID, ConvertGN
 from graphformat import graphformat
+
+
+""" 
+# list of simulations
+#mySims = np.array([('RefL0025N0376', 25)])
+#mySims = np.array([('RefL0050N0752', 50)])
+#mySims = np.array([('RefL0100N1504', 100)]) 
+#snapNum = 28
+
+# Directories of data hdf5 file(s)
+#dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_0%s_z000p101/snap_0%s_z000p101.0.hdf5' %(snapNum, snapNum)
+#dataDir = '/home/universe/spxtd1-shared/RefL0025N0376/snapshot_0%s_z000p000/snap_0%s_z000p000.0.hdf5' %(snapNum, snapNum)
+#dataDir = '/home/universe/spxtd1-shared/RefL0050N0752/snapshot_0%s_z000p000/snap_0%s_z000p000.0.hdf5' %(snapNum, snapNum)
+#dataDir = '/home/universe/spxtd1-shared/RefL0100N1504/snapshot_0%s_z000p000/snap_0%s_z000p000.0.hdf5' %(snapNum, snapNum)
+
+# root_file = '/home/user/c22048063/Documents/EAGLE/trial_plots/tests',
+"""
 
 
 # list of simulations
 mySims = np.array([('RefL0012N0188', 12)])   
-snapNum = 28
 
 # Directories of data hdf5 file(s)
+dataDir_main = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/'
+dataDir_dict = {}
+dataDir_dict['15'] = dataDir_main + 'snapshot_015_z002p012/snap_015_z002p012.0.hdf5'
+dataDir_dict['16'] = dataDir_main + 'snapshot_016_z001p737/snap_016_z001p737.0.hdf5'
+dataDir_dict['17'] = dataDir_main + 'snapshot_017_z001p487/snap_017_z001p487.0.hdf5'
+dataDir_dict['18'] = dataDir_main + 'snapshot_018_z001p259/snap_018_z001p259.0.hdf5'
+dataDir_dict['19'] = dataDir_main + 'snapshot_019_z001p004/snap_019_z001p004.0.hdf5'
+dataDir_dict['20'] = dataDir_main + 'snapshot_020_z000p865/snap_020_z000p865.0.hdf5'
+dataDir_dict['21'] = dataDir_main + 'snapshot_021_z000p736/snap_021_z000p736.0.hdf5'
+dataDir_dict['22'] = dataDir_main + 'snapshot_022_z000p615/snap_022_z000p615.0.hdf5'
+dataDir_dict['23'] = dataDir_main + 'snapshot_023_z000p503/snap_023_z000p503.0.hdf5'
+dataDir_dict['24'] = dataDir_main + 'snapshot_024_z000p366/snap_024_z000p366.0.hdf5'
+dataDir_dict['25'] = dataDir_main + 'snapshot_025_z000p271/snap_025_z000p271.0.hdf5'
+dataDir_dict['26'] = dataDir_main + 'snapshot_026_z000p183/snap_026_z000p183.0.hdf5'
+dataDir_dict['27'] = dataDir_main + 'snapshot_027_z000p101/snap_027_z000p101.0.hdf5'
+dataDir_dict['28'] = dataDir_main + 'snapshot_028_z000p000/snap_028_z000p000.0.hdf5'
 #dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_0%s_z000p101/snap_0%s_z000p101.0.hdf5' %(snapNum, snapNum)
-dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_0%s_z000p000/snap_0%s_z000p000.0.hdf5' %(snapNum, snapNum)
-  
+
+ 
     
 """ 
 PURPOSE
@@ -37,8 +69,18 @@ PURPOSE
 """
 #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
 #1, 2, 4, 3, 6, 5, 7, 9, 16, 14, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
-def galaxy_render(manual_GroupNumList = np.array([1, 2, 4, 3, 6, 5, 7, 9, 16, 14, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21]),
-                    SubGroupNum       = 0, 
+#37445, 37446, 37447
+"""
+
+                    manual_GroupNumList = np.array([3]),
+                    SubGroupNum       = 0,
+                    snapNum           = 19, 
+"""
+# Now takes a galaxyID, or array of IDs
+def galaxy_render(GalaxyIDList = np.array([37445, 37458]),       # leave empty if ignore
+                    manual_GroupNumList = np.array([]),                 # leave empty if ignore
+                    SubGroupNum       = 0,
+                    snapNum           = 28, 
                   spin_rad_in           = np.array([2.0]),              # multiples of rad
                   kappa_rad_in          = 30,                           # Calculate kappa for this radius [pkpc]
                   aperture_rad_in       = 30,                           # trim all data to this maximum value
@@ -78,8 +120,31 @@ def galaxy_render(manual_GroupNumList = np.array([1, 2, 4, 3, 6, 5, 7, 9, 16, 14
                     debug = False):
         
         
-    # Converting names of variables for consistency
-    GroupNumList = manual_GroupNumList    
+    if len(GalaxyIDList) == 0:
+        # Converting names of variables for consistency
+        GroupNumList    = manual_GroupNumList
+        SubGroupNumList = np.full(len(manual_GroupNumList), SubGroupNum)
+        snapNumList     = np.full(len(manual_GroupNumList), snapNum)
+        
+        GalaxyIDList = []
+        for gn, sgn, snap in zip(GroupNumList, SubGroupNumList, snapNumList):
+            galID = ConvertGN(gn, sgn, snap, mySims)
+        
+            # Append to arrays
+            GalaxyIDList.append(galID)
+        
+    elif len(manual_GroupNumList) == 0:
+        # Extract GroupNum, SubGroupNum, and Snap for each ID
+        GroupNumList    = []
+        SubGroupNumList = []
+        snapNumList     = []
+        for galID in GalaxyIDList:
+            gn, sgn, snap = ConvertID(galID, mySims)
+        
+            # Append to arrays
+            GroupNumList.append(gn)
+            SubGroupNumList.append(sgn)
+            snapNumList.append(snap)
     
     #-----------------------------------------------------------
     # making particle_list_in and angle_selection obsolete:
@@ -111,9 +176,9 @@ def galaxy_render(manual_GroupNumList = np.array([1, 2, 4, 3, 6, 5, 7, 9, 16, 14
         angle_selection.append(['gas_sf', 'gas_nsf'])
     
     
-    for GroupNum in tqdm(GroupNumList):         
+    for GroupNum, SubGroupNum, snapNum, GalaxyID in tqdm(zip(GroupNumList, SubGroupNumList, snapNumList, GalaxyIDList), total=len(GroupNumList)):         
         # Initial extraction of galaxy data
-        galaxy = Subhalo_Extract(mySims, dataDir, snapNum, GroupNum, SubGroupNum, aperture_rad_in, viewing_axis)
+        galaxy = Subhalo_Extract(mySims, dataDir_dict['%s' %snapNum], snapNum, GroupNum, SubGroupNum, aperture_rad_in, viewing_axis)
         
         if projected_or_abs == 'projected':
             use_rad = galaxy.halfmass_rad_proj
@@ -186,7 +251,7 @@ def galaxy_render(manual_GroupNumList = np.array([1, 2, 4, 3, 6, 5, 7, 9, 16, 14
             mask = np.where(np.array(subhalo.coms['hmr'] == min(spin_rad_in)))
             print('C.O.M %s HMR STARS-SF [pkpc]:  %.2f' %(str(min(spin_rad_in)), subhalo.coms['stars_gas_sf'][int(mask[0])]))
         elif print_galaxy_short == True:
-            print('GN:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(str(subhalo.gn), subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'], subhalo.general['kappa_gas_sf'])) 
+            print('GN:\t%s\t|ID:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(str(subhalo.gn), str(GalaxyID), subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'], subhalo.general['kappa_gas_sf'])) 
              
         # Graph initialising and base formatting
         graphformat(8, 11, 11, 11, 11, 5, 5)

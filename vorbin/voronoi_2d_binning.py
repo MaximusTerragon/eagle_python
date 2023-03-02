@@ -123,7 +123,10 @@ def _sn_func(index, signal=None, noise=None, standev=None):
             vel_selection.append(standev[i])
     
     #print(np.sum(np.concatenate(vel_selection).ravel()))
-    vel_std  = np.std(np.concatenate(vel_selection).ravel(), ddof=1)
+    if len(np.concatenate(vel_selection).ravel()) == 1:
+        vel_std = 0
+    else:
+        vel_std  = np.std(np.concatenate(vel_selection).ravel(), ddof=1)
     
     #print('vel_selection')
     #print(np.concatenate(vel_selection).ravel())
@@ -248,8 +251,8 @@ def _accretion(x, y, signal, noise, standev, target_sn, pixelsize, quiet, sn_fun
             # 4) The new-S/N decreases.
             #
             if (np.sqrt(minDist) > 1.2*pixelsize or roundness > 0.3
-                or abs(SN - target_sn) > abs(SNOld - target_sn) or SNOld > SN):
-                if SNOld > 0.8*target_sn:
+                or abs(SN - (target_sn+1)) > abs(SNOld - target_sn) or SNOld > SN):
+                if SNOld >= 0.8*target_sn:
                     good[currentBin] = 1
                 break
 
@@ -677,7 +680,7 @@ def voronoi_2d_binning(x, y, signal, noise, standev, target_sn, cvt=False, pixel
     t3 = clock()
     if not quiet:
         print('Unbinned pixels: ', np.sum(single), ' / ', x.size)
-        print('Fractional S/N scatter (%):', np.std(sn[~single] - target_sn, ddof=1)/target_sn*100)
+        #print('Fractional S/N scatter (%):', np.std(sn[~single] - target_sn, ddof=1)/target_sn*100)
         print('Elapsed time accretion: %.2f seconds' % (t2 - t1))
         print('Elapsed time optimization: %.2f seconds' % (t3 - t2))
 

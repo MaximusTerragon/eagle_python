@@ -149,7 +149,7 @@ def plot_misalignment_angle(manual_GroupNumList = [],           # manually enter
                                 csv_name = 'data_misalignment',
                               showfig   = False,
                               savefig   = True,  
-                                savefig_txt = '_new',            #extra savefile txt
+                                savefig_txt = '',            #extra savefile txt
                               debug = False):            
     
     

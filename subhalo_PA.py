@@ -29,6 +29,21 @@ from graphformat import graphformat
 
 time_start_main = time.time()
 
+""" 
+# list of simulations
+#mySims = np.array([('RefL0025N0376', 25)])
+#mySims = np.array([('RefL0050N0752', 50)])
+#mySims = np.array([('RefL0100N1504', 100)]) 
+#snapNum = 28
+
+# Directories of data hdf5 file(s)
+#dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_0%s_z000p101/snap_0%s_z000p101.0.hdf5' %(snapNum, snapNum)
+#dataDir = '/home/universe/spxtd1-shared/RefL0025N0376/snapshot_0%s_z000p000/snap_0%s_z000p000.0.hdf5' %(snapNum, snapNum)
+#dataDir = '/home/universe/spxtd1-shared/RefL0050N0752/snapshot_0%s_z000p000/snap_0%s_z000p000.0.hdf5' %(snapNum, snapNum)
+#dataDir = '/home/universe/spxtd1-shared/RefL0100N1504/snapshot_0%s_z000p000/snap_0%s_z000p000.0.hdf5' %(snapNum, snapNum)
+
+# root_file = '/home/user/c22048063/Documents/EAGLE/trial_plots/tests',
+"""
 # list of simulations
 mySims = np.array([('RefL0012N0188', 12)])   
 snapNum = 28
@@ -509,7 +524,7 @@ def velocity_projection(manual_GroupNumList = np.array([]),
                           csv_file           = True,              # .csv file will ALL data
                             csv_name = 'data_pa_UPDATED',
                           showfig        = True,
-                          savefig        = True,                 # Whether to save and/or show figures
+                          savefig        = False,                 # Whether to save and/or show figures
                             savefigtxt       = '_UPDATED',                # added txt to append to end of savefile
                           debug = True,
                                 pa_angle_type_in            = 'voronoi',             # which pa angles to use: '2dhist', 'voronoi', 'both'... compare will use either or both and compare to 3D
@@ -759,7 +774,8 @@ def velocity_projection(manual_GroupNumList = np.array([]),
                     fig, axs = plt.subplots(nrows=1, ncols=len(particle_list_in), gridspec_kw={'width_ratios': [1, 1.22]}, figsize=(6.5, 3.15), sharex=True, sharey=True)
                     
                     if local_boxradius == True:
-                        boxradius = 1.5*trim_rad_i*subhalo.halfmass_rad_proj
+                        #boxradius = 1.5*trim_rad_i*subhalo.halfmass_rad_proj
+                        boxradius = np.floor(1.5*trim_rad_i*subhalo.halfmass_rad_proj / resolution) * resolution
                 
                     ### 2D HISTO ROUTINE
                     j = 0
@@ -841,7 +857,8 @@ def velocity_projection(manual_GroupNumList = np.array([]),
                     fig, axs = plt.subplots(nrows=1, ncols=len(particle_list_in), figsize=(4.5*len(particle_list_in), 4), sharex=True, sharey=True)
                 
                     if local_boxradius == True:
-                        boxradius = 1.5*trim_rad_i*subhalo.halfmass_rad_proj
+                        #boxradius = 1.5*trim_rad_i*subhalo.halfmass_rad_proj
+                        boxradius = np.floor(1.5*trim_rad_i*subhalo.halfmass_rad_proj / resolution) * resolution
                         
                     ### VORONOI TESSALATION ROUTINE
                     j = 0
@@ -946,7 +963,8 @@ def velocity_projection(manual_GroupNumList = np.array([]),
                     all_pafit['%s' %str(subhalo.gn)]['2dhist']['%s' %str(viewing_angle)]['hmr'].append(trim_rad_i)
                     
                     if local_boxradius == True:
-                        boxradius = 1.5*trim_rad_i*subhalo.halfmass_rad_proj
+                        #boxradius = 1.5*trim_rad_i*subhalo.halfmass_rad_proj
+                        boxradius = np.floor(1.5*trim_rad_i*subhalo.halfmass_rad_proj / resolution) * resolution
                         
                     for particle_list_in_i in particle_list_in:
                         # Check particle count before 2dhisto
@@ -1085,7 +1103,8 @@ def velocity_projection(manual_GroupNumList = np.array([]),
                     all_pafit['%s' %str(subhalo.gn)]['voronoi']['%s' %str(viewing_angle)]['hmr'].append(trim_rad_i)
                     
                     if local_boxradius == True:
-                        boxradius = 1.5*trim_rad_i*subhalo.halfmass_rad_proj
+                        #boxradius = 1.5*trim_rad_i*subhalo.halfmass_rad_proj
+                        boxradius = np.floor(1.5*trim_rad_i*subhalo.halfmass_rad_proj / resolution) * resolution
                         
                     for particle_list_in_i in particle_list_in:
                         

@@ -765,7 +765,7 @@ class Subhalo:
                 tmp_particle_count = len(self._trim_within_rad(data_nil['%s' %parttype_i], min(spin_rad_in))['Mass'])
                 
                 if tmp_particle_count < gas_sf_min_particles:
-                    self.flags.append('%i %s particles in %.2f pkpc (%.2f rad)' %(tmp_particle_count, parttype_i, min(spin_rad_in), min(spin_rad_in)/self.halfmass_rad_proj))
+                    self.flags.append('%i %s particles in %.2f pkpc (%.2f HMR)' %(tmp_particle_count, parttype_i, min(spin_rad_in), min(spin_rad_in)/self.halfmass_rad_proj))
         
         # Flag galaxy if CoM requirement not met between stars and gas_sf (if included)
         if len(self.flags) == 0:
@@ -1428,8 +1428,6 @@ class Subhalo:
         centre_of_mass = np.sum(mass_weighted, axis=0)/np.sum(arr['Mass'][mask])
     
         return centre_of_mass
-    
-    
 """### MANUAL CALL
 # Directories of data hdf5 file(s)
 dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_028_z000p000/snap_028_z000p000.0.hdf5'
@@ -1467,7 +1465,308 @@ print(subhalo.data_align.keys())
 """
 
 
+""" 
+DESCRIPTION
+-----------
+Will extract the Merger Tree of a given galaxy ID and extimate merger ratio
 
+WILL ONLY WORK FOR Z=0 (need to fix)
+
+- Main branch evolution will have the same 
+  TopLeafID
+- Main branch will have IDs between target_GalaxyID 
+  and TopLeafID
+- Entire tree will have IDs between target_GalaxyID 
+  and LastProgID
+- Galaxies about to merge into main branch will have 
+  their DescendentID lie between target_GalaxyID 
+  and TopLeafID
+- These galaxies can be used to estimate merger 
+  ratios by taking their stellar mass before merger 
+  (simple), or looking for the largest mass history 
+  of that galaxy before merger (complex)
+
+No change is made between SubGroupNumber as some 
+mergers may originate from accreted Satellites, while
+some may be external.
+
+
+
+CALLING FUNCTION
+----------------
+tree = MergerTree(sim, target_GalaxyID)
+
+
+
+INPUT PARAMETERS
+----------------
+sim:
+    Simulation types eg. 
+    mySims = np.array([('RefL0012N0188', 12)])   
+target_GalaxyID:    int
+    Galaxy ID at z=0 that we care about
+
+
+
+OUTPUT PARAMETERS
+-----------------
+.target_GalaxyID:       int
+    Galaxy ID at z=0 that we care about
+.sim:
+    Simulation that we used
+.TopLeafID:
+    The oldest galaxy ID in the main branch. All galaxies
+    on the main branch will have the same TopLeafID
+.all_branches:      dict
+    Has raw data from all branches, including main branch
+    ['redshift']        - redshift list (has duplicates, but ordered largest-> smallest)
+    ['snapnum']         - 
+    ['GalaxyID']        - Unique ID of specific galaxy
+    ['DescendantID']    - DescendantID of the galaxy next up, this has been selected to lie on the main branch
+    ['TopLeafID']       - Oldest galaxy ID of branch. Can differ, but all on main have same as .TopLeafID
+    ['GroupNumber']     - Will mostly be the same as interested galaxy
+    ['SubGroupNumber']  - Will mostly be satellites
+    ['stelmass']        - stellar mass in 30pkpc
+    ['gasmass']         - gasmass in 30pkpc
+    ['totalstelmass']   - total Subhalo stellar mass
+.main_branch        dict
+    Has raw data from only main branch
+    ['redshift']        - redshift list (no duplicates, large -> small)
+    ['lookbacktime']        - lookback time
+    ['snapnum']         - 
+    ['GalaxyID']        - Unique ID of specific galaxy
+    ['DescendantID']    - DescendantID of the galaxy next up, this has been selected to lie on the main branch
+    ['TopLeafID']       - Oldest galaxy ID of branch. Can differ, but all on main have same as .TopLeafID
+    ['GroupNumber']     - Will mostly be the same as interested galaxy
+    ['SubGroupNumber']  - Will mostly be satellites
+    ['stelmass']        - stellar mass in 30pkpc
+    ['gasmass']         - gasmass in 30pkpc
+    ['totalstelmass']   - total Subhalo stellar mass
+.mergers            dict
+    Has complete data on all mergers, ratios, and IDs. Merger data will be entered
+    for snapshot immediately AFTER both galaxies do not appear.
+
+    For example: 
+        Snap    ID              Mass
+        27      35787 264545    10^7 10^4
+        28      35786           10^7...
+                        ... Here the merger takes place at Snap28
+    ['redshift']        - Redshift (unique)
+    ['snapnum']         - Snapnums (unique)
+    ['ratios']          - Array of mass ratios at this redshift
+    ['gasratios']       - Array of gas ratios at this redshift
+    ['GalaxyIDs']       - Array of type [Primary GalaxyID, Secondary GalaxyID]
+
+
+"""
+class MergerTree:
+    def __init__(self, sim, target_GalaxyID, maxSnap):
+        # Assign target_GalaxyID (any snapshot)
+        self.target_GalaxyID    = target_GalaxyID
+        self.sim                = sim
+        
+        # SQL query for single galaxy
+        myData = self._extract_merger_tree(target_GalaxyID, maxSnap)
+         
+        redshift        = myData['z']
+        snapnum         = myData['SnapNum']
+        GalaxyID        = myData['GalaxyID']
+        DescendantID    = myData['DescendantID']
+        TopLeafID       = myData['TopLeafID']
+        GroupNumber     = myData['GroupNumber']
+        SubGroupNumber  = myData['SubGroupNumber']
+        stelmass        = myData['stelmass']
+        gasmass         = myData['gasmass']
+        totalstelmass   = myData['totalstelmass']
+        totalgasmass    = myData['totalgasmass']
+        
+        # Extract TopLeafID of main branch (done by masking for target_GalaxyID)
+        mask = np.where(GalaxyID == target_GalaxyID)
+        self.TopLeafID = TopLeafID[mask]
+        
+        
+        # Create dictionary for all branches (that meet the requirements in the description above)
+        self.all_branches = {}
+        for name, entry in zip(['redshift', 'snapnum', 'GalaxyID', 'DescendantID', 'TopLeafID', 'GroupNumber', 'SubGroupNumber', 'stelmass', 'gasmass', 'totalstelmass', 'totalgasmass'], [redshift, snapnum, GalaxyID, DescendantID, TopLeafID, GroupNumber, SubGroupNumber, stelmass, gasmass, totalstelmass, totalgasmass]):
+            self.all_branches[name] = entry
+        
+        
+        # Extract only main branch data
+        self.main_branch = self._main_branch(self.TopLeafID, self.all_branches)
+        self.main_branch['lookbacktime'] = ((13.8205298 * u.Gyr) - FlatLambdaCDM(H0=67.77, Om0=0.307, Ob0 = 0.04825).age(self.main_branch['redshift'])).value
+        
+        
+        # Find merger ratios along tree
+        self.mergers = self._analyze_tree(target_GalaxyID, self.TopLeafID, self.all_branches)
+        
+        # gasmass is not sf or nsf
+        
+        
+    def _extract_merger_tree(self, target_GalaxyID, maxSnap):
+        # This uses the eagleSqlTools module to connect to the database with your username and password.
+        # If the password is not given, the module will prompt for it.
+        con = sql.connect('lms192', password='dhuKAP62')
+        
+
+        for sim_name, sim_size in self.sim:
+            #print(sim_name)
+        
+            # Construct and execute query to contruct merger tree
+            myQuery = 'SELECT \
+                         SH.Redshift as z, \
+                         SH.SnapNum, \
+                         SH.GalaxyID, \
+                         SH.DescendantID, \
+                         SH.TopLeafID, \
+                         SH.GroupNumber, \
+                         SH.SubGroupNumber, \
+                         AP.Mass_Star as stelmass, \
+                         AP.Mass_Gas as gasmass, \
+                         SH.MassType_Star as totalstelmass, \
+                         SH.MassType_Gas as totalgasmass \
+                       FROM \
+                         %s_Subhalo as SH, \
+                         %s_Aperture as AP, \
+                         %s_Subhalo as REF \
+                       WHERE \
+                         REF.GalaxyID = %s \
+                         and SH.SnapNum >= %s \
+                         and (((SH.SnapNum > REF.SnapNum and REF.GalaxyID between SH.GalaxyID and SH.TopLeafID) or (SH.SnapNum <= REF.SnapNum and SH.GalaxyID between REF.GalaxyID and REF.LastProgID))) \
+                         and ((SH.DescendantID between SH.GalaxyID and SH.TopLeafID) or (SH.DescendantID between REF.GalaxyID and REF.TopLeafID) or (SH.DescendantID = -1)) \
+                         and AP.Mass_Star > 5000000 \
+                         and AP.ApertureSize = 30 \
+                         and AP.GalaxyID = SH.GalaxyID \
+                       ORDER BY \
+                         SH.Redshift DESC, \
+                         stelmass DESC' %(sim_name, sim_name, sim_name, target_GalaxyID, maxSnap)
+            
+            # Execute query.
+            myData = sql.execute_query(con, myQuery)
+        
+        return myData
+ 
+    def _main_branch(self, TopLeafID, arr):
+        # arr will have all merger tree data, all those with the same TopLeafID will be on the main branch
+        mask = np.where(arr['TopLeafID'] == TopLeafID)
+        
+        newData = {}
+        for header in arr.keys():
+            newData[header] = arr[header][mask]
+            
+        return newData
+ 
+    def _analyze_tree(self, target_GalaxyID, TopLeafID, arr):
+        # arr is sorted per redshift in descending order (starting at 0)
+        redshift_tmp  = []
+        snapnum_tmp   = []
+        ratios_tmp    = []
+        gasratios_tmp = []
+        IDs_tmp       = []
+        
+        z_old = 9999
+        ratios_collect    = []
+        gasratios_collect = []
+        IDs_collect       = []
+        for z, snapnum, topID, galaxyID, stelmass, gasmass in zip(arr['redshift'], arr['snapnum'], arr['TopLeafID'], arr['GalaxyID'], arr['stelmass'], arr['gasmass']):
+            if z != z_old:
+                # If current z not yet added to list, do so
+                redshift_tmp.append(z)
+                snapnum_tmp.append(snapnum)
+                ratios_tmp.append(ratios_collect)
+                gasratios_tmp.append(gasratios_collect)
+                IDs_tmp.append(IDs_collect)
+                
+                # Create tmp arrays at the start of new z
+                ratios_collect    = []
+                gasratios_collect = []
+                IDs_collect       = []
+                
+                
+            if topID == TopLeafID:
+                # Establish the main stelmass (which will be repeated in loop)
+                stelmass_primary = stelmass
+                gasmass_primary  = gasmass
+                id_primary       = galaxyID
+                
+                
+            else:
+                # find mergers and gas ratio
+                merger_ratio = stelmass / stelmass_primary
+                gas_ratios   = (gasmass_primary + gasmass) / (stelmass_primary + stelmass)
+                
+                #Grab ID of secondary
+                id_secondary = galaxyID
+                
+                ratios_collect.append(merger_ratio)
+                gasratios_collect.append(gas_ratios)
+                IDs_collect.append([id_primary, id_secondary])
+                
+            z_old = z
+                
+            
+        # Create dictionary
+        merger_dict = {}
+        merger_dict['redshift']  = redshift_tmp
+        merger_dict['snapnum']   = snapnum_tmp
+        merger_dict['ratios']    = ratios_tmp
+        merger_dict['gasratios'] = gasratios_tmp
+        merger_dict['GalaxyIDs'] = IDs_tmp
+        
+        return merger_dict
+
+
+
+
+
+
+# Will find ID of galaxy when given gn, sgn, snap, and sim
+def ConvertGN(gn, sgn, snapNum, sim):
+    # This uses the eagleSqlTools module to connect to the database with your username and password.
+    # If the password is not given, the module will prompt for it.
+    con = sql.connect("lms192", password="dhuKAP62")
+    
+    for sim_name, sim_size in sim:
+        #print(sim_name)
+
+        # Construct and execute query for each simulation. This query returns properties for a single galaxy
+        myQuery = 'SELECT \
+                    SH.GalaxyID \
+                   FROM \
+    			     %s_Subhalo as SH \
+                   WHERE \
+    			     SH.SnapNum = %i \
+                     and SH.GroupNumber = %i \
+                     and SH.SubGroupNumber = %i'%(sim_name, snapNum, gn, sgn)
+
+        # Execute query.
+        myData = sql.execute_query(con, myQuery)
+        
+        return myData['GalaxyID']
+
+
+# Will find gn, sgn, and snap of galaxy when given ID and sim
+def ConvertID(galID, sim):
+    # This uses the eagleSqlTools module to connect to the database with your username and password.
+    # If the password is not given, the module will prompt for it.
+    con = sql.connect("lms192", password="dhuKAP62")
+    
+    for sim_name, sim_size in sim:
+        #print(sim_name)
+
+        # Construct and execute query for each simulation. This query returns properties for a single galaxy
+        myQuery = 'SELECT \
+                    SH.GroupNumber, \
+                    SH.SubGroupNumber, \
+                    SH.SnapNum \
+                   FROM \
+    			     %s_Subhalo as SH \
+                   WHERE \
+    			     SH.GalaxyID = %i'%(sim_name, galID)
+
+        # Execute query.
+        myData = sql.execute_query(con, myQuery)
+        
+        return myData['GroupNumber'], myData['SubGroupNumber'], myData['SnapNum']
 
 
 

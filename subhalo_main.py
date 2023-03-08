@@ -484,7 +484,7 @@ kappa_rad_in:   False or value [pkpc]
 aperture_rad_in:    value [pkpc]
     Will trim data to this maximum value for quicker processing.
     Usually 30.
-trim_rad_in:    array [multiples of rad]
+trim_hmr_in:    array [multiples of rad]
     Will trim the output data to this radius. This is
     used for render and 2dhisto
 align_rad_in:   False or value [pkpc]
@@ -582,7 +582,7 @@ Output Parameters
             ['GroupNumber']         - int array 
             ['SubGroupNumber']      - int array
         
-    if trim_rad_in has a value, coordinates lying outside
+    if trim_hmr_in has a value, coordinates lying outside
     these values will be trimmed in final output, but still
     used in calculations.
         
@@ -661,7 +661,7 @@ class Subhalo:
                             viewing_angle,
                             spin_rad_in, 
                             spin_hmr_in,
-                            trim_rad_in, 
+                            trim_hmr_in, 
                             kappa_rad_in,
                             aperture_rad_in,
                             align_rad_in, 
@@ -771,7 +771,7 @@ class Subhalo:
                 tmp_particle_count = len(self._trim_within_rad(data_nil['%s' %parttype_i], min(spin_rad_in))['Mass'])
                 
                 if tmp_particle_count < gas_sf_min_particles:
-                    self.flags.append('%i %s particles in %.2f pkpc (%.2f HMR)' %(tmp_particle_count, parttype_i, min(spin_rad_in), min(spin_rad_in)/self.halfmass_rad_proj))
+                    self.flags.append('%i %s particles in %.2f pkpc (%.2f HMR)' %(tmp_particle_count, parttype_i, min(spin_rad_in), min(spin_hmr_in)))
         
         # Flag galaxy if CoM requirement not met between stars and gas_sf (if included)
         if len(self.flags) == 0:
@@ -819,11 +819,11 @@ class Subhalo:
                     time_start = time.time()
                     
                 self.spins['rad']     = spin_rad_in
-                self.spins['hmr']     = spin_rad_in/self.halfmass_rad_proj
+                self.spins['hmr']     = spin_hmr_in
                 self.particles['rad'] = spin_rad_in
-                self.particles['hmr'] = spin_rad_in/self.halfmass_rad_proj
+                self.particles['hmr'] = spin_hmr_in
                 self.coms['rad']      = spin_rad_in
-                self.coms['hmr']      = spin_rad_in/self.halfmass_rad_proj
+                self.coms['hmr']      = spin_hmr_in
                 for parttype_name in particle_list_in:
                     tmp_spins = []
                     tmp_particles = []
@@ -906,8 +906,8 @@ class Subhalo:
         
                 # for each radius...
                 spins_rand = {}
-                for rad_i in spin_rad_in:
-                    spins_rand.update({'%s' %str(rad_i/self.halfmass_rad_proj): {}})
+                for rad_i, hmr_i in zip(spin_rad_in, spin_hmr_in):
+                    spins_rand.update({'%s' %str(hmr_i): {}})
             
                     # for each particle type...
                     for parttype_name in particle_list_in:
@@ -917,7 +917,7 @@ class Subhalo:
                         for jjjj in range(iterations):
                             spin_i, _, _ = self._find_spin(self.data[parttype_name], rad_i, parttype_name, random_sample=True)
                             tmp_spins.append(spin_i)
-                        spins_rand['%s' %str(rad_i/self.halfmass_rad_proj)]['%s' %parttype_name] = np.stack(tmp_spins)
+                        spins_rand['%s' %str(hmr_i)]['%s' %parttype_name] = np.stack(tmp_spins)
          
                 if debug:   
                     print(spins_rand.keys())        
@@ -935,11 +935,11 @@ class Subhalo:
                 time_start = time.time()
             
             self.mis_angles['rad'] = spin_rad_in
-            self.mis_angles['hmr'] = spin_rad_in/self.halfmass_rad_proj
+            self.mis_angles['hmr'] = spin_hmr_in
             for parttype_name in angle_selection:   #[['stars', 'gas'], ['stars', '_nsf'], ['gas_sf', 'gas_nsf']]:
                 tmp_angles = []
                 tmp_errors = []
-                for i, hmr_i in zip(np.arange(0, len(spin_rad_in), 1), spin_rad_in/self.halfmass_rad_proj):
+                for i, hmr_i in zip(np.arange(0, len(spin_rad_in), 1), spin_hmr_in):
                     # analytical angle
                     angle = self._misalignment_angle(self.spins[parttype_name[0]][i], self.spins[parttype_name[1]][i])
                     tmp_angles.append(angle)
@@ -975,13 +975,13 @@ class Subhalo:
             self.mis_angles_proj = {'x': {}, 'y': {}, 'z': {}}
             for viewing_axis_i in ['x', 'y', 'z']:
                 self.mis_angles_proj[viewing_axis_i]['rad'] = spin_rad_in
-                self.mis_angles_proj[viewing_axis_i]['hmr'] = spin_rad_in/self.halfmass_rad_proj
+                self.mis_angles_proj[viewing_axis_i]['hmr'] = spin_hmr_in
             
                 if viewing_axis_i == 'x':
                     for parttype_name in angle_selection:
                         tmp_angles = []
                         tmp_errors = []
-                        for i, hmr_i in zip(np.arange(0, len(spin_rad_in), 1), spin_rad_in/self.halfmass_rad_proj):
+                        for i, hmr_i in zip(np.arange(0, len(spin_rad_in), 1), spin_hmr_in):
                             angle = self._misalignment_angle(np.array([self.spins[parttype_name[0]][i][1], self.spins[parttype_name[0]][i][2]]), np.array([self.spins[parttype_name[1]][i][1], self.spins[parttype_name[1]][i][2]]))
                             tmp_angles.append(angle)
                         
@@ -1001,7 +1001,7 @@ class Subhalo:
                     for parttype_name in angle_selection:
                         tmp_angles = []
                         tmp_errors = []
-                        for i, hmr_i in zip(np.arange(0, len(spin_rad_in), 1), spin_rad_in/self.halfmass_rad_proj):
+                        for i, hmr_i in zip(np.arange(0, len(spin_rad_in), 1), spin_hmr_in):
                             tmp_angles.append(self._misalignment_angle(np.array([self.spins[parttype_name[0]][i][0], self.spins[parttype_name[0]][i][2]]), np.array([self.spins[parttype_name[1]][i][0], self.spins[parttype_name[1]][i][2]])))
                         
                             if find_uncertainties:
@@ -1020,7 +1020,7 @@ class Subhalo:
                     for parttype_name in angle_selection:
                         tmp_angles = []
                         tmp_errors = []
-                        for i, hmr_i in zip(np.arange(0, len(spin_rad_in), 1), spin_rad_in/self.halfmass_rad_proj):
+                        for i, hmr_i in zip(np.arange(0, len(spin_rad_in), 1), spin_hmr_in):
                             angle = self._misalignment_angle(np.array([self.spins[parttype_name[0]][i][0], self.spins[parttype_name[0]][i][1]]), np.array([self.spins[parttype_name[1]][i][0], self.spins[parttype_name[1]][i][1]]))
                             tmp_angles.append(angle)
                         
@@ -1115,18 +1115,18 @@ class Subhalo:
         
             #--------------------------------
             # Trimming data
-            if len(trim_rad_in) > 0:
+            if len(trim_hmr_in) > 0:
                 if print_progress:
                     print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                    print('Trimming datasets to trim_rad_in ', trim_rad_in)
+                    print('Trimming datasets to trim_hmr_in ', trim_hmr_in)
                     time_start = time.time()
                 tmp_data = {}
-                for rad in trim_rad_in:
-                    tmp_data.update({'%s' %str(rad): {}})
+                for hmr_i in trim_hmr_in:
+                    tmp_data.update({'%s' %str(hmr_i): {}})
                 
-                for rad in trim_rad_in:
+                for hmr_i in trim_hmr_in:
                     for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf', 'dm', 'bh']:
-                        tmp_data['%s' %str(rad)]['%s' %parttype_name] = self._trim_within_rad(self.data[parttype_name], rad*self.halfmass_rad_proj)
+                        tmp_data['%s' %str(hmr_i)]['%s' %parttype_name] = self._trim_within_rad(self.data[parttype_name], hmr_i*self.halfmass_rad_proj)
                 
                 self.data = tmp_data
             
@@ -1162,11 +1162,11 @@ class Subhalo:
                 self.particles_align = {}
                 self.coms_align      = {}
                 self.spins_align['rad']     = spin_rad_in
-                self.spins_align['hmr']     = spin_rad_in/self.halfmass_rad_proj
+                self.spins_align['hmr']     = spin_hmr_in
                 self.particles_align['rad'] = spin_rad_in
-                self.particles_align['hmr'] = spin_rad_in/self.halfmass_rad_proj
+                self.particles_align['hmr'] = spin_hmr_in
                 self.coms_align['rad']      = spin_rad_in
-                self.coms_align['hmr']      = spin_rad_in/self.halfmass_rad_proj
+                self.coms_align['hmr']      = spin_hmr_in
                 for parttype_name in particle_list_in:
                     tmp_spins = []
                     tmp_particles = []
@@ -1187,7 +1187,7 @@ class Subhalo:
                 # Find misalignment angles (does not find difference between every component ei. gas_sf and gas_nsf)
                 self.mis_angles_align = {}
                 self.mis_angles_align['rad'] = spin_rad_in
-                self.mis_angles_align['hmr'] = spin_rad_in/self.halfmass_rad_proj
+                self.mis_angles_align['hmr'] = spin_hmr_in
                 for parttype_name in angle_selection:
                     tmp_angles = []
                     for i in np.arange(0, len(self.spins_align['stars']), 1):
@@ -1195,14 +1195,14 @@ class Subhalo:
                     self.mis_angles_align['%s_%s' %(parttype_name[0], parttype_name[1])] = tmp_angles
                                
                     
-                if len(trim_rad_in) > 0:
+                if len(trim_hmr_in) > 0:
                     tmp_data = {}
-                    for rad in trim_rad_in:
-                        tmp_data.update({'%s' %str(rad): {}})
+                    for hmr_i in trim_hmr_in:
+                        tmp_data.update({'%s' %str(hmr_i): {}})
                     
-                    for rad in trim_rad_in:
+                    for hmr_i in trim_hmr_in:
                         for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
-                            tmp_data['%s' %str(rad)]['%s' %parttype_name] = self._trim_within_rad(self.data_align[parttype_name], rad*self.halfmass_rad_proj)
+                            tmp_data['%s' %str(hmr_i)]['%s' %parttype_name] = self._trim_within_rad(self.data_align[parttype_name], hmr_i*self.halfmass_rad_proj)
         
                     self.data_align = tmp_data
                   
@@ -1434,41 +1434,7 @@ class Subhalo:
         centre_of_mass = np.sum(mass_weighted, axis=0)/np.sum(arr['Mass'][mask])
     
         return centre_of_mass
-"""### MANUAL CALL
-# Directories of data hdf5 file(s)
-dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_028_z000p000/snap_028_z000p000.0.hdf5'
 
-# list of simulations
-mySims = np.array([('RefL0012N0188', 12)])   
-GroupNum = 4
-SubGroupNum = 0
-snapNum = 28
-
-# Initial extraction of galaxy data
-galaxy = Subhalo_Extract(mySims, dataDir, snapNum, GroupNum, SubGroupNum)
-
-spin_rad_in = galaxy.halfmass_rad*np.arange(0.5, 10.5, 0.5)   # pkpc
-kappa_rad_in = 30                       # [pkpc] False or value
-trim_rad_in = np.arange(0.5, 10.5, 0.5)                        # [pkpc] False or value
-align_rad_in = True    #30                       # [pkpc] False or value
-viewing_angle = 10                      # [deg] will rotate subhalo.data by this angle about z-axis
-orientate_to_axis = 'z'                 # 'z', 'y', 'x', will orientate axis to this angle based on stellar-spin in align_rad_in
-
-spin_rad = spin_rad_in
-trim_rad = trim_rad_in
-kappa_rad = kappa_rad_in
-align_rad = align_rad_in
-
-subhalo = Subhalo(galaxy.halfmass_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas, 
-                                    viewing_angle,
-                                    spin_rad,
-                                    trim_rad, 
-                                    kappa_rad, 
-                                    align_rad,               #align_rad=False
-                                    orientate_to_axis)     
-
-print(subhalo.data_align.keys())
-"""
 
 
 """ 

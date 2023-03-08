@@ -74,7 +74,7 @@ SAMPLE:
 #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
 # 3748
 # 37445
-def plot_radial_evolution(manual_GalaxyIDList_target = np.array([37445]),       # AT Z=0 leave empty if ignore
+def plot_radial_evolution(manual_GalaxyIDList_target = np.array([3748]),       # AT Z=0 leave empty if ignore
                                manual_GroupNumList_target = np.array([]),           # AT Z=0 manually enter galaxy gns we want. -1 for nothing
                                snapNum_target      = 28,                            #Snap number of the target 
                                SubGroupNum_target  = 0,
@@ -84,14 +84,14 @@ def plot_radial_evolution(manual_GalaxyIDList_target = np.array([37445]),       
                                    csv_load_name = '',                  #FIND IN LINUX, mac is weird
                              kappa_rad_in    = 30,                          # calculate kappa for this radius [pkpc]    
                              aperture_rad_in = 30,                          # trim all data to this maximum value before calculations
-                             trim_rad_in     = np.array([100]),             # keep as 100, doesn't matter as capped by aperture anyway
+                             trim_hmr_in     = np.array([100]),             # keep as 100, doesn't matter as capped by aperture anyway
                              align_rad_in    = False,                       # keep on False   
                              orientate_to_axis='z',                         # keep as z
                              viewing_angle=0,                               #keep as 0
                                      find_uncertainties      = True,                    # whether to find 2D and 3D uncertainties
                                      viewing_axis            = 'z',                     # Which axis to view galaxy from.  DEFAULT 'z'
                                      com_min_distance        = 2.0,                     # [pkpc] min distance between sfgas and stars. Min radius of spin_rad_in used
-                                     gas_sf_min_particles    = 20,                      # Minimum gas sf particles to use galaxy.  DEFAULT 100
+                                     gas_sf_min_particles    = 0,                      # Minimum gas sf particles to use galaxy.  DEFAULT 100
                                      min_inclination         = 0,                       # Minimum inclination toward viewing axis [deg] DEFAULT 0
                                      projected_or_abs        = 'projected',              # 'projected' or 'abs'
                                      spin_hmr_in             = np.array([1.0, 2.0, 3.0, 5.0]),    # multiples of HMR
@@ -244,7 +244,7 @@ def plot_radial_evolution(manual_GalaxyIDList_target = np.array([37445]),       
                 if len(spin_rad) != len(spin_hmr_in):
                     print('Capped spin_rad (%s pkpc) at aperture radius (%s pkpc)' %(max(spin_rad), aperture_rad_in))
                  
-                trim_rad = trim_rad_in
+                trim_hmr = trim_hmr_in
                 aperture_rad = aperture_rad_in
         
                 if kappa_rad_in == 'rad':
@@ -274,7 +274,7 @@ def plot_radial_evolution(manual_GalaxyIDList_target = np.array([37445]),       
                                                         viewing_angle,
                                                         spin_rad,
                                                         spin_hmr,
-                                                        trim_rad, 
+                                                        trim_hmr, 
                                                         kappa_rad, 
                                                         aperture_rad,
                                                         align_rad,              #align_rad = False
@@ -472,29 +472,9 @@ def plot_radial_evolution(manual_GalaxyIDList_target = np.array([37445]),       
                             #-------------------------------------
                             # Same as taking 'for redshift in XX'
                             for GalaxyID_i, lookbacktime_i in zip(tree.main_branch['GalaxyID'], tree.main_branch['lookbacktime']):
-                                
-                                print('hmr_i', hmr_i)
-
-                                
-                                
                                 if len(all_flags['%s' %str(GalaxyID_i)]) == 0:
                                     # Mask correct integer (formatting weird but works)
-
-                                    print(GalaxyID_i)
-                                    print(all_misanglesproj['%s' %str(GalaxyID_i)][viewing_axis]['hmr'][0])
-                                    print(all_misanglesproj['%s' %str(GalaxyID_i)][viewing_axis]['hmr'][1])
-                                    print(all_misanglesproj['%s' %str(GalaxyID_i)][viewing_axis]['hmr'][2])
-                                    print(all_misanglesproj['%s' %str(GalaxyID_i)][viewing_axis]['hmr'][3])
-                                    
-                                    print(all_misanglesproj['%s' %str(GalaxyID_i)][viewing_axis]['hmr'])
-                                    print(np.where(np.array(all_misanglesproj['%s' %str(GalaxyID_i)][viewing_axis]['hmr']) == hmr_i)[0])
-                                    
-                                    
-                                    # remove ceil
-                                    
-                                    
-                                    
-                                    mask_rad = int(np.where(np.ceil(np.array(all_misanglesproj['%s' %str(GalaxyID_i)][viewing_axis]['hmr'])) == hmr_i)[0])
+                                    mask_rad = int(np.where(np.array(all_misanglesproj['%s' %str(GalaxyID_i)][viewing_axis]['hmr']) == hmr_i)[0])
                                 
                                     misangle_plot.append(all_misanglesproj['%s' %str(GalaxyID_i)][viewing_axis]['%s_angle' %angle_type_in_i][mask_rad])
                                     misangle_err_lo_plot.append(all_misanglesproj['%s' %str(GalaxyID_i)][viewing_axis]['%s_angle_err' %angle_type_in_i][mask_rad][0])
@@ -650,7 +630,7 @@ def plot_radial_evolution(manual_GalaxyIDList_target = np.array([37445]),       
                     axs[2].set_ylabel('Mass fraction')
                     axs[2].set_yticks(np.arange(0, 1.1, 0.25))
                     axs[3].set_ylim(0, 1)
-                    axs[3].set_ylabel('kappa')
+                    axs[3].set_ylabel('\u03BA')
                     axs[3].set_yticks(np.arange(0, 1.1, 0.25))
                     
                                         

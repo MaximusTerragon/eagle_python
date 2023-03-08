@@ -127,11 +127,11 @@ def _stellar_mass_func(galaxy_mass_limit = 10**9,               # Mass limit of 
                        kappa_rad_in        = 30,                               # calculate kappa for this radius [pkpc]
                        aperture_rad_in     = 30,                               # trim all data to this maximum value before calculations
                        align_rad_in        = False,                            # keep on False
-                       trim_rad_in         = np.array([100]),                  # keep as 100... will be capped by aperture anyway. Doesn't matter
+                       trim_hmr_in         = np.array([100]),                  # keep as 100... will be capped by aperture anyway. Doesn't matter
                        orientate_to_axis='z',                              # Keep as z
                        viewing_angle = 0,                                    # Keep as 0
                                find_uncertainties      = False,                         # whether to find 2D and 3D uncertainties
-                               spin_rad_in             = np.array([2.0]),               # SAMPLE multiples of hmr. Will use lowest value for spin
+                               spin_hmr_in             = np.array([2.0]),               # SAMPLE multiples of hmr. Will use lowest value for spin
                                viewing_axis            = 'z',                           # SAMPLE Which axis to view galaxy from.  DEFAULT 'z'
                                com_min_distance        = 2.0,                           # SAMPLE [pkpc] min distance between sfgas and stars.  DEFAULT 2.0 
                                gas_sf_min_particles    = 20,                            # SAMPLE Minimum gas sf particles to use galaxy.  DEFAULT 100
@@ -238,8 +238,8 @@ def _stellar_mass_func(galaxy_mass_limit = 10**9,               # Mass limit of 
             #-------------------------------------------------------------------
             # Automating some later variables to avoid putting them in manually
 
-            # Use spin_rad_in as a way to trim data. This variable swap is from older version but allows future use of trim_rad_in
-            trim_rad_in = spin_rad_in
+            # Use spin_rad_in as a way to trim data. This variable swap is from older version but allows future use of trim_hmr_in
+            trim_hmr_in = spin_hmr_in
     
             # making particle_list_in and angle_selection obsolete:
             particle_list_in = []
@@ -274,8 +274,9 @@ def _stellar_mass_func(galaxy_mass_limit = 10**9,               # Mass limit of 
             elif projected_or_abs == 'abs':
                 use_rad = galaxy.halfmass_rad
             
-            spin_rad = spin_rad_in * use_rad                    #pkpc
-            trim_rad = trim_rad_in                              #rads
+            spin_rad = spin_hmr_in * use_rad                    #pkpc
+            spin_hmr = spin_hmr_in
+            trim_hmr = trim_hmr_in                              #rads
             aperture_rad = aperture_rad_in
             
             if kappa_rad_in == 'rad':
@@ -297,7 +298,8 @@ def _stellar_mass_func(galaxy_mass_limit = 10**9,               # Mass limit of 
                                                 angle_selection,
                                                 viewing_angle,
                                                 spin_rad,
-                                                trim_rad, 
+                                                spin_hmr,
+                                                trim_hmr, 
                                                 kappa_rad, 
                                                 aperture_rad,
                                                 align_rad,              #align_rad = False

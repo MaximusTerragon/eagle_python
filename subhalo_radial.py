@@ -75,12 +75,12 @@ def plot_radial_misalignment(manual_GalaxyIDList = np.array([]),       # leave e
                                    csv_load_name = 'data_radial_2023-02-28 11:21:57.629653',       #FIND IN LINUX, mac is weird
                              kappa_rad_in    = 30,                          # calculate kappa for this radius [pkpc]    
                              aperture_rad_in = 30,                          # trim all data to this maximum value before calculations
-                             trim_rad_in     = np.array([100]),             # keep as 100, doesn't matter as capped by aperture anyway
+                             trim_hmr_in     = np.array([100]),             # keep as 100, doesn't matter as capped by aperture anyway
                              align_rad_in    = False,                       # keep on False   
                              orientate_to_axis='z',                         # keep as z
                              viewing_angle=0,                               #keep as 0
                                      find_uncertainties      = True,                    # whether to find 2D and 3D uncertainties
-                                     spin_rad_in             = np.arange(0.5, 10.01, 0.25),    # multiples of rad
+                                     spin_hmr_in             = np.arange(0.5, 10.01, 0.25),    # multiples of rad
                                      viewing_axis            = 'z',                     # Which axis to view galaxy from.  DEFAULT 'z'
                                      com_min_distance        = 2.0,                     # [pkpc] min distance between sfgas and stars. Min radius of spin_rad_in used
                                      gas_sf_min_particles    = 20,                      # Minimum gas sf particles to use galaxy.  DEFAULT 100
@@ -200,12 +200,13 @@ def plot_radial_misalignment(manual_GalaxyIDList = np.array([]),       # leave e
             elif projected_or_abs == 'abs':
                 use_rad = galaxy.halfmass_rad
             
-            spin_rad = spin_rad_in * use_rad                                          #pkpc
+            spin_rad = spin_hmr_in * use_rad                                          #pkpc
             spin_rad = [x for x in spin_rad if x <= aperture_rad_in]
-            if len(spin_rad) != len(spin_rad_in):
+            spin_hmr = [x for x in spin_hmr_in if x*use_rad <= aperture_rad_in]
+            if len(spin_rad) != len(spin_hmr_in):
                 print('Capped spin_rad (%s pkpc) at aperture radius (%s pkpc)' %(max(spin_rad), aperture_rad_in))
             
-            trim_rad = trim_rad_in
+            trim_hmr = trim_hmr_in
             aperture_rad = aperture_rad_in
             
             if kappa_rad_in == 'rad':
@@ -234,7 +235,8 @@ def plot_radial_misalignment(manual_GalaxyIDList = np.array([]),       # leave e
                                                     angle_selection,
                                                     viewing_angle,
                                                     spin_rad,
-                                                    trim_rad, 
+                                                    spin_hmr,
+                                                    trim_hmr, 
                                                     kappa_rad, 
                                                     aperture_rad,
                                                     align_rad,              #align_rad = False
@@ -267,8 +269,8 @@ def plot_radial_misalignment(manual_GalaxyIDList = np.array([]),       # leave e
                 print('KAPPA:                  %.2f' %subhalo.kappa)
                 print('KAPPA GAS SF:           %.2f' %subhalo.kappa_gas_sf)
                 print('KAPPA RAD CALC [pkpc]:  %s'   %str(kappa_rad_in))
-                mask = np.where(np.array(subhalo.coms['hmr'] == min(spin_rad_in)))
-                print('C.O.M %s HMR STARS-SF [pkpc]:  %.2f' %(str(min(spin_rad_in)), subhalo.coms['stars_gas_sf'][int(mask[0])]))
+                mask = np.where(np.array(subhalo.coms['hmr'] == min(spin_hmr_in)))
+                print('C.O.M %s HMR STARS-SF [pkpc]:  %.2f' %(str(min(spin_hmr_in)), subhalo.coms['stars_gas_sf'][int(mask[0])]))
             elif print_galaxy_short == True:
                 print('GN:\t%s\t|ID:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(str(subhalo.gn), str(subhalo.GalaxyID), subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'], subhalo.general['kappa_gas_sf'])) 
                 
@@ -371,12 +373,12 @@ def plot_radial_misalignment(manual_GalaxyIDList = np.array([]),       # leave e
         
                 ### General formatting 
                 if rad_type_plot == 'hmr':
-                    axs[0].set_xlim(0, max(spin_rad_in))
-                    axs[0].set_xticks(np.arange(0, max(spin_rad_in)+1, 1))
+                    axs[0].set_xlim(0, max(spin_hmr_in))
+                    axs[0].set_xticks(np.arange(0, max(spin_hmr_in)+1, 1))
                     axs[1].set_xlabel('Stellar half-mass radius')
                 if rad_type_plot == 'rad':
-                    axs[0].set_xlim(0, max(spin_rad_in * float(all_general['%s' %str(GroupNum)]['halfmass_rad_proj'])))
-                    axs[0].set_xticks(np.arange(0, max(spin_rad_in * float(all_general['%s' %str(GroupNum)]['halfmass_rad_proj']))+1, 5))
+                    axs[0].set_xlim(0, max(spin_hmr_in * float(all_general['%s' %str(GroupNum)]['halfmass_rad_proj'])))
+                    axs[0].set_xticks(np.arange(0, max(spin_hmr_in * float(all_general['%s' %str(GroupNum)]['halfmass_rad_proj']))+1, 5))
                     axs[1].set_xlabel('Radial distance from centre [pkpc]')
 
                 axs[0].set_ylabel('Stellar-gas PA misalignment')
@@ -475,12 +477,12 @@ def plot_radial_misalignment(manual_GalaxyIDList = np.array([]),       # leave e
                
             ### General formatting 
             if rad_type_plot == 'hmr':
-                axs[0].set_xlim(0, max(spin_rad_in))
-                axs[0].set_xticks(np.arange(0, max(spin_rad_in)+1, 1))
+                axs[0].set_xlim(0, max(spin_hmr_in))
+                axs[0].set_xticks(np.arange(0, max(spin_hmr_in)+1, 1))
                 axs[1].set_xlabel('Stellar half-mass radius')
             if rad_type_plot == 'rad':
-                axs[0].set_xlim(0, max(spin_rad_in * float(all_general['%s' %str(GroupNum)]['halfmass_rad_proj'])))
-                axs[0].set_xticks(np.arange(0, max(spin_rad_in * float(all_general['%s' %str(GroupNum)]['halfmass_rad_proj']))+1, 5))
+                axs[0].set_xlim(0, max(spin_hmr_in * float(all_general['%s' %str(GroupNum)]['halfmass_rad_proj'])))
+                axs[0].set_xticks(np.arange(0, max(spin_hmr_in * float(all_general['%s' %str(GroupNum)]['halfmass_rad_proj']))+1, 5))
                 axs[1].set_xlabel('Radial distance from centre [pkpc]')
                 
             axs[0].set_ylabel('Stellar-gas misalignment')

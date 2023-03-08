@@ -140,11 +140,11 @@ def plot_misalignment_angle(manual_GalaxyIDList   = [3748, 37445],           # m
                             kappa_rad_in        = 30,                               # calculate kappa for this radius [pkpc]
                             aperture_rad_in     = 30,                               # trim all data to this maximum value before calculations
                             align_rad_in        = False,                            # keep on False
-                            trim_rad_in         = np.array([100]),                  # keep as 100... will be capped by aperture anyway. Doesn't matter
+                            trim_hmr_in         = np.array([100]),                  # keep as 100... will be capped by aperture anyway. Doesn't matter
                             orientate_to_axis='z',                              # Keep as z
                             viewing_angle = 0,                                    # Keep as 0
                                     find_uncertainties      = False,                    # whether to find 2D and 3D uncertainties
-                                    spin_rad_in             = np.array([2.0]),                  # multiples of hmr. Will use lowest value for spin
+                                    spin_hmr_in             = np.array([2.0]),                  # multiples of hmr. Will use lowest value for spin
                                     viewing_axis            = 'z',                     # Which axis to view galaxy from.  DEFAULT 'z'
                                     com_min_distance        = 2.0,                     # [pkpc] min distance between sfgas and stars.  DEFAULT 2.0 
                                     gas_sf_min_particles    = 20,                     # Minimum gas sf particles to use galaxy.  DEFAULT 100
@@ -284,8 +284,9 @@ def plot_misalignment_angle(manual_GalaxyIDList   = [3748, 37445],           # m
              elif projected_or_abs == 'abs':
                  use_rad = galaxy.halfmass_rad
             
-             spin_rad = spin_rad_in * use_rad                            #pkpc
-             trim_rad = trim_rad_in
+             spin_rad = spin_hmr_in * use_rad                            #pkpc
+             spin_hmr = spin_hmr_in
+             trim_hmr = trim_hmr_in
              aperture_rad = aperture_rad_in
             
              if kappa_rad_in == 'rad':
@@ -313,7 +314,8 @@ def plot_misalignment_angle(manual_GalaxyIDList   = [3748, 37445],           # m
                                                  angle_selection,
                                                  viewing_angle,
                                                  spin_rad,
-                                                 trim_rad, 
+                                                 spin_hmr,
+                                                 trim_hmr, 
                                                  kappa_rad, 
                                                  aperture_rad,
                                                  align_rad,              #align_rad = False
@@ -349,8 +351,8 @@ def plot_misalignment_angle(manual_GalaxyIDList   = [3748, 37445],           # m
                  print('KAPPA:                  %.2f' %subhalo.kappa_stars)
                  print('KAPPA GAS SF:           %.2f' %subhalo.kappa_gas_sf)
                  print('KAPPA RAD CALC [pkpc]:  %s'   %str(kappa_rad_in))
-                 mask = np.where(np.array(subhalo.coms['hmr'] == min(spin_rad_in)))
-                 print('C.O.M %s HMR STARS-SF [pkpc]:  %.2f' %(str(min(spin_rad_in)), subhalo.coms['stars_gas_sf'][int(mask[0])]))
+                 mask = np.where(np.array(subhalo.coms['hmr'] == min(spin_hmr_in)))
+                 print('C.O.M %s HMR STARS-SF [pkpc]:  %.2f' %(str(min(spin_hmr_in)), subhalo.coms['stars_gas_sf'][int(mask[0])]))
              elif print_galaxy_short == True:
                  print('GN:\t%s\t|ID:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(str(subhalo.gn), str(subhalo.GalaxyID), subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'], subhalo.general['kappa_gas_sf'])) 
                  
@@ -402,7 +404,7 @@ def plot_misalignment_angle(manual_GalaxyIDList   = [3748, 37445],           # m
                 # If galaxy not flagged, use galaxy
                 if len(all_flags['%s' %str(GroupNum)]) == 0:
                     # Mask correct integer (formatting weird but works)
-                    mask_rad = int(np.where(np.array(all_misangles['%s' %GroupNum]['hmr']) == min(spin_rad_in))[0])
+                    mask_rad = int(np.where(np.array(all_misangles['%s' %GroupNum]['hmr']) == min(spin_hmr_in))[0])
                     
                     misalignment_angle.append(all_misangles['%s' %str(GroupNum)]['%s_angle' %angle_type_in_i][mask_rad])
                     projected_angle.append(all_misanglesproj['%s' %str(GroupNum)][viewing_axis]['%s_angle' %angle_type_in_i][mask_rad])
@@ -428,7 +430,7 @@ def plot_misalignment_angle(manual_GalaxyIDList   = [3748, 37445],           # m
             if not quiet:
                 print(' ', GroupNumNotPlot)
             print('\n\n==========================================')
-            print('Spin radius, axis:   %.1f [pkpc], %s' %(min(spin_rad_in), viewing_axis))
+            print('Spin radius, axis:   %.1f [hmr], %s' %(min(spin_hmr_in), viewing_axis))
             print('Min. stellar mass:   %.1f [log10 M*]' %np.log10(galaxy_mass_limit))
             print('Min. sf particles:   %i' %gas_sf_min_particles)
             print('Min. c.o.m distance: %.1f [pkpc]' %com_min_distance)
@@ -489,9 +491,9 @@ def plot_misalignment_angle(manual_GalaxyIDList   = [3748, 37445],           # m
             
             
             """if plot_2D_3D == '2D':
-                plt.suptitle("L%s: %s Misalignment\nmass: %.1f, type: 2D, hmr: %s, ax: %s, \nparticles: %s, com: %s, galaxies: %s/%s" %(str(mySims[0][1]), angle_type_in_i, np.log10(galaxy_mass_limit), str(min(spin_rad_in)), viewing_axis, str(gas_sf_min_particles), str(com_min_distance), len(GroupNumPlot), len(sample.GroupNum)))
+                plt.suptitle("L%s: %s Misalignment\nmass: %.1f, type: 2D, hmr: %s, ax: %s, \nparticles: %s, com: %s, galaxies: %s/%s" %(str(mySims[0][1]), angle_type_in_i, np.log10(galaxy_mass_limit), str(min(spin_hmr_in)), viewing_axis, str(gas_sf_min_particles), str(com_min_distance), len(GroupNumPlot), len(sample.GroupNum)))
             elif plot_2D_3D == '3D':
-                plt.suptitle("L%s: %s Misalignment\nmass: %.1f, type: 3D, hmr: %s, \nparticles: %s, com: %s, galaxies: %s/%s" %(str(mySims[0][1]), angle_type_in_i, np.log10(galaxy_mass_limit), str(min(spin_rad_in)), str(gas_sf_min_particles), str(com_min_distance), len(GroupNumPlot), len(sample.GroupNum)))
+                plt.suptitle("L%s: %s Misalignment\nmass: %.1f, type: 3D, hmr: %s, \nparticles: %s, com: %s, galaxies: %s/%s" %(str(mySims[0][1]), angle_type_in_i, np.log10(galaxy_mass_limit), str(min(spin_hmr_in)), str(gas_sf_min_particles), str(com_min_distance), len(GroupNumPlot), len(sample.GroupNum)))
             """
             
             # Annotations
@@ -507,9 +509,9 @@ def plot_misalignment_angle(manual_GalaxyIDList   = [3748, 37445],           # m
             # Savefig
             if savefig == True:
                 if plot_2D_3D == '2D':
-                    plt.savefig("%s/MisAngleHist_2D_mass%s_%s_rad%s_part%s_com%s_ax%s%s.%s" %(root_file, np.log10(galaxy_mass_limit), angle_type_in_i, str(int(min(spin_rad_in))), str(gas_sf_min_particles), str(com_min_distance), viewing_axis, savefig_txt, file_format), format=file_format, bbox_inches='tight', pad_inches=0.2, dpi=300)
+                    plt.savefig("%s/MisAngleHist_2D_mass%s_%s_rad%s_part%s_com%s_ax%s%s.%s" %(root_file, np.log10(galaxy_mass_limit), angle_type_in_i, str(min(spin_hmr_in)), str(gas_sf_min_particles), str(com_min_distance), viewing_axis, savefig_txt, file_format), format=file_format, bbox_inches='tight', pad_inches=0.2, dpi=300)
                 elif plot_2D_3D == '3D':
-                    plt.savefig("%s/MisAngleHist_3D_mass%s_%s_rad%s_part%s_com%s%s.%s" %(root_file, np.log10(galaxy_mass_limit), angle_type_in_i, str(int(min(spin_rad_in))), str(gas_sf_min_particles), str(com_min_distance), savefig_txt, file_format), format=file_format, bbox_inches='tight', pad_inches=0.2, dpi=300)
+                    plt.savefig("%s/MisAngleHist_3D_mass%s_%s_rad%s_part%s_com%s%s.%s" %(root_file, np.log10(galaxy_mass_limit), angle_type_in_i, str(min(spin_hmr_in)), str(gas_sf_min_particles), str(com_min_distance), savefig_txt, file_format), format=file_format, bbox_inches='tight', pad_inches=0.2, dpi=300)
             if showfig == True:
                 plt.show()
             plt.close()
@@ -531,7 +533,7 @@ def plot_misalignment_angle(manual_GalaxyIDList   = [3748, 37445],           # m
                 # If galaxy not flagged, use galaxy
                 if len(all_flags['%s' %str(GroupNum)]) == 0:
                     # Mask correct integer (formatting weird but works)
-                    mask_rad = int(np.where(np.array(all_misangles['%s' %GroupNum]['hmr']) == min(spin_rad_in))[0])
+                    mask_rad = int(np.where(np.array(all_misangles['%s' %GroupNum]['hmr']) == min(spin_hmr_in))[0])
                     
                     if all_general['%s' %str(GroupNum)]['kappa_stars'] >= 0.40:
                         misalignment_angle_LTG.append(all_misangles['%s' %str(GroupNum)]['%s_angle' %angle_type_in_i][mask_rad])
@@ -566,7 +568,7 @@ def plot_misalignment_angle(manual_GalaxyIDList   = [3748, 37445],           # m
             if not quiet:
                 print(' ', GroupNumNotPlot)
             print('\n\n==========================================')
-            print('Spin radius, axis:   %.1f [pkpc], %s' %(min(spin_rad_in), viewing_axis))
+            print('Spin radius, axis:   %.1f [hmr], %s' %(min(spin_hmr_in), viewing_axis))
             print('Min. stellar mass:   %.1f [log10 M*]' %np.log10(galaxy_mass_limit))
             print('Min. sf particles:   %i' %gas_sf_min_particles)
             print('Min. c.o.m distance: %.1f [pkpc]' %com_min_distance)
@@ -653,9 +655,9 @@ def plot_misalignment_angle(manual_GalaxyIDList   = [3748, 37445],           # m
                 
             
                 """if plot_2D_3D == '2D':
-                    plt.suptitle("L%s: %s Misalignment\nmass: %.1f, type: 2D, hmr: %s, ax: %s, \nparticles: %s, com: %s, galaxies: %s/%s" %(str(mySims[0][1]), angle_type_in_i, np.log10(galaxy_mass_limit), str(min(spin_rad_in)), viewing_axis, str(gas_sf_min_particles), str(com_min_distance), len(GroupNumPlot), len(sample.GroupNum)))
+                    plt.suptitle("L%s: %s Misalignment\nmass: %.1f, type: 2D, hmr: %s, ax: %s, \nparticles: %s, com: %s, galaxies: %s/%s" %(str(mySims[0][1]), angle_type_in_i, np.log10(galaxy_mass_limit), str(min(spin_hmr_in)), viewing_axis, str(gas_sf_min_particles), str(com_min_distance), len(GroupNumPlot), len(sample.GroupNum)))
                 elif plot_2D_3D == '3D':
-                    plt.suptitle("L%s: %s Misalignment\nmass: %.1f, type: 3D, hmr: %s, \nparticles: %s, com: %s, galaxies: %s/%s" %(str(mySims[0][1]), angle_type_in_i, np.log10(galaxy_mass_limit), str(min(spin_rad_in)), str(gas_sf_min_particles), str(com_min_distance), len(GroupNumPlot), len(sample.GroupNum)))
+                    plt.suptitle("L%s: %s Misalignment\nmass: %.1f, type: 3D, hmr: %s, \nparticles: %s, com: %s, galaxies: %s/%s" %(str(mySims[0][1]), angle_type_in_i, np.log10(galaxy_mass_limit), str(min(spin_hmr_in)), str(gas_sf_min_particles), str(com_min_distance), len(GroupNumPlot), len(sample.GroupNum)))
                 """
             
                 # Annotations
@@ -673,9 +675,9 @@ def plot_misalignment_angle(manual_GalaxyIDList   = [3748, 37445],           # m
             # Savefig
             if savefig == True:
                 if plot_2D_3D == '2D':
-                    plt.savefig("%s/MisAngleHist_morph_2D_mass%s_%s_rad%s_part%s_com%s_ax%s%s.%s" %(root_file, np.log10(galaxy_mass_limit), angle_type_in_i, str(int(min(spin_rad_in))), str(gas_sf_min_particles), str(com_min_distance), viewing_axis, savefig_txt, file_format), format=file_format, bbox_inches='tight', pad_inches=0.2, dpi=300)
+                    plt.savefig("%s/MisAngleHist_morph_2D_mass%s_%s_rad%s_part%s_com%s_ax%s%s.%s" %(root_file, np.log10(galaxy_mass_limit), angle_type_in_i, str(min(spin_hmr_in)), str(gas_sf_min_particles), str(com_min_distance), viewing_axis, savefig_txt, file_format), format=file_format, bbox_inches='tight', pad_inches=0.2, dpi=300)
                 elif plot_2D_3D == '3D':
-                    plt.savefig("%s/MisAngleHist_morph_3D_mass%s_%s_rad%s_part%s_com%s%s.%s" %(root_file, np.log10(galaxy_mass_limit), angle_type_in_i, str(int(min(spin_rad_in))), str(gas_sf_min_particles), str(com_min_distance), savefig_txt, file_format), format=file_format, bbox_inches='tight', pad_inches=0.2, dpi=300)
+                    plt.savefig("%s/MisAngleHist_morph_3D_mass%s_%s_rad%s_part%s_com%s%s.%s" %(root_file, np.log10(galaxy_mass_limit), angle_type_in_i, str(min(spin_hmr_in)), str(gas_sf_min_particles), str(com_min_distance), savefig_txt, file_format), format=file_format, bbox_inches='tight', pad_inches=0.2, dpi=300)
             if showfig == True:
                 plt.show()
             plt.close()    

@@ -14,18 +14,33 @@ import math
 from datetime import datetime
 from tqdm import tqdm
 from matplotlib.ticker import PercentFormatter
-from subhalo_main import Subhalo_Extract, Subhalo
+from subhalo_main import Subhalo_Extract, Subhalo, ConvertID, ConvertGN
 import eagleSqlTools as sql
 from graphformat import graphformat
 
 
 # list of simulations
 mySims = np.array([('RefL0012N0188', 12)])   
-snapNum = 28
 
 # Directories of data hdf5 file(s)
+dataDir_main = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/'
+dataDir_dict = {}
+dataDir_dict['15'] = dataDir_main + 'snapshot_015_z002p012/snap_015_z002p012.0.hdf5'
+dataDir_dict['16'] = dataDir_main + 'snapshot_016_z001p737/snap_016_z001p737.0.hdf5'
+dataDir_dict['17'] = dataDir_main + 'snapshot_017_z001p487/snap_017_z001p487.0.hdf5'
+dataDir_dict['18'] = dataDir_main + 'snapshot_018_z001p259/snap_018_z001p259.0.hdf5'
+dataDir_dict['19'] = dataDir_main + 'snapshot_019_z001p004/snap_019_z001p004.0.hdf5'
+dataDir_dict['20'] = dataDir_main + 'snapshot_020_z000p865/snap_020_z000p865.0.hdf5'
+dataDir_dict['21'] = dataDir_main + 'snapshot_021_z000p736/snap_021_z000p736.0.hdf5'
+dataDir_dict['22'] = dataDir_main + 'snapshot_022_z000p615/snap_022_z000p615.0.hdf5'
+dataDir_dict['23'] = dataDir_main + 'snapshot_023_z000p503/snap_023_z000p503.0.hdf5'
+dataDir_dict['24'] = dataDir_main + 'snapshot_024_z000p366/snap_024_z000p366.0.hdf5'
+dataDir_dict['25'] = dataDir_main + 'snapshot_025_z000p271/snap_025_z000p271.0.hdf5'
+dataDir_dict['26'] = dataDir_main + 'snapshot_026_z000p183/snap_026_z000p183.0.hdf5'
+dataDir_dict['27'] = dataDir_main + 'snapshot_027_z000p101/snap_027_z000p101.0.hdf5'
+dataDir_dict['28'] = dataDir_main + 'snapshot_028_z000p000/snap_028_z000p000.0.hdf5'
 #dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_0%s_z000p101/snap_0%s_z000p101.0.hdf5' %(snapNum, snapNum)
-dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_0%s_z000p000/snap_0%s_z000p000.0.hdf5' %(snapNum, snapNum)
+
  
 
 """  
@@ -51,9 +66,13 @@ SAMPLE:
 
 """
 #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
-def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # manually enter galaxy gns we want
-                               SubGroupNum = 0,
-                               galaxy_mass_limit = 10**9.5,                         # for print 
+def plot_radial_misalignment(manual_GalaxyIDList = np.array([]),       # leave empty if ignore
+                               manual_GroupNumList = np.array([4]),           # manually enter galaxy gns we want
+                               SubGroupNum         = 0,
+                               snapNum             = 28,
+                                 galaxy_mass_limit = 10**9.5,                         # for print 
+                                 csv_load       = False,              # .csv file will ALL data
+                                   csv_load_name = 'data_radial_2023-02-28 11:21:57.629653',       #FIND IN LINUX, mac is weird
                              kappa_rad_in    = 30,                          # calculate kappa for this radius [pkpc]    
                              aperture_rad_in = 30,                          # trim all data to this maximum value before calculations
                              trim_rad_in     = np.array([100]),             # keep as 100, doesn't matter as capped by aperture anyway
@@ -76,11 +95,10 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
                                print_galaxy       = False,
                                print_galaxy_short = True,
                                print_progress     = True,
-                               csv_load       = True,              # .csv file will ALL data
-                                 csv_load_name = 'data_radial_2023-02-28 11:21:57.629653',       #FIND IN LINUX, mac is weird
+                               
                                csv_file = False,                     # whether to create a csv file of used data
                                  csv_name = 'data_radial',          # name of .csv file
-                               savefig = True,
+                               savefig = False,
                                showfig = True,  
                                  savefigtxt = '_new', 
                                debug = False):         
@@ -103,9 +121,27 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
         print(dict_new['function_input'])
         
         GroupNumList = all_general.keys()
+        SubGroupNumList = np.full(len(GroupNumList), SubGroupNum)
         
         
     if not csv_load:
+        
+        # Creating list (usually just single galaxy)
+        if len(manual_GroupNumList) > 0:
+            # Converting names of variables for consistency
+            GroupNumList    = manual_GroupNumList
+            SubGroupNumList = np.full(len(manual_GroupNumList), SubGroupNum)
+        elif len(manual_GalaxyIDList) > 0:
+            # Extract GroupNum, SubGroupNum, and Snap for each ID
+            GroupNumList    = []
+            SubGroupNumList = []
+            for galID in manual_GalaxyIDList:
+                gn, sgn, snap = ConvertID(galID, mySims)
+       
+                # Append to arrays
+                GroupNumList.append(gn)
+                SubGroupNumList.append(sgn)
+        
         #-------------------------------------------------------------------
         # Automating some later variables to avoid putting them in manually
     
@@ -148,15 +184,14 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
         
     
         #=================================================================== 
-        GroupNumList = manual_GroupNumList
-        for GroupNum in tqdm(GroupNumList):
+        for GroupNum, SubGroupNum in tqdm(zip(GroupNumList, SubGroupNumList), total=len(GroupNumList)): 
         
             if print_progress:
                 print('Extracting particle data Subhalo_Extract()')
                 time_start = time.time()
         
             # Initial extraction of galaxy data
-            galaxy = Subhalo_Extract(mySims, dataDir, snapNum, GroupNum, SubGroupNum, aperture_rad_in, viewing_axis)
+            galaxy = Subhalo_Extract(mySims, dataDir_dict['%s' %str(snapNum)], snapNum, GroupNum, SubGroupNum, aperture_rad_in, viewing_axis)
         
             #-------------------------------------------------------------------
             # Automating some later variables to avoid putting them in manually
@@ -235,7 +270,7 @@ def plot_radial_misalignment(manual_GroupNumList = np.array([1]),           # ma
                 mask = np.where(np.array(subhalo.coms['hmr'] == min(spin_rad_in)))
                 print('C.O.M %s HMR STARS-SF [pkpc]:  %.2f' %(str(min(spin_rad_in)), subhalo.coms['stars_gas_sf'][int(mask[0])]))
             elif print_galaxy_short == True:
-                print('GN:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(str(subhalo.gn), subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'], subhalo.general['kappa_gas_sf'])) 
+                print('GN:\t%s\t|ID:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(str(subhalo.gn), str(subhalo.GalaxyID), subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'], subhalo.general['kappa_gas_sf'])) 
                 
         
             #===================================================================

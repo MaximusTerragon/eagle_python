@@ -11,7 +11,7 @@ import json
 from datetime import datetime
 from tqdm import tqdm
 import eagleSqlTools as sql
-from subhalo_main import Subhalo_Extract, Subhalo, ConvertID, CovertGN
+from subhalo_main import Subhalo_Extract, Subhalo, ConvertID, ConvertGN
 from graphformat import graphformat
 
 
@@ -79,7 +79,7 @@ class Sample:
                              and AP.ApertureSize = 30 \
                              and SH.GalaxyID = AP.GalaxyID \
                            ORDER BY \
-        			         AP.Mass_Star desc'%(sim_name, sim_name, snapNum, self.mstar_limit)
+        			         AP.Mass_Star desc'%(sim_name, sim_name, self.snapNum, self.mstar_limit)
             
             # Execute query.
             myData = sql.execute_query(con, myQuery)
@@ -102,7 +102,7 @@ class Sample:
                              and AP.ApertureSize = 30 \
                              and SH.GalaxyID = AP.GalaxyID \
                            ORDER BY \
-        			         AP.Mass_Star desc'%(sim_name, sim_name, snapNum, self.mstar_limit)
+        			         AP.Mass_Star desc'%(sim_name, sim_name, self.snapNum, self.mstar_limit)
     
             # Execute query.
             myData = sql.execute_query(con, myQuery)
@@ -120,8 +120,10 @@ csv_load to compare this to.
 """
 def _stellar_mass_func(galaxy_mass_limit = 10**9,               # Mass limit of sample
                        sql_mass_limit    = 10**8,               # Mass limit of SQL query    
-                         SubGroupNum       = 0,
-                         snapNum           = 28,
+                         SubGroupNum     = 0,
+                         snapNum         = 28,
+                         csv_load        = True,              # .csv file will ALL data
+                           csv_load_name   = 'data_misalignment_2023-02-28 10:45:11.358603',       #FIND IN LINUX, mac is weird
                        kappa_rad_in        = 30,                               # calculate kappa for this radius [pkpc]
                        aperture_rad_in     = 30,                               # trim all data to this maximum value before calculations
                        align_rad_in        = False,                            # keep on False
@@ -139,15 +141,15 @@ def _stellar_mass_func(galaxy_mass_limit = 10**9,               # Mass limit of 
                        plot_single     = True,                        # whether to create single plots. KEEP ON TRUE
                                hist_bin_width          = 0.2,         # Msun
                          print_progress = True,
-                         root_file = '/Users/c22048063/Documents/EAGLE/serpens_plots/trial_plots/tests',
+                         root_file = '/Users/c22048063/Documents/EAGLE/plots/',
                          file_format = 'png',
                          csv_load       = True,              # .csv file will ALL data
-                           csv_load_name = 'data_pa_L100_2023-02-05 00:23:20.406924_voronoi',       #FIND IN LINUX, mac is weird
+                           csv_load_name = 'data_misalignment_2023-02-28 10:45:11.358603',       #FIND IN LINUX, mac is weird
                          csv_file       = False,
                            csv_name = 'stellar_mass_func_L25',
                          showfig   = True,
-                         savefig   = True,  
-                           savefigtxt = '_L100_voronoisample',            #extra savefile txt
+                         savefig   = False,  
+                           savefigtxt = '',            #extra savefile txt
                          quiet = True,
                          debug = False):
             
@@ -212,11 +214,13 @@ def _stellar_mass_func(galaxy_mass_limit = 10**9,               # Mass limit of 
         print(dict_new['function_input'])
         
         GroupNumList = all_general.keys()
+        SubGroupNumList = np.full(len(GroupNumList), SubGroupNum)
           
     if not csv_load:
         # creates a list of applicable gn (and sgn) to sample. To include satellite galaxies, use 'yes'
         sample = Sample(mySims, snapNum, galaxy_mass_limit, 'no')
         GroupNumList = sample.GroupNum
+        SubGroupNumList = sample.SubGroupNum
         
         # Create dictionaries to collect for csv
         all_flags         = {}
@@ -226,9 +230,10 @@ def _stellar_mass_func(galaxy_mass_limit = 10**9,               # Mass limit of 
         all_misanglesproj = {}
         all_general       = {}
         
-        for GroupNum in tqdm(GroupNumList):
+        
+        for GroupNum, SubGroupNum in tqdm(zip(GroupNumList, SubGroupNumList), total=len(GroupNumList)): 
             # Initial extraction of galaxy data
-            galaxy = Subhalo_Extract(mySims, dataDir, snapNum, GroupNum, SubGroupNum, aperture_rad_in, viewing_axis)
+            galaxy = Subhalo_Extract(mySims, dataDir_dict['%s' %str(snapNum)], snapNum, GroupNum, SubGroupNum, aperture_rad_in, viewing_axis)
             
             #-------------------------------------------------------------------
             # Automating some later variables to avoid putting them in manually
@@ -417,7 +422,7 @@ def _stellar_mass_func(galaxy_mass_limit = 10**9,               # Mass limit of 
     
     # Savefig
     if savefig == True:
-        plt.savefig('%s/stellarMassFunc_%s.%s' %(str(root_file), savefigtxt, file_format), format=file_format, dpi=300, bbox_inches='tight', pad_inches=0.2)
+        plt.savefig('%s/stellarMassFunc_snap%s_%s.%s' %(str(root_file), str(snapNum), savefigtxt, file_format), format=file_format, dpi=300, bbox_inches='tight', pad_inches=0.2)
     if showfig == True:
         plt.show()
     plt.close()

@@ -69,6 +69,7 @@ PURPOSE
 """
 #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
 #1, 2, 4, 3, 6, 5, 7, 9, 16, 14, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
+#3748
 #37445, 37446, 37447
 """
 
@@ -77,7 +78,7 @@ PURPOSE
                     snapNum           = 19, 
 """
 # Now takes a galaxyID, or array of IDs
-def galaxy_render(GalaxyIDList = np.array([37445, 37458]),       # leave empty if ignore
+def galaxy_render(manual_GalaxyIDList = np.array(np.arange(37445, 37459)),       # leave empty if ignore
                     manual_GroupNumList = np.array([]),                 # leave empty if ignore
                     SubGroupNum       = 0,
                     snapNum           = 28, 
@@ -120,25 +121,21 @@ def galaxy_render(GalaxyIDList = np.array([37445, 37458]),       # leave empty i
                     debug = False):
         
         
-    if len(GalaxyIDList) == 0:
+    
+    if len(manual_GroupNumList) > 0:
         # Converting names of variables for consistency
         GroupNumList    = manual_GroupNumList
         SubGroupNumList = np.full(len(manual_GroupNumList), SubGroupNum)
         snapNumList     = np.full(len(manual_GroupNumList), snapNum)
         
-        GalaxyIDList = []
-        for gn, sgn, snap in zip(GroupNumList, SubGroupNumList, snapNumList):
-            galID = ConvertGN(gn, sgn, snap, mySims)
+    elif len(manual_GalaxyIDList) > 0:
+        GalaxyIDList = manual_GalaxyIDList
         
-            # Append to arrays
-            GalaxyIDList.append(galID)
-        
-    elif len(manual_GroupNumList) == 0:
         # Extract GroupNum, SubGroupNum, and Snap for each ID
         GroupNumList    = []
         SubGroupNumList = []
         snapNumList     = []
-        for galID in GalaxyIDList:
+        for galID in manual_GalaxyIDList:
             gn, sgn, snap = ConvertID(galID, mySims)
         
             # Append to arrays
@@ -176,7 +173,7 @@ def galaxy_render(GalaxyIDList = np.array([37445, 37458]),       # leave empty i
         angle_selection.append(['gas_sf', 'gas_nsf'])
     
     
-    for GroupNum, SubGroupNum, snapNum, GalaxyID in tqdm(zip(GroupNumList, SubGroupNumList, snapNumList, GalaxyIDList), total=len(GroupNumList)):         
+    for GroupNum, SubGroupNum, snapNum in tqdm(zip(GroupNumList, SubGroupNumList, snapNumList), total=len(GroupNumList)):         
         # Initial extraction of galaxy data
         galaxy = Subhalo_Extract(mySims, dataDir_dict['%s' %snapNum], snapNum, GroupNum, SubGroupNum, aperture_rad_in, viewing_axis)
         
@@ -251,7 +248,7 @@ def galaxy_render(GalaxyIDList = np.array([37445, 37458]),       # leave empty i
             mask = np.where(np.array(subhalo.coms['hmr'] == min(spin_rad_in)))
             print('C.O.M %s HMR STARS-SF [pkpc]:  %.2f' %(str(min(spin_rad_in)), subhalo.coms['stars_gas_sf'][int(mask[0])]))
         elif print_galaxy_short == True:
-            print('GN:\t%s\t|ID:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(str(subhalo.gn), str(GalaxyID), subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'], subhalo.general['kappa_gas_sf'])) 
+            print('GN:\t%s\t|ID:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(str(subhalo.gn), str(subhalo.GalaxyID), subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'], subhalo.general['kappa_gas_sf'])) 
              
         # Graph initialising and base formatting
         graphformat(8, 11, 11, 11, 11, 5, 5)

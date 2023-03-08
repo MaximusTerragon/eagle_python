@@ -14,6 +14,7 @@ from astropy.constants import G
 import eagleSqlTools as sql
 from pyread_eagle import EagleSnapshot
 from read_dataset_tools import read_dataset, read_dataset_dm_mass, read_header
+from astropy.cosmology import FlatLambdaCDM
 
 
 
@@ -473,6 +474,10 @@ spin_rad_in:    array [pkpc] ... *subhalo.halfmass_rad externally already...
     When given a list of values, for example:
     galaxy.halfmass_rad*np.arange(0.5, 10.5, 0.5)
     will calculate spin values within these values
+spin_hmr_in:    array .
+    When given a list of values, for example:
+    np.arange(0.5, 10.5, 0.5)
+    will calculate spin values within these values
 kappa_rad_in:   False or value [pkpc]
     Will calculate kappa for this radius from centre
     of galaxy. Usually 30
@@ -655,6 +660,7 @@ class Subhalo:
                             angle_selection,    #angle_selection = [['stars', 'gas'], ['stars', 'gas_sf'], ['stars', 'gas_nsf'], ['gas_sf', 'gas_nsf']]
                             viewing_angle,
                             spin_rad_in, 
+                            spin_hmr_in,
                             trim_rad_in, 
                             kappa_rad_in,
                             aperture_rad_in,
@@ -752,7 +758,7 @@ class Subhalo:
                 time_start = time.time()
                 
             if (len(data_nil['gas_sf']['Mass']) == 0) or (len(data_nil['gas_nsf']['Mass']) == 0):
-                self.flags.append(['No particles'])
+                self.flags.append(['No gas particles'])
         
         # Flag galaxy if particles in smallest radius given in spin_rad_in < gas_sf_min_particles
         if len(self.flags) == 0:

@@ -80,7 +80,7 @@ def plot_radial_misalignment(manual_GalaxyIDList = np.array([]),       # leave e
                              orientate_to_axis='z',                         # keep as z
                              viewing_angle=0,                               #keep as 0
                                      find_uncertainties      = True,                    # whether to find 2D and 3D uncertainties
-                                     spin_hmr_in             = np.arange(0.5, 10.01, 0.25),    # multiples of rad
+                                     spin_hmr_in             = np.array([1.0, 2.0, 3.0]), #np.arange(0.5, 10.01, 0.25),    # multiples of rad
                                      viewing_axis            = 'z',                     # Which axis to view galaxy from.  DEFAULT 'z'
                                      com_min_distance        = 2.0,                     # [pkpc] min distance between sfgas and stars. Min radius of spin_rad_in used
                                      gas_sf_min_particles    = 20,                      # Minimum gas sf particles to use galaxy.  DEFAULT 100
@@ -93,7 +93,7 @@ def plot_radial_misalignment(manual_GalaxyIDList = np.array([]),       # leave e
                              root_file = '/Users/c22048063/Documents/EAGLE/plots',
                              file_format = 'png',
                                print_galaxy       = False,
-                               print_galaxy_short = True,
+                               print_galaxy_short = False,
                                print_progress     = True,
                                
                                csv_file = False,                     # whether to create a csv file of used data
@@ -192,7 +192,7 @@ def plot_radial_misalignment(manual_GalaxyIDList = np.array([]),       # leave e
         
             # Initial extraction of galaxy data
             galaxy = Subhalo_Extract(mySims, dataDir_dict['%s' %str(snapNum)], snapNum, GroupNum, SubGroupNum, aperture_rad_in, viewing_axis)
-        
+            
             #-------------------------------------------------------------------
             # Automating some later variables to avoid putting them in manually
             if projected_or_abs == 'projected':
@@ -228,7 +228,7 @@ def plot_radial_misalignment(manual_GalaxyIDList = np.array([]),       # leave e
                 print('Running particle data analysis Subhalo()')
                 time_start = time.time()
             
-            # Galaxy will be rotated to calc_kappa_rad's stellar spin value
+            # Galaxy will be rotated to calc_kappa_rad's stellar spin value        
             with np.errstate(divide='ignore', invalid='ignore'):
                 # subhalo.halfmass_rad_proj will be either projected or absolute, use this
                 subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.GalaxyID, galaxy.stelmass, galaxy.gasmass, galaxy.halfmass_rad, use_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, galaxy.MorphoKinem,

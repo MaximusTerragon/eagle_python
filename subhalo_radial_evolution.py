@@ -75,14 +75,14 @@ SAMPLE:
 #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
 # 3748
 # 37445
-def plot_radial_evolution(manual_GalaxyIDList_target = np.array([37445]),       # AT Z=0 leave empty if ignore
+def plot_radial_evolution(manual_GalaxyIDList_target = np.array([30494]),       # AT Z=0 leave empty if ignore
                                manual_GroupNumList_target = np.array([]),           # AT Z=0 manually enter galaxy gns we want. -1 for nothing
                                snapNum_target      = 28,                            #Snap number of the target 
                                SubGroupNum_target  = 0,
                                snapNumMax          = 15,                    # maximum snap number we are interested in
-                                 galaxy_mass_limit = 10**9.5,                         # for print 
+                                 galaxy_mass_limit = 10**9.0,                         # for print 
                                  csv_load       = True,              # .csv file will ALL data
-                                   csv_load_name = 'data_radial_evolution_2023-03-09 20:13:14.854317',                  #FIND IN LINUX, mac is weird
+                                   csv_load_name = 'data_radial_evolution_2023-03-17 16:51:01.461137',                  #FIND IN LINUX, mac is weird
                              kappa_rad_in    = 30,                          # calculate kappa for this radius [pkpc]    
                              aperture_rad_in = 30,                          # trim all data to this maximum value before calculations
                              trim_hmr_in     = np.array([100]),             # keep as 100, doesn't matter as capped by aperture anyway
@@ -95,7 +95,7 @@ def plot_radial_evolution(manual_GalaxyIDList_target = np.array([37445]),       
                                      gas_sf_min_particles    = 20,                      # Minimum gas sf particles to use galaxy.  DEFAULT 100
                                      min_inclination         = 0,                       # Minimum inclination toward viewing axis [deg] DEFAULT 0
                                      projected_or_abs        = 'projected',              # 'projected' or 'abs'
-                                     spin_hmr_in             = np.array([1.0, 1.5, 2.0, 2.5, 3.0]),    # multiples of HMR
+                                     spin_hmr_in             = np.arange(1.0, 5, 0.1),    # multiples of HMR
                                      angle_type_in           = np.array(['stars_gas', 'stars_gas_sf']),       # analytical results for constituent particles will be found. ei., stars_gas_sf will mean stars and gas_sf properties will be found, and the angles between them                                                           
                                      plot_2D_3D           = '2D',                # whether to plot 2D or 3D angle
                                      rad_type_plot        = 'hmr',               # 'rad' whether to use absolute distance or hmr
@@ -105,12 +105,12 @@ def plot_radial_evolution(manual_GalaxyIDList_target = np.array([37445]),       
                              file_format = 'png',
                                print_galaxy       = False,
                                print_galaxy_short = True,
-                               print_progress     = True,
+                               print_progress     = False,
                                csv_file = False,                     # whether to create a csv file of used data
                                  csv_name = 'data_radial_evolution',          # name of .csv file
-                               savefig = False,
+                               savefig = True,
                                showfig = True,  
-                                 savefigtxt = '', 
+                                 savefigtxt = '_no_errors', 
                                debug = False):         
           
     time_start = time.time()  
@@ -319,7 +319,6 @@ def plot_radial_evolution(manual_GalaxyIDList_target = np.array([37445]),       
                                                         min_inclination,
                                                         quiet=True)
                 
-                print('STELMASS: %f\t%f\tDIFF: %f' %(galaxy.stelmass, subhalo.stelmass, galaxy.stelmass-subhalo.stelmass))
                 
                 #--------------------------------
                 # Collecting all relevant particle info for galaxy
@@ -329,6 +328,7 @@ def plot_radial_evolution(manual_GalaxyIDList_target = np.array([37445]),       
                 total_coms['%s' %str(tree.target_GalaxyID)]['%s' %str(subhalo.GalaxyID)]          = subhalo.coms
                 total_misangles['%s' %str(tree.target_GalaxyID)]['%s' %str(subhalo.GalaxyID)]     = subhalo.mis_angles
                 total_misanglesproj['%s' %str(tree.target_GalaxyID)]['%s' %str(subhalo.GalaxyID)] = subhalo.mis_angles_proj
+                
                 #---------------------------------
                 
                 print('  FLAGS:\t', subhalo.flags)
@@ -425,7 +425,7 @@ def plot_radial_evolution(manual_GalaxyIDList_target = np.array([37445]),       
                     if len(ratio_i) == 0:
                         next
                     else:
-                        if max(ratio_i) >= 0.01:
+                        if max(ratio_i) >= 0.1:
                             for ax in axs:
                                 ax.axvline(lookbacktime_i, ls='-', color='grey', alpha=min(0.5, max(ratio_i)*10), linewidth=3)
         
@@ -444,15 +444,15 @@ def plot_radial_evolution(manual_GalaxyIDList_target = np.array([37445]),       
         
         
                     # Create some colormaps of things we want
-                    colors_blues    = plt.get_cmap('Blues_r')(np.linspace(0.05, 0.5, len(spin_hmr_in)))
-                    colors_reds     = plt.get_cmap('Reds_r')(np.linspace(0.05, 0.5, len(spin_hmr_in)))
-                    colors_greens   = plt.get_cmap('Greens_r')(np.linspace(0.05, 0.5, len(spin_hmr_in)))
-                    colors_spectral = plt.get_cmap('Purples_r')(np.linspace(0.05, 0.5, len(spin_hmr_in)))
+                    colors_blues    = plt.get_cmap('Blues')(np.linspace(0.4, 0.9, len(spin_hmr_in)))
+                    colors_reds     = plt.get_cmap('Reds')(np.linspace(0.4, 0.9, len(spin_hmr_in)))
+                    colors_greens   = plt.get_cmap('Greens')(np.linspace(0.4, 0.9, len(spin_hmr_in)))
+                    colors_spectral = plt.get_cmap('Spectral_r')(np.linspace(0.05, 0.95, len(spin_hmr_in)))
         
         
                     #-----------------------
                     # Loop over each rad
-                    for hmr_i, color_b, color_r, color_g, color_s in zip(spin_hmr_in, colors_blues, colors_reds, colors_greens, colors_spectral):
+                    for hmr_i, color_b, color_r, color_g, color_s in zip(np.flip(spin_hmr_in), colors_blues, colors_reds, colors_greens, colors_spectral):
             
                         GalaxyID_plot     = []
                         GalaxyID_notplot  = []
@@ -478,7 +478,6 @@ def plot_radial_evolution(manual_GalaxyIDList_target = np.array([37445]),       
                             if len(np.array(total_flags['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)])) == 0:
                                 # Mask correct integer (formatting weird but works)
                                 mask_rad = int(np.where(np.array(total_misanglesproj['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)][viewing_axis]['hmr']) == hmr_i)[0])
-                                mask_rad = int(np.where(np.array(total_misanglesproj['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)][viewing_axis]['hmr']) == hmr_i)[0])
                 
                                 misangle_plot.append(total_misanglesproj['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)][viewing_axis]['%s_angle' %angle_type_in_i][mask_rad])
                                 misangle_err_lo_plot.append(total_misanglesproj['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)][viewing_axis]['%s_angle_err' %angle_type_in_i][mask_rad][0])
@@ -497,7 +496,7 @@ def plot_radial_evolution(manual_GalaxyIDList_target = np.array([37445]),       
                     
                             else:
                                 print('VOID ID: %s\t\t%s' %(str(GalaxyID_i), str(lookbacktime_i)))
-                                print(all_flags['%s' %str(GalaxyID_i)])
+                                print(total_flags['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)])
                     
                                 misangle_plot.append(math.nan)
                                 misangle_err_lo_plot.append(math.nan)
@@ -546,7 +545,7 @@ def plot_radial_evolution(manual_GalaxyIDList_target = np.array([37445]),       
                             axs[0].plot(lookbacktime_plot, misangle_plot, label='%s r$_{HMR}$' %str(hmr_i), alpha=0.8, ms=2, lw=1, ls=ls, c=color_s)
                         if angle_type_in_i == 'stars_gas_sf':
                             axs[0].plot(lookbacktime_plot, misangle_plot, label='%s r$_{HMR}$' %str(hmr_i), alpha=0.8, ms=2, lw=1, ls=ls, c=color_s)
-                        axs[0].fill_between(lookbacktime_plot, misangle_err_lo_plot, misangle_err_hi_plot, alpha=0.2, color=color_s)
+                        #axs[0].fill_between(lookbacktime_plot, misangle_err_lo_plot, misangle_err_hi_plot, alpha=0.2, color=color_s, lw=0)
             
             
                         #------------------------
@@ -596,10 +595,10 @@ def plot_radial_evolution(manual_GalaxyIDList_target = np.array([37445]),       
                 labels_color_1    = [plt.get_cmap('Reds_r')([0.5]), plt.get_cmap('Greens_r')([0.5])]
     
                 #axs[0].add_artist(plt.legend(handles=legend_elements_0, labels=labels_0, loc='upper left', frameon=False, labelspacing=0.1, fontsize=8, labelcolor='linecolor', handlelength=1))
-                axs[0].legend(loc='upper right', frameon=False, labelspacing=0.1, fontsize=8, labelcolor='linecolor', handlelength=0)
-                axs[1].legend(handles=legend_elements_1, labels=labels_1, loc='upper right', frameon=False, labelspacing=0.1, fontsize=8, labelcolor=labels_color_1, handlelength=0)
-                axs[2].legend(loc='upper right', frameon=False, labelspacing=0.1, fontsize=8, labelcolor='linecolor', handlelength=0)
-                axs[3].legend(loc='upper right', frameon=False, labelspacing=0.1, fontsize=8, labelcolor='linecolor', handlelength=0)
+                #axs[0].legend(loc='upper right', frameon=False, labelspacing=0.1, fontsize=8, labelcolor='linecolor', handlelength=0)
+                #axs[1].legend(handles=legend_elements_1, labels=labels_1, loc='upper right', frameon=False, labelspacing=0.1, fontsize=8, labelcolor=labels_color_1, handlelength=0)
+                #axs[2].legend(loc='upper right', frameon=False, labelspacing=0.1, fontsize=8, labelcolor='linecolor', handlelength=0)
+                #axs[3].legend(loc='upper right', frameon=False, labelspacing=0.1, fontsize=8, labelcolor='linecolor', handlelength=0)
                 axs[4].legend(loc='lower right', frameon=False, labelspacing=0.1, fontsize=8, labelcolor='linecolor', handlelength=0)
     
     

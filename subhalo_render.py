@@ -71,18 +71,21 @@ PURPOSE
 #1, 2, 4, 3, 6, 5, 7, 9, 16, 14, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
 #3748
 #37445, 37446, 37447
-"""
+
+#3748, 20455, 37445, 30494, 43163, 40124, 44545, 48383, 57647, 55343, 51640, 46366, 53904, 52782, 56522, 59467, 49986, 61119, 62355, 63199, 61831
+
+""""
 
                     manual_GroupNumList = np.array([3]),
                     SubGroupNum       = 0,
                     snapNum           = 19, 
 """
 # Now takes a galaxyID, or array of IDs
-def galaxy_render(manual_GalaxyIDList = np.array([37445]),       # leave empty if ignore
+def galaxy_render(manual_GalaxyIDList = np.array([30504]),       # leave empty if ignore
                     manual_GroupNumList = np.array([]),                 # leave empty if ignore
                     SubGroupNum       = 0,
                     snapNum           = 28, 
-                  spin_hmr_in           = np.array([2.0]),              # multiples of rad
+                  spin_hmr_in           = np.array([1.0]),              # multiples of rad
                   kappa_rad_in          = 30,                           # Calculate kappa for this radius [pkpc]
                   aperture_rad_in       = 30,                           # trim all data to this maximum value
                   align_rad_in          = False,                              # Align galaxy to stellar vector in. this radius [pkpc]
@@ -93,20 +96,20 @@ def galaxy_render(manual_GalaxyIDList = np.array([37445]),       # leave empty i
                     maxangle  = 0, 
                     stepangle = 30,
                   plot_spin_vectors = True,
-                    spin_vector_rad = 2.0,            # radius of spinvector to display (in hmr)
+                    spin_vector_rad = 1.0,            # radius of spinvector to display (in hmr)
                   centre_of_pot     = True,           # Plot most bound object (default centre)
                   centre_of_mass    = False,           # Plot total centre of mass
                   axis              = True,           # Plot small axis below galaxy
-                      boxradius_in          = 30,                  # boxradius of render [kpc], 'rad', 'tworad'
+                      boxradius_in          = 10,                  # boxradius of render [kpc], 'rad', 'tworad'
                       particles             = 5000,
-                      trim_hmr_in           = np.array([1000]),     # WILL PLOT LOWEST VALUE. trim particles # multiples of rad, num [pkpc], found in subhalo.data[hmr]    
+                      trim_hmr_in           = np.array([1.0]),     # WILL PLOT LOWEST VALUE. trim particles # multiples of rad, num [pkpc], found in subhalo.data[hmr]    
                       stars                 = True,
                       gas_sf                = True,
                       gas_nsf               = True,    
                       dark_matter           = True,
                       black_holes           = True,
                   find_uncertainties = False,                   # LEAVE THESE. whether to find 2D and 3D uncertainties
-                  viewing_axis = 'x',                           # Which axis to view galaxy from.  DEFAULT 'z'
+                  viewing_axis = 'z',                           # Which axis to view galaxy from.  DEFAULT 'z'
                   com_min_distance = 10000,                      # [pkpc] min distance between sfgas and stars.  DEFAULT 2.0 
                   gas_sf_min_particles = 0,                     # Minimum gas sf particles to use galaxy.  DEFAULT 100
                   min_inclination = 0,                          # Minimum inclination toward viewing axis [deg] DEFAULT 0
@@ -142,6 +145,7 @@ def galaxy_render(manual_GalaxyIDList = np.array([37445]),       # leave empty i
             GroupNumList.append(gn)
             SubGroupNumList.append(sgn)
             snapNumList.append(snap)
+    
     
     #-----------------------------------------------------------
     # making particle_list_in and angle_selection obsolete:
@@ -207,6 +211,7 @@ def galaxy_render(manual_GalaxyIDList = np.array([37445]),       # leave empty i
         else:
             boxradius = boxradius_in
             
+                                           
         # Galaxy will be rotated to calc_kappa_rad's stellar spin value. subhalo.halfmass_rad_proj will be EITHER abs or projected
         subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.GalaxyID, galaxy.stelmass, galaxy.gasmass, galaxy.halfmass_rad, use_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, galaxy.MorphoKinem,
                                             angle_selection,
@@ -227,6 +232,8 @@ def galaxy_render(manual_GalaxyIDList = np.array([37445]),       # leave empty i
                                             min_inclination,
                                             quiet=True)
         
+        
+        print('STELMASS: %f\t%f\tDIFF: %f %%' %(np.log10(galaxy.stelmass), np.log10(subhalo.stelmass), 100*abs(galaxy.stelmass-subhalo.stelmass)/subhalo.stelmass))
         
         # Add filter to skip pafitting of galaxy if any basic condition not met
         if len(subhalo.flags) != 0:
@@ -250,7 +257,7 @@ def galaxy_render(manual_GalaxyIDList = np.array([37445]),       # leave empty i
             mask = np.where(np.array(subhalo.coms['hmr'] == min(spin_hmr_in)))
             print('C.O.M %s HMR STARS-SF [pkpc]:  %.2f' %(str(min(spin_hmr_in)), subhalo.coms['stars_gas_sf'][int(mask[0])]))
         elif print_galaxy_short == True:
-            print('GN:\t%s\t|ID:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(str(subhalo.gn), str(subhalo.GalaxyID), subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'], subhalo.general['kappa_gas_sf'])) 
+            print('| %i |GN:    %s   |ID:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(snapNum, str(subhalo.gn), str(subhalo.GalaxyID), subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'], subhalo.general['kappa_gas_sf'])) 
              
         # Graph initialising and base formatting
         graphformat(8, 11, 11, 11, 11, 5, 5)

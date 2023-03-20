@@ -1666,6 +1666,10 @@ class MergerTree:
                 merger_ratio = stelmass / stelmass_primary
                 gas_ratios   = (gasmass_primary + gasmass) / (stelmass_primary + stelmass)
                 
+                # Ensure ratio is strictly less than 1
+                if merger_ratio > 1.0:
+                    merger_ratio = 2 - merger_ratio
+                
                 #Grab ID of secondary
                 id_secondary = galaxyID
                 

@@ -108,7 +108,7 @@ def plot_radial_evolution(manual_GalaxyIDList_target = np.array([30494]),       
                                print_progress     = False,
                                csv_file = False,                     # whether to create a csv file of used data
                                  csv_name = 'data_radial_evolution',          # name of .csv file
-                               savefig = True,
+                               savefig = False,
                                showfig = True,  
                                  savefigtxt = '_no_errors', 
                                debug = False):         
@@ -684,117 +684,280 @@ def plot_radial_evolution(manual_GalaxyIDList_target = np.array([30494]),       
                     plt.show()
                 plt.close()
                 
-            
-
-
-
-        
-    
-            
-    
+          
         # Plots analytical misalignment angle in 3D space
         if plot_2D_3D == '3D':
-            print('  NOT CONFIGURED  ')
-            for GroupNum in GroupNumList:
+            for target_GalaxyID in np.array(GalaxyIDList_target):
                 # Initialise figure
-                graphformat(8, 11, 11, 9, 11, 4.5, 3.75)
-                fig, axs = plt.subplots(nrows=2, ncols=1, gridspec_kw={'height_ratios': [3, 1]}, figsize=(3.15, 3.15), sharex=True, sharey=False)
-
-                plot_count = 0
-
-                for angle_type_in_i in angle_type_in:
-                    # Collect values to plot
-                    rad_points    = []
-                    gas_sf_frac   = []
-                    pa_points     = []
-                    pa_points_lo  = []
-                    pa_points_hi  = []
-                    GroupNumPlot       = []
-                    GroupNumNotPlot    = []
-
-                    # If galaxy not flagged, use galaxy
-                    if len(all_flags['%s' %str(GroupNum)]) == 0:
-                        for i in np.arange(0, len(all_misangles['%s' %str(GroupNum)]['%s' %rad_type_plot]), 1):
-                            rad_points.append(all_misangles['%s' %str(GroupNum)]['%s' %rad_type_plot][i])
-                            pa_points.append(all_misangles['%s' %str(GroupNum)]['%s_angle' %angle_type_in_i][i])
+                graphformat(8, 11, 11, 9, 11, 6.5, 3.75)
+                fig, axs = plt.subplots(nrows=5, ncols=1, gridspec_kw={'height_ratios': [1.3, 0.7, 0.7, 0.7, 0.7]}, figsize=[3.5, 8], sharex=True, sharey=False)                    
     
-                            # lower and higher, where error is [lo, hi] in _misanglesproj[...]
-                            pa_points_lo.append(all_misangles['%s' %str(GroupNum)]['%s_angle_err' %angle_type_in_i][i][0])
-                            pa_points_hi.append(all_misangles['%s' %str(GroupNum)]['%s_angle_err' %angle_type_in_i][i][1])
-        
-                            if plot_count == 0:
-                                # Gas sf fraction
-                                gas_sf_frac.append(all_particles['%s' %str(GroupNum)]['gas_sf_mass'][i]  / all_particles['%s' %str(GroupNum)]['gas_mass'][i])
-        
     
-                        GroupNumPlot.append(GroupNum)
+                #=====================
+                # Add mergers
+                for ratio_i, lookbacktime_i, snap_i in zip(np.array(total_mergers['%s' %str(target_GalaxyID)]['ratios']), np.array(total_mainbranch['%s' %str(target_GalaxyID)]['lookbacktime']), np.array(total_mainbranch['%s' %str(target_GalaxyID)]['snapnum'])):
+                    if len(ratio_i) == 0:
+                        next
                     else:
-                        print('VOID: flagged')
-                        print(all_flags['%s' %str(GroupNum)].items())
-                        GroupNumNotPlot.append(GroupNum)
-
-
-                    if debug == True:
-                        print('\nrad ', rad_points)
-                        print('proj', pa_points)
-                        print('lo', pa_points_lo)
-                        print('hi', pa_points_hi)
-
-
-
-                    # Plot scatter and errorbars
-                    #plt.errorbar(rad_points, pa_points, xerr=None, yerr=pa_points_err, label='2D projected', alpha=0.8, ms=2, capsize=4, elinewidth=1, markeredgewidth=1)
+                        if max(ratio_i) >= 0.1:
+                            for ax in axs:
+                                ax.axvline(lookbacktime_i, ls='-', color='grey', alpha=min(0.5, max(ratio_i)*10), linewidth=3)
+        
+                            # Annotate
+                            axs[0].text(lookbacktime_i, 170, ' %.2f' %max(ratio_i), fontsize=7, color='grey')
+                
+                 
+                #---------------------------
+                # Loop over each angle type
+                for angle_type_in_i in plot_angle_type_in:
+                    # angletype_in_i will be dotted for total gas, and line for SF gas
                     if angle_type_in_i == 'stars_gas':
-                        axs[0].plot(rad_points, pa_points, label='Gas', alpha=1.0, ms=2, lw=1)
-                    if angle_type_in_i == 'stars_gas_sf':
-                        axs[0].plot(rad_points, pa_points, label='SF gas', alpha=1.0, ms=2, lw=1)
-                    axs[0].fill_between(rad_points, pa_points_lo, pa_points_hi, alpha=0.3)
+                        ls = '--'
+                    elif angle_type_in_i == 'stars_gas_sf':
+                        ls = '-'
+        
+        
+                    # Create some colormaps of things we want
+                    colors_blues    = plt.get_cmap('Blues')(np.linspace(0.4, 0.9, len(spin_hmr_in)))
+                    colors_reds     = plt.get_cmap('Reds')(np.linspace(0.4, 0.9, len(spin_hmr_in)))
+                    colors_greens   = plt.get_cmap('Greens')(np.linspace(0.4, 0.9, len(spin_hmr_in)))
+                    colors_spectral = plt.get_cmap('Spectral_r')(np.linspace(0.05, 0.95, len(spin_hmr_in)))
+        
+        
+                    #-----------------------
+                    # Loop over each rad
+                    for hmr_i, color_b, color_r, color_g, color_s in zip(np.flip(spin_hmr_in), colors_blues, colors_reds, colors_greens, colors_spectral):
+            
+                        GalaxyID_plot     = []
+                        GalaxyID_notplot  = []
+                        lookbacktime_plot = []
+                        redshift_plot     = []
+            
+                        misangle_plot     = []
+                        misangle_err_lo_plot = []
+                        misangle_err_hi_plot = []
+            
+                        stelmass_plot     = []
+                        gasmass_plot      = []
+                        gassfmass_plot    = []
+            
+                        gas_frac_plot     = []
+                        gas_sf_frac_plot  = []
+            
+            
+                        #-------------------------------------
+                        # Same as taking 'for redshift in XX'
+                        for GalaxyID_i, lookbacktime_i, redshift_i in zip(np.array(total_mainbranch['%s' %str(target_GalaxyID)]['GalaxyID']), np.array(total_mainbranch['%s' %str(target_GalaxyID)]['lookbacktime']), np.array(total_mainbranch['%s' %str(target_GalaxyID)]['redshift'])):
+                            
+                            if len(np.array(total_flags['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)])) == 0:
+                                # Mask correct integer (formatting weird but works)
+                                mask_rad = int(np.where(np.array(total_misangles['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['hmr']) == hmr_i)[0])
+                
+                                misangle_plot.append(total_misangles['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['%s_angle' %angle_type_in_i][mask_rad])
+                                misangle_err_lo_plot.append(total_misangles['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['%s_angle_err' %angle_type_in_i][mask_rad][0])
+                                misangle_err_hi_plot.append(total_misangles['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['%s_angle_err' %angle_type_in_i][mask_rad][1])
+                    
+                                stelmass_plot.append(total_particles['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['stars_mass'][mask_rad])
+                                gasmass_plot.append(total_particles['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['gas_mass'][mask_rad])
+                                gassfmass_plot.append(total_particles['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['gas_sf_mass'][mask_rad])
+                    
+                                gas_frac_plot.append(total_particles['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['gas_mass'][mask_rad]  / (total_particles['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['stars_mass'][mask_rad] + total_particles['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['gas_mass'][mask_rad]))
+                                gas_sf_frac_plot.append(total_particles['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['gas_sf_mass'][mask_rad]  / (total_particles['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['stars_mass'][mask_rad] + total_particles['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['gas_mass'][mask_rad]))
+                    
+                                redshift_plot.append(redshift_i)
+                                lookbacktime_plot.append(lookbacktime_i)
+                                GalaxyID_plot.append(GalaxyID_i)
+                    
+                            else:
+                                print('VOID ID: %s\t\t%s' %(str(GalaxyID_i), str(lookbacktime_i)))
+                                print(total_flags['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)])
+                    
+                                misangle_plot.append(math.nan)
+                                misangle_err_lo_plot.append(math.nan)
+                                misangle_err_hi_plot.append(math.nan)
+                    
+                                stelmass_plot.append(math.nan)
+                                gasmass_plot.append(math.nan)
+                                gassfmass_plot.append(math.nan)
+                    
+                                gas_frac_plot.append(math.nan)
+                                gas_sf_frac_plot.append(math.nan)
+                    
+                                redshift_plot.append(redshift_i)
+                                lookbacktime_plot.append(lookbacktime_i)
+                                GalaxyID_notplot.append(GalaxyID_i)
+                    
+               
+                        if debug == True:
+                            print('\nGalaxyID plot    ', GalaxyID_plot)
+                            print('GalaxyID not plot', GalaxyID_notplot)
+                            print(' ')
+                            print('lookbacktime_plot', lookbacktime_plot)
+                            print(' ')
+                            print('misangle_plot       ', misangle_plot)
+                            print('misangle_err_lo_plot', misangle_err_lo_plot)
+                            print('misangle_err_hi_plot', misangle_err_hi_plot)
+                            print(' ')
+                            print('stelmass_plot ', stelmass_plot)
+                            print('gasmass_plot  ', gasmass_plot)
+                            print('gassfmass_plot', gassfmass_plot)
+                            print(' ')
+                            print('gas_frac_plot   ', gas_frac_plot)
+                            print('gas_sf_frac_plot', gas_sf_frac_plot)
+            
+            
+                        #========================
+                        # Plotting
+                        # Plot 1: Misalignment angles, errors, with time/redshift
+                        # Plot 2: Stellar mass, gas mass, gas sf mass, with time/redshift
+                        # Plot 3: Gas fractions with time/redshift
+            
+                        #------------------------
+                        # PLOT 1
+                        # Plot scatter and errorbars
+                        if angle_type_in_i == 'stars_gas':
+                            axs[0].plot(lookbacktime_plot, misangle_plot, label='%s r$_{HMR}$' %str(hmr_i), alpha=0.8, ms=2, lw=1, ls=ls, c=color_s)
+                        if angle_type_in_i == 'stars_gas_sf':
+                            axs[0].plot(lookbacktime_plot, misangle_plot, label='%s r$_{HMR}$' %str(hmr_i), alpha=0.8, ms=2, lw=1, ls=ls, c=color_s)
+                        #axs[0].fill_between(lookbacktime_plot, misangle_err_lo_plot, misangle_err_hi_plot, alpha=0.2, color=color_s, lw=0)
+            
+            
+                        #------------------------
+                        # PLOT 2
+                        # Plot masses
+                        axs[1].plot(lookbacktime_plot, np.log10(stelmass_plot), alpha=1.0, lw=1, c=color_r, label='Stars')
+                        #axs[1].plot(lookbacktime_plot, np.log10(gasmass_plot), alpha=1.0, lw=1, c=color_b, label='Gas$_{Total}$')
+                        axs[1].plot(lookbacktime_plot, np.log10(gassfmass_plot), alpha=1.0, lw=1, c=color_g, label='Gas$_{SF}$')
+            
+            
+                        #------------------------
+                        # PLOT 3
+                        # Plot gas frations
+                        axs[2].plot(lookbacktime_plot, gas_frac_plot, alpha=1.0, lw=1, c=color_b, label='%s r$_{HMR}$' %str(hmr_i))
+                        axs[3].plot(lookbacktime_plot, gas_sf_frac_plot, alpha=1.0, lw=1, c=color_g, label='%s r$_{HMR}$' %str(hmr_i))
+        
+                #------------------------
+                # PLOT 4
+    
+                # Find kappas and other _general stats
+                kappa_stars       = []
+                kappa_gas         = []
+    
+                # Same as taking 'for redshift in XX'
+                for GalaxyID_i, lookbacktime_i in zip(np.array(total_mainbranch['%s' %str(target_GalaxyID)]['GalaxyID']), np.array(total_mainbranch['%s' %str(target_GalaxyID)]['lookbacktime'])):
+                    if len(total_flags['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]) == 0:
+                        kappa_stars.append(total_general['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['kappa_stars'])
+                        kappa_gas.append(total_general['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['kappa_gas_sf'])
+                    else:
+                        kappa_stars.append(math.nan)
+                        kappa_gas.append(math.nan)
+        
+    
+                # Plot kappas
+                axs[4].axhline(0.4, lw=1, ls='--', c='grey', alpha=0.7)
+                axs[4].text(13.4, 0.41, ' LTG', fontsize=7, color='grey')
+                axs[4].text(13.4, 0.29, ' ETG', fontsize=7, color='grey')
+                axs[4].plot(lookbacktime_plot, kappa_stars, alpha=1.0, lw=1, c='r', label='\u03BA$_{Stars}$')
+                axs[4].plot(lookbacktime_plot, kappa_gas, alpha=1.0, lw=1, c='b', label='\u03BA$_{Gas}$')
+    
+                #=============================
+                ### General formatting 
+    
+                ### Customise legend labels
+                legend_elements_1 = [Line2D([0], [0], marker=' ', color='w'), Line2D([0], [0], marker=' ', color='w')]
+                labels_1          = ['Stars', 'Gas$_{SF}$']
+                labels_color_1    = [plt.get_cmap('Reds_r')([0.5]), plt.get_cmap('Greens_r')([0.5])]
+    
+                #axs[0].add_artist(plt.legend(handles=legend_elements_0, labels=labels_0, loc='upper left', frameon=False, labelspacing=0.1, fontsize=8, labelcolor='linecolor', handlelength=1))
+                #axs[0].legend(loc='upper right', frameon=False, labelspacing=0.1, fontsize=8, labelcolor='linecolor', handlelength=0)
+                #axs[1].legend(handles=legend_elements_1, labels=labels_1, loc='upper right', frameon=False, labelspacing=0.1, fontsize=8, labelcolor=labels_color_1, handlelength=0)
+                #axs[2].legend(loc='upper right', frameon=False, labelspacing=0.1, fontsize=8, labelcolor='linecolor', handlelength=0)
+                #axs[3].legend(loc='upper right', frameon=False, labelspacing=0.1, fontsize=8, labelcolor='linecolor', handlelength=0)
+                axs[4].legend(loc='lower right', frameon=False, labelspacing=0.1, fontsize=8, labelcolor='linecolor', handlelength=0)
+    
+    
+                # Create redshift axis:
+                redshiftticks = [0, 0.2, 0.5, 1, 1.5, 2, 5, 10, 20]
+                ageticks = ((13.8205298 * u.Gyr) - FlatLambdaCDM(H0=67.77, Om0=0.307, Ob0 = 0.04825).age(redshiftticks)).value
+                for i, ax in enumerate(axs):
+                    ax_top = ax.twiny()
+                    ax_top.set_xticks(ageticks)
 
-                    if plot_count == 0:
-                        # Plot star forming fraction
-                        axs[1].plot(rad_points, gas_sf_frac, alpha=1.0, lw=1, c='k')
+                    ax.set_xlim(0, 13.5)
+                    ax_top.set_xlim(0, 13.5)
+        
+                    if i == 0:
+                        ax.set_ylim(0, 180)
+            
+                        ax_top.set_xlabel('Redshift')
+                        ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major', length=3, width=0.8)
+                        ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='minor', length=1.8, width=0.8)
+            
+                        ax.set_yticks(np.arange(0, 181, 30))
+                        ax_top.set_xticklabels(['{:g}'.format(z) for z in redshiftticks])
+                        ax.set_ylabel('Misalignment')
+            
+                        ax.set_title('GalaxyID: %s' %str(target_GalaxyID))
+                        ax.invert_xaxis()
+                        ax_top.invert_xaxis()
+                    if i == 1:
+                        ax.set_ylim(7, 13)
+                        ax.set_ylabel('Mass [log$_{10}$M$_{\odot}$]')
+            
+                        ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major', length=3, width=0.8, labelbottom=False, labeltop=False)
+                        ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='minor', length=1.8, width=0.8)
+                        ax.invert_xaxis()
+                        ax_top.invert_xaxis()
+                    if i == 2:
+                        ax.set_ylim(0, 1)
+                        ax.set_yticks(np.arange(0, 1.1, 0.25))
+            
+                        ax.set_ylabel('Gas mass\nfraction')
+            
+                        ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major', length=3, width=0.8, labelbottom=False, labeltop=False)
+                        ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='minor', length=1.8, width=0.8)
+                        ax.invert_xaxis()
+                        ax_top.invert_xaxis()
+                    if i == 3:
+                        ax.set_ylim(0, 1)
+                        ax.set_yticks(np.arange(0, 1.1, 0.25))
+            
+                        ax.set_ylabel('Gas$_{SF}$ mass\nfraction')
+            
+                        ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major', length=3, width=0.8, labelbottom=False, labeltop=False)
+                        ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='minor', length=1.8, width=0.8)
+                        ax.invert_xaxis()
+                        ax_top.invert_xaxis()
+                    if i == 4:
+                        ax.set_ylim(0, 1)
+                        ax.set_yticks(np.arange(0, 1.1, 0.25))
+            
+                        ax.set_xlabel('Lookback time (Gyr)')
+                        ax.set_ylabel('\u03BA')
+            
+                        ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major', length=3, width=0.8, labelbottom=False, labeltop=False)
+                        ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='minor', length=1.8, width=0.8)
+                        ax.invert_xaxis()
+                        ax_top.invert_xaxis()
+        
+                    ax.minorticks_on()
+                    ax.tick_params(axis='both', direction='in', top=False, bottom=True, left=True, right=True, which='major', width=0.8, length=3)
+                    ax.tick_params(axis='both', direction='in', top=False, bottom=True, left=True, right=True, which='minor', length=1.8, width=0.8)
+        
+                  
+    
+                # other
+                #axs[0].grid(alpha=0.3)
+                #axs[1].grid(alpha=0.3)
+                plt.tight_layout()
 
-
-            ### General formatting 
-            if rad_type_plot == 'hmr':
-                axs[0].set_xlim(0, max(spin_hmr_in))
-                axs[0].set_xticks(np.arange(0, max(spin_hmr_in)+1, 1))
-                axs[1].set_xlabel('Stellar half-mass radius')
-            if rad_type_plot == 'rad':
-                axs[0].set_xlim(0, max(spin_hmr_in * float(all_general['%s' %str(GroupNum)]['halfmass_rad_proj'])))
-                axs[0].set_xticks(np.arange(0, max(spin_hmr_in * float(all_general['%s' %str(GroupNum)]['halfmass_rad_proj']))+1, 5))
-                axs[1].set_xlabel('Radial distance from centre [pkpc]')
-
-            axs[0].set_ylabel('Stellar-gas misalignment')
-            axs[1].set_ylabel('f$_{gas_{sf}/gas_{tot}}$')
-            axs[0].set_yticks(np.arange(0, 181, 30))
-            axs[1].set_yticks(np.arange(0, 1.1, 0.25))
-            axs[1].set_yticklabels(['0', '', '', '', '1'])
-            axs[0].set_ylim(0, 180)
-            axs[1].set_ylim(0, 1)
-            axs[0].set_title('GalaxyID: %i' %subhalo.GalaxyID)
-
-            # Annotations
-
-            # Legend
-            axs[0].legend(loc='lower right', frameon=False, labelspacing=0.1, fontsize=9, labelcolor='linecolor', handlelength=0)
-            for ax in axs:
-                ax.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='both', width=0.8, length=2)
-
-            # Other
-            plt.tight_layout()
-            axs[0].grid(alpha=0.3)
-            axs[1].grid(alpha=0.3)
-
-            # Savefig
-            if savefig == True:
-                plt.savefig('%s/Radial3D_gn%s_id%s_mass%s_%s_part%s_com%s_%s.%s' %(str(root_file), str(all_general['%s' %str(GroupNum)]['gn']), str(all_general['%s' %str(GroupNum)]['GalaxyID']), str('%.2f' %np.log10(float(all_general['%s' %str(GroupNum)]['stelmass']))), angle_type_in, str(gas_sf_min_particles), str(com_min_distance), savefigtxt, file_format), format='%s' %file_format, dpi=300, bbox_inches='tight', pad_inches=0.2)
-            if showfig == True:
-                plt.show()
-            plt.close()
-
-            plot_count = plot_count+1
-
+                # savefig
+                if savefig == True:
+                    plt.savefig('%s/Radial3D_EVOLUTION_id%s_mass%s_%s_part%s_com%s_ax%s%s.%s' %(str(root_file), str(target_GalaxyID), str('%.2f' %np.log10(float(total_general['%s' %str(target_GalaxyID)]['%s' %str(target_GalaxyID)]['stelmass']))), angle_type_in, str(gas_sf_min_particles), str(com_min_distance), viewing_axis, savefigtxt, file_format), format='%s' %file_format, dpi=300, bbox_inches='tight', pad_inches=0.2)
+                if showfig == True:
+                    plt.show()
+                plt.close()
+            
 
     #-------------
     _plot_rad()

@@ -17,6 +17,169 @@ from astropy.cosmology import FlatLambdaCDM
 
 
 
+# Will want to combine Extract with Subhalo:
+# 
+# From a given snapshot... get sample
+# Database used to find sample at z=0, returns list of IDs, GNs, SGNs, TopLeafIDs, Mass_Star30
+# For z=0, will allocate a special TargetID = GalaxyID at z=0
+# 
+# IDs that we want full particle analysis are then between IDs and TopLeafIDs for each galaxy extracted
+# Now have a list of GalaxyIDs, and list of GN, SGN, and snapNum
+#
+# Use merger_tree to link galaxy IDs (and properties) that we have stored over snapshots, this will also extract locations of mergers
+# Classify galaxy as either 'main' or 'branch' which will determine the level of particle analysis done
+#
+# All 'main' galaxies at z=0 will have Mass_Star30 by definition of our sample, but we will want to trim for that in the loop below. This may mean that some very small galaxies have no descendants plotted, but that cannot be avoided.
+#
+# Set a limit of 'branch' to Mass_Star30 = 0.1*Mass_star30 to do a shorter analysis on
+
+# For a given snapshot/redshift:
+    #Feed all GNs/SGNs/snapNum into new Subhalo tool to look at particle data
+#   For a given ID/GN/SGN/snap:
+#       
+#       if it is a 'main' galaxy, do full analysis as before:
+#           Subhalo_main(mySims, dataDir_dict['%s' %str(snapNum)],
+#               USED FOR MASKING
+#               snapNum
+#               GroupNum
+#               SubGroupNum
+#
+#               USED FOR CLIPPING PARTICLES + KAPPA          
+#               aperture_rad_in       -> max. radial extent of data, will clip particles to this [pkpc]
+#               kappa_rad=30          -> rad. to calculate kappa [pkpc]
+#
+#               USED FOR MISALIGNMENT ANGLE CALCULATION
+#               spin_rad              -> find spin for these rads [pkpc]
+#               spin_hmr              -> or, find spin for these hmr [ ]
+#               find_uncertainties    = True
+#               particle_list_in      -> speed up calculation by specifying the particle spins we are interested in
+#                                           Defaults to star, gas, gas_sf
+#               angle_type_in         -> speed up calculation by specifying which misalignment angles we are after
+#                                           Defaults to star-gas, star-gas_sf, star_dm
+#
+#               USED TO QUICKLY FLAG GALAXY
+#               min_tot_particles     -> min. total particles of galaxy... or something 
+#
+#               WILL APPEND MATH.NAN IF NOT MET FOR A GIVEN RADIUS (RATHER THAN FLAG)... still add some sort of notifier:
+#               com_min_distance      -> min. distance between components of a given rad
+#               min_bin_particles     -> min. particles in a radial bin for a galaxy
+#               min_inclination       -> min. angle between viewing axis and stellar component. 
+#
+#               OTHER:
+#               viewing_axis='z'
+#               viewing_angle=0
+#               orientate_to_axis='z'
+#               align_rad=False       -> don't auto-align data
+#               quiet=True)
+#               -------------------
+#
+#               FROM SQL QUERY:
+#               CentreOfPotential x, y, z
+#               Will extract Morpho_Kinem data
+#           
+#               PARTICLE HANDLING:
+#               Extract a, aexp, h, hexp, boxsize
+#               Centre coordinates using centre of potential
+#               Find velocity within radius of components, and subtract
+#               Trim to aperature_rad       
+#
+#               - find properties similar to before -   
+#       
+#               CREATE DICTIONARIES AS BEFORE:
+#               self.general        -> for all general data
+#               self.particles      -> for particle counts, and masses within a given rad
+#               self.coms           -> for list of C.o.Ms within a given rad
+#               self.misangles      -> 3D with uncertainties
+#               self.misangles_proj -> projected onto given axis with uncertainties  
+#               self.flags          -> will have length 0 if galaxy is fine to use. Individual flags added to all above dictionaries instead
+#           
+#
+#           if galaxy is a branch galaxy, do smaller analysis:
+#               Subhalo_branch(mySims, dataDir_dict['%s' %str(snapNum)],
+#               USED FOR MASKING
+#               snapNum
+#               GroupNum
+#               SubGroupNum
+#
+#               USED FOR CLIPPING PARTICLES + KAPPA          
+#               aperture_rad_in       -> max. radial extent of data, will clip particles to this [pkpc]
+#               kappa_rad=30          -> rad. to calculate kappa [pkpc]
+#
+#               OTHER:
+#               quiet=True)
+#               -------------------
+#
+#               FROM SQL QUERY:
+#               CentreOfPotential x, y, z
+#               Will extract Morpho_Kinem data (if it exists)
+#           
+#               PARTICLE HANDLING:
+#               Extract a, aexp, h, hexp, boxsize
+#               Centre coordinates using centre of potential
+#       
+#               CREATE DICTIONARIES AS BEFORE:
+#               self.general        -> for all general data 
+#               self.particles      -> for particle counts, and masses within aperture_rad_in
+#
+#       Append all this for a single galaxy to larger dictionary to be used for later (or csv file?) depending if it is a main or branch galaxy
+#       Append using galaxyID... we can link it all back together again through the extracted merger tree
+#   
+#   Finished loop of all galaxies (main + branch) for a snapshot
+#
+# Finished loop of all IDs over all snapshots
+#
+#
+# Use existing merger tree to link everything back together again in a new dictionary:
+#   For a given TargetID:
+#       Append all IDs between TargetID and TopLeafID as being part of main, alongside their snap/redshift
+#       Append all branches with DescendantID between TargetID and TopLeafID, alongside their snap/redshift
+#       
+#       Calculate merger ratios, and merger properties and also append
+#
+# We are left with a dictionary that looks like this:
+#   [TargetID]
+#       [snapNum]
+#           ['redshift']
+#           ['lookbacktime']
+#           ['main']
+#               ['general']
+#                   [...]
+#               ['misangles']
+#                   ['hmr'] = array
+#                   ['rad'] = array
+#                   ['flags'] = array of NaN or description
+#               ['misanglesproj']
+#                   ['hmr'] = array
+#                   ['rad'] = array
+#                   ['flags'] = array of NaN or description
+#               ['coms']
+#                   ['hmr'] = array
+#                   ['rad'] = array
+#                   ['flags'] = array of NaN or description
+#               ['particles']
+#                   ['hmr'] = array
+#                   ['rad'] = array
+#                   ['flags'] = array of NaN or description
+#               ['flags'] = array (=0 IF GALAXY IS FINE)
+#                       
+#           ['branch']
+#               empty for snapNum=28, otherwise:
+#               ['general']
+#                   [...]
+#               ['particles']
+#                   ['hmr'] = array
+#                   ['rad'] = array
+#                   ['flags'] = array of NaN or description
+#
+#           ['mergers']
+#               properties as before.. eg. ratio, but also wet/dry
+#       [snapNum-1]
+#       [snapNum-2]
+#       [snapNum-3]
+#       [snapNum-4]
+
+
+
 """ 
 Purpose
 -------
@@ -186,7 +349,7 @@ class Subhalo_Extract:
         # These were all originally in cMpc, converted to pMpc through self.a and self.aexp
         self.centre       = np.array([myData['x'], myData['y'], myData['z']]) * u.Mpc.to(u.kpc) * self.a**self.aexp                 # [pkpc]
         self.centre_mass  = np.array([myData['x_mass'], myData['y_mass'], myData['z_mass']]) * u.Mpc.to(u.kpc) * self.a**self.aexp  # [pkpc]
-        self.perc_vel_old = np.array([myData['vel_x'], myData['vel_y'], myData['vel_z']])                                           # [pkm/s]
+        self.perc_vel_old = np.array([myData['vel_x'], myData['vel_y'], myData['vel_z']]) * self.a**0.5                             # [pkm/s]
         
         #-------------------------------------------------------------
         # Load data for stars and gas in non-centred units
@@ -195,33 +358,31 @@ class Subhalo_Extract:
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
             print('Reading particle data _read_galaxy')
             time_start = time.time()
-        stars     = self._read_galaxy(data_dir, 4, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length) 
-        gas       = self._read_galaxy(data_dir, 0, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length)
-        dm        = self._read_galaxy(data_dir, 1, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length)
-        bh        = self._read_galaxy(data_dir, 5, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length)
+        self.stars     = self._read_galaxy(data_dir, 4, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length) 
+        self.gas       = self._read_galaxy(data_dir, 0, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length)
+        self.dm        = self._read_galaxy(data_dir, 1, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length)
+        self.bh        = self._read_galaxy(data_dir, 5, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length)
         
         
         # CENTER COORDS, VELOCITY NOT ADJUSTED
         if centre_galaxy == True:
-            stars['Coordinates'] = stars['Coordinates'] - self.centre
-            gas['Coordinates']   = gas['Coordinates'] - self.centre
-            dm['Coordinates']    = dm['Coordinates'] - self.centre
-            bh['Coordinates']    = bh['Coordinates'] - self.centre
+            self.stars['Coordinates'] = self.stars['Coordinates'] - self.centre
+            self.gas['Coordinates']   = self.gas['Coordinates'] - self.centre
+            self.dm['Coordinates']    = self.dm['Coordinates'] - self.centre
+            self.bh['Coordinates']    = self.bh['Coordinates'] - self.centre
             
         # Trim data
-        self.stars  = self._trim_within_rad(stars, aperture_rad_in)
-        self.gas    = self._trim_within_rad(gas, aperture_rad_in)
-        self.dm     = self._trim_within_rad(dm, aperture_rad_in)
-        self.bh     = self._trim_within_rad(bh, aperture_rad_in)
+        self.stars  = self._trim_within_rad(self.stars, aperture_rad_in)
+        self.gas    = self._trim_within_rad(self.gas, aperture_rad_in)
+        self.dm     = self._trim_within_rad(self.dm, aperture_rad_in)
+        self.bh     = self._trim_within_rad(self.bh, aperture_rad_in)
         
         
         # Finding perculiar velocity and centre of mass for trimmed data
         self.perc_vel          = self._perculiar_velocity()
         self.halfmass_rad_proj = self._projected_rad(self.stars, viewing_axis)
         
-        
-        
-        # account for perculiar velocity within aperture rad
+        # account for perculiar velocity within rad
         if centre_galaxy == True:            
             self.stars['Velocity'] = self.stars['Velocity'] - self.perc_vel
             self.gas['Velocity']   = self.gas['Velocity'] - self.perc_vel
@@ -335,6 +496,7 @@ class Subhalo_Extract:
                     
                     # Create special extract dm mass
                     dm_mass     = f['Header'].attrs.get('MassTable')[1]
+            
                     # Create an array of length n_particles each set to dm_mass.
                     m = np.ones(n_particles, dtype='f8') * dm_mass
             
@@ -358,7 +520,6 @@ class Subhalo_Extract:
                 aexp = f['PartType%i/%s'%(itype, att)].attrs.get('aexp-scale-exponent')
                 hexp = f['PartType%i/%s'%(itype, att)].attrs.get('h-scale-exponent')
                 data[att] = np.multiply(tmp, cgs * self.a**aexp * self.h**hexp, dtype='f8')
-                
             f.close()
         # If bhs
         elif itype == 5:
@@ -407,14 +568,7 @@ class Subhalo_Extract:
         
     def _perculiar_velocity(self, debug=False):        
         # Mass-weighted formula from subhalo paper
-        vel_weighted = 0
-        mass_sums = 0
-        for arr in [self.stars, self.gas, self.dm, self.bh]:
-            if len(arr['Mass']) > 0:
-                vel_weighted = vel_weighted + np.sum(arr['Velocity'] * arr['Mass'][:, None], axis=0)
-                mass_sums = mass_sums + np.sum(arr['Mass'])
-            
-        perc_vel = vel_weighted / mass_sums
+        perc_vel = (np.sum(self.stars['Velocity'] * self.stars['Mass'][:, None] , axis=0) + np.sum(self.gas['Velocity'] * self.gas['Mass'][:, None] , axis=0) + np.sum(self.dm['Velocity'] * self.dm['Mass'][:, None] , axis=0) + np.sum(self.bh['Velocity'] * self.bh['Mass'][:, None] , axis=0)) / (np.sum(self.stars['Mass']) + np.sum(self.gas['Mass']) + np.sum(self.bh['Mass']) + np.sum(self.dm['Mass']))
             
         return perc_vel
         
@@ -704,7 +858,6 @@ class Subhalo:
         data_nil = {}
         for parttype, parttype_name in zip([stars, gas, dm, bh], ['stars', 'gas', 'dm', 'bh']):
             data_nil['%s'%parttype_name] = parttype
-        
         
         if not quiet:
             print('HALFMASS RAD PROJECTED', self.halfmass_rad_proj)
@@ -1247,7 +1400,6 @@ class Subhalo:
         #r = r[mask]
         #print("Total %s particles in %.5f kpc: %i\n"%(desc, radius*1000, len(r)))
         
-        
         if random_sample:
             #
             if debug:
@@ -1294,19 +1446,6 @@ class Subhalo:
         # OUTPUTS UNIT VECTOR OF SPIN, PARTICLE COUNT WITHIN RAD, MASS WITHIN RAD 
         return spin_unit, len(r[mask]), np.sum(arr['Mass'][mask])
             
-    def _perculiar_velocity(self, arr_list, debug=False):        
-        # Mass-weighted formula from subhalo paper
-        vel_weighted = 0
-        mass_sums = 0
-        for arr in arr_list:
-            if len(arr['Mass']) > 0:
-                vel_weighted = vel_weighted + np.sum(arr['Velocity'] * arr['Mass'][:, None], axis=0)
-                mass_sums = mass_sums + np.sum(arr['Mass'])
-            
-        perc_vel = vel_weighted / mass_sums
-            
-        return perc_vel
-        
     def _misalignment_angle(self, angle1, angle2, debug=False):
         # Find the misalignment angle
         angle = np.rad2deg(np.arccos(np.clip(np.dot(angle1/np.linalg.norm(angle1), angle2/np.linalg.norm(angle2)), -1.0, 1.0)))     # [deg]

@@ -40,7 +40,7 @@ dataDir_dict['26'] = dataDir_main + 'snapshot_026_z000p183/snap_026_z000p183.0.h
 dataDir_dict['27'] = dataDir_main + 'snapshot_027_z000p101/snap_027_z000p101.0.hdf5'
 dataDir_dict['28'] = dataDir_main + 'snapshot_028_z000p000/snap_028_z000p000.0.hdf5'
 #dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_0%s_z000p101/snap_0%s_z000p101.0.hdf5' %(snapNum, snapNum)
- 
+#dataDir = '/home/universe/spxtd1-shared/RefL0100N1504/snapshot_0%s_z000p000/snap_0%s_z000p000.0.hdf5' %(snapNum, snapNum)
  
 """ 
 Will extract all galaxies with specified stellar
@@ -132,13 +132,13 @@ SAMPLE:
 
 """
 #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
-def plot_misalignment_angle(manual_GalaxyIDList   = [3748, 37445],           # manually enter galaxy IDs we want
-                              manual_GroupNumList = [],           # manually enter galaxy gns we want
+def plot_misalignment_angle(manual_GalaxyIDList   = [],           # manually enter galaxy IDs we want
+                              manual_GroupNumList = [1, 2, 4, 3, 6, 5, 7, 9, 16, 14, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21],           # manually enter galaxy gns we want
                               SubGroupNum       = 0,
-                              snapNum           = 28,
+                              snapNum           = 25,
                                 galaxy_mass_limit = 10**9.0,                              # for use in SAMPLE
                             kappa_rad_in        = 30,                               # calculate kappa for this radius [pkpc]
-                            aperture_rad_in     = 30,                               # trim all data to this maximum value before calculations
+                            aperture_rad_in     = 3000,                               # trim all data to this maximum value before calculations
                             align_rad_in        = False,                            # keep on False
                             trim_hmr_in         = np.array([100]),                  # keep as 100... will be capped by aperture anyway. Doesn't matter
                             orientate_to_axis='z',                              # Keep as z
@@ -157,7 +157,7 @@ def plot_misalignment_angle(manual_GalaxyIDList   = [3748, 37445],           # m
                             root_file = '/Users/c22048063/Documents/EAGLE/plots',
                             file_format = 'png',
                               print_galaxy       = False,
-                              print_galaxy_short = False,
+                              print_galaxy_short = True,
                               print_progress     = False,
                               csv_load       = False,              # .csv file will ALL data
                                 csv_load_name = 'data_misalignment_2023-02-28 10:45:11.358603',       #FIND IN LINUX, mac is weird
@@ -354,7 +354,7 @@ def plot_misalignment_angle(manual_GalaxyIDList   = [3748, 37445],           # m
                  mask = np.where(np.array(subhalo.coms['hmr'] == min(spin_hmr_in)))
                  print('C.O.M %s HMR STARS-SF [pkpc]:  %.2f' %(str(min(spin_hmr_in)), subhalo.coms['stars_gas_sf'][int(mask[0])]))
              elif print_galaxy_short == True:
-                 print('GN:\t%s\t|ID:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(str(subhalo.gn), str(subhalo.GalaxyID), subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'], subhalo.general['kappa_gas_sf'])) 
+                 print('GN:\t%s\t|ID:\t%s\t|HMR:\t%.2f\t|KAPPA:\t%.2f' %(str(subhalo.gn), str(subhalo.GalaxyID), subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'])) 
                  
     
          #=====================================
@@ -376,7 +376,7 @@ def plot_misalignment_angle(manual_GalaxyIDList   = [3748, 37445],           # m
              csv_dict.update({'function_input': str(inspect.signature(plot_misalignment_angle))})
         
              # Writing one massive JSON file
-             json.dump(csv_dict, open('%s/%s_%s.csv' %(root_file, csv_name, str(datetime.now())), 'w'), cls=NumpyEncoder)
+             json.dump(csv_dict, open('%s/%s_%s_%s.csv' %(root_file, str(snapNum), csv_name, str(datetime.now())), 'w'), cls=NumpyEncoder)
         
              # Reading JSON file
              """dict_new = json.load(open('%s/%s.csv' %(root_file, csv_name), 'r'))
@@ -509,9 +509,9 @@ def plot_misalignment_angle(manual_GalaxyIDList   = [3748, 37445],           # m
             # Savefig
             if savefig == True:
                 if plot_2D_3D == '2D':
-                    plt.savefig("%s/MisAngleHist_2D_mass%s_%s_rad%s_part%s_com%s_ax%s%s.%s" %(root_file, np.log10(galaxy_mass_limit), angle_type_in_i, str(min(spin_hmr_in)), str(gas_sf_min_particles), str(com_min_distance), viewing_axis, savefig_txt, file_format), format=file_format, bbox_inches='tight', pad_inches=0.2, dpi=300)
+                    plt.savefig("%s/%s_MisAngleHist_2D_mass%s_%s_rad%s_part%s_com%s_ax%s%s.%s" %(root_file, str(snapNum), np.log10(galaxy_mass_limit), angle_type_in_i, str(min(spin_hmr_in)), str(gas_sf_min_particles), str(com_min_distance), viewing_axis, savefig_txt, file_format), format=file_format, bbox_inches='tight', pad_inches=0.2, dpi=300)
                 elif plot_2D_3D == '3D':
-                    plt.savefig("%s/MisAngleHist_3D_mass%s_%s_rad%s_part%s_com%s%s.%s" %(root_file, np.log10(galaxy_mass_limit), angle_type_in_i, str(min(spin_hmr_in)), str(gas_sf_min_particles), str(com_min_distance), savefig_txt, file_format), format=file_format, bbox_inches='tight', pad_inches=0.2, dpi=300)
+                    plt.savefig("%s/%s_MisAngleHist_3D_mass%s_%s_rad%s_part%s_com%s%s.%s" %(root_file, str(snapNum), np.log10(galaxy_mass_limit), angle_type_in_i, str(min(spin_hmr_in)), str(gas_sf_min_particles), str(com_min_distance), savefig_txt, file_format), format=file_format, bbox_inches='tight', pad_inches=0.2, dpi=300)
             if showfig == True:
                 plt.show()
             plt.close()
@@ -675,9 +675,9 @@ def plot_misalignment_angle(manual_GalaxyIDList   = [3748, 37445],           # m
             # Savefig
             if savefig == True:
                 if plot_2D_3D == '2D':
-                    plt.savefig("%s/MisAngleHist_morph_2D_mass%s_%s_rad%s_part%s_com%s_ax%s%s.%s" %(root_file, np.log10(galaxy_mass_limit), angle_type_in_i, str(min(spin_hmr_in)), str(gas_sf_min_particles), str(com_min_distance), viewing_axis, savefig_txt, file_format), format=file_format, bbox_inches='tight', pad_inches=0.2, dpi=300)
+                    plt.savefig("%s/%s_MisAngleHist_morph_2D_mass%s_%s_rad%s_part%s_com%s_ax%s%s.%s" %(root_file, str(snapNum), np.log10(galaxy_mass_limit), angle_type_in_i, str(min(spin_hmr_in)), str(gas_sf_min_particles), str(com_min_distance), viewing_axis, savefig_txt, file_format), format=file_format, bbox_inches='tight', pad_inches=0.2, dpi=300)
                 elif plot_2D_3D == '3D':
-                    plt.savefig("%s/MisAngleHist_morph_3D_mass%s_%s_rad%s_part%s_com%s%s.%s" %(root_file, np.log10(galaxy_mass_limit), angle_type_in_i, str(min(spin_hmr_in)), str(gas_sf_min_particles), str(com_min_distance), savefig_txt, file_format), format=file_format, bbox_inches='tight', pad_inches=0.2, dpi=300)
+                    plt.savefig("%s/%s_MisAngleHist_morph_3D_mass%s_%s_rad%s_part%s_com%s%s.%s" %(root_file, str(snapNum), np.log10(galaxy_mass_limit), angle_type_in_i, str(min(spin_hmr_in)), str(gas_sf_min_particles), str(com_min_distance), savefig_txt, file_format), format=file_format, bbox_inches='tight', pad_inches=0.2, dpi=300)
             if showfig == True:
                 plt.show()
             plt.close()    

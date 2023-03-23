@@ -1,0 +1,9 @@
+# EAGLE requirements.txt
+astropy==5.1
+eagleSqlTools==2.0.0
+h5py==3.7.0
+matplotlib==3.5.2
+numpy==1.21.5
+pandas==1.4.4
+scipy==1.9.1
+tqdm==4.64.1

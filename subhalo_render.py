@@ -11,6 +11,8 @@ import matplotlib.colors as colors
 import matplotlib.cm as cm
 from tqdm import tqdm
 from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.patches import Circle
+import mpl_toolkits.mplot3d.art3d as art3d
 from matplotlib.widgets import Button
 from subhalo_main import Subhalo_Extract, Subhalo, ConvertID, ConvertGN
 from graphformat import graphformat
@@ -67,7 +69,6 @@ PURPOSE
 - Can also orientate the galaxy to a given axis, based on the angular momentum vector calculated at a given distance. This is used in the calculation of kappa at 30pkpc
 
 """
-#1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
 #1, 2, 4, 3, 6, 5, 7, 9, 16, 14, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
 #3748
 #37445, 37446, 37447
@@ -81,11 +82,11 @@ PURPOSE
                     snapNum           = 19, 
 """
 # Now takes a galaxyID, or array of IDs
-def galaxy_render(manual_GalaxyIDList = np.array([30504]),       # leave empty if ignore
-                    manual_GroupNumList = np.array([]),                 # leave empty if ignore
+def galaxy_render(manual_GalaxyIDList = np.array([]),       # leave empty if ignore
+                    manual_GroupNumList = np.array([1]),                 # leave empty if ignore
                     SubGroupNum       = 0,
-                    snapNum           = 28, 
-                  spin_hmr_in           = np.array([1.0]),              # multiples of rad
+                    snapNum           = 25, 
+                  spin_hmr_in           = np.array([2.0]),              # multiples of rad
                   kappa_rad_in          = 30,                           # Calculate kappa for this radius [pkpc]
                   aperture_rad_in       = 30,                           # trim all data to this maximum value
                   align_rad_in          = False,                              # Align galaxy to stellar vector in. this radius [pkpc]
@@ -96,13 +97,13 @@ def galaxy_render(manual_GalaxyIDList = np.array([30504]),       # leave empty i
                     maxangle  = 0, 
                     stepangle = 30,
                   plot_spin_vectors = True,
-                    spin_vector_rad = 1.0,            # radius of spinvector to display (in hmr)
+                    spin_vector_rad = 2.0,            # radius of spinvector to display (in hmr)
                   centre_of_pot     = True,           # Plot most bound object (default centre)
                   centre_of_mass    = False,           # Plot total centre of mass
                   axis              = True,           # Plot small axis below galaxy
-                      boxradius_in          = 10,                  # boxradius of render [kpc], 'rad', 'tworad'
+                      boxradius_in          = 30,                  # boxradius of render [kpc], 'rad', 'tworad'
                       particles             = 5000,
-                      trim_hmr_in           = np.array([1.0]),     # WILL PLOT LOWEST VALUE. trim particles # multiples of rad, num [pkpc], found in subhalo.data[hmr]    
+                      trim_hmr_in           = np.array([30]),     # WILL PLOT LOWEST VALUE. trim particles # multiples of rad, num [pkpc], found in subhalo.data[hmr]    
                       stars                 = True,
                       gas_sf                = True,
                       gas_nsf               = True,    
@@ -119,7 +120,7 @@ def galaxy_render(manual_GalaxyIDList = np.array([30504]),       # leave empty i
                     print_galaxy_short = True,
                     txt_file           = False,              # create a txt file with print data
                     showfig        = True,
-                    savefig        = False,
+                    savefig        = True,
                       savefigtxt       = '',                # added txt to append to end of savefile
                     debug = False):
         
@@ -465,13 +466,19 @@ def galaxy_render(manual_GalaxyIDList = np.array([30504]),       # leave empty i
         
         
         
-            
+        
+        radius_circle = Circle((0, 0), subhalo.halfmass_rad_proj, linewidth=1, edgecolor='w', alpha=1, facecolor=None, fill=False)
+        radius_circle2 = Circle((0, 0), 2*subhalo.halfmass_rad_proj, linewidth=1, edgecolor='w', alpha=1, facecolor=None, fill=False)
+        ax.add_patch(radius_circle)
+        ax.add_patch(radius_circle2)
+        art3d.pathpatch_2d_to_3d(radius_circle, z=0, zdir="z")
+        art3d.pathpatch_2d_to_3d(radius_circle2, z=0, zdir="z")
         
         
         
         for ii in np.arange(minangle, maxangle+1, stepangle):
             #print(ii , end=' ')                 # [deg]
-            ax.view_init(0, ii)
+            ax.view_init(90, ii)
             
             # Formatting 
             ax.set_xlabel('x-pos [pkpc]')
@@ -487,6 +494,8 @@ def galaxy_render(manual_GalaxyIDList = np.array([30504]),       # leave empty i
             ax.tick_params(axis='z', colors='grey')
 
             if savefig:
+                plt.savefig("%s/%s_render_all_%s.jpeg" %(str(root_file), str(subhalo.GalaxyID), savefigtxt), dpi=300)
+                
                 if (stars == True) & (gas_sf == True) & (gas_nsf == True) & (align_rad_in == False):
                     plt.savefig("%s/galaxy_%s/render_all_rad%s_spin%s_angle%s%s.jpeg" %(str(root_file), str(GroupNum), str(trim_hmr_in[0]), str(spin_vector_rad), str(ii), savefigtxt), dpi=300)
                 elif (stars == True) & (gas_sf == False) & (gas_nsf == False) & (align_rad_in == False):

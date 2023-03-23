@@ -2,7 +2,8 @@ import matplotlib.pyplot as plt
 
 def graphformat(size1, size2, size3, size4, size5, width, height):
     
-    plt.rcParams["font.family"] = "Times New Roman"
+    plt.rcParams["font.family"] = "DeJavu Serif"
+    plt.rcParams['font.serif'] = ['Times New Roman']
     
     # General graph font size formatting
     plt.rc('font', size=size1)          # controls default text sizes

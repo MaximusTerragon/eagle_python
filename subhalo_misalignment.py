@@ -133,12 +133,12 @@ SAMPLE:
 """
 #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
 def plot_misalignment_angle(manual_GalaxyIDList   = [],           # manually enter galaxy IDs we want
-                              manual_GroupNumList = [1, 2, 4, 3, 6, 5, 7, 9, 16, 14, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21],           # manually enter galaxy gns we want
+                              manual_GroupNumList = [],           # manually enter galaxy gns we want
                               SubGroupNum       = 0,
-                              snapNum           = 25,
+                              snapNum           = 28,
                                 galaxy_mass_limit = 10**9.0,                              # for use in SAMPLE
                             kappa_rad_in        = 30,                               # calculate kappa for this radius [pkpc]
-                            aperture_rad_in     = 3000,                               # trim all data to this maximum value before calculations
+                            aperture_rad_in     = 30,                               # trim all data to this maximum value before calculations
                             align_rad_in        = False,                            # keep on False
                             trim_hmr_in         = np.array([100]),                  # keep as 100... will be capped by aperture anyway. Doesn't matter
                             orientate_to_axis='z',                              # Keep as z
@@ -329,9 +329,9 @@ def plot_misalignment_angle(manual_GalaxyIDList   = [],           # manually ent
                                                  min_inclination,
                                                  quiet=True)
                                             
-             #print('kappa_databa: ', subhalo.general['kappa_stars'])
-             #print('kappa_manual: ', subhalo.general['kappa_old'])
-        
+             if len(subhalo.flags) > 0:
+                 print('SUBHALO SKIPPED: ', subhalo.flags)
+            
         
              #--------------------------------
              # Collecting all relevant particle info for galaxy

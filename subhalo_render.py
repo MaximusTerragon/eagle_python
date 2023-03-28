@@ -83,15 +83,15 @@ PURPOSE
 """
 # Now takes a galaxyID, or array of IDs
 def galaxy_render(manual_GalaxyIDList = np.array([]),       # leave empty if ignore
-                    manual_GroupNumList = np.array([1]),                 # leave empty if ignore
+                    manual_GroupNumList = np.array([4]),                 # leave empty if ignore
                     SubGroupNum       = 0,
-                    snapNum           = 25, 
+                    snapNum           = 28, 
                   spin_hmr_in           = np.array([2.0]),              # multiples of rad
                   kappa_rad_in          = 30,                           # Calculate kappa for this radius [pkpc]
                   aperture_rad_in       = 30,                           # trim all data to this maximum value
                   align_rad_in          = False,                              # Align galaxy to stellar vector in. this radius [pkpc]
                   projected_or_abs      = 'projected',                  # 'projected' or 'abs'
-                  orientate_to_axis='z',                                      # Keep as 'z'
+                  viewing_axis = 'z',                           # Which axis to view galaxy from.  DEFAULT 'z'
                   viewing_angle=0,                                            # Keep as 0
                     minangle  = 0,
                     maxangle  = 0, 
@@ -103,14 +103,14 @@ def galaxy_render(manual_GalaxyIDList = np.array([]),       # leave empty if ign
                   axis              = True,           # Plot small axis below galaxy
                       boxradius_in          = 30,                  # boxradius of render [kpc], 'rad', 'tworad'
                       particles             = 5000,
-                      trim_hmr_in           = np.array([30]),     # WILL PLOT LOWEST VALUE. trim particles # multiples of rad, num [pkpc], found in subhalo.data[hmr]    
+                      trim_hmr_in           = np.array([50]),     # WILL PLOT LOWEST VALUE. trim particles # multiples of rad, num [pkpc], found in subhalo.data[hmr]    
                       stars                 = True,
                       gas_sf                = True,
                       gas_nsf               = True,    
                       dark_matter           = True,
                       black_holes           = True,
                   find_uncertainties = False,                   # LEAVE THESE. whether to find 2D and 3D uncertainties
-                  viewing_axis = 'z',                           # Which axis to view galaxy from.  DEFAULT 'z'
+                  orientate_to_axis='z',                                      # Keep as 'z'
                   com_min_distance = 10000,                      # [pkpc] min distance between sfgas and stars.  DEFAULT 2.0 
                   gas_sf_min_particles = 0,                     # Minimum gas sf particles to use galaxy.  DEFAULT 100
                   min_inclination = 0,                          # Minimum inclination toward viewing axis [deg] DEFAULT 0
@@ -120,7 +120,7 @@ def galaxy_render(manual_GalaxyIDList = np.array([]),       # leave empty if ign
                     print_galaxy_short = True,
                     txt_file           = False,              # create a txt file with print data
                     showfig        = True,
-                    savefig        = True,
+                    savefig        = False,
                       savefigtxt       = '',                # added txt to append to end of savefile
                     debug = False):
         
@@ -140,7 +140,7 @@ def galaxy_render(manual_GalaxyIDList = np.array([]),       # leave empty if ign
         SubGroupNumList = []
         snapNumList     = []
         for galID in manual_GalaxyIDList:
-            gn, sgn, snap = ConvertID(galID, mySims)
+            gn, sgn, snap, _ = ConvertID(galID, mySims)
         
             # Append to arrays
             GroupNumList.append(gn)
@@ -367,6 +367,43 @@ def galaxy_render(manual_GalaxyIDList = np.array([]),       # leave empty if ign
                 ax.scatter( load_region,  load_region,  load_region, s=3, c='lime')
                 
                 fig.canvas.draw_idle()
+            def draw_hmr(self, event):
+                # Plot 1 and 2 HMR projected rad 
+                u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]
+                x = subhalo.halfmass_rad*np.cos(u)*np.sin(v)
+                y = subhalo.halfmass_rad*np.sin(u)*np.sin(v)
+                z = subhalo.halfmass_rad*np.cos(v)
+                
+                ax.plot_wireframe(x, y, z, color="w", alpha=0.3, linewidth=0.5)
+                
+                u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]
+                x = 2*subhalo.halfmass_rad*np.cos(u)*np.sin(v)
+                y = 2*subhalo.halfmass_rad*np.sin(u)*np.sin(v)
+                z = 2*subhalo.halfmass_rad*np.cos(v)
+                
+                ax.plot_wireframe(x, y, z, color="w", alpha=0.3, linewidth=0.5)
+                
+                fig.canvas.draw_idle()
+            def draw_hmr_proj(self, event):
+                # Plot 1 and 2 HMR projected rad 
+                radius_circle = Circle((0, 0), subhalo.halfmass_rad_proj, linewidth=1, edgecolor='w', alpha=0.7, facecolor=None, fill=False)
+                radius_circle2 = Circle((0, 0), 2*subhalo.halfmass_rad_proj, linewidth=1, edgecolor='w', alpha=0.7, facecolor=None, fill=False)
+                ax.add_patch(radius_circle)
+                ax.add_patch(radius_circle2)
+                art3d.pathpatch_2d_to_3d(radius_circle, z=0, zdir=viewing_axis)
+                art3d.pathpatch_2d_to_3d(radius_circle2, z=0, zdir=viewing_axis)
+                
+                fig.canvas.draw_idle()
+            def draw_aperture(self, event):
+                # Plot 1 and 2 HMR projected rad 
+                u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]
+                x = aperture_rad_in*np.cos(u)*np.sin(v)
+                y = aperture_rad_in*np.sin(u)*np.sin(v)
+                z = aperture_rad_in*np.cos(v)
+                
+                ax.plot_wireframe(x, y, z, color="r", alpha=0.3, linewidth=0.5)
+                
+                fig.canvas.draw_idle()
             def auto_rotate(self, event):
                 fig.canvas.draw_idle()
                 for ii in np.arange(ax.azim, ax.azim+360, 1):
@@ -401,11 +438,16 @@ def galaxy_render(manual_GalaxyIDList = np.array([]),       # leave empty if ign
         bbh     = Button(fig.add_axes([0.49, 0.96, 0.12, 0.03]), 'BH', color='blueviolet', hovercolor='blueviolet')
         bcom    = Button(fig.add_axes([0.01, 0.92, 0.12, 0.03]), 'C.O.M')
         bcop    = Button(fig.add_axes([0.13, 0.92, 0.12, 0.03]), 'C.O.P')
+        
+        
         brotate = Button(fig.add_axes([0.81, 0.96, 0.18, 0.03]), 'ROTATE 360', color='limegreen', hovercolor='darkgreen')
-        bregion = Button(fig.add_axes([0.25, 0.92, 0.18, 0.03]), 'LOAD REGION')
+        bregion = Button(fig.add_axes([0.61, 0.92, 0.12, 0.03]), 'LOADED')
         bviewx  = Button(fig.add_axes([0.81, 0.92, 0.05, 0.03]), 'x')
         bviewy  = Button(fig.add_axes([0.87, 0.92, 0.05, 0.03]), 'y')
         bviewz  = Button(fig.add_axes([0.93, 0.92, 0.05, 0.03]), 'z')
+        bhmr    = Button(fig.add_axes([0.25, 0.92, 0.12, 0.03]), 'HMR')
+        bhmrpro = Button(fig.add_axes([0.37, 0.92, 0.12, 0.03]), 'HMR P')
+        bapert  = Button(fig.add_axes([0.49, 0.92, 0.12, 0.03]), 'APERT.')
         
         bstars.on_clicked(callback.stars_button)
         bgassf.on_clicked(callback.gas_sf_button)
@@ -420,6 +462,9 @@ def galaxy_render(manual_GalaxyIDList = np.array([]),       # leave empty if ign
         bviewx.on_clicked(callback.view_x)
         bviewy.on_clicked(callback.view_y)
         bviewz.on_clicked(callback.view_z)
+        bhmr.on_clicked(callback.draw_hmr)
+        bhmrpro.on_clicked(callback.draw_hmr_proj)
+        bapert.on_clicked(callback.draw_aperture)
         #--------------------------------------------
         
         # Plot scatters and spin vectors   
@@ -462,18 +507,7 @@ def galaxy_render(manual_GalaxyIDList = np.array([]),       # leave empty if ign
             ax.quiver(0, 0, -boxradius, boxradius/3, 0, 0, color='r', linewidth=0.5)
             ax.quiver(0, 0, -boxradius, 0, boxradius/3, 0, color='g', linewidth=0.5)
             ax.quiver(0, 0, -boxradius, 0, 0, boxradius/3, color='b', linewidth=0.5)
-                          
-        
-        
-        
-        
-        radius_circle = Circle((0, 0), subhalo.halfmass_rad_proj, linewidth=1, edgecolor='w', alpha=1, facecolor=None, fill=False)
-        radius_circle2 = Circle((0, 0), 2*subhalo.halfmass_rad_proj, linewidth=1, edgecolor='w', alpha=1, facecolor=None, fill=False)
-        ax.add_patch(radius_circle)
-        ax.add_patch(radius_circle2)
-        art3d.pathpatch_2d_to_3d(radius_circle, z=0, zdir="z")
-        art3d.pathpatch_2d_to_3d(radius_circle2, z=0, zdir="z")
-        
+                        
         
         
         for ii in np.arange(minangle, maxangle+1, stepangle):

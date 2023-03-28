@@ -143,6 +143,7 @@ class Subhalo_Extract:
             time_start = time.time()
         self.a, self.h, self.boxsize = read_header(data_dir) # units of scale factor, h, and L [cMpc/h]    
         
+        
         # Distances:    [cMpc/h] * a^1 *h^-1 -> [pMpc]. [pMpc/h] * h^-1 -> [pMpc], [cMpc/h] * h^-1 -> [cMpc]
         # Velocity:     [cx/sh] * a^0.5 * h^0 -> [x/s]
         # Mass:         [Mass/h] * a^0 * h*-1 -> [Mass]
@@ -1657,7 +1658,7 @@ class MergerTree:
                          and AP.GalaxyID = SH.GalaxyID \
                        ORDER BY \
                          SH.Redshift DESC, \
-                         stelmass DESC' %(sim_name, sim_name, sim_name, target_GalaxyID, maxSnap)
+                         SH.DescendantID DESC' %(sim_name, sim_name, sim_name, target_GalaxyID, maxSnap)
             
             # Execute query.
             myData = sql.execute_query(con, myQuery)

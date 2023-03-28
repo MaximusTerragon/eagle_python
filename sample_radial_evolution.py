@@ -17,7 +17,7 @@ import math
 from datetime import datetime
 from tqdm import tqdm
 from matplotlib.ticker import PercentFormatter
-from subhalo_main import Subhalo_Extract, Subhalo, MergerTree, ConvertID, ConvertGN
+from evolution_main import Subhalo_Extract, Subhalo, MergerTree, ConvertID, ConvertGN
 import eagleSqlTools as sql
 from graphformat import graphformat
 
@@ -48,6 +48,85 @@ dataDir_dict['28'] = dataDir_main + 'snapshot_028_z000p000/snap_028_z000p000.0.h
 
  
 
+""" 
+Will extract all galaxies with specified stellar
+mass greater than given, and return gn + sgn
+"""
+class Sample:
+    def __init__(self, sim, snapNum, mstarLimit, satellite):
+        # Allowing these attributes to be called from the object
+        self.mstar_limit = mstarLimit
+        self.sim         = sim
+        self.snapNum     = snapNum
+        
+        myData = self.samplesize(satellite)
+        
+        self.GroupNum    = myData['GroupNumber']
+        self.SubGroupNum = myData['SubGroupNumber']
+        self.GalaxyID    = myData['GalaxyID']
+        self.TopLeafID   = myData['TopLeafID']
+        self.snapNum     = myData['SnapNum']
+        
+    def samplesize(self, satellite):
+        # This uses the eagleSqlTools module to connect to the database with your username and password.
+        # If the password is not given, the module will prompt for it.
+        con = sql.connect('lms192', password='dhuKAP62')
+        
+        if satellite == 'yes':
+            for sim_name, sim_size in self.sim:
+                #print(sim_name)
+            
+                # Construct and execute query for each simulation. This query returns properties for a single galaxy
+                myQuery = 'SELECT \
+                             SH.GroupNumber, \
+                             SH.SubGroupNumber, \
+                             SH.GalaxyID, \
+                             SH.TopLeafID, \
+                             SH.SnapNum \
+                           FROM \
+                             %s_Subhalo as SH, \
+                             %s_Aperture as AP \
+                           WHERE \
+        			         SH.SnapNum = %i \
+                             and AP.Mass_Star >= %f \
+                             and AP.ApertureSize = 30 \
+                             and SH.GalaxyID = AP.GalaxyID \
+                           ORDER BY \
+        			         AP.Mass_Star desc'%(sim_name, sim_name, self.snapNum, self.mstar_limit)
+            
+            # Execute query.
+            myData = sql.execute_query(con, myQuery)
+            
+        else:
+            for sim_name, sim_size in self.sim:
+                #print(sim_name)
+            
+                # Construct and execute query for each simulation. This query returns properties for a single galaxy
+                myQuery = 'SELECT \
+                             SH.GroupNumber, \
+                             SH.SubGroupNumber, \
+                             SH.GalaxyID, \
+                             SH.TopLeafID, \
+                             SH.SnapNum \
+                           FROM \
+                             %s_Subhalo as SH, \
+                             %s_Aperture as AP \
+                           WHERE \
+        			         SH.SnapNum = %i \
+                             and AP.Mass_star >= %f \
+                             and SH.SubGroupNumber = 0 \
+                             and AP.ApertureSize = 30 \
+                             and SH.GalaxyID = AP.GalaxyID \
+                           ORDER BY \
+        			         AP.Mass_Star desc'%(sim_name, sim_name, self.snapNum, self.mstar_limit)
+    
+            # Execute query.
+            myData = sql.execute_query(con, myQuery)
+
+        return myData
+
+
+
 
 """  
 DESCRIPTION
@@ -71,11 +150,162 @@ SAMPLE:
 
 
 """
-#1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
-#1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
-# 3748
-# 37445
-def plot_radial_evolution(manual_GalaxyIDList_target = np.array([30494]),       # AT Z=0 leave empty if ignore
+
+def sample_radial_evolution(manual_sample = False,
+                                manual_GalaxyIDList_target  = [], 
+                                manual_GroupNumList_target  = [],
+                                manual_SubGroupNumList_target   = 0,    # Use 0 for central target galaxies only
+                            auto_sample = True,
+                                target_mass_limit   = 10**9.0,      # target mass limit 
+                                main_mass_limit     = 10**9.0,      # min. size of galaxies along main branch
+                                branch_mass_limit   = 10**8.0,      # min. size of galaxies along branch
+                            root_file = '/Users/c22048063/Documents/EAGLE/plots',
+                              csv_load = False, 
+                              csv_load_name = 'data_radial_evolution_2023-03-17 16:51:01.461137',
+                                
+                            snapNum_target          = 28,           # snapnum of target
+                                snapNumMax = 15,                     # Maximum snapnum to go back to
+                            
+                            
+                            print_progress = True,
+                            debug = False): 
+               
+    #-----------------------------------------
+    # Load our sample             
+    time_start = time.time()  
+    
+    #-----------------------------------------
+    # Load existing data from csv file
+    if csv_load:
+        # Load existing sample
+        dict_new = json.load(open(r'%s/%s.csv' %(root_file, csv_load_name), 'r'))
+        
+        # these will all be lists, they need to be transformed into arrays
+        print('LOADED CSV:')
+        print(dict_new['function_input'])
+        
+        
+        # Can read in inpts like snapNum_target from dict_new['function_input']?
+        print('NOT CONFIGURED')
+        
+    
+    #-----------------------------------------
+    if not csv_load:
+        # Create sample using inputs        
+        
+        # use manual input if values given, else use sample with mstar_limit
+        if print_progress:
+            print('Creating sample')
+            time_start = time.time()  
+            
+        
+        # Gather manual sample and fill in missing IDs, GNs, SGNs, SNAPs    
+        if (manual_sample == True) & (auto_sample == False):
+            
+            # If GN, SGN, and SNAP list given, find ID list 
+            if len(manual_GroupNumList_target) > 0:
+                # Converting names of variables for consistency
+                GroupNumList_target    = manual_GroupNumList_target
+                SubGroupNumList_target = np.full(len(manual_GroupNumList_target), manual_SubGroupNumList_target)   
+                snapNumList_target     = np.full(len(manual_GroupNumList_target), snapNum_target)
+                 
+                GalaxyIDList_target = []
+                TopLeafIDList_target       = []
+                for gn, sgn, snap in zip(GroupNumList_target, SubGroupNumList_target, snapNumList_target):
+                    galID, topID = ConvertGN(gn, sgn, snap, mySims)
+                    GalaxyIDList_target.append(galID)
+                    TopLeafIDList_target.append(topID)
+                
+            
+            # If ID given, find GN, SGN, SNAP list
+            elif len(manual_GalaxyIDList_target) > 0:
+                GalaxyIDList_target    = manual_GalaxyIDList_target
+                snapNumList_target     = np.full(len(manual_GalaxyIDList_target), snapNum_target)
+            
+                # Extract GroupNum, SubGroupNum, and Snap for each ID
+                GroupNumList_target    = []
+                SubGroupNumList_target = []
+                TopLeafIDList_target       = []
+                for galID in manual_GalaxyIDList_target:
+                    gn, sgn, snap, topID = ConvertID(galID, mySims)
+                
+                    # Append to arrays
+                    GroupNumList_target.append(gn)
+                    SubGroupNumList_target.append(sgn)
+                    TopLeafIDList_target.append(topID)
+                    
+      
+        # IF no manual sample given, create sample
+        elif (manual_sample == False) & (auto_sample == True):
+            # creates a list of applicable gn (and sgn) to sample. To include satellite galaxies, use 'yes'
+            sample = Sample(mySims, snapNum_target, target_mass_limit, 'no')
+            
+            print("Sample length: ", len(sample.GroupNum))
+            print("  ", sample.GroupNum)
+            
+            GalaxyIDList_target = sample.GalaxyID
+            GroupNumList_target = sample.GroupNum
+            SubGroupNumList_target = sample.SubGroupNum
+            snapNumList_target = sample.snapNum
+            TopLeafIDList_target = sample.TopLeafID
+                
+        else:
+            raise Exception('No sample given')
+    
+        """ We are left with:
+        GroupNumList_target     
+        SubGroupNumList_target
+        snapNumList_target
+        GalaxyIDList_target        
+        """
+        
+        print(GroupNumList_target)
+        print(SubGroupNumList_target)
+        print(GalaxyIDList_target)
+        print(snapNumList_target)
+        print(TopLeafIDList_target)
+            
+        assert len(GroupNumList_target) == len(SubGroupNumList_target)
+        assert len(GroupNumList_target) == len(snapNumList_target)
+        assert len(GroupNumList_target) == len(GalaxyIDList_target)
+        assert len(GroupNumList_target) == len(SubGroupNumList_target)
+        assert len(GroupNumList_target) == len(TopLeafIDList_target)
+        assert snapNumList_target[0] >= snapNumMax
+        assert snapNumList_target[0] == snapNumList_target[-1]
+        
+        if print_progress:
+            print('Finished sample creation')
+            time_start = time.time()
+        #-----------------------------------------
+        
+        
+        #=========================================
+        # Run analysis on each individual galaxy
+        for target_GroupNum, target_SubGroupNum, target_GalaxyID, target_snapNum, target_TopLeafID in zip(np.array(GroupNumList_target), np.array(SubGroupNumList_target), np.array(GalaxyIDList_target), np.array(snapNumList_target), np.array(TopLeafIDList_target)):
+            
+            if print_progress:
+                print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+                print('Extracting merger tree data MergerTree()')
+                time_start = time.time()
+            
+            # Extract merger tree data
+            tree = MergerTree(mySims, target_GalaxyID, snapNumMax)
+            
+            #List all IDs and snaps
+            #classify as main or branch
+            
+        
+        
+        # Establish merger trees, separate IDs into 'main' and 'branch', and run different analysis on each
+        
+        
+        
+        
+        
+
+
+
+def plot_radial_evolution(manual_GalaxyIDList_target = np.array([]),       # AT Z=0 leave empty if ignore
                                manual_GroupNumList_target = np.array([]),           # AT Z=0 manually enter galaxy gns we want. -1 for nothing
                                snapNum_target      = 28,                            #Snap number of the target 
                                SubGroupNum_target  = 0,
@@ -116,28 +346,29 @@ def plot_radial_evolution(manual_GalaxyIDList_target = np.array([30494]),       
     time_start = time.time()  
     
 
-    # Load existing data from csv file
+    #-----------------------------------------
+    # Load our sample
     if csv_load:
+        
         # Load existing sample
         dict_new = json.load(open(r'%s/%s.csv' %(root_file, csv_load_name), 'r'))
         
-        total_misangles       = dict_new['total_misangles']
-        total_coms            = dict_new['total_coms']
-        total_particles       = dict_new['total_particles']
-        total_misanglesproj   = dict_new['total_misanglesproj']
-        total_general         = dict_new['total_general']
-        total_flags           = dict_new['total_flags']
-        
-        total_allbranches     = dict_new['total_allbranches']
-        total_mainbranch      = dict_new['total_mainbranch']
-        total_mergers         = dict_new['total_mergers']
+        all_misangles       = dict_new['all_misangles']
+        all_coms            = dict_new['all_coms']
+        all_particles       = dict_new['all_particles']
+        all_misanglesproj   = dict_new['all_misanglesproj']
+        all_general         = dict_new['all_general']
+        all_flags           = dict_new['all_flags']
 
         # these will all be lists, they need to be transformed into arrays
         print('LOADED CSV:')
         print(dict_new['function_input'])
         
-        GalaxyIDList_target = list(total_general.keys())
+        GroupNumList = all_general.keys()
+        SubGroupNumList = np.full(len(GroupNumList), SubGroupNum)
         
+    #------------------------------------------
+    
     
     if not csv_load:
         # Creating list (usually just single galaxy)
@@ -222,7 +453,6 @@ def plot_radial_evolution(manual_GalaxyIDList_target = np.array([30494]),       
         for target_GroupNum, target_SubGroupNum, target_GalaxyID, target_snapNum in zip(np.array(GroupNumList_target), np.array(SubGroupNumList_target), GalaxyIDList_target, snapNumList_target):
         
             if print_progress:
-                print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
                 print('Extracting merger tree data MergerTree()')
                 time_start = time.time()
             
@@ -874,7 +1104,7 @@ def plot_radial_evolution(manual_GalaxyIDList_target = np.array([30494]),       
                 #axs[1].legend(handles=legend_elements_1, labels=labels_1, loc='upper right', frameon=False, labelspacing=0.1, fontsize=8, labelcolor=labels_color_1, handlelength=0)
                 #axs[2].legend(loc='upper right', frameon=False, labelspacing=0.1, fontsize=8, labelcolor='linecolor', handlelength=0)
                 #axs[3].legend(loc='upper right', frameon=False, labelspacing=0.1, fontsize=8, labelcolor='linecolor', handlelength=0)
-                axs[4].legend(loc='upper left', frameon=False, labelspacing=0.1, fontsize=8, labelcolor='linecolor', handlelength=0)
+                axs[4].legend(loc='lower right', frameon=False, labelspacing=0.1, fontsize=8, labelcolor='linecolor', handlelength=0)
     
     
                 # Create redshift axis:
@@ -966,5 +1196,5 @@ def plot_radial_evolution(manual_GalaxyIDList_target = np.array([30494]),       
             
         
 #------------------------  
-plot_radial_evolution()
+sample_radial_evolution()
 #------------------------  

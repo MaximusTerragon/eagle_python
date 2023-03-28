@@ -24,9 +24,12 @@ from astropy.cosmology import FlatLambdaCDM
 # For z=0, will allocate a special TargetID = GalaxyID at z=0
 # 
 # IDs that we want full particle analysis are then between IDs and TopLeafIDs for each galaxy extracted
-# Now have a list of GalaxyIDs, and list of GN, SGN, and snapNum
+# Now have a list of GalaxyIDs, and list of TopLeafIDs, GN, SGN, and snapNum
 #
 # Use merger_tree to link galaxy IDs (and properties) that we have stored over snapshots, this will also extract locations of mergers
+
+
+
 # Classify galaxy as either 'main' or 'branch' which will determine the level of particle analysis done
 #
 # All 'main' galaxies at z=0 will have Mass_Star30 by definition of our sample, but we will want to trim for that in the loop below. This may mean that some very small galaxies have no descendants plotted, but that cannot be avoided.
@@ -178,7 +181,7 @@ from astropy.cosmology import FlatLambdaCDM
 #       [snapNum-3]
 #       [snapNum-4]
 
-print('NOT UPDATED WITH NEW PERC VEL')
+print('\n==\tNOT UPDATED WITH BUG\t==\n')
 
 """ 
 Purpose
@@ -349,7 +352,7 @@ class Subhalo_Extract:
         # These were all originally in cMpc, converted to pMpc through self.a and self.aexp
         self.centre       = np.array([myData['x'], myData['y'], myData['z']]) * u.Mpc.to(u.kpc) * self.a**self.aexp                 # [pkpc]
         self.centre_mass  = np.array([myData['x_mass'], myData['y_mass'], myData['z_mass']]) * u.Mpc.to(u.kpc) * self.a**self.aexp  # [pkpc]
-        self.perc_vel_old = np.array([myData['vel_x'], myData['vel_y'], myData['vel_z']]) * self.a**0.5                             # [pkm/s]
+        self.perc_vel_old = np.array([myData['vel_x'], myData['vel_y'], myData['vel_z']])                                           # [pkm/s]
         
         #-------------------------------------------------------------
         # Load data for stars and gas in non-centred units
@@ -358,31 +361,32 @@ class Subhalo_Extract:
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
             print('Reading particle data _read_galaxy')
             time_start = time.time()
-        self.stars     = self._read_galaxy(data_dir, 4, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length) 
-        self.gas       = self._read_galaxy(data_dir, 0, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length)
-        self.dm        = self._read_galaxy(data_dir, 1, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length)
-        self.bh        = self._read_galaxy(data_dir, 5, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length)
+        stars     = self._read_galaxy(data_dir, 4, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length) 
+        gas       = self._read_galaxy(data_dir, 0, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length)
+        dm        = self._read_galaxy(data_dir, 1, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length)
+        bh        = self._read_galaxy(data_dir, 5, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length)
         
         
         # CENTER COORDS, VELOCITY NOT ADJUSTED
         if centre_galaxy == True:
-            self.stars['Coordinates'] = self.stars['Coordinates'] - self.centre
-            self.gas['Coordinates']   = self.gas['Coordinates'] - self.centre
-            self.dm['Coordinates']    = self.dm['Coordinates'] - self.centre
-            self.bh['Coordinates']    = self.bh['Coordinates'] - self.centre
+            stars['Coordinates'] = stars['Coordinates'] - self.centre
+            gas['Coordinates']   = gas['Coordinates'] - self.centre
+            dm['Coordinates']    = dm['Coordinates'] - self.centre
+            bh['Coordinates']    = bh['Coordinates'] - self.centre
             
         # Trim data
-        self.stars  = self._trim_within_rad(self.stars, aperture_rad_in)
-        self.gas    = self._trim_within_rad(self.gas, aperture_rad_in)
-        self.dm     = self._trim_within_rad(self.dm, aperture_rad_in)
-        self.bh     = self._trim_within_rad(self.bh, aperture_rad_in)
+        self.stars  = self._trim_within_rad(stars, aperture_rad_in)
+        self.gas    = self._trim_within_rad(gas, aperture_rad_in)
+        self.dm     = self._trim_within_rad(dm, aperture_rad_in)
+        self.bh     = self._trim_within_rad(bh, aperture_rad_in)
         
         
         # Finding perculiar velocity and centre of mass for trimmed data
         self.perc_vel          = self._perculiar_velocity()
         self.halfmass_rad_proj = self._projected_rad(self.stars, viewing_axis)
         
-        # account for perculiar velocity within rad
+        
+        # account for perculiar velocity within aperture rad
         if centre_galaxy == True:            
             self.stars['Velocity'] = self.stars['Velocity'] - self.perc_vel
             self.gas['Velocity']   = self.gas['Velocity'] - self.perc_vel
@@ -496,7 +500,6 @@ class Subhalo_Extract:
                     
                     # Create special extract dm mass
                     dm_mass     = f['Header'].attrs.get('MassTable')[1]
-            
                     # Create an array of length n_particles each set to dm_mass.
                     m = np.ones(n_particles, dtype='f8') * dm_mass
             
@@ -520,6 +523,7 @@ class Subhalo_Extract:
                 aexp = f['PartType%i/%s'%(itype, att)].attrs.get('aexp-scale-exponent')
                 hexp = f['PartType%i/%s'%(itype, att)].attrs.get('h-scale-exponent')
                 data[att] = np.multiply(tmp, cgs * self.a**aexp * self.h**hexp, dtype='f8')
+                
             f.close()
         # If bhs
         elif itype == 5:
@@ -568,7 +572,14 @@ class Subhalo_Extract:
         
     def _perculiar_velocity(self, debug=False):        
         # Mass-weighted formula from subhalo paper
-        perc_vel = (np.sum(self.stars['Velocity'] * self.stars['Mass'][:, None] , axis=0) + np.sum(self.gas['Velocity'] * self.gas['Mass'][:, None] , axis=0) + np.sum(self.dm['Velocity'] * self.dm['Mass'][:, None] , axis=0) + np.sum(self.bh['Velocity'] * self.bh['Mass'][:, None] , axis=0)) / (np.sum(self.stars['Mass']) + np.sum(self.gas['Mass']) + np.sum(self.bh['Mass']) + np.sum(self.dm['Mass']))
+        vel_weighted = 0
+        mass_sums = 0
+        for arr in [self.stars, self.gas, self.dm, self.bh]:
+            if len(arr['Mass']) > 0:
+                vel_weighted = vel_weighted + np.sum(arr['Velocity'] * arr['Mass'][:, None], axis=0)
+                mass_sums = mass_sums + np.sum(arr['Mass'])
+            
+        perc_vel = vel_weighted / mass_sums
             
         return perc_vel
         
@@ -859,6 +870,7 @@ class Subhalo:
         for parttype, parttype_name in zip([stars, gas, dm, bh], ['stars', 'gas', 'dm', 'bh']):
             data_nil['%s'%parttype_name] = parttype
         
+        
         if not quiet:
             print('HALFMASS RAD PROJECTED', self.halfmass_rad_proj)
         
@@ -931,7 +943,7 @@ class Subhalo:
                 time_start = time.time()
                 
             for parttype_i in particle_list_in:
-                tmp_particle_count = len(self._trim_within_rad(data_nil['%s' %parttype_i], min(spin_rad_in))['Mass'])
+                tmp_particle_count = len(self._trim_within_rad(data_nil['%s' %parttype_i], min(spin_rad_in), [data_nil['stars'], data_nil['gas'], data_nil['dm'], data_nil['bh']])['Mass'])
                 
                 if tmp_particle_count < gas_sf_min_particles:
                     self.flags.append('%i %s particles in %.2f pkpc (%.2f HMR)' %(tmp_particle_count, parttype_i, min(spin_rad_in), min(spin_hmr_in)))
@@ -972,7 +984,7 @@ class Subhalo:
                         self.data['%s'%parttype_name] = self._rotate_galaxy(matrix, data_nil[parttype_name])
                 else:
                     self.data = data_nil
-                    
+                
                 
                 #-----------------------------------------------------------
                 # Find aligned spin vectors and particle count within radius
@@ -993,7 +1005,7 @@ class Subhalo:
                     tmp_mass = []
                     tmp_coms = []
                     for rad, i in zip(spin_rad_in, np.arange(len(spin_rad_in))):
-                        spin_x, particle_x, mass_x = self._find_spin(self.data[parttype_name], rad, parttype_name)
+                        spin_x, particle_x, mass_x = self._find_spin(self.data[parttype_name], rad, [self.data['stars'], self.data['gas'], self.data['dm'], self.data['bh']], parttype_name)
                         tmp_spins.append(spin_x)
                         tmp_particles.append(particle_x)
                         tmp_mass.append(mass_x)
@@ -1053,7 +1065,7 @@ class Subhalo:
             #------------------------------------------------
             # Create 1000 random spin iterations for each rad
             if find_uncertainties:
-                
+                # 1-sigma
                 use_percentiles = 32
                 
                 if print_progress:
@@ -1078,7 +1090,7 @@ class Subhalo:
                 
                         # ...append 1000 random spin iterations
                         for jjjj in range(iterations):
-                            spin_i, _, _ = self._find_spin(self.data[parttype_name], rad_i, parttype_name, random_sample=True)
+                            spin_i, _, _ = self._find_spin(self.data[parttype_name], rad_i, [self.data['stars'], self.data['gas'], self.data['dm'], self.data['bh']], parttype_name, random_sample=True)
                             tmp_spins.append(spin_i)
                         spins_rand['%s' %str(hmr_i)]['%s' %parttype_name] = np.stack(tmp_spins)
          
@@ -1218,14 +1230,15 @@ class Subhalo:
                         time_start = time.time()
                     
                     # Finding star unit vector within kappa_rad_in, finding angle between it and z and returning matrix for this
-                    stars_spin_kappa, _, _ = self._find_spin(data_nil['stars'], kappa_rad_in, 'stars')
+                    stars_spin_kappa, _, _ = self._find_spin(data_nil['stars'], kappa_rad_in, [self.data['stars'], self.data['gas'], self.data['dm'], self.data['bh']], 'stars')
                     _ , matrix = self._orientate(orientate_to_axis, stars_spin_kappa)
                     
                     # Orientate entire galaxy according to matrix above, use this to find kappa
                     stars_aligned_kappa  = self._rotate_galaxy(matrix, data_nil['stars'])
                     self.kappa_old = self._kappa_co(stars_aligned_kappa, kappa_rad_in) 
                     
-                    self.general.update({'kappa_old': self.kappa_old})"""
+                    self.general.update({'kappa_old': self.kappa_old})
+                """
         
                 if 'gas' in particle_list_in:
                     if print_progress:
@@ -1234,7 +1247,7 @@ class Subhalo:
                         time_start = time.time()
                 
                     # Finding gas unit vector within kappa_rad_in, finding angle between it and z and returning matrix for this
-                    gas_spin_kappa, _, _ = self._find_spin(data_nil['gas'], kappa_rad_in, 'gas')
+                    gas_spin_kappa, _, _ = self._find_spin(data_nil['gas'], kappa_rad_in, [self.data['stars'], self.data['gas'], self.data['dm'], self.data['bh']], 'gas')
                     _ , matrix = self._orientate(orientate_to_axis, gas_spin_kappa)
                     
                     # Orientate entire galaxy according to matrix above, use this to find kappa
@@ -1250,7 +1263,7 @@ class Subhalo:
                         time_start = time.time()
             
                     # Finding gas_sf unit vector within kappa_rad_in, finding angle between it and z and returning matrix for this
-                    gas_sf_spin_kappa, _, _ = self._find_spin(data_nil['gas_sf'], kappa_rad_in, 'gas_sf')
+                    gas_sf_spin_kappa, _, _ = self._find_spin(data_nil['gas_sf'], kappa_rad_in, [self.data['stars'], self.data['gas'], self.data['dm'], self.data['bh']], 'gas_sf')
                     _ , matrix = self._orientate(orientate_to_axis, gas_sf_spin_kappa)
                     
                     # Orientate entire galaxy according to matrix above, use this to find kappa
@@ -1266,7 +1279,7 @@ class Subhalo:
                         time_start = time.time()
             
                     # Finding gas_sf unit vector within kappa_rad_in, finding angle between it and z and returning matrix for this
-                    gas_nsf_spin_kappa, _, _ = self._find_spin(data_nil['gas_nsf'], kappa_rad_in, 'gas_nsf')
+                    gas_nsf_spin_kappa, _, _ = self._find_spin(data_nil['gas_nsf'], kappa_rad_in, [self.data['stars'], self.data['gas'], self.data['dm'], self.data['bh']], 'gas_nsf')
                     _ , matrix = self._orientate(orientate_to_axis, gas_nsf_spin_kappa)
                     
                     # Orientate entire galaxy according to matrix above, use this to find kappa
@@ -1289,7 +1302,7 @@ class Subhalo:
                 
                 for hmr_i in trim_hmr_in:
                     for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf', 'dm', 'bh']:
-                        tmp_data['%s' %str(hmr_i)]['%s' %parttype_name] = self._trim_within_rad(self.data[parttype_name], hmr_i*self.halfmass_rad_proj)
+                        tmp_data['%s' %str(hmr_i)]['%s' %parttype_name] = self._trim_within_rad(self.data[parttype_name], hmr_i*self.halfmass_rad_proj, [self.data['stars'], self.data['gas'], self.data['dm'], self.data['bh']])
                 
                 self.data = tmp_data
             
@@ -1313,7 +1326,7 @@ class Subhalo:
             if align_rad_in:
                 # Large-scale stellar spin vector used to align galaxy
                 # Finding star unit vector within align_rad_in, finding angle between it and z and returning matrix for this
-                stars_spin_align, _, _  = self._find_spin(data_nil['stars'], align_rad_in, 'stars')
+                stars_spin_align, _, _  = self._find_spin(data_nil['stars'], align_rad_in, [self.data['stars'], self.data['gas'], self.data['dm'], self.data['bh']], 'stars')
                 _ , matrix = self._orientate('z', stars_spin_align)
             
                 # Orientate entire galaxy according to matrix above
@@ -1336,7 +1349,7 @@ class Subhalo:
                     tmp_mass = []
                     tmp_coms = []
                     for rad in spin_rad_in:
-                        spin_x, particle_x, mass_x = self._find_spin(self.data_align[parttype_name], rad, parttype_name)
+                        spin_x, particle_x, mass_x = self._find_spin(self.data_align[parttype_name], rad, [self.data['stars'], self.data['gas'], self.data['dm'], self.data['bh']], parttype_name)
                         tmp_spins.append(spin_x)
                         tmp_particles.append(particle_x)
                         tmp_mass.append(mass_x)
@@ -1365,7 +1378,7 @@ class Subhalo:
                     
                     for hmr_i in trim_hmr_in:
                         for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
-                            tmp_data['%s' %str(hmr_i)]['%s' %parttype_name] = self._trim_within_rad(self.data_align[parttype_name], hmr_i*self.halfmass_rad_proj)
+                            tmp_data['%s' %str(hmr_i)]['%s' %parttype_name] = self._trim_within_rad(self.data_align[parttype_name], hmr_i*self.halfmass_rad_proj, [self.data['stars'], self.data['gas'], self.data['dm'], self.data['bh']])
         
                     self.data_align = tmp_data
                   
@@ -1380,10 +1393,14 @@ class Subhalo:
                     
                 
 
-    def _trim_within_rad(self, arr, radius, debug=False):
+    def _trim_within_rad(self, arr, radius, arr_list, debug=False):
         # Compute distance to centre and mask all within Radius in pkpc
         r  = np.linalg.norm(arr['Coordinates'], axis=1)
         mask = np.where(r <= radius)
+        
+        # find perculiar velocity and adjust arr['Velocity']
+        perc_vel_rad = self._perculiar_velocity(arr_list, radius)
+        arr['Velocity'] = arr['Velocity'] - perc_vel_rad
         
         newData = {}
         for header in arr.keys():
@@ -1391,7 +1408,7 @@ class Subhalo:
             
         return newData
         
-    def _find_spin(self, arr, radius, desc, random_sample=False, debug=False):
+    def _find_spin(self, arr, radius, arr_list, desc, random_sample=False, debug=False):
         # Compute distance to centre and mask all within stelhalfrad
         r  = np.linalg.norm(arr['Coordinates'], axis=1)
         mask = np.where(r <= radius)
@@ -1399,6 +1416,15 @@ class Subhalo:
         #print("Total %s particles in subhalo: %i"%(desc, len(r)))
         #r = r[mask]
         #print("Total %s particles in %.5f kpc: %i\n"%(desc, radius*1000, len(r)))
+        
+        # find perculiar velocity and adjust arr['Velocity']
+        perc_vel_rad = self._perculiar_velocity(arr_list, radius)
+        arr['Velocity'] = arr['Velocity'] - perc_vel_rad
+        
+        if debug:
+            print(desc)
+            print('perc_vel_rad')
+            print(perc_vel_rad)
         
         if random_sample:
             #
@@ -1446,6 +1472,28 @@ class Subhalo:
         # OUTPUTS UNIT VECTOR OF SPIN, PARTICLE COUNT WITHIN RAD, MASS WITHIN RAD 
         return spin_unit, len(r[mask]), np.sum(arr['Mass'][mask])
             
+    def _perculiar_velocity(self, arr_list, radius, debug=False):   
+        # Mass-weighted formula from subhalo paper but accounting for radius
+        vel_weighted = 0
+        mass_sums = 0
+        for arr in arr_list:
+            if len(arr['Mass']) > 0:
+                # Masking out particles within the radius we care about
+                r = np.linalg.norm(arr['Coordinates'], axis=1)
+                mask = np.where(r <= radius)
+                
+                vel_weighted = vel_weighted + np.sum(arr['Velocity'][mask] * arr['Mass'][:, None][mask], axis=0)
+                mass_sums = mass_sums + np.sum(arr['Mass'][mask])
+                
+                if debug:
+                    print('max dist in rad')
+                    print(radius)
+                    print(max(np.linalg.norm(arr['Coordinates'][mask], axis=1)))
+            
+        perc_vel = vel_weighted / mass_sums
+            
+        return perc_vel
+        
     def _misalignment_angle(self, angle1, angle2, debug=False):
         # Find the misalignment angle
         angle = np.rad2deg(np.arccos(np.clip(np.dot(angle1/np.linalg.norm(angle1), angle2/np.linalg.norm(angle2)), -1.0, 1.0)))     # [deg]
@@ -1773,7 +1821,7 @@ class MergerTree:
                          and AP.GalaxyID = SH.GalaxyID \
                        ORDER BY \
                          SH.Redshift DESC, \
-                         stelmass DESC' %(sim_name, sim_name, sim_name, target_GalaxyID, maxSnap)
+                         SH.DescendantID DESC' %(sim_name, sim_name, sim_name, target_GalaxyID, maxSnap)
             
             # Execute query.
             myData = sql.execute_query(con, myQuery)
@@ -1869,7 +1917,8 @@ def ConvertGN(gn, sgn, snapNum, sim):
 
         # Construct and execute query for each simulation. This query returns properties for a single galaxy
         myQuery = 'SELECT \
-                    SH.GalaxyID \
+                    SH.GalaxyID, \
+                    SH.TopLeafID \
                    FROM \
     			     %s_Subhalo as SH \
                    WHERE \
@@ -1880,7 +1929,7 @@ def ConvertGN(gn, sgn, snapNum, sim):
         # Execute query.
         myData = sql.execute_query(con, myQuery)
         
-        return myData['GalaxyID']
+        return myData['GalaxyID'], myData['TopLeafID']
 
 
 # Will find gn, sgn, and snap of galaxy when given ID and sim
@@ -1896,7 +1945,8 @@ def ConvertID(galID, sim):
         myQuery = 'SELECT \
                     SH.GroupNumber, \
                     SH.SubGroupNumber, \
-                    SH.SnapNum \
+                    SH.SnapNum, \
+                    SH.TopLeafID \
                    FROM \
     			     %s_Subhalo as SH \
                    WHERE \
@@ -1905,7 +1955,7 @@ def ConvertID(galID, sim):
         # Execute query.
         myData = sql.execute_query(con, myQuery)
         
-        return myData['GroupNumber'], myData['SubGroupNumber'], myData['SnapNum']
+        return myData['GroupNumber'], myData['SubGroupNumber'], myData['SnapNum'], myData['TopLeafID']
 
 
 

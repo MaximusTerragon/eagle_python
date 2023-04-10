@@ -22,7 +22,7 @@ from read_dataset_tools import read_dataset, read_dataset_dm_mass, read_header
 from pafit.fit_kinematic_pa import fit_kinematic_pa
 from plotbin.sauron_colormap import register_sauron_colormap
 from vorbin.voronoi_2d_binning import voronoi_2d_binning
-from subhalo_main import Subhalo_Extract, Subhalo
+from subhalo_main_pa import Subhalo_Extract, Subhalo
 import eagleSqlTools as sql
 from graphformat import graphformat
 

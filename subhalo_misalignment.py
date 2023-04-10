@@ -25,6 +25,11 @@ mySims = np.array([('RefL0012N0188', 12)])
 # Directories of data hdf5 file(s)
 dataDir_main = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/'
 dataDir_dict = {}
+dataDir_dict['10'] = dataDir_main + 'snapshot_010_z003p984/snap_010_z003p984.0.hdf5'
+dataDir_dict['11'] = dataDir_main + 'snapshot_011_z003p528/snap_011_z003p528.0.hdf5'
+dataDir_dict['12'] = dataDir_main + 'snapshot_012_z003p017/snap_012_z003p017.0.hdf5'
+dataDir_dict['13'] = dataDir_main + 'snapshot_013_z002p478/snap_013_z002p478.0.hdf5'
+dataDir_dict['14'] = dataDir_main + 'snapshot_014_z002p237/snap_014_z002p237.0.hdf5'
 dataDir_dict['15'] = dataDir_main + 'snapshot_015_z002p012/snap_015_z002p012.0.hdf5'
 dataDir_dict['16'] = dataDir_main + 'snapshot_016_z001p737/snap_016_z001p737.0.hdf5'
 dataDir_dict['17'] = dataDir_main + 'snapshot_017_z001p487/snap_017_z001p487.0.hdf5'
@@ -155,7 +160,7 @@ def plot_misalignment_angle(manual_GalaxyIDList   = [],           # manually ent
                             plot_morphology = True,                     # whether to create separate plots for ETGs/LTGs
                                     plot_2D_3D              = '2D',                     #or use '3D'. DEFAULT 2D
                             root_file = '/Users/c22048063/Documents/EAGLE/plots',
-                            file_format = 'png',
+                            file_format = 'pdf',
                               print_galaxy       = False,
                               print_galaxy_short = True,
                               print_progress     = False,
@@ -164,8 +169,8 @@ def plot_misalignment_angle(manual_GalaxyIDList   = [],           # manually ent
                               csv_file           = False,              # .csv file will ALL data
                                 csv_name = 'data_misalignment',
                               showfig   = True,
-                              savefig   = False,  
-                                savefig_txt = '',            #extra savefile txt
+                              savefig   = True,  
+                                savefig_txt = '_pdf',            #extra savefile txt
                               debug = False):            
     
     
@@ -392,6 +397,9 @@ def plot_misalignment_angle(manual_GalaxyIDList   = [],           # manually ent
         
     #=====================================  
     def _plot_single(quiet=0, debug=False):
+        
+        raise Exception('Do not use. Works but not tested with updated stuff')
+        
         for angle_type_in_i in angle_type_in:
             # Collect values to plot
             misalignment_angle = []
@@ -580,7 +588,7 @@ def plot_misalignment_angle(manual_GalaxyIDList   = [],           # manually ent
             
             #------------------------------------------------
             # Graph initialising and base formatting
-            graphformat(8, 11, 11, 9, 11, 4.5, 3.75)
+            graphformat(8, 9, 9, 9, 9, 4.5, 3.75)
             fig, axs = plt.subplots(1, 2, figsize=[7.5, 2.55], sharex=True, sharey=False)
             plt.subplots_adjust(wspace=0.4, hspace=0.4)
         
@@ -602,7 +610,9 @@ def plot_misalignment_angle(manual_GalaxyIDList   = [],           # manually ent
                 # ETGs
                 # Plot data as histogram (outer lines + fill)
                 axs[0].hist(projected_angle_ETG, weights=np.ones(len(GroupNumPlot_ETG))/len(GroupNumPlot_ETG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor='none', facecolor=plot_color_ETG, alpha=0.1)
-                axs[0].hist(projected_angle_ETG, weights=np.ones(len(GroupNumPlot_ETG))/len(GroupNumPlot_ETG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor=plot_color_ETG, facecolor='none', alpha=1.0)
+                bin_count, _, _ = axs[0].hist(projected_angle_ETG, weights=np.ones(len(GroupNumPlot_ETG))/len(GroupNumPlot_ETG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor=plot_color_ETG, facecolor='none', alpha=1.0)
+                print('ETG bin count')
+                print(bin_count*100)
                 
                 # Add poisson errors to each bin (sqrt N)
                 hist_n, _ = np.histogram(projected_angle_ETG, bins=np.arange(0, 181, 10), range=(0, 180))
@@ -611,7 +621,9 @@ def plot_misalignment_angle(manual_GalaxyIDList   = [],           # manually ent
                 # LTGs
                 # Plot data as histogram (outer lines + fill)
                 axs[1].hist(projected_angle_LTG, weights=np.ones(len(GroupNumPlot_LTG))/len(GroupNumPlot_LTG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor='none', facecolor=plot_color_LTG, alpha=0.1)
-                axs[1].hist(projected_angle_LTG, weights=np.ones(len(GroupNumPlot_LTG))/len(GroupNumPlot_LTG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor=plot_color_LTG, facecolor='none', alpha=1.0)
+                bin_count, _, _ = axs[1].hist(projected_angle_LTG, weights=np.ones(len(GroupNumPlot_LTG))/len(GroupNumPlot_LTG), bins=np.arange(0, 181, 10), histtype='bar', edgecolor=plot_color_LTG, facecolor='none', alpha=1.0)
+                print('LTG bin count')
+                print(bin_count*100)
                 
                 # Add poisson errors to each bin (sqrt N)
                 hist_n, _ = np.histogram(projected_angle_LTG, bins=np.arange(0, 181, 10), range=(0, 180))
@@ -648,7 +660,6 @@ def plot_misalignment_angle(manual_GalaxyIDList   = [],           # manually ent
                     ax.set_xlabel('Stellar-gas PA misalignment')   #3D projected $\Psi$$_{gas-star}$
                 elif plot_2D_3D == '3D':
                     ax.set_xlabel('Stellar-gas misalignment')
-                if index == 0:
                     ax.set_ylabel('Percentage of galaxies')
                 ax.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='both', width=0.8, length=2)
                 

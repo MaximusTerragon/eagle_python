@@ -141,7 +141,7 @@ class Subhalo_Extract:
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
             print('Reading header')
             time_start = time.time()
-        self.a, self.h, self.boxsize = read_header(data_dir) # units of scale factor, h, and L [cMpc/h]    
+        self.a, self.h, self.boxsize = read_header(data_dir) # units of scale factor, h, and L [cMpc/h]  
         
         
         # Distances:    [cMpc/h] * a^1 *h^-1 -> [pMpc]. [pMpc/h] * h^-1 -> [pMpc], [cMpc/h] * h^-1 -> [cMpc]
@@ -689,8 +689,6 @@ class Subhalo:
         
         time_start = time.time()
         
-        print('MAIN UPDATED')
-        
         # Array to note if galaxy fails any extraction based on filters. 
         # If empty, galaxy is good for further processing
         self.flags = []
@@ -903,7 +901,7 @@ class Subhalo:
             # Create 1000 random spin iterations for each rad
             if find_uncertainties:
                 # 1-sigma
-                use_percentiles = 32
+                use_percentiles = 16
                 
                 if print_progress:
                     print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))

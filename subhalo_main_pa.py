@@ -17,175 +17,6 @@ from astropy.cosmology import FlatLambdaCDM
 
 
 
-# Will want to combine Extract with Subhalo:
-# 
-# From a given snapshot... get sample
-# Database used to find sample at z=0, returns list of IDs, GNs, SGNs, TopLeafIDs, Mass_Star30
-# For z=0, will allocate a special TargetID = GalaxyID at z=0
-# 
-# IDs that we want full particle analysis are then between IDs and TopLeafIDs for each galaxy extracted
-# Now have a list of GalaxyIDs, and list of TopLeafIDs, GN, SGN, and snapNum
-#
-# Use merger_tree to link galaxy IDs (and properties) that we have stored over snapshots, this will also extract locations of mergers
-
-
-
-
-# as some galaxies do not have sql values calculated, will need to nan append/sort at stelmass
-
-# Classify galaxy as either 'main' or 'branch' which will determine the level of particle analysis done
-#
-# All 'main' galaxies at z=0 will have Mass_Star30 by definition of our sample, but we will want to trim for that in the loop below. This may mean that some very small galaxies have no descendants plotted, but that cannot be avoided.
-#
-# Set a limit of 'branch' to Mass_Star30 = 0.1*Mass_star30 to do a shorter analysis on
-
-# For a given snapshot/redshift:
-    #Feed all GNs/SGNs/snapNum into new Subhalo tool to look at particle data
-#   For a given ID/GN/SGN/snap:
-#       
-#       if it is a 'main' galaxy, do full analysis as before:
-#           Subhalo_main(mySims, dataDir_dict['%s' %str(snapNum)],
-#               USED FOR MASKING
-#               snapNum
-#               GroupNum
-#               SubGroupNum
-#
-#               USED FOR CLIPPING PARTICLES + KAPPA          
-#               aperture_rad_in       -> max. radial extent of data, will clip particles to this [pkpc]
-#               kappa_rad=30          -> rad. to calculate kappa [pkpc]
-#
-#               USED FOR MISALIGNMENT ANGLE CALCULATION
-#               spin_rad              -> find spin for these rads [pkpc]
-#               spin_hmr              -> or, find spin for these hmr [ ]
-#               find_uncertainties    = True
-#               particle_list_in      -> speed up calculation by specifying the particle spins we are interested in
-#                                           Defaults to star, gas, gas_sf
-#               angle_type_in         -> speed up calculation by specifying which misalignment angles we are after
-#                                           Defaults to star-gas, star-gas_sf, star_dm
-#
-#               USED TO QUICKLY FLAG GALAXY
-#               min_tot_particles     -> min. total particles of galaxy... or something 
-#
-#               WILL APPEND MATH.NAN IF NOT MET FOR A GIVEN RADIUS (RATHER THAN FLAG)... still add some sort of notifier:
-#               com_min_distance      -> min. distance between components of a given rad
-#               min_bin_particles     -> min. particles in a radial bin for a galaxy
-#               min_inclination       -> min. angle between viewing axis and stellar component. 
-#
-#               OTHER:
-#               viewing_axis='z'
-#               viewing_angle=0
-#               orientate_to_axis='z'
-#               align_rad=False       -> don't auto-align data
-#               quiet=True)
-#               -------------------
-#
-#               FROM SQL QUERY:
-#               CentreOfPotential x, y, z
-#               Will extract Morpho_Kinem data
-#           
-#               PARTICLE HANDLING:
-#               Extract a, aexp, h, hexp, boxsize
-#               Centre coordinates using centre of potential
-#               Find velocity within radius of components, and subtract
-#               Trim to aperature_rad       
-#
-#               - find properties similar to before -   
-#       
-#               CREATE DICTIONARIES AS BEFORE:
-#               self.general        -> for all general data
-#               self.particles      -> for particle counts, and masses within a given rad
-#               self.coms           -> for list of C.o.Ms within a given rad
-#               self.misangles      -> 3D with uncertainties
-#               self.misangles_proj -> projected onto given axis with uncertainties  
-#               self.flags          -> will have length 0 if galaxy is fine to use. Individual flags added to all above dictionaries instead
-#           
-#
-#           if galaxy is a branch galaxy, do smaller analysis:
-#               Subhalo_branch(mySims, dataDir_dict['%s' %str(snapNum)],
-#               USED FOR MASKING
-#               snapNum
-#               GroupNum
-#               SubGroupNum
-#
-#               USED FOR CLIPPING PARTICLES + KAPPA          
-#               aperture_rad_in       -> max. radial extent of data, will clip particles to this [pkpc]
-#               kappa_rad=30          -> rad. to calculate kappa [pkpc]
-#
-#               OTHER:
-#               quiet=True)
-#               -------------------
-#
-#               FROM SQL QUERY:
-#               CentreOfPotential x, y, z
-#               Will extract Morpho_Kinem data (if it exists)
-#           
-#               PARTICLE HANDLING:
-#               Extract a, aexp, h, hexp, boxsize
-#               Centre coordinates using centre of potential
-#       
-#               CREATE DICTIONARIES AS BEFORE:
-#               self.general        -> for all general data 
-#               self.particles      -> for particle counts, and masses within aperture_rad_in
-#
-#       Append all this for a single galaxy to larger dictionary to be used for later (or csv file?) depending if it is a main or branch galaxy
-#       Append using galaxyID... we can link it all back together again through the extracted merger tree
-#   
-#   Finished loop of all galaxies (main + branch) for a snapshot
-#
-# Finished loop of all IDs over all snapshots
-#
-#
-# Use existing merger tree to link everything back together again in a new dictionary:
-#   For a given TargetID:
-#       Append all IDs between TargetID and TopLeafID as being part of main, alongside their snap/redshift
-#       Append all branches with DescendantID between TargetID and TopLeafID, alongside their snap/redshift
-#       
-#       Calculate merger ratios, and merger properties and also append
-#
-# We are left with a dictionary that looks like this:
-#   [TargetID]
-#       [snapNum]
-#           ['redshift']
-#           ['lookbacktime']
-#           ['main']
-#               ['general']
-#                   [...]
-#               ['misangles']
-#                   ['hmr'] = array
-#                   ['rad'] = array
-#                   ['flags'] = array of NaN or description
-#               ['misanglesproj']
-#                   ['hmr'] = array
-#                   ['rad'] = array
-#                   ['flags'] = array of NaN or description
-#               ['coms']
-#                   ['hmr'] = array
-#                   ['rad'] = array
-#                   ['flags'] = array of NaN or description
-#               ['particles']
-#                   ['hmr'] = array
-#                   ['rad'] = array
-#                   ['flags'] = array of NaN or description
-#               ['flags'] = array (=0 IF GALAXY IS FINE)
-#                       
-#           ['branch']
-#               empty for snapNum=28, otherwise:
-#               ['general']
-#                   [...]
-#               ['particles']
-#                   ['hmr'] = array
-#                   ['rad'] = array
-#                   ['flags'] = array of NaN or description
-#
-#           ['mergers']
-#               properties as before.. eg. ratio, but also wet/dry
-#       [snapNum-1]
-#       [snapNum-2]
-#       [snapNum-3]
-#       [snapNum-4]
-
-print('\n==\tNOT UPDATED WITH BUG\t==\n')
-
 """ 
 Purpose
 -------
@@ -310,7 +141,8 @@ class Subhalo_Extract:
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
             print('Reading header')
             time_start = time.time()
-        self.a, self.h, self.boxsize = read_header(data_dir) # units of scale factor, h, and L [cMpc/h]    
+        self.a, self.h, self.boxsize = read_header(data_dir) # units of scale factor, h, and L [cMpc/h]  
+        
         
         # Distances:    [cMpc/h] * a^1 *h^-1 -> [pMpc]. [pMpc/h] * h^-1 -> [pMpc], [cMpc/h] * h^-1 -> [cMpc]
         # Velocity:     [cx/sh] * a^0.5 * h^0 -> [x/s]
@@ -1920,8 +1752,7 @@ def ConvertGN(gn, sgn, snapNum, sim):
 
         # Construct and execute query for each simulation. This query returns properties for a single galaxy
         myQuery = 'SELECT \
-                    SH.GalaxyID, \
-                    SH.TopLeafID \
+                    SH.GalaxyID \
                    FROM \
     			     %s_Subhalo as SH \
                    WHERE \
@@ -1932,7 +1763,7 @@ def ConvertGN(gn, sgn, snapNum, sim):
         # Execute query.
         myData = sql.execute_query(con, myQuery)
         
-        return myData['GalaxyID'], myData['TopLeafID']
+        return myData['GalaxyID']
 
 
 # Will find gn, sgn, and snap of galaxy when given ID and sim
@@ -1948,8 +1779,7 @@ def ConvertID(galID, sim):
         myQuery = 'SELECT \
                     SH.GroupNumber, \
                     SH.SubGroupNumber, \
-                    SH.SnapNum, \
-                    SH.TopLeafID \
+                    SH.SnapNum \
                    FROM \
     			     %s_Subhalo as SH \
                    WHERE \
@@ -1958,7 +1788,7 @@ def ConvertID(galID, sim):
         # Execute query.
         myData = sql.execute_query(con, myQuery)
         
-        return myData['GroupNumber'], myData['SubGroupNumber'], myData['SnapNum'], myData['TopLeafID']
+        return myData['GroupNumber'], myData['SubGroupNumber'], myData['SnapNum']
 
 
 

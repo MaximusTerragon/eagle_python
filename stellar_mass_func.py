@@ -23,6 +23,11 @@ snapNum = 28
 # Directories of data hdf5 file(s)
 dataDir_main = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/'
 dataDir_dict = {}
+dataDir_dict['10'] = dataDir_main + 'snapshot_010_z003p984/snap_010_z003p984.0.hdf5'
+dataDir_dict['11'] = dataDir_main + 'snapshot_011_z003p528/snap_011_z003p528.0.hdf5'
+dataDir_dict['12'] = dataDir_main + 'snapshot_012_z003p017/snap_012_z003p017.0.hdf5'
+dataDir_dict['13'] = dataDir_main + 'snapshot_013_z002p478/snap_013_z002p478.0.hdf5'
+dataDir_dict['14'] = dataDir_main + 'snapshot_014_z002p237/snap_014_z002p237.0.hdf5'
 dataDir_dict['15'] = dataDir_main + 'snapshot_015_z002p012/snap_015_z002p012.0.hdf5'
 dataDir_dict['16'] = dataDir_main + 'snapshot_016_z001p737/snap_016_z001p737.0.hdf5'
 dataDir_dict['17'] = dataDir_main + 'snapshot_017_z001p487/snap_017_z001p487.0.hdf5'
@@ -142,9 +147,7 @@ def _stellar_mass_func(galaxy_mass_limit = 10**9,               # Mass limit of 
                                hist_bin_width          = 0.2,         # Msun
                          print_progress = True,
                          root_file = '/Users/c22048063/Documents/EAGLE/plots/',
-                         file_format = 'png',
-                         csv_load       = True,              # .csv file will ALL data
-                           csv_load_name = 'data_misalignment_2023-02-28 10:45:11.358603',       #FIND IN LINUX, mac is weird
+                         file_format = 'pdf',
                          csv_file       = False,
                            csv_name = 'stellar_mass_func_L25',
                          showfig   = True,
@@ -158,7 +161,7 @@ def _stellar_mass_func(galaxy_mass_limit = 10**9,               # Mass limit of 
     
     # Initialise figure
     # Graph initialising and base formatting
-    graphformat(8, 11, 11, 9, 11, 4.5, 3.75)
+    graphformat(8, 9, 9, 9, 9, 4.5, 3.75)
     fig, ax = plt.subplots(1, 1, figsize=[3.15, 2.9])
     
     #-----------------------------------------
@@ -380,11 +383,11 @@ def _stellar_mass_func(galaxy_mass_limit = 10**9,               # Mass limit of 
     else:
         print('---------------------------------------')
         print('Initial sample:  ', len(GroupNumList))
-        print(' ', GroupNumList)
+        #print(' ', GroupNumList)
         print('Final sample:    ', len(GroupNumPlot))
-        print(' ', GroupNumPlot)  
+        #print(' ', GroupNumPlot)  
         print('Not in sample:   ', len(GroupNumNotPlot)) 
-        print(' ', GroupNumNotPlot)
+        #print(' ', GroupNumNotPlot)
         print('==========================================')    
     
     

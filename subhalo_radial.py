@@ -66,13 +66,13 @@ SAMPLE:
 
 """
 #1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
-def plot_radial_misalignment(manual_GalaxyIDList = np.array([]),       # leave empty if ignore
-                               manual_GroupNumList = np.array([4]),           # manually enter galaxy gns we want
+def plot_radial_misalignment(manual_GalaxyIDList = np.array([3748]),       # leave empty if ignore
+                               manual_GroupNumList = np.array([]),           # manually enter galaxy gns we want
                                SubGroupNum         = 0,
                                snapNum             = 28,
                                  galaxy_mass_limit = 10**9.5,                         # for print 
-                                 csv_load       = False,              # .csv file will ALL data
-                                   csv_load_name = 'data_radial_2023-02-28 11:21:57.629653',       #FIND IN LINUX, mac is weird
+                                 csv_load       = True,              # .csv file will ALL data
+                                   csv_load_name = 'data_radial_2023-04-05 23:22:32.160462',       #FIND IN LINUX, mac is weird
                              kappa_rad_in    = 30,                          # calculate kappa for this radius [pkpc]    
                              aperture_rad_in = 30,                          # trim all data to this maximum value before calculations
                              trim_hmr_in     = np.array([100]),             # keep as 100, doesn't matter as capped by aperture anyway
@@ -80,7 +80,7 @@ def plot_radial_misalignment(manual_GalaxyIDList = np.array([]),       # leave e
                              orientate_to_axis='z',                         # keep as z
                              viewing_angle=0,                               #keep as 0
                                      find_uncertainties      = True,                    # whether to find 2D and 3D uncertainties
-                                     spin_hmr_in             = np.array([1.0, 2.0, 3.0]), #np.arange(0.5, 10.01, 0.25),    # multiples of rad
+                                     spin_hmr_in             = np.arange(0.5, 10.5, 0.25), #np.arange(0.5, 10.01, 0.25),    # multiples of rad
                                      viewing_axis            = 'z',                     # Which axis to view galaxy from.  DEFAULT 'z'
                                      com_min_distance        = 2.0,                     # [pkpc] min distance between sfgas and stars. Min radius of spin_rad_in used
                                      gas_sf_min_particles    = 20,                      # Minimum gas sf particles to use galaxy.  DEFAULT 100
@@ -91,16 +91,15 @@ def plot_radial_misalignment(manual_GalaxyIDList = np.array([]),       # leave e
                                      plot_2D_3D           = '2D',                # whether to plot 2D or 3D angle
                                      rad_type_plot        = 'hmr',               # 'rad' whether to use absolute distance or hmr 
                              root_file = '/Users/c22048063/Documents/EAGLE/plots',
-                             file_format = 'png',
+                             file_format = 'pdf',
                                print_galaxy       = False,
                                print_galaxy_short = False,
                                print_progress     = True,
-                               
                                csv_file = False,                     # whether to create a csv file of used data
                                  csv_name = 'data_radial',          # name of .csv file
                                savefig = False,
                                showfig = True,  
-                                 savefigtxt = '_new', 
+                                 savefigtxt = '_pdf', 
                                debug = False):         
           
     time_start = time.time()   
@@ -314,7 +313,7 @@ def plot_radial_misalignment(manual_GalaxyIDList = np.array([]),       # leave e
         if plot_2D_3D == '2D':
             for GroupNum in GroupNumList:
                 # Initialise figure
-                graphformat(8, 11, 11, 9, 11, 4.5, 3.75)
+                graphformat(8, 9, 9, 9, 9, 4.5, 3.75)
                 fig, axs = plt.subplots(nrows=2, ncols=1, gridspec_kw={'height_ratios': [3, 1]}, figsize=(3.15, 3.15), sharex=True, sharey=False)
                 
                 plot_count = 0
@@ -348,7 +347,7 @@ def plot_radial_misalignment(manual_GalaxyIDList = np.array([]),       # leave e
                         GroupNumPlot.append(GroupNum)
                     else:
                         print('VOID: flagged')
-                        print(all_flags['%s' %str(GroupNum)].items())
+                        print(all_flags['%s' %str(GroupNum)])
                         GroupNumNotPlot.append(GroupNum)
                 
                     if debug == True:
@@ -492,7 +491,7 @@ def plot_radial_misalignment(manual_GalaxyIDList = np.array([]),       # leave e
             axs[1].set_yticklabels(['0', '', '', '', '1'])
             axs[0].set_ylim(0, 180)
             axs[1].set_ylim(0, 1)
-            axs[0].set_title('GalaxyID: %i' %subhalo.GalaxyID)
+            axs[0].set_title('GalaxyID: %i' %all_general['%s' %str(GroupNum)]['GalaxyID'])
             
             # Annotations
             

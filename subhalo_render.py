@@ -140,7 +140,7 @@ def galaxy_render(manual_GalaxyIDList = np.array([]),       # leave empty if ign
         SubGroupNumList = []
         snapNumList     = []
         for galID in manual_GalaxyIDList:
-            gn, sgn, snap, _ = ConvertID(galID, mySims)
+            gn, sgn, snap = ConvertID(galID, mySims)
         
             # Append to arrays
             GroupNumList.append(gn)
@@ -235,6 +235,7 @@ def galaxy_render(manual_GalaxyIDList = np.array([]),       # leave empty if ign
         
         
         print('STELMASS: %f\t%f\tDIFF: %f %%' %(np.log10(galaxy.stelmass), np.log10(subhalo.stelmass), 100*abs(galaxy.stelmass-subhalo.stelmass)/subhalo.stelmass))
+        print(subhalo.general.items())
         
         # Add filter to skip pafitting of galaxy if any basic condition not met
         if len(subhalo.flags) != 0:

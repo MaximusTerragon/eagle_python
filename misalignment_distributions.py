@@ -160,8 +160,8 @@ def _misalignment_distribution(csv_sample = '28_cent_sample_misalignment_9.0',  
                                 viewing_axis        = 'z',                  # Which axis to view galaxy from.  DEFAULT 'z'
                                 aperture_rad        = 30,                   # trim all data to this maximum value before calculations [pkpc]
                                 kappa_rad           = 30,                   # calculate kappa for this radius [pkpc]
-                                trim_hmr = np.array([100]),              # keep as 100... will be capped by aperture anyway. Doesn't matter
-                                align_rad = False,                       # keep on False
+                                trim_hmr = np.array([100]),                 # keep as 100... will be capped by aperture anyway. Doesn't matter
+                                align_rad = False,                          # keep on False
                                 orientate_to_axis='z',                      # Keep as z
                                 viewing_angle = 0,                          # Keep as 0
                                 #-----------------------------------------------------
@@ -253,9 +253,26 @@ def _misalignment_distribution(csv_sample = '28_cent_sample_misalignment_9.0',  
        
         # Set spin_rad here
         if rad_projected == True:
-            spin_rad = spin_hmr * galaxy.halfmass_rad_proj
+            spin_rad = np.array(spin_hmr) * galaxy.halfmass_rad_proj
+            spin_hmr_tmp = spin_hmr
+            
+            # Reduce spin_rad array if value exceeds aperture_rad_in... means not all dictionaries will have same number of array spin values
+            spin_rad = [x for x in spin_rad if x <= aperture_rad]
+            spin_hmr = [x for x in spin_hmr if x*galaxy.halfmass_rad_proj <= aperture_rad]
+            
+            if len(spin_hmr) != len(spin_hmr_tmp):
+                print('Capped spin_rad (%s pkpc) at aperture radius (%s pkpc)' %(spin_rad, aperture_rad))
         elif rad_projected == False:
-            spin_rad = spin_hmr * galaxy.halfmass_rad
+            spin_rad = np.array(spin_hmr) * galaxy.halfmass_rad
+            spin_hmr_tmp = spin_hmr
+            
+            # Reduce spin_rad array if value exceeds aperture_rad_in... means not all dictionaries will have same number of array spin values
+            spin_rad = [x for x in spin_rad if x <= aperture_rad]
+            spin_hmr = [x for x in spin_hmr if x*galaxy.halfmass_rad <= aperture_rad]
+            
+            if len(spin_hmr) != len(spin_hmr_tmp):
+                print('Capped spin_rad (%s pkpc) at aperture radius (%s pkpc)' %(max(spin_rad), aperture_rad))
+        
         
 
         # If we want the original values, enter 0 for viewing angle
@@ -279,84 +296,23 @@ def _misalignment_distribution(csv_sample = '28_cent_sample_misalignment_9.0',  
                                        
         
         print(GroupNum)
-        #print(subhalo.flags['total_particles'])
-        #print(subhalo.flags['min_particles'])
-        #print(subhalo.flags['min_inclination'])
-        #print(subhalo.flags['com_min_distance'])
-        print(subhalo.mis_angles_proj[viewing_axis]['stars_gas_sf_angle'])
-        print(subhalo.mis_angles_proj[viewing_axis]['stars_gas_sf_angle_err'])
-        print(' ')
-        print(subhalo.counts.items())
+        print(subhalo.mis_angles.items())
         
         
-        #clip spin_rad to aperture
+        #print(subhalo.flags['total_particles'])            # will flag if there are missing particles within aperture_rad
+        #print(subhalo.flags['min_particles'])              # will flag if min. particles not met within spin_rad (will find spin if particles exist, but no uncertainties)
+        #print(subhalo.flags['min_inclination'])            # will flag if inclination angle not met within spin_rad... all spins and uncertainties still calculated
+        #print(subhalo.flags['com_min_distance'])           # will flag if com distance not met within spin_rad... all spins and uncertainties still calculated
+
         
-        """ 
-        .flags:     dictionary
-            Has list of arrays that will be != if flagged. Contains hmr at failure, or 30pkpc
-                ['total_particles']
-                    ['stars']       - [hmr]
-                    ['gas']         - [hmr]
-                    ['gas_sf']      - [hmr]
-                    ['gas_nsf']     - [hmr]
-                    ['dm']          - [hmr]
-                    ['bh']          - [hmr]
-                ['min_particles']
-                    ['stars']       - [hmr]
-                    ['gas']         - [hmr]
-                    ['gas_sf']      - [hmr]
-                    ['gas_nsf']     - [hmr]
-                    ['dm']          - [hmr]
-                ['min_inclination']
-                    ['stars']       - [hmr]
-                    ['gas']         - [hmr]
-                    ['gas_sf']      - [hmr]
-                    ['gas_nsf']     - [hmr]
-                    ['dm']          - [hmr]
-                ['com_min_distance']
-                    ['stars_gas']   - [hmr]
-                    ['stars_gas_sf']- [hmr]
-                    ...
-                
-        .spins:   dictionary
-            Has aligned/rotated spin vectors within spin_rad_in's:
-                ['rad']     - [pkpc]
-                ['hmr']     - multiples of halfmass_rad
-                ['stars']   - [unit vector]
-                ['gas']     - [unit vector]
-                ['gas_sf']  - [unit vector]
-                ['gas_nsf'] - [unit vector]
-                ['dm']      - unit vector at 30pkpc
-        .counts:   dictionary
-            Has aligned/rotated particle count and mass within spin_rad_in's:
-                ['rad']          - [pkpc]
-                ['hmr']     - multiples of halfmass_rad
-                ['stars']        - [count]
-                ['gas']          - [count]
-                ['gas_sf']       - [count]
-                ['gas_nsf']      - [count]
-                ['dm']           - count at 30pkpc
-        .masses:   dictionary
-            Has aligned/rotated particle count and mass within spin_rad_in's:
-                ['rad']          - [pkpc]
-                ['hmr']     - multiples of halfmass_rad
-                ['stars']        - [Msun]
-                ['gas']          - [Msun]
-                ['gas_sf']       - [Msun]
-                ['gas_nsf']      - [Msun]
-                ['dm']           - Msun at 30pkpc
-        .coms:     dictionary
-            Has all centres of mass and distances within a spin_rad_in:
-                ['rad']          - [pkpc]
-                ['hmr']     - multiples of halfmass_rad
-                ['stars']          - [x, y, z] [pkpc]
-                ['gas']            - [x, y, z] [pkpc]
-                ['gas_sf']         - [x, y, z] [pkpc]
-                ['gas_nsf']        - [x, y, z] [pkpc]
-                ['dm']             - x, y, z [pkpc]  at 30pkpc
-        """
+        
+        
     
-    
+        # print galaxy
+        
+        # collect all dictionaries
+        
+        #write to csv
     
     
     
@@ -364,6 +320,12 @@ def _misalignment_distribution(csv_sample = '28_cent_sample_misalignment_9.0',  
     
 def _misalignment_plot():
     print('PLOT')    
+    
+    # option for ETG, LTG
+    # option for field, group
+    # option for mass dependence
+    # option for type of misalignment
+    # add z to plot
     
     
     

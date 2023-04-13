@@ -1,4 +1,4 @@
-import h5py
+                .import h5py
 import numpy as np
 import math
 import random
@@ -24,6 +24,7 @@ GalaxyID
 SnapNum
 
 """
+# Creates a list of GN, SGN, GalaxyID, and snaps and saves to csv file
 class Initial_Sample:
     def __init__(self, sim, snapNum, mstarLimit, satellite):
         # Allowing these attributes to be called from the object
@@ -107,8 +108,7 @@ extract data from local files.
 
 Calling function
 ----------------
-galaxy = Subhalo_Extract(mySims, dataDir, snapNum, GroupNum, SubGroupNum, aperture_rad_in, viewing_axis,
-                                    centre_galaxy=True, load_region_length=2)
+galaxy = Subhalo_Extract(sample_input['mySims'], dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, aperture_rad, viewing_axis)
 
 Input Parameters
 ----------------
@@ -119,7 +119,7 @@ mySims:
 dataDir:
     Location of the snapshot data hdf5 file, 
     eg. '/Users/c22048063/Documents/.../snapshot_028_xx/snap_028_xx.0.hdf5'
-snapNum: int
+SnapNum: int
     Snapshot number, ei. 28
 GroupNum: int
     GroupNumber of the subhalo, starts at 1
@@ -131,14 +131,6 @@ aperture_rad_in: float, [pkpc]
 viewing_axis: 'z'
     Used to find projected halfmass radius
 
-centre_galaxy: boolean
-    Whether to centre the galaxy both in coordinates
-    and in peculiar velocity using the sql values
-load_region_length: value [cMpc/h] (i think)
-    Will use the eagle_data.select_region() routine to 
-    select only a boxed region rather than entire box
-    for speed. Leave at 2 for now.
-
 
 Output Parameters
 -----------------
@@ -149,13 +141,20 @@ Output Parameters
     SubGroupNumber of galaxy
 .a: 
     Scale factor for given snapshot
+.aexp: 
+    Scale factor exponent for given snapshot
 .h:
     0.6777 for z=0
+.hexp: 
+    h exponent for given snapshot
 .boxsize:   [cMpc/h]
     Size of simulation boxsize in [cMpc/h]. Convert
     to [pMpc] by .boxsize / .h
 .centre:    [pkpc]
     SQL value of centre of potential for the galaxy
+        
+.halo_mass:     float
+    Value of the halomass within 200 density
 .stars:     dictionary of particle data:
     ['Coordinates']         - [pkpc]
     ['Velocity']            - [pkm/s]
@@ -503,22 +502,23 @@ Will find useful particle data when given stars, gas
 
 Calling function
 ----------------
-subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.stelmass, galaxy.gasmass, galaxy.GalaxyID, galaxy.halfmass_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas,
-                                                angle_selection,
-                                                viewing_angle,
-                                                spin_rad,
-                                                trim_rad,              
-                                                kappa_rad,              # False or value
-                                                aperture_rad,
-                                                align_rad,              # False or value
-                                                orientate_to_axis,
-                                                viewing_axis,
-                                                com_min_distance,
-                                                gas_sf_min_particles,
-                                                particle_list_in,
-                                                angle_type_in,
-                                                find_uncertainties,
-                                                quiet=True)
+Subhalo_Analysis(sample_input['mySims'], GroupNum, SubGroupNum, GalaxyID, SnapNum, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, 
+                                            viewing_axis,
+                                            aperture_rad,
+                                            kappa_rad, 
+                                            trim_hmr, 
+                                            align_rad,              #align_rad = False
+                                            orientate_to_axis,
+                                            viewing_angle,
+                                            
+                                            angle_selection,        
+                                            spin_rad,
+                                            spin_hmr,
+                                            find_uncertainties,
+                                            
+                                            com_min_distance,
+                                            min_particles,                                            
+                                            min_inclination)
 
 If find_uncertainties = False, will append NaNs to uncertainties... so can
         safely plot.
@@ -528,56 +528,59 @@ Input Parameters
 
 galaxy. values all from above function
 
-angle_selection:
-    Will speed up process to find only specific angles. Automated process.
-    [['stars', 'gas'], ['stars', 'gas_sf']]
-viewing_angle:
-    Will rotate output particle data by this angle
-spin_rad_in:    array [pkpc] ... *subhalo.halfmass_rad externally already...
-    When given a list of values, for example:
-    galaxy.halfmass_rad*np.arange(0.5, 10.5, 0.5)
-    will calculate spin values within these values
-spin_hmr_in:    array .
-    When given a list of values, for example:
-    np.arange(0.5, 10.5, 0.5)
-    will calculate spin values within these values
-kappa_rad_in:   False or value [pkpc]
-    Will calculate kappa for this radius from centre
-    of galaxy. Usually 30
-aperture_rad_in:    value [pkpc]
+viewing_axis:   'x', 'y', 'z'
+    Defaults to 'z', speeds up process to only find
+    uncertainties in this viewing axis
+aperture_rad:    value [pkpc]
     Will trim data to this maximum value for quicker processing.
     Usually 30.
-trim_hmr_in:    array [multiples of rad]
+kappa_rad:   False or value [pkpc]
+    Will calculate kappa for this radius from centre
+    of galaxy. Usually 30
+trim_hmr:    array [multiples of rad]
     Will trim the output data to this radius. This is
     used for render and 2dhisto
-align_rad_in:   False or value [pkpc]
+align_rad:   False or value [pkpc]
     Will orientate the galaxy based on the stellar 
     spin vector within this radius. Usually 30
 orientate_to_axis:  'x', 'y', 'z'
     When align_rad_in == value, will orientate galaxy
     to this axis. 
-viewing_axis:   'x', 'y', 'z'
-    Defaults to 'z', speeds up process to only find
-    uncertainties in this viewing axis
-com_min_distance: [pkpc]
-    Will initiate flag if this not met within spin_rad
-    (if c.o.m > 2.0, in 2HMR)
-gas_sf_min_particle:
-    Minimum gas_sf (and gas_nsf, stars) particle within
-    spin_rad. Will flag if not met
-particle_list_in:
-    Lists particles for speed up of process. Will only
-    contain maximum of 1 each.
-angle_type_in:
-    Target angle, ei. 'stars_gas_sf'
+viewing_angle:
+    Will rotate output particle data by this angle
+        
+angle_selection:
+    Will speed up process to find only specific angles' uncertainties. 
+    Automated process.   
+        np.array(['stars_gas',            # stars_gas     stars_gas_sf    stars_gas_nsf
+                  'stars_gas_sf',         # gas_dm        gas_sf_dm       gas_nsf_dm
+                  'stars_gas_nsf',        # gas_sf_gas_nsf
+                  'gas_sf_gas_nsf',
+                  'stars_dm'])
+spin_rad:    array [pkpc] 
+    When given a list of values, for example:
+    galaxy.halfmass_rad*np.arange(0.5, 10.5, 0.5)
+    will calculate spin values within these values
+spin_hmr:    array .
+    When given a list of values, for example:
+    np.arange(0.5, 10.5, 0.5)
+    will calculate spin values within these values
 find_uncertainties:     Boolean
     If True, will create rand_spins to find estimate of
     uncertainty for 3D angles
-quiet:  boolean
-    Whether to print grid of:
-        RAD, ANGLES-, PARTICLE COUNT, MASS
-    
-
+        
+com_min_distance: [pkpc]
+    Will initiate flag if this not met within spin_rad
+    (if c.o.m > 2.0, in 2HMR)
+    Will flag but continue to extract all values 
+min_particles:
+    Minimum gas_sf (and gas_nsf, stars) particle within spin_rad.
+    Will flag but continue to extract all analytical values
+        uncertainties not calculated if not met
+min_inclination:
+    Minimum and maximum spin inclination for a given rad.
+    Will flag but continue to extract all values 
+        
 Output Parameters
 -----------------
 
@@ -586,11 +589,37 @@ Output Parameters
     'halo_mass', 'stelmass', 'gasmass', 'gasmass_sf', 'gasmass_nsf', 
     'halfmass_rad', 'halfmass_rad_proj'
 
-.flags: array
-    Has all flags for when conditions fail. Will have len(self.flags) == 0 
-    if galaxy is good to go
+.flags:     dictionary
+    Has list of arrays that will be != if flagged. Contains hmr at failure, or 30pkpc
+        ['total_particles']
+            will flag if there are missing particles within aperture_rad
+            ['stars']       - [hmr]
+            ['gas']         - [hmr]
+            ['gas_sf']      - [hmr]
+            ['gas_nsf']     - [hmr]
+            ['dm']          - [hmr]
+            ['bh']          - [hmr]
+        ['min_particles']
+            will flag if min. particles not met within spin_rad (will find spin if particles exist, but no uncertainties)
+            ['stars']       - [hmr]
+            ['gas']         - [hmr]
+            ['gas_sf']      - [hmr]
+            ['gas_nsf']     - [hmr]
+            ['dm']          - [hmr]
+        ['min_inclination']
+            will flag if inclination angle not met within spin_rad... all spins and uncertainties still calculated
+            ['stars']       - [hmr]
+            ['gas']         - [hmr]
+            ['gas_sf']      - [hmr]
+            ['gas_nsf']     - [hmr]
+            ['dm']          - [hmr]
+        ['com_min_distance']
+            will flag if com distance not met within spin_rad... all spins and uncertainties still calculated
+            ['stars_gas']   - [hmr]
+            ['stars_gas_sf']- [hmr]
+            ... for all angle_selection ...
               
-.data, .data_align:    dictionary
+.data:    dictionary
     Has aligned/rotated values for 'stars', 'gas', 'gas_sf', 'gas_nsf':
         [hmr]                       - multiples of hmr, ei. '1.0' that data was trimmed to
             ['Coordinates']         - [pkpc]
@@ -604,7 +633,7 @@ Output Parameters
     these values will be trimmed in final output, but still
     used in calculations.
         
-.spins, .spins_align:   dictionary
+.spins:   dictionary
     Has aligned/rotated spin vectors within spin_rad_in's:
         ['rad']     - [pkpc]
         ['hmr']     - multiples of halfmass_rad
@@ -612,75 +641,82 @@ Output Parameters
         ['gas']     - [unit vector]
         ['gas_sf']  - [unit vector]
         ['gas_nsf'] - [unit vector]
-.particles, .particles_align:   dictionary
+        ['dm']      - unit vector at 30pkpc
+.counts:   dictionary
     Has aligned/rotated particle count and mass within spin_rad_in's:
         ['rad']          - [pkpc]
         ['hmr']     - multiples of halfmass_rad
-        ['stars']        - count
-        ['gas']          - count
-        ['gas_sf']       - count
-        ['gas_nsf']      - count
-        ['stars_mass']   - [Msun]
-        ['gas_mass']     - [Msun]
-        ['gas_sf_mass']  - [Msun]
-        ['gas_nsf_mass'] - [Msun]
-.coms, .coms_align:     dictionary
+        ['stars']        - [count]
+        ['gas']          - [count]
+        ['gas_sf']       - [count]
+        ['gas_nsf']      - [count]
+        ['dm']           - count at 30pkpc
+.masses:   dictionary
+    Has aligned/rotated particle count and mass within spin_rad_in's:
+        ['rad']          - [pkpc]
+        ['hmr']     - multiples of halfmass_rad
+        ['stars']        - [Msun]
+        ['gas']          - [Msun]
+        ['gas_sf']       - [Msun]
+        ['gas_nsf']      - [Msun]
+        ['dm']           - Msun at 30pkpc
+.coms:     dictionary
     Has all centres of mass and distances within a spin_rad_in:
         ['rad']          - [pkpc]
         ['hmr']     - multiples of halfmass_rad
-        ['stars']          - [x, y, z] [pkpc]
+        ['stars']          - [x, y, z] [pkpc] distance in 3D
         ['gas']            - [x, y, z] [pkpc]
         ['gas_sf']         - [x, y, z] [pkpc]
         ['gas_nsf']        - [x, y, z] [pkpc]
-        ['stars_gas']      - [pkpc] distance in 3D
-        ['stars_gas_sf']   - [pkpc] distance in 3D
-        ['stars_gas_nsf']  - [pkpc] distance in 3D
-        ['gas_sf_gas_nsf'] - [pkpc] distance in 3D
-.coms_proj, .coms_align:     dictionary
-    Has all centres of mass and distances within a spin_rad_in:
-        ['rad']          - [pkpc]
-        ['hmr']     - multiples of halfmass_rad
-        ['stars']          - [x, y, z] [pkpc]
-        ['gas']            - [x, y, z] [pkpc]
-        ['gas_sf']         - [x, y, z] [pkpc]
-        ['gas_nsf']        - [x, y, z] [pkpc]
-        ['stars_gas']      - [pkpc] distance in 3D
-        ['stars_gas_sf']   - [pkpc] distance in 3D
-        ['stars_gas_nsf']  - [pkpc] distance in 3D
-        ['gas_sf_gas_nsf'] - [pkpc] distance in 3D
-.mis_angles, .mis_angles_align:     dictionary
+        ['dm']             - x, y, z [pkpc]  at 30pkpc
+        
+  
+.mis_angles:     dictionary
     Has aligned/rotated misalignment angles between stars 
     and X within spin_rad_in's. Errors given by iterations,
-    which defults to 1000.
+    which defults to 500.
         ['rad']            - [pkpc]
         ['hmr']            - multiples of halfmass_rad
-        ['stars_gas_angle']      - [deg]
-        ['stars_gas_sf_angle']   - [deg]
-        ['stars_gas_nsf_angle']  - [deg]
-        ['gas_sf_gas_nsf_angle'] - [deg]
-        ['stars_gas_angle_err']      - [lo, hi] [deg]       ^
-        ['stars_gas_sf_angle_err']   - [lo, hi] [deg]
-        ['stars_gas_nsf_angle_err']  - [lo, hi] [deg]       (assuming it was passed into _main)
-        ['gas_sf_gas_nsf_angle_err'] - [lo, hi] [deg]       ^
+        ['stars_gas_angle']             - [deg]                -
+        ['stars_gas_sf_angle']          - [deg]                .
+        ['stars_gas_nsf_angle']         - [deg]                .
+        ['gas_sf_gas_nsf_angle']        - [deg]                .
+        ['stars_dm_angle']              - [deg]                .
+        ['gas_dm_angle']                - [deg]                .
+        ['gas_sf_dm_angle']             - [deg]                .
+        ['gas_nsf_dm_angle']            - [deg]                .
+        ['stars_gas_angle_err']         - [lo, hi] [deg]       .
+        ['stars_gas_sf_angle_err']      - [lo, hi] [deg]       .
+        ['stars_gas_nsf_angle_err']     - [lo, hi] [deg]       (assuming it was passed into angle_selection and not flagged)
+        ['gas_sf_gas_nsf_angle_err']    - [lo, hi] [deg]       .
+        ['stars_dm_angle_err']          - [lo, hi] [deg]       . 
+        ['gas_dm_angle_err']            - [lo, hi] [deg]       .
+        ['gas_sf_dm_angle_err']         - [lo, hi] [deg]       .
+        ['gas_nsf_dm_angle_err']        - [lo, hi] [deg]       ^
 .mis_angles_proj                    dictionary
     Has projected misalignment angles. Errors given by iterations,
-    which defults to 1000.
+    which defults to 500.
         ['x']
         ['y']
         ['z']
             ['rad']            - [pkpc]
             ['hmr']            - multiples of halfmass_rad
-            ['stars_gas_angle']      - [deg]
-            ['stars_gas_sf_angle']   - [deg]
-            ['stars_gas_nsf_angle']  - [deg]
-            ['gas_sf_gas_nsf_angle'] - [deg]
-            ['stars_gas_angle_err']      - [lo, hi] [deg]       ^
-            ['stars_gas_sf_angle_err']   - [lo, hi] [deg]
-            ['stars_gas_nsf_angle_err']  - [lo, hi] [deg]       (assuming it was passed into _main)
-            ['gas_sf_gas_nsf_angle_err'] - [lo, hi] [deg]       ^
-        
-        
-        
+            ['stars_gas_angle']             - [deg]                -
+            ['stars_gas_sf_angle']          - [deg]                .
+            ['stars_gas_nsf_angle']         - [deg]                .
+            ['gas_sf_gas_nsf_angle']        - [deg]                .
+            ['stars_dm_angle']              - [deg]                .
+            ['gas_dm_angle']                - [deg]                .
+            ['gas_sf_dm_angle']             - [deg]                .
+            ['gas_nsf_dm_angle']            - [deg]                .
+            ['stars_gas_angle_err']         - [lo, hi] [deg]       -
+            ['stars_gas_sf_angle_err']      - [lo, hi] [deg]       .
+            ['stars_gas_nsf_angle_err']     - [lo, hi] [deg]       (assuming it was passed into angle_selection and not flagged)
+            ['gas_sf_gas_nsf_angle_err']    - [lo, hi] [deg]       .
+            ['stars_dm_angle_err']          - [lo, hi] [deg]       . 
+            ['gas_dm_angle_err']            - [lo, hi] [deg]       .
+            ['gas_sf_dm_angle_err']         - [lo, hi] [deg]       .
+            ['gas_nsf_dm_angle_err']        - [lo, hi] [deg]       ^
         
 """
 # Finds the values we are after
@@ -891,7 +927,18 @@ class Subhalo_Analysis:
             else:
                 self.data = data_nil
         else:
-            print('ALIGN NOT CONFIGURED')
+            # Large-scale stellar spin vector used to align galaxy
+            # Finding star unit vector within align_rad_in, finding angle between it and z and returning matrix for this
+            stars_spin_align    = self._find_spin(data_nil['stars'])
+            _ , matrix          = self._orientate('z', stars_spin_align)
+            
+            # Orientate entire galaxy according to matrix above
+            for parttype_name in data_nil.keys():
+                # Align if there exists particle data, if not set same as before
+                if len(self.flags['total_particles'][parttype_name]) == 0:
+                    self.data[parttype_name] = self._rotate_galaxy(matrix, data_nil[parttype_name])
+                else:
+                    self.data[parttype_name] = data_nil[parttype_name]
             
         
         #------------------------------
@@ -1001,19 +1048,21 @@ class Subhalo_Analysis:
                 
                 # Find peculiar velocity of trimmed data
                 pec_vel_rad = self._peculiar_velocity(trimmed_data)
+                
+                # Adjust velocity of trimmed_data to account for peculiar velocity
+                for parttype in trimmed_data.keys():
+                    if len(trimmed_data[parttype]['Mass']) == 0:
+                        continue
+                    else:
+                        trimmed_data[parttype]['Velocity'] = trimmed_data[parttype]['Velocity'] - pec_vel_rad
                 if debug:
                     print('Peculiar velocity in rad', rad_i)
                     print(pec_vel_rad)
                     print('Gas_sf in rad: ', rad_i)
                     print(len(trimmed_data['gas_sf']['Mass']))
                 
-                # Adjust velocity of trimmed_data to account for peculiar velocity
-                for parttype in trimmed_data.keys():
-                    if len(trimmed_data[parttype]['Mass']) == 0:
-                        next
-                    else:
-                        trimmed_data[parttype]['Velocity'] = trimmed_data[parttype]['Velocity'] - pec_vel_rad
-                 
+                
+                #------------------------------
                 for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
                     #----------------------------------------------
                     # Find particle counts, masses
@@ -1076,7 +1125,7 @@ class Subhalo_Analysis:
                     for parttype_name in particle_selection:
                         
                         if parttype_name == 'dm':
-                            next
+                            continue
                         else:
                             tmp_spins = [] 
                     
@@ -1538,7 +1587,7 @@ class Subhalo_Analysis:
                         self.mis_angles_proj[viewing_axis]['gas_nsf_dm_angle_err'].append([math.nan, math.nan])
         find_2d_misalignment_angles()    
         
-        #-------------------------------------------------
+        #-----------------------------
         # KAPPA
         def find_kappa():
             
@@ -1553,24 +1602,26 @@ class Subhalo_Analysis:
             else:
                 kappa_parttype = ['stars', 'gas', 'gas_sf']
             
+            # Trim data to kappa radius
+            trimmed_data = self._trim_data(data_nil, kappa_rad)
+            
+            # Find peculiar velocity of trimmed data
+            pec_vel_rad = self._peculiar_velocity(trimmed_data)
+
+            # Adjust velocity of trimmed_data to account for peculiar velocity
+            for parttype in trimmed_data.keys():
+                if len(trimmed_data[parttype]['Mass']) == 0:
+                    continue
+                else:
+                    trimmed_data[parttype]['Velocity'] = trimmed_data[parttype]['Velocity'] - pec_vel_rad
+            if debug:
+                print('Peculiar velocity in rad', kappa_rad)
+                print(pec_vel_rad)
+                print('Gas_sf in rad: ', kappa_rad)
+                print(len(trimmed_data['gas_sf']['Mass']))
+            
+            #-------------------------------    
             for parttype_name in kappa_parttype:
-                # Trim data to kapparadius
-                trimmed_data = self._trim_data(data_nil, kappa_rad)
-                
-                # Find peculiar velocity of trimmed data
-                pec_vel_rad = self._peculiar_velocity(trimmed_data)
-                if debug:
-                    print('Peculiar velocity in rad', kappa_rad)
-                    print(pec_vel_rad)
-                    print('Gas_sf in rad: ', kappa_rad)
-                    print(len(trimmed_data['gas_sf']['Mass']))
-                
-                # Adjust velocity of trimmed_data to account for peculiar velocity
-                for parttype in trimmed_data.keys():
-                    if len(trimmed_data[parttype]['Mass']) == 0:
-                        next
-                    else:
-                        trimmed_data[parttype]['Velocity'] = trimmed_data[parttype]['Velocity'] - pec_vel_rad
                 
                 # If particles of type exist within aperture_rad... find kappas
                 if len(trimmed_data[parttype]['Mass']) > 0:
@@ -1588,124 +1639,57 @@ class Subhalo_Analysis:
                     self.general.update({'kappa_%s' %parttype_name: math.nan})   
         find_kappa()
         
-        
-        
-        # check peculiar velocity for difference in spin IN OLD VERSION -> gn 3
-        
-        
-                    
-        # Old method
-        """ 
-            
-        
-            
-            
-                    
-        
-            #--------------------------------
-            # Trimming data
-            if len(trim_hmr_in) > 0:
-                if print_progress:
-                    print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                    print('Trimming datasets to trim_hmr_in ', trim_hmr_in)
-                    time_start = time.time()
-                tmp_data = {}
-                for hmr_i in trim_hmr_in:
-                    tmp_data.update({'%s' %str(hmr_i): {}})
-                
-                for hmr_i in trim_hmr_in:
-                    for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf', 'dm', 'bh']:
-                        tmp_data['%s' %str(hmr_i)]['%s' %parttype_name] = self._trim_within_rad(self.data[parttype_name], hmr_i*self.halfmass_rad_proj, [self.data['stars'], self.data['gas'], self.data['dm'], self.data['bh']])
-                
-                self.data = tmp_data
-            
-            
-            #--------------------------------
-            # Print statements
-            if not quiet:
-                print('GALAXY ID', self.GalaxyID)
-                print('STELMASS', np.log10(self.stelmass))
-                print('GASMASS', np.log10(self.gasmass))
-                print('GASMASS_SF', np.log10(self.gasmass_sf))
-                print('GASMASS_NSF', np.log10(self.gasmass_nsf))
-
+        #-----------------------------
+        # Trimming data
+        def trim_output_data():
             if print_progress:
                 print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                print('FINISHED EXTRACTION')
-            #============================
+                print('Trimming datasets to trim_hmr ', trim_hmr)
             
-            #============================
-            # Galaxy aligned calculations
-            if align_rad_in:
-                # Large-scale stellar spin vector used to align galaxy
-                # Finding star unit vector within align_rad_in, finding angle between it and z and returning matrix for this
-                stars_spin_align, _, _  = self._find_spin(data_nil['stars'], align_rad_in, [self.data['stars'], self.data['gas'], self.data['dm'], self.data['bh']], 'stars')
-                _ , matrix = self._orientate('z', stars_spin_align)
+            tmp_data = {}
+            for hmr_i in trim_hmr:
+                tmp_data.update({'%s' %str(hmr_i): {}})
+                
+            trim_rad = trim_hmr * self.halfmass_rad_proj
             
-                # Orientate entire galaxy according to matrix above
-                for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
-                    self.data_align['%s'%parttype_name] = self._rotate_galaxy(matrix, data_nil[parttype_name])
+            for rad_i in trim_rad:
                 
-                # Find aligned spin vectors and particle count within radius
-                self.spins_align     = {}
-                self.particles_align = {}
-                self.coms_align      = {}
-                self.spins_align['rad']     = spin_rad_in
-                self.spins_align['hmr']     = spin_hmr_in
-                self.particles_align['rad'] = spin_rad_in
-                self.particles_align['hmr'] = spin_hmr_in
-                self.coms_align['rad']      = spin_rad_in
-                self.coms_align['hmr']      = spin_hmr_in
-                for parttype_name in particle_list_in:
-                    tmp_spins = []
-                    tmp_particles = []
-                    tmp_mass = []
-                    tmp_coms = []
-                    for rad in spin_rad_in:
-                        spin_x, particle_x, mass_x = self._find_spin(self.data_align[parttype_name], rad, [self.data['stars'], self.data['gas'], self.data['dm'], self.data['bh']], parttype_name)
-                        tmp_spins.append(spin_x)
-                        tmp_particles.append(particle_x)
-                        tmp_mass.append(mass_x)
-                        tmp_coms.append(self._centre_of_mass(self.data_align[parttype_name], rad))
-                    
-                    self.spins_align[parttype_name]     = tmp_spins 
-                    self.particles_align[parttype_name] = tmp_particles
-                    self.particles_align[parttype_name + '_mass'] = tmp_mass
-                    self.coms_align[partytype_name]     = tmp_coms
+                # If trim_rad larger than already cropped data, simply assign existing data to output data
+                if rad_i > aperture_rad:
+                    for parttype_name in self.data.keys():
+                        tmp_data['%s' %str(hmr_i)][parttype_name] = self.data[parttype_name]
                 
-                # Find misalignment angles (does not find difference between every component ei. gas_sf and gas_nsf)
-                self.mis_angles_align = {}
-                self.mis_angles_align['rad'] = spin_rad_in
-                self.mis_angles_align['hmr'] = spin_hmr_in
-                for parttype_name in angle_selection:
-                    tmp_angles = []
-                    for i in np.arange(0, len(self.spins_align['stars']), 1):
-                        tmp_angles.append(self._misalignment_angle(self.spins_align[parttype_name[0]][i], self.spins_align[parttype_name[1]][i]))
-                    self.mis_angles_align['%s_%s' %(parttype_name[0], parttype_name[1])] = tmp_angles
-                               
-                    
-                if len(trim_hmr_in) > 0:
-                    tmp_data = {}
-                    for hmr_i in trim_hmr_in:
-                        tmp_data.update({'%s' %str(hmr_i): {}})
-                    
-                    for hmr_i in trim_hmr_in:
-                        for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
-                            tmp_data['%s' %str(hmr_i)]['%s' %parttype_name] = self._trim_within_rad(self.data_align[parttype_name], hmr_i*self.halfmass_rad_proj, [self.data['stars'], self.data['gas'], self.data['dm'], self.data['bh']])
+                else:
+                    # Trim data to particular radius
+                    trimmed_data = self._trim_data(self.data, rad_i)
+                
+                    # Find peculiar velocity of trimmed data
+                    pec_vel_rad = self._peculiar_velocity(trimmed_data)
+                
+                    # Adjust velocity of trimmed_data to account for peculiar velocity
+                    for parttype in trimmed_data.keys():
+                        if len(trimmed_data[parttype]['Mass']) == 0:
+                            continue
+                        else:
+                            trimmed_data[parttype]['Velocity'] = trimmed_data[parttype]['Velocity'] - pec_vel_rad
+                    if debug:
+                        print('Peculiar velocity in rad', rad_i)
+                        print(pec_vel_rad)
+                        print('Gas_sf in rad: ', rad_i)
+                        print(len(trimmed_data['gas_sf']['Mass']))
+                
+                    for parttype_name in trimmed_data.keys():
+                        tmp_data['%s' %str(hmr_i)][parttype_name] = trimmed_data[parttype_name]   
+            self.data = tmp_data
+        trim_output_data()
         
-                    self.data_align = tmp_data
-                  
-                if not quiet:  
-                    print('MISALIGNMENT ANGLES ALIGN [deg]:')
-                    print(' HALF-\tANGLES (STARS-)\t\t\tPARTICLE COUNT\t\t\tMASS')
-                    print(' RAD\tGAS\tSF\tNSF\tSF-NSF\tSTARS\tGAS\tSF\tNSF\tSTARS\tGAS\tSF\tNSF')
-                    for i in np.arange(0, len(self.mis_angles_align['rad']), 1):
-                        with np.errstate(divide='ignore', invalid='ignore'):
-                            print(' %.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%i\t%i\t%i\t%i\t%.1f\t%.1f\t%.1f\t%.1f' %(self.mis_angles_align['hmr'][i], self.mis_angles_align['stars_gas'][i], self.mis_angles_align['stars_gas_sf'][i], self.mis_angles_align['stars_gas_nsf'][i], self.mis_angles_align['gas_sf_gas_nsf'][i], self.particles_align['stars'][i], self.particles_align['gas'][i], self.particles_align['gas_sf'][i], self.particles_align['gas_nsf'][i], np.log10(self.particles_align['stars_mass'][i]), np.log10(self.particles_align['gas_mass'][i]), np.log10(self.particles_align['gas_sf_mass'][i]), np.log10(self.particles_align['gas_nsf_mass'][i])))               
-            #============================
-     
-        """
-     
+        #-----------------------------
+        # Print statements
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+            print('FINISHED EXTRACTION\tGALAXY ID: %s' %GalaxyID)
+        
+        
                     
     def _query_morph(self, sim, GroupNum, SubGroupNum, SnapNum, debug=False):
         # This uses the eagleSqlTools module to connect to the database with your username and password.

@@ -1,4 +1,4 @@
-                .import h5py
+import h5py
 import numpy as np
 import math
 import random
@@ -94,8 +94,6 @@ class Initial_Sample:
             myData = sql.execute_query(con, myQuery)
 
         return myData
-
-
 
 
 
@@ -552,11 +550,11 @@ viewing_angle:
 angle_selection:
     Will speed up process to find only specific angles' uncertainties. 
     Automated process.   
-        np.array(['stars_gas',            # stars_gas     stars_gas_sf    stars_gas_nsf
-                  'stars_gas_sf',         # gas_dm        gas_sf_dm       gas_nsf_dm
-                  'stars_gas_nsf',        # gas_sf_gas_nsf
-                  'gas_sf_gas_nsf',
-                  'stars_dm'])
+        ['stars_gas',            # stars_gas     stars_gas_sf    stars_gas_nsf
+         'stars_gas_sf',         # gas_dm        gas_sf_dm       gas_nsf_dm
+         'stars_gas_nsf',        # gas_sf_gas_nsf
+         'gas_sf_gas_nsf',
+         'stars_dm']
 spin_rad:    array [pkpc] 
     When given a list of values, for example:
     galaxy.halfmass_rad*np.arange(0.5, 10.5, 0.5)

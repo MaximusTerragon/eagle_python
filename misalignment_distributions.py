@@ -105,7 +105,7 @@ def _misalignment_sample(mySims                = [('RefL0012N0188', 12)],
     if csv_file: 
         # Converting numpy arrays to lists. When reading, may need to simply convert list back to np.array() (easy)
         class NumpyEncoder(json.JSONEncoder):
-            """ Special json encoder for numpy types """
+            ''' Special json encoder for numpy types '''
             def default(self, obj):
                 if isinstance(obj, np.integer):
                     return int(obj)
@@ -166,11 +166,11 @@ def _misalignment_distribution(csv_sample = '28_cent_sample_misalignment_9.0',  
                                 viewing_angle = 0,                          # Keep as 0
                                 #-----------------------------------------------------
                                 # Misalignments we want extracted and at which radii
-                                angle_selection     = np.array(['stars_gas',            # stars_gas     stars_gas_sf    stars_gas_nsf
+                                angle_selection     = ['stars_gas',            # stars_gas     stars_gas_sf    stars_gas_nsf
                                                                 'stars_gas_sf',         # gas_dm        gas_sf_dm       gas_nsf_dm
                                                                 'stars_gas_nsf',        # gas_sf_gas_nsf
                                                                 'gas_sf_gas_nsf',
-                                                                'stars_dm']),           
+                                                                'stars_dm'],           
                                 spin_hmr            = np.array([1.0, 2.0]),          # multiples of hmr for which to find spin
                                 find_uncertainties  = True,                    # whether to find 2D and 3D uncertainties
                                 rad_projected       = True,                     # whether to use rad in projection or 3D
@@ -181,19 +181,21 @@ def _misalignment_distribution(csv_sample = '28_cent_sample_misalignment_9.0',  
                                 min_inclination         = 0,                      # Minimum inclination toward viewing axis [deg] DEFAULT 0
                                 #--------------------------   
                                 csv_file = True,                       # Will write sample to csv file in sapmle_dir
-                                    csv_name = 'data_misalignment',
+                                    csv_name        = '',              # extra stuff at end
                                 #--------------------------
                                 print_progress = False,
+                                print_galaxy   = True,
                                 debug = False):
     
     
-    #---------------------------------------------
+    #---------------------------------------------    
     # Load sample csv
     if print_progress:
         print('Loading initial sample')
         time_start = time.time()
         
-        
+    
+    # Loading sample
     dict_new = json.load(open('%s/%s.csv' %(sample_dir, csv_sample), 'r'))
     
     
@@ -218,13 +220,27 @@ def _misalignment_distribution(csv_sample = '28_cent_sample_misalignment_9.0',  
     print('\nEXTRACT:\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s' %(str(angle_selection), str(spin_hmr), str(find_uncertainties), str(rad_projected)))
     print('===================')
     
+    
+    output_input = {'angle_selection': angle_selection,
+                    'spin_hmr': spin_hmr,
+                    'find_uncertainties': find_uncertainties,
+                    'rad_projected': rad_projected,
+                    'viewing_axis': viewing_axis,
+                    'aperture_rad': aperture_rad,
+                    'kappa_rad': kappa_rad,
+                    'com_min_distance': com_min_distance,
+                    'min_particles': min_particles,
+                    'min_inclination': min_inclination}
+    
     #---------------------------------------------
     # Empty dictionaries to collect relevant data
     all_flags         = {}          # has reason why galaxy failed sample
     all_general       = {}          # has total masses, kappa, halfmassrad, etc.
-    all_coms          = {}          # has all C.o.Ms
+    #all_coms          = {}          # has all C.o.Ms
+    #all_spins         = {}          # has all spins
+    all_counts        = {}          # has all the particle count within rad
+    all_masses        = {}          # has all the particle mass within rad
     all_misangles     = {}          # has all 3D angles
-    all_particles     = {}          # has all the particle count and mass within rad
     all_misanglesproj = {}          # has all 2D projected angles from 3d when given a viewing axis and viewing_angle = 0
     
     
@@ -274,7 +290,6 @@ def _misalignment_distribution(csv_sample = '28_cent_sample_misalignment_9.0',  
                 print('Capped spin_rad (%s pkpc) at aperture radius (%s pkpc)' %(max(spin_rad), aperture_rad))
         
         
-
         # If we want the original values, enter 0 for viewing angle
         subhalo = Subhalo_Analysis(sample_input['mySims'], GroupNum, SubGroupNum, GalaxyID, SnapNum, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, 
                                             viewing_axis,
@@ -295,30 +310,132 @@ def _misalignment_distribution(csv_sample = '28_cent_sample_misalignment_9.0',  
                                             min_inclination)
                                        
         
-        print(GroupNum)
-        print(subhalo.mis_angles.items())
-        
-        
+        ''' FLAGS
+        ------------
         #print(subhalo.flags['total_particles'])            # will flag if there are missing particles within aperture_rad
         #print(subhalo.flags['min_particles'])              # will flag if min. particles not met within spin_rad (will find spin if particles exist, but no uncertainties)
         #print(subhalo.flags['min_inclination'])            # will flag if inclination angle not met within spin_rad... all spins and uncertainties still calculated
         #print(subhalo.flags['com_min_distance'])           # will flag if com distance not met within spin_rad... all spins and uncertainties still calculated
-
+        ------------
+        '''
+        
+        #--------------------------------
+        # Collecting all relevant particle info for galaxy
+        all_flags['%s' %str(subhalo.GalaxyID)]          = subhalo.flags
+        all_general['%s' %str(subhalo.GalaxyID)]        = subhalo.general
+        all_counts['%s' %str(subhalo.GalaxyID)]         = subhalo.counts
+        all_masses['%s' %str(subhalo.GalaxyID)]         = subhalo.masses
+        all_misangles['%s' %str(subhalo.GalaxyID)]      = subhalo.mis_angles
+        all_misanglesproj['%s' %str(subhalo.GalaxyID)]  = subhalo.mis_angles_proj
+        #---------------------------------
+          
+        if print_galaxy:
+            print('ID:\t%s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f' %(str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'])) 
+            
+            
+    #=====================================
+    # End of individual subhalo loop
+    
+    
+    
+    if csv_file: 
+        # Converting numpy arrays to lists. When reading, may need to simply convert list back to np.array() (easy)
+        class NumpyEncoder(json.JSONEncoder):
+            ''' Special json encoder for numpy types '''
+            def default(self, obj):
+                if isinstance(obj, np.integer):
+                    return int(obj)
+                elif isinstance(obj, np.floating):
+                    return float(obj)
+                elif isinstance(obj, np.ndarray):
+                    return obj.tolist()
+                return json.JSONEncoder.default(self, obj)
+                  
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+            print('Writing to csv...')
+            time_start = time.time() 
+        
+        # Combining all dictionaries
+        csv_dict = {'all_general': all_general,
+                    'all_counts': all_counts,
+                    'all_masses': all_masses,
+                    'all_misangles': all_misangles,
+                    'all_misanglesproj': all_misanglesproj, 
+                    'output_input': output_input}
+        #csv_dict.update({'function_input': str(inspect.signature(_misalignment_distribution))})
+        
+        #-----------------------------
+        # File names
+        angle_str = ''
+        for angle_name in list(angle_selection):
+            angle_str = '%s_%s' %(str(angle_str), str(angle_name))
+            
+        uncertainty_str = 'noErr'    
+        if find_uncertainties:
+            uncertainty_str = 'Err'   
+            
+        rad_str = 'Rad'    
+        if rad_projected:
+            rad_str = 'RadProj'
+        
+            
+        
+        # Writing one massive JSON file
+        json.dump(csv_dict, open('%s/%s_%s_%s_%s_%s.csv' %(output_dir, csv_sample, rad_str, uncertainty_str, angle_str, csv_name), 'w'), cls=NumpyEncoder)
+        print('\nSAVED: %s/%s_%s_%s_%s_%s.csv' %(output_dir, csv_sample, rad_str, uncertainty_str, angle_str, csv_name))
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+        
+        """ Reading JSON file
+        dict_new = json.load(open('%s/%s.csv' %(output_dir, csv_output), 'r'))
+        #===============
+        # Loading sample
+        dict_new = json.load(open('%s/%s.csv' %(sample_dir, csv_sample), 'r'))
+    
+        # Extract GroupNum etc.
+        GroupNum_List       = np.array(dict_new['GroupNum'])
+        SubGroupNum_List    = np.array(dict_new['SubGroupNum'])
+        GalaxyID_List       = np.array(dict_new['GalaxyID'])
+        SnapNum_List        = np.array(dict_new['SnapNum'])
+        sample_input        = dict_new['sample_input']
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+        if debug:
+            print(sample_input)
+            print(GroupNum_List)
+            print(SubGroupNum_List)
+            print(GalaxyID_List)
+            print(SnapNum_List)
+       
+       
+        #===============
+        # Loading output
+        all_general         = dict_new['all_general']
+        all_counts          = dict_new['all_counts']
+        all_masses          = dict_new['all_masses']
+        all_misangles       = dict_new['all_misangles']
+        all_misanglesproj   = dict_new['all_misanglesproj']
+        
+        # to get to selection criteria, snap, etc:
+        output_input        = dict_new['output_input']
         
         
         
-    
-        # print galaxy
+        print('\n===================\nSAMPLE LOADED:\n  %s\n  Mass limit: %.2E\n  SnapNum: %s\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['galaxy_mass_limit'], sample_input['snapNum'], sample_input['use_satellites']))
+        print('  SAMPLE LENGTH: ', len(GroupNum_List))
+        print('\nEXTRACT:\n  Viewing axis: %s\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s\n  COM min distance: %s\n  Min. particles: %s\n  Min. inclination: %s\n' %(output_input['viewing_axis'], output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected'], output_input['com_min_distance'], output_input['min_particles'], output_input['min_inclination']))
+        print('\nCRITERIA:\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s' %(output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected']))
+        print('===================')
         
-        # collect all dictionaries
+        """
         
-        #write to csv
     
     
     
-    
-    
-def _misalignment_plot():
+def _misalignment_plot(csv_sample = '28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+                       csv_output = '28_all_sample_misalignment_9.0'     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+                        ):
     print('PLOT')    
     
     # option for ETG, LTG

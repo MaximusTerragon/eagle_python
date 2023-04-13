@@ -3,17 +3,97 @@ import numpy as np
 import math
 import random
 import astropy.units as u
-import matplotlib as mpl
-import matplotlib.pyplot as plt 
-import pandas as pd
 import time
 from tqdm import tqdm
-from time import sleep
 from astropy.constants import G
 import eagleSqlTools as sql
 from pyread_eagle import EagleSnapshot
 from read_dataset_tools import read_dataset, read_dataset_dm_mass, read_header
 from astropy.cosmology import FlatLambdaCDM
+
+
+""" Create sample. 
+This returns a list of IDs, the snap and simulation
+
+Returns:
+-------
+
+GroupNum
+SubGroupNum
+GalaxyID
+SnapNum
+
+"""
+class Initial_Sample:
+    def __init__(self, sim, snapNum, mstarLimit, satellite):
+        # Allowing these attributes to be called from the object
+        self.mstar_limit = mstarLimit
+        self.sim         = sim
+        self.snapNum     = snapNum
+        
+        myData = self.samplesize(satellite)
+        
+        self.GroupNum    = myData['GroupNumber']
+        self.SubGroupNum = myData['SubGroupNumber']
+        self.GalaxyID    = myData['GalaxyID']
+        self.SnapNum     = myData['SnapNum']
+        
+    def samplesize(self, satellite = 'no'):
+        # This uses the eagleSqlTools module to connect to the database with your username and password.
+        # If the password is not given, the module will prompt for it.
+        con = sql.connect('lms192', password='dhuKAP62')
+        
+        if satellite == 'yes':
+            for sim_name, sim_size in self.sim:
+                #print(sim_name)
+            
+                # Construct and execute query for each simulation. This query returns properties for a single galaxy
+                myQuery = 'SELECT \
+                             SH.GroupNumber, \
+                             SH.SubGroupNumber, \
+                             SH.GalaxyID, \
+                             SH.SnapNum \
+                           FROM \
+                             %s_Subhalo as SH, \
+                             %s_Aperture as AP \
+                           WHERE \
+        			         SH.SnapNum = %i \
+                             and AP.Mass_Star >= %f \
+                             and AP.ApertureSize = 30 \
+                             and SH.GalaxyID = AP.GalaxyID \
+                           ORDER BY \
+        			         AP.Mass_Star desc'%(sim_name, sim_name, self.snapNum, self.mstar_limit)
+            
+            # Execute query.
+            myData = sql.execute_query(con, myQuery)
+            
+        else:
+            for sim_name, sim_size in self.sim:
+                #print(sim_name)
+            
+                # Construct and execute query for each simulation. This query returns properties for a single galaxy
+                myQuery = 'SELECT \
+                             SH.GroupNumber, \
+                             SH.SubGroupNumber, \
+                             SH.GalaxyID, \
+                             SH.SnapNum \
+                           FROM \
+                             %s_Subhalo as SH, \
+                             %s_Aperture as AP \
+                           WHERE \
+        			         SH.SnapNum = %i \
+                             and AP.Mass_star >= %f \
+                             and SH.SubGroupNumber = 0 \
+                             and AP.ApertureSize = 30 \
+                             and SH.GalaxyID = AP.GalaxyID \
+                           ORDER BY \
+        			         AP.Mass_Star desc'%(sim_name, sim_name, self.snapNum, self.mstar_limit)
+    
+            # Execute query.
+            myData = sql.execute_query(con, myQuery)
+
+        return myData
+
 
 
 
@@ -219,7 +299,6 @@ class Subhalo_Extract:
         # Finding perculiar velocity and centre of mass for trimmed data
         self.perc_vel          = self._perculiar_velocity()
         self.halfmass_rad_proj = self._projected_rad(self.stars, viewing_axis)
-        
         
         # account for perculiar velocity within aperture rad
         if centre_galaxy == True:            
@@ -440,6 +519,7 @@ class Subhalo_Extract:
         radius = r[index]
         
         return radius
+
 
 
 """ 
@@ -709,7 +789,6 @@ class Subhalo:
         if not quiet:
             print('HALFMASS RAD PROJECTED', self.halfmass_rad_proj)
         
-        
         #-----------------------------------------------------
         # Create masks for starforming and non-starforming gas
         if print_progress:
@@ -778,10 +857,15 @@ class Subhalo:
                 time_start = time.time()
                 
             for parttype_i in particle_list_in:
+                
+                #perc_vel_rad = self._perculiar_velocity([data_nil['stars'], data_nil['gas'], data_nil['dm'], data_nil['bh']], min(spin_rad_in))
+                #print('  RAD %s\t%s' %(min(spin_rad_in), perc_vel_rad))
+                
                 tmp_particle_count = len(self._trim_within_rad(data_nil['%s' %parttype_i], min(spin_rad_in), [data_nil['stars'], data_nil['gas'], data_nil['dm'], data_nil['bh']])['Mass'])
                 
                 if tmp_particle_count < gas_sf_min_particles:
                     self.flags.append('%i %s particles in %.2f pkpc (%.2f HMR)' %(tmp_particle_count, parttype_i, min(spin_rad_in), min(spin_hmr_in)))
+        
         
         # Flag galaxy if CoM requirement not met between stars and gas_sf (if included)
         if len(self.flags) == 0:
@@ -805,9 +889,10 @@ class Subhalo:
                 coord2 = self._centre_of_mass(data_nil['gas'], min(spin_rad_in))
                 if np.linalg.norm(coord1 - coord2) > com_min_distance:
                     self.flags.append('stars-gas %.2f pkpc > %f' %(np.linalg.norm(coord1 - coord2), com_min_distance))  
-             
+          
         # Flag galaxy if inclination angle not met to requested viewing angle
         if len(self.flags) == 0:
+        
             #============================
             # Galaxy in box calculations
             if not align_rad_in:
@@ -819,8 +904,8 @@ class Subhalo:
                         self.data['%s'%parttype_name] = self._rotate_galaxy(matrix, data_nil[parttype_name])
                 else:
                     self.data = data_nil
-                
-                
+                    
+            
                 #-----------------------------------------------------------
                 # Find aligned spin vectors and particle count within radius
                 if print_progress:
@@ -1234,8 +1319,8 @@ class Subhalo:
         mask = np.where(r <= radius)
         
         # find perculiar velocity and adjust arr['Velocity']
-        perc_vel_rad = self._perculiar_velocity(arr_list, radius)
-        arr['Velocity'] = arr['Velocity'] - perc_vel_rad
+        #perc_vel_rad = self._perculiar_velocity(arr_list, radius)
+        #arr['Velocity'] = arr['Velocity'] - perc_vel_rad
         
         newData = {}
         for header in arr.keys():
@@ -1254,7 +1339,7 @@ class Subhalo:
         
         # find perculiar velocity and adjust arr['Velocity']
         perc_vel_rad = self._perculiar_velocity(arr_list, radius)
-        arr['Velocity'] = arr['Velocity'] - perc_vel_rad
+        arr_velocity = arr['Velocity'] - perc_vel_rad      
         
         if debug:
             print(desc)
@@ -1269,7 +1354,7 @@ class Subhalo:
             # Mask within radius
             tmp_coords = arr['Coordinates'][mask]
             tmp_mass = arr['Mass'][:, None][mask]
-            tmp_velocity = arr['Velocity'][mask]
+            tmp_velocity = arr_velocity[mask]
             
             if debug:
                 print('radius', radius)
@@ -1295,7 +1380,7 @@ class Subhalo:
             
         else:
             # Finding spin angular momentum vector of each individual particle of gas and stars, where [:, None] is done to allow multiplaction of N3*N1 array. Equation D.25
-            L  = np.cross(arr['Coordinates'][mask] * arr['Mass'][:, None][mask], arr['Velocity'][mask])
+            L  = np.cross(arr['Coordinates'][mask] * arr['Mass'][:, None][mask], arr_velocity[mask])
         
             # Summing for total angular momentum and dividing by mass to get the spin vectors
             with np.errstate(divide='ignore', invalid='ignore'):

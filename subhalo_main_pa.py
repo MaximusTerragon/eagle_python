@@ -662,6 +662,8 @@ Output Parameters
         
         
 """
+
+
 # Finds the values we are after
 class Subhalo:
     
@@ -1234,8 +1236,8 @@ class Subhalo:
         mask = np.where(r <= radius)
         
         # find perculiar velocity and adjust arr['Velocity']
-        perc_vel_rad = self._perculiar_velocity(arr_list, radius)
-        arr['Velocity'] = arr['Velocity'] - perc_vel_rad
+        #perc_vel_rad = self._perculiar_velocity(arr_list, radius)
+        #arr['Velocity'] = arr['Velocity'] - perc_vel_rad
         
         newData = {}
         for header in arr.keys():
@@ -1254,7 +1256,7 @@ class Subhalo:
         
         # find perculiar velocity and adjust arr['Velocity']
         perc_vel_rad = self._perculiar_velocity(arr_list, radius)
-        arr['Velocity'] = arr['Velocity'] - perc_vel_rad
+        arr_velocity = arr['Velocity'] - perc_vel_rad      
         
         if debug:
             print(desc)
@@ -1269,7 +1271,7 @@ class Subhalo:
             # Mask within radius
             tmp_coords = arr['Coordinates'][mask]
             tmp_mass = arr['Mass'][:, None][mask]
-            tmp_velocity = arr['Velocity'][mask]
+            tmp_velocity = arr_velocity[mask]
             
             if debug:
                 print('radius', radius)
@@ -1295,7 +1297,7 @@ class Subhalo:
             
         else:
             # Finding spin angular momentum vector of each individual particle of gas and stars, where [:, None] is done to allow multiplaction of N3*N1 array. Equation D.25
-            L  = np.cross(arr['Coordinates'][mask] * arr['Mass'][:, None][mask], arr['Velocity'][mask])
+            L  = np.cross(arr['Coordinates'][mask] * arr['Mass'][:, None][mask], arr_velocity[mask])
         
             # Summing for total angular momentum and dividing by mass to get the spin vectors
             with np.errstate(divide='ignore', invalid='ignore'):
@@ -1480,7 +1482,7 @@ class Subhalo:
         centre_of_mass = np.sum(mass_weighted, axis=0)/np.sum(arr['Mass'][mask])
     
         return centre_of_mass
-
+    
 
 
 """ 

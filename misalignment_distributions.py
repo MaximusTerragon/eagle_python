@@ -53,10 +53,11 @@ dataDir_dict['28'] = dataDir_main + 'snapshot_028_z000p000/snap_028_z000p000.0.h
 
 # Creates a sample of galaxies given the inputs.
 # Returns GroupNum, SubGroupNum, SnapNum, and GalaxyID for each galaxy
-def _misalignment_sample(mySims                = [('RefL0012N0188', 12)],
+def _misalignment_sample(mySims = [('RefL0012N0188', 12)],
+                         #--------------------------
                             galaxy_mass_limit  = 10**9,            # Lower mass limit within 30pkpc
                             snapNum            = 28,               # Target snapshot
-                            use_satellites     = 'yes',             # Whether to include SubGroupNum =/ 0
+                            use_satellites     = 'no',             # Whether to include SubGroupNum =/ 0
                             print_sample       = False,             # Print list of IDs
                          #--------------------------   
                          csv_file = True,                       # Will write sample to csv file in sapmle_dir
@@ -80,21 +81,24 @@ def _misalignment_sample(mySims                = [('RefL0012N0188', 12)],
         print(sample.SubGroupNum)
         print(sample.GalaxyID)
         print(sample.SnapNum)
+        print(sample.Redshift)
     if print_progress:
         print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
     
     if print_sample:
         print("  ", sample.GroupNum)
     
-    print('\n===================\nSAMPLE CREATED:\n  Mass limit: %.2E\n  SnapNum: %s\n  Satellites: %s' %(galaxy_mass_limit, snapNum, use_satellites))
+    print('\n===================')
+    print('SAMPLE CREATED:\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E\n  Satellites: %s' %(snapNum, sample.Redshift[0], galaxy_mass_limit,  use_satellites))
     print("  SAMPLE LENGTH: ", len(sample.GalaxyID))
-    
+    print('===================')
     
     
     #===================================== 
     # Creating dictionaries to gather input data
     sample_input = {'galaxy_mass_limit': galaxy_mass_limit,
                     'snapNum': snapNum,
+                    'Redshift': sample.Redshift[0],
                     'use_satellites': use_satellites,
                     'mySims': mySims}
     if debug:
@@ -153,7 +157,7 @@ def _misalignment_sample(mySims                = [('RefL0012N0188', 12)],
     
     
 # Reads in a sample file, and does all relevant calculations, and exports as csv file
-def _misalignment_distribution(csv_sample = '28_cent_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+def _misalignment_distribution(csv_sample = '28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                                 
                                 #--------------------------
                                 # Galaxy extraction properties
@@ -184,7 +188,7 @@ def _misalignment_distribution(csv_sample = '28_cent_sample_misalignment_9.0',  
                                     csv_name        = '',              # extra stuff at end
                                 #--------------------------
                                 print_progress = False,
-                                print_galaxy   = True,
+                                print_galaxy   = False,
                                 debug = False):
     
     
@@ -215,7 +219,8 @@ def _misalignment_distribution(csv_sample = '28_cent_sample_misalignment_9.0',  
         print(SnapNum_List)
        
        
-    print('\n===================\nSAMPLE LOADED:\n  %s\n  Mass limit: %.2E\n  SnapNum: %s\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['galaxy_mass_limit'], sample_input['snapNum'], sample_input['use_satellites']))
+    print('\n===================')
+    print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_limit'], sample_input['use_satellites']))
     print('  SAMPLE LENGTH: ', len(GroupNum_List))
     print('\nEXTRACT:\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s' %(str(angle_selection), str(spin_hmr), str(find_uncertainties), str(rad_projected)))
     print('===================')
@@ -362,6 +367,7 @@ def _misalignment_distribution(csv_sample = '28_cent_sample_misalignment_9.0',  
                     'all_masses': all_masses,
                     'all_misangles': all_misangles,
                     'all_misanglesproj': all_misanglesproj, 
+                    'all_flags': all_flags,
                     'output_input': output_input}
         #csv_dict.update({'function_input': str(inspect.signature(_misalignment_distribution))})
         
@@ -388,17 +394,27 @@ def _misalignment_distribution(csv_sample = '28_cent_sample_misalignment_9.0',  
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
         
         """ Reading JSON file
-        dict_new = json.load(open('%s/%s.csv' %(output_dir, csv_output), 'r'))
-        #===============
+        
+        #=========================
         # Loading sample
-        dict_new = json.load(open('%s/%s.csv' %(sample_dir, csv_sample), 'r'))
-    
-        # Extract GroupNum etc.
-        GroupNum_List       = np.array(dict_new['GroupNum'])
-        SubGroupNum_List    = np.array(dict_new['SubGroupNum'])
-        GalaxyID_List       = np.array(dict_new['GalaxyID'])
-        SnapNum_List        = np.array(dict_new['SnapNum'])
-        sample_input        = dict_new['sample_input']
+        dict_sample = json.load(open('%s/%s.csv' %(sample_dir, csv_sample), 'r'))
+        GroupNum_List       = np.array(dict_sample['GroupNum'])
+        SubGroupNum_List    = np.array(dict_sample['SubGroupNum'])
+        GalaxyID_List       = np.array(dict_sample['GalaxyID'])
+        SnapNum_List        = np.array(dict_sample['SnapNum'])
+            
+        # Loading output
+        dict_output = json.load(open('%s/%s.csv' %(output_dir, csv_output), 'r'))
+        all_general         = dict_output['all_general']
+        all_counts          = dict_output['all_counts']
+        all_masses          = dict_output['all_masses']
+        all_misangles       = dict_output['all_misangles']
+        all_misanglesproj   = dict_output['all_misanglesproj']
+        
+        # Loading sample criteria
+        sample_input        = dict_sample['sample_input']
+        output_input        = dict_new['output_input']
+        
         if print_progress:
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
         if debug:
@@ -408,20 +424,6 @@ def _misalignment_distribution(csv_sample = '28_cent_sample_misalignment_9.0',  
             print(GalaxyID_List)
             print(SnapNum_List)
        
-       
-        #===============
-        # Loading output
-        all_general         = dict_new['all_general']
-        all_counts          = dict_new['all_counts']
-        all_masses          = dict_new['all_masses']
-        all_misangles       = dict_new['all_misangles']
-        all_misanglesproj   = dict_new['all_misanglesproj']
-        
-        # to get to selection criteria, snap, etc:
-        output_input        = dict_new['output_input']
-        
-        
-        
         print('\n===================\nSAMPLE LOADED:\n  %s\n  Mass limit: %.2E\n  SnapNum: %s\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['galaxy_mass_limit'], sample_input['snapNum'], sample_input['use_satellites']))
         print('  SAMPLE LENGTH: ', len(GroupNum_List))
         print('\nEXTRACT:\n  Viewing axis: %s\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s\n  COM min distance: %s\n  Min. particles: %s\n  Min. inclination: %s\n' %(output_input['viewing_axis'], output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected'], output_input['com_min_distance'], output_input['min_particles'], output_input['min_inclination']))
@@ -431,28 +433,305 @@ def _misalignment_distribution(csv_sample = '28_cent_sample_misalignment_9.0',  
         """
         
     
-    
-    
+# Plots singular graphs by reading in existing csv file
 def _misalignment_plot(csv_sample = '28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
-                       csv_output = '28_all_sample_misalignment_9.0'     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
-                        ):
-    print('PLOT')    
+                       csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
+                       #--------------------------
+                       print_summary = True,
+                         use_angle          = 'stars_gas_sf',         # Which angles to plot
+                         use_hmr            = 1.0,                    # Which HMR to use
+                         use_proj_angle     = True,                   # Whether to use projected or absolute angle
+                         lower_mass_limit   = 0,            # Whether to plot only certain masses
+                         upper_mass_limit   = 10**15,         
+                         ETG_or_LTG         = 'both',       # Whether to plot only ETG/LTG
+                         group_or_field     = 'both',       # Whether to plot only field/group
+                       #--------------------------
+                       showfig       = True,
+                       savefig       = True,
+                         file_format = 'pdf',
+                         savefig_txt = '',
+                       #--------------------------
+                       print_progress = False,
+                       debug = False ):
+                        
+                        
+                        
+    # Ensuring the sample and output originated together
+    csv_output = csv_sample + csv_output 
     
-    # option for ETG, LTG
-    # option for field, group
-    # option for mass dependence
-    # option for type of misalignment
-    # add z to plot
+    #---------------------------------------------    
+    # Load sample csv
+    if print_progress:
+        print('Loading initial sample')
+        time_start = time.time()
+    
+    
+    #=========================
+    # Loading sample
+    dict_sample = json.load(open('%s/%s.csv' %(sample_dir, csv_sample), 'r'))
+    GroupNum_List       = np.array(dict_sample['GroupNum'])
+    SubGroupNum_List    = np.array(dict_sample['SubGroupNum'])
+    GalaxyID_List       = np.array(dict_sample['GalaxyID'])
+    SnapNum_List        = np.array(dict_sample['SnapNum'])
+        
+    # Loading output
+    dict_output = json.load(open('%s/%s.csv' %(output_dir, csv_output), 'r'))
+    all_general         = dict_output['all_general']
+    all_counts          = dict_output['all_counts']
+    all_masses          = dict_output['all_masses']
+    all_misangles       = dict_output['all_misangles']
+    all_misanglesproj   = dict_output['all_misanglesproj']
+    all_flags           = dict_output['all_flags']
+    
+    # Loading sample criteria
+    sample_input        = dict_sample['sample_input']
+    output_input        = dict_output['output_input']
+    
+    if print_progress:
+        print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+    if debug:
+        print(sample_input)
+        print(GroupNum_List)
+        print(SubGroupNum_List)
+        print(GalaxyID_List)
+        print(SnapNum_List)
+   
+    print('\n===================')
+    print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_limit'], sample_input['use_satellites']))
+    print('  SAMPLE LENGTH: ', len(GroupNum_List))
+    print('\nOUTPUT LOADED:\n  Viewing axis: %s\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s\n  COM min distance: %s\n  Min. particles: %s\n  Min. inclination: %s' %(output_input['viewing_axis'], output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected'], output_input['com_min_distance'], output_input['min_particles'], output_input['min_inclination']))
+    print('\nPLOT:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %s\n  Upper mass limit: %s\n  ETG or LTG: %s\n  Group or field: %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field))
+    print('===================')
+    
+    
+    #------------------------------
+    # Check if requested plot is possible with loaded data
+    assert use_angle in output_input['angle_selection'], 'Requested angle %s not in output_input' %use_angle
+    assert use_hmr in output_input['spin_hmr'], 'Requested HMR %s not in output_input' %use_hmr
+
+    # Create particle list of interested values (used later for flag):
+    use_particles = []
+    if use_angle == 'stars_gas':
+        if 'stars' not in use_particles:
+            use_particles.append('stars')
+        if 'gas' not in use_particles:
+            use_particles.append('gas')
+    if use_angle == 'stars_gas_sf':
+        if 'stars' not in use_particles:
+            use_particles.append('stars')
+        if 'gas_sf' not in use_particles:
+            use_particles.append('gas_sf')
+    if use_angle == 'stars_gas_nsf':
+        if 'stars' not in use_particles:
+            use_particles.append('stars')
+        if 'gas_nsf' not in use_particles:
+            use_particles.append('gas_nsf')
+    if use_angle == 'gas_sf_gas_nsf':
+        if 'gas_sf' not in use_particles:
+            use_particles.append('gas_sf')
+        if 'gas_nsf' not in use_particles:
+            use_particles.append('gas_nsf')
+    if use_angle == 'stars_dm':
+        if 'stars' not in use_particles:
+            use_particles.append('stars')
+        if 'dm' not in use_particles:
+            use_particles.append('dm')
+    if use_angle == 'gas_dm':
+        if 'gas' not in use_particles:
+            use_particles.append('gas')
+        if 'dm' not in use_particles:
+            use_particles.append('dm')
+    if use_angle == 'gas_sf_dm':
+        if 'gas_sf' not in use_particles:
+            use_particles.append('gas_sf')
+        if 'dm' not in use_particles:
+            use_particles.append('dm')
+    if use_angle == 'gas_nsf_dm':
+        if 'gas_nsf' not in use_particles:
+            use_particles.append('gas_nsf')
+        if 'dm' not in use_particles:
+            use_particles.append('dm')
+    
+    
+    #-----------------------------
+    # Set definitions
+    group_threshold     = 10**14
+    LTG_threshold       = 0.4
+    
+    # Setting morphology lower and upper boundaries based on inputs
+    if ETG_or_LTG == 'both':
+        lower_morph = 0
+        upper_morph = 1
+    elif ETG_or_LTG == 'ETG':
+        lower_morph = 0
+        upper_morph = LTG_threshold
+    elif ETG_or_LTG == 'LTG':
+        lower_morph = LTG_threshold
+        upper_morph = 1
+        
+    # Setting group lower and upper boundaries based on inputs
+    if group_or_field == 'both':
+        lower_halo = 0
+        upper_halo = 10**16
+    elif group_or_field == 'group':
+        lower_halo = group_threshold
+        upper_halo = 10**16
+    elif group_or_field == 'field':
+        lower_halo = 0
+        upper_halo = group_threshold
+    
+    
+    #------------------------------
+    def _plot_misalignment_distributions(debug=False):
+        # We have use_angle = 'stars_gas_sf', and use_particles = ['stars', 'gas_sf'] 
+        
+        #------------------------------
+        # Collect values to plot
+        plot_angles     = []
+        plot_angles_err = []
+        
+        # Collect other useful values
+        catalogue = {'total': {},          # Total galaxies in mass range
+                     'sample': {},         # Sample of galaxies
+                     'plot': {}}           # Sub-sample that is plotted
+        for key in catalogue.keys():
+            catalogue[key] = {'all': 0,        # Size of group
+                              'group': 0,      # number of group galaxies
+                              'field': 0,      # number of field galaxies
+                              'ETG': 0,        # number of ETGs
+                              'LTG': 0}        # number of LTGs
+        
+        # Add all galaxies loaded to catalogue
+        catalogue['total']['all'] = len(GroupNum_List)        # Total galaxies initially
+        
+        if debug:
+            print(catalogue['total'])
+            print(catalogue['sample'])
+            print(catalogue['plot'])
+        if print_progress:
+            print('Analysing extracted sample and collecting angles')
+            time_start = time.time()
+        
+        
+        #-------------------------------
+        # Loop over all galaxies we have available, and analyse output of flags
+        for GalaxyID in GalaxyID_List:
+            
+            #-----------------------------
+            # Determine if group or field
+            if all_general['%s' %GalaxyID]['halo_mass'] > group_threshold:
+                catalogue['total']['group'] += 1
+                
+                # Determine if criteria met. If it is, it is part of the final sample
+                if (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[1]]) and use_hmr not in all_flags['%s' %GalaxyID]['com_min_distance'][use_angle]:
+                    catalogue['sample']['group'] += 1
+                    catalogue['sample']['all'] += 1
+                    
+                    # Determine if this is a galaxy we want to plot
+                    if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph):
+                        catalogue['plot']['group'] += 1
+                        catalogue['plot']['all'] += 1
+                        
+                        # Mask correct integer (formatting weird but works)
+                        mask_rad = int(np.where(np.array(all_misangles['%s' %GalaxyID]['hmr']) == use_hmr)[0])
+                        
+                        # Collect misangle or misangleproj
+                        if use_proj_angle:
+                            plot_angles.append(all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle' %use_angle][mask_rad])
+                        else:
+                            plot_angles.append(all_misangles['%s' %GalaxyID]['%s_angle' %use_angle][mask_rad])
+                else:
+                    if debug:
+                        print('not included group: ', GalaxyID)
+                         
+            elif all_general['%s' %GalaxyID]['halo_mass'] <= group_threshold: 
+                catalogue['total']['field'] += 1
+                
+                # Determine if criteria met. If it is, it is part of the final sample
+                if (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[1]]) and use_hmr not in all_flags['%s' %GalaxyID]['com_min_distance'][use_angle]:
+                    catalogue['sample']['field'] += 1
+                    catalogue['sample']['all'] += 1
+                    
+                    # Determine if this is a galaxy we want to plot
+                    if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph):
+                        catalogue['plot']['field'] += 1
+                        catalogue['plot']['all'] += 1
+                        
+                        # Mask correct integer (formatting weird but works)
+                        mask_rad = int(np.where(np.array(all_misangles['%s' %GalaxyID]['hmr']) == use_hmr)[0])
+                        
+                        # Collect misangle or misangleproj
+                        if use_proj_angle:
+                            plot_angles.append(all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle' %use_angle][mask_rad])
+                        else:
+                            plot_angles.append(all_misangles['%s' %GalaxyID]['%s_angle' %use_angle][mask_rad])
+                else:
+                    if debug:
+                        print('not included group: ', GalaxyID)
+                
+                
+                
+            #-----------------------------
+            # Determine if ETG or field
+            if all_general['%s' %GalaxyID]['kappa_stars'] > LTG_threshold:
+                catalogue['total']['LTG'] += 1
+                
+                # Determine if criteria met. If it is, it is part of the final sample
+                if (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[1]]) and use_hmr not in all_flags['%s' %GalaxyID]['com_min_distance'][use_angle]:
+                    catalogue['sample']['LTG'] += 1
+                    
+                    # Determine if this is a galaxy we want to plot
+                    if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph):
+                        catalogue['plot']['LTG'] += 1
+                else:
+                    if debug:
+                        print('not included group: ', GalaxyID)
+                
+            elif all_general['%s' %GalaxyID]['kappa_stars'] <= LTG_threshold:
+                catalogue['total']['ETG'] += 1
+                
+                # Determine if criteria met. If it is, it is part of the final sample
+                if (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[1]]) and use_hmr not in all_flags['%s' %GalaxyID]['com_min_distance'][use_angle]:
+                    catalogue['sample']['ETG'] += 1
+                    
+                    # Determine if this is a galaxy we want to plot
+                    if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph):
+                        catalogue['plot']['ETG'] += 1
+                else:
+                    if debug:
+                        print('not included group: ', GalaxyID)
+        
+        
+       
+        
+        
+        
+        # option for ETG, LTG
+        # option for field, group
+        # option for mass dependence
+        # option for type of misalignment
+        # add z to plot
+
+        
+        print(catalogue['total'])
+        print(catalogue['sample'])
+        print(catalogue['plot'])
+        
+        
+        
+        
+        
+    _plot_misalignment_distributions()
+
     
     
     
 
     
-    
-    
 #===========================    
 #_misalignment_sample()
-_misalignment_distribution()
+#_misalignment_distribution()
+_misalignment_plot()
 #===========================
     
 

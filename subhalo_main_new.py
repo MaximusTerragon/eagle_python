@@ -22,9 +22,10 @@ GroupNum
 SubGroupNum
 GalaxyID
 SnapNum
+Redshift
 
 """
-# Creates a list of GN, SGN, GalaxyID, and snaps and saves to csv file
+# Creates a list of GN, SGN, GalaxyID, SnapNum, and Redshift and saves to csv file
 class Initial_Sample:
     def __init__(self, sim, snapNum, mstarLimit, satellite):
         # Allowing these attributes to be called from the object
@@ -38,6 +39,7 @@ class Initial_Sample:
         self.SubGroupNum = myData['SubGroupNumber']
         self.GalaxyID    = myData['GalaxyID']
         self.SnapNum     = myData['SnapNum']
+        self.Redshift    = myData['Redshift']
         
     def samplesize(self, satellite = 'no'):
         # This uses the eagleSqlTools module to connect to the database with your username and password.
@@ -53,7 +55,8 @@ class Initial_Sample:
                              SH.GroupNumber, \
                              SH.SubGroupNumber, \
                              SH.GalaxyID, \
-                             SH.SnapNum \
+                             SH.SnapNum, \
+                             SH.Redshift \
                            FROM \
                              %s_Subhalo as SH, \
                              %s_Aperture as AP \
@@ -77,7 +80,8 @@ class Initial_Sample:
                              SH.GroupNumber, \
                              SH.SubGroupNumber, \
                              SH.GalaxyID, \
-                             SH.SnapNum \
+                             SH.SnapNum, \
+                             SH.Redshift \
                            FROM \
                              %s_Subhalo as SH, \
                              %s_Aperture as AP \

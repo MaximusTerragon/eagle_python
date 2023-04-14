@@ -22,10 +22,16 @@ from graphformat import set_rc_params
 # Directories
 EAGLE_dir       = '/Users/c22048063/Documents/EAGLE'
 dataDir_main    = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/'
+
+# Directories serpens
+#EAGLE_dir       = '/home/user/c22048063/Documents/EAGLE'
+#data_Dir_main   = '/home/universe/spxtd1-shared/RefL0100N1504/'
+
+
+# Other directories
 sample_dir      = EAGLE_dir + '/samples'
 output_dir      = EAGLE_dir + '/outputs'
 fig_dir         = EAGLE_dir + '/plots'
-
 
 # Directories of data hdf5 file(s)
 dataDir_dict = {}
@@ -446,7 +452,7 @@ def _misalignment_plot(csv_sample = '28_all_sample_misalignment_9.0',     # CSV 
                          use_proj_angle     = True,                   # Whether to use projected or absolute angle
                          lower_mass_limit   = 10**9,            # Whether to plot only certain masses
                          upper_mass_limit   = 10**15,         
-                         ETG_or_LTG         = 'both',       # Whether to plot only ETG/LTG
+                         ETG_or_LTG         = 'ETG',       # Whether to plot only ETG/LTG
                          group_or_field     = 'both',       # Whether to plot only field/group
                        #--------------------------
                        showfig       = True,
@@ -833,7 +839,8 @@ def _misalignment_plot(csv_sample = '28_all_sample_misalignment_9.0',     # CSV 
                     counter_tally += bin_count_i
                     counter_err_tally += bin_count_i**0.5
             
-            print('\n')
+            print('\n')     # total population includes galaxies that failed sample, so can add to less than 100% (ei. remaining % is galaxies that make up non-sample)
+            print('OF TOTAL POPULATION:\n  Aligned:          %.1f ± %.1f %%\n  Misaligned:       %.1f ± %.1f %%\n  Counter-rotating: %.1f ± %.1f %%' %(aligned_tally*100/catalogue['total']['all'], aligned_err_tally*100/catalogue['total']['all'], misaligned_tally*100/catalogue['total']['all'], misaligned_err_tally*100/catalogue['total']['all'], counter_tally*100/catalogue['total']['all'], counter_err_tally*100/catalogue['total']['all']))
             print('OF TOTAL SAMPLE:\n  Aligned:          %.1f ± %.1f %%\n  Misaligned:       %.1f ± %.1f %%\n  Counter-rotating: %.1f ± %.1f %%' %(aligned_tally*100/catalogue['sample']['all'], aligned_err_tally*100/catalogue['sample']['all'], misaligned_tally*100/catalogue['sample']['all'], misaligned_err_tally*100/catalogue['sample']['all'], counter_tally*100/catalogue['sample']['all'], counter_err_tally*100/catalogue['sample']['all']))
             print('OF PLOT SAMPLE:\n  Aligned:          %.1f ± %.1f %%\n  Misaligned:       %.1f ± %.1f %%\n  Counter-rotating: %.1f ± %.1f %%' %(aligned_tally*100/catalogue['plot']['all'], aligned_err_tally*100/catalogue['plot']['all'], misaligned_tally*100/catalogue['plot']['all'], misaligned_err_tally*100/catalogue['plot']['all'], counter_tally*100/catalogue['plot']['all'], counter_err_tally*100/catalogue['plot']['all']))
                 

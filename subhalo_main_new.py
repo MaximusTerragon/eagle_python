@@ -1052,11 +1052,11 @@ class Subhalo_Analysis:
                 pec_vel_rad = self._peculiar_velocity(trimmed_data)
                 
                 # Adjust velocity of trimmed_data to account for peculiar velocity
-                for parttype in trimmed_data.keys():
-                    if len(trimmed_data[parttype]['Mass']) == 0:
+                for parttype_name in trimmed_data.keys():
+                    if len(trimmed_data[parttype_name]['Mass']) == 0:
                         continue
                     else:
-                        trimmed_data[parttype]['Velocity'] = trimmed_data[parttype]['Velocity'] - pec_vel_rad
+                        trimmed_data[parttype_name]['Velocity'] = trimmed_data[parttype_name]['Velocity'] - pec_vel_rad
                 if debug:
                     print('Peculiar velocity in rad', rad_i)
                     print(pec_vel_rad)
@@ -1611,11 +1611,11 @@ class Subhalo_Analysis:
             pec_vel_rad = self._peculiar_velocity(trimmed_data)
 
             # Adjust velocity of trimmed_data to account for peculiar velocity
-            for parttype in trimmed_data.keys():
-                if len(trimmed_data[parttype]['Mass']) == 0:
+            for parttype_name in trimmed_data.keys():
+                if len(trimmed_data[parttype_name]['Mass']) == 0:
                     continue
                 else:
-                    trimmed_data[parttype]['Velocity'] = trimmed_data[parttype]['Velocity'] - pec_vel_rad
+                    trimmed_data[parttype_name]['Velocity'] = trimmed_data[parttype_name]['Velocity'] - pec_vel_rad
             if debug:
                 print('Peculiar velocity in rad', kappa_rad)
                 print(pec_vel_rad)
@@ -1626,7 +1626,7 @@ class Subhalo_Analysis:
             for parttype_name in kappa_parttype:
                 
                 # If particles of type exist within aperture_rad... find kappas
-                if len(trimmed_data[parttype]['Mass']) > 0:
+                if len(trimmed_data[parttype_name]['Mass']) > 0:
                     # Finding spin vector within aperture_rad for current kappa
                     spin_kappa = self._find_spin(trimmed_data[parttype_name])
                     _ , matrix = self._orientate(orientate_to_axis, spin_kappa)
@@ -1669,11 +1669,11 @@ class Subhalo_Analysis:
                     pec_vel_rad = self._peculiar_velocity(trimmed_data)
                 
                     # Adjust velocity of trimmed_data to account for peculiar velocity
-                    for parttype in trimmed_data.keys():
-                        if len(trimmed_data[parttype]['Mass']) == 0:
+                    for parttype_name in trimmed_data.keys():
+                        if len(trimmed_data[parttype_name]['Mass']) == 0:
                             continue
                         else:
-                            trimmed_data[parttype]['Velocity'] = trimmed_data[parttype]['Velocity'] - pec_vel_rad
+                            trimmed_data[parttype_name]['Velocity'] = trimmed_data[parttype_name]['Velocity'] - pec_vel_rad
                     if debug:
                         print('Peculiar velocity in rad', rad_i)
                         print(pec_vel_rad)
@@ -1804,40 +1804,40 @@ class Subhalo_Analysis:
         
     def _trim_data(self, data_dict, radius, debug=False):
         new_dict = {}
-        for parttype in data_dict.keys():
+        for parttype_name in data_dict.keys():
             # Compute distance to centre and mask all within 3D radius in pkpc
-            r  = np.linalg.norm(data_dict[parttype]['Coordinates'], axis=1)
+            r  = np.linalg.norm(data_dict[parttype_name]['Coordinates'], axis=1)
             mask = np.where(r <= radius)
             
             newData = {}
-            for header in data_dict[parttype].keys():
-                newData[header] = data_dict[parttype][header][mask]
+            for header in data_dict[parttype_name].keys():
+                newData[header] = data_dict[parttype_name][header][mask]
             
-            new_dict[parttype] = newData
+            new_dict[parttype_name] = newData
         
         return new_dict
     
     def _trim_data_proj(self, data_dict, radius, viewing_axis, debug=False):
         new_dict = {}
-        for parttype in data_dict.keys():    
+        for parttype_name in data_dict.keys():    
             # Compute distance to centre and mask all within projected radius in pkpc
             if viewing_axis == 'z':
-                r = np.linalg.norm(data_dict[parttype]['Coordinates'][:,[0,1]], axis=1)
+                r = np.linalg.norm(data_dict[parttype_name]['Coordinates'][:,[0,1]], axis=1)
                 mask = np.where(r <= radius)
             
             if viewing_axis == 'y':
-                r = np.linalg.norm(data_dict[parttype]['Coordinates'][:,[0,2]], axis=1)
+                r = np.linalg.norm(data_dict[parttype_name]['Coordinates'][:,[0,2]], axis=1)
                 mask = np.where(r <= radius)
             
             if viewing_axis == 'x':
-                r = np.linalg.norm(data_dict[parttype]['Coordinates'][:,[1,2]], axis=1)
+                r = np.linalg.norm(data_dict[parttype_name]['Coordinates'][:,[1,2]], axis=1)
                 mask = np.where(r <= radius)
             
             newData = {}
-            for header in data_dict[parttype].keys():
-                newData[header] = data_dict[parttype][header][mask]
+            for header in data_dict[parttype_name].keys():
+                newData[header] = data_dict[parttype_name][header][mask]
             
-            new_dict[parttype] = newData
+            new_dict[parttype_name] = newData
         
         return new_dict
     
@@ -1847,11 +1847,11 @@ class Subhalo_Analysis:
         mass_sums       = 0
         
         # Don't use gas_sf, and gas_nsf
-        for parttype in ['stars', 'gas', 'dm', 'bh']:
-            if len(data_dict[parttype]['Mass']) > 0:
+        for parttype_name in ['stars', 'gas', 'dm', 'bh']:
+            if len(data_dict[parttype_name]['Mass']) > 0:
                 # Both start at 0, will only append if there are particles to use
-                vel_weighted = vel_weighted + np.sum(data_dict[parttype]['Velocity'] * data_dict[parttype]['Mass'][:, None], axis=0)
-                mass_sums = mass_sums + np.sum(data_dict[parttype]['Mass'])
+                vel_weighted = vel_weighted + np.sum(data_dict[parttype_name]['Velocity'] * data_dict[parttype_name]['Mass'][:, None], axis=0)
+                mass_sums = mass_sums + np.sum(data_dict[parttype_name]['Mass'])
                 
         pec_vel_rad = vel_weighted / mass_sums
             
@@ -1897,6 +1897,10 @@ class Subhalo_Analysis:
             # Finding spin angular momentum vector of each individual particle of gas and stars, where [:, None] is done to allow multiplaction of N3*N1 array. Equation D.25
             L  = np.cross(arr['Coordinates'] * arr['Mass'][:, None], arr['Velocity'])
         
+            if debug:
+                print(arr['Mass'][:, None])
+                print(np.sum(arr['Mass']))
+            
             # Summing for total angular momentum and dividing by mass to get the spin vectors
             spin = np.sum(L, axis=0)/np.sum(arr['Mass'])
                 

@@ -18,11 +18,9 @@ import eagleSqlTools as sql
 from graphformat import set_rc_params
 
 
-
 # Directories
 EAGLE_dir       = '/Users/c22048063/Documents/EAGLE'
 dataDir_main    = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/'
-
 # Directories serpens
 #EAGLE_dir       = '/home/user/c22048063/Documents/EAGLE'
 #data_Dir_main   = '/home/universe/spxtd1-shared/RefL0100N1504/'
@@ -143,11 +141,11 @@ def _misalignment_sample(mySims = [('RefL0012N0188', 12)],
    
         # Writing one massive JSON file
         if use_satellites == 'no':
-            json.dump(csv_dict, open('%s/%s_cent_%s_%s.csv' %(sample_dir, str(snapNum), csv_name, np.log10(galaxy_mass_limit)), 'w'), cls=NumpyEncoder)
-            print('\n  SAVED: %s/%s_cent_%s_%s.csv' %(sample_dir, str(snapNum), csv_name, np.log10(galaxy_mass_limit)))
+            json.dump(csv_dict, open('%s/L%s_%s_cent_%s_%s.csv' %(sample_dir, str(mySims[0][1]), str(snapNum), csv_name, np.log10(galaxy_mass_limit)), 'w'), cls=NumpyEncoder)
+            print('\n  SAVED: %s/L%s_%s_cent_%s_%s.csv' %(sample_dir, str(mySims[0][1]), str(snapNum), csv_name, np.log10(galaxy_mass_limit)))
         else:
-            json.dump(csv_dict, open('%s/%s_all_%s_%s.csv' %(sample_dir, str(snapNum), csv_name, np.log10(galaxy_mass_limit)), 'w'), cls=NumpyEncoder)
-            print('\n  SAVED: %s/%s_all_%s_%s.csv' %(sample_dir, str(snapNum), csv_name, np.log10(galaxy_mass_limit)))
+            json.dump(csv_dict, open('%s/L%s_%s_all_%s_%s.csv' %(sample_dir, str(mySims[0][1]), str(snapNum), csv_name, np.log10(galaxy_mass_limit)), 'w'), cls=NumpyEncoder)
+            print('\n  SAVED: %s/L%s_%s_all_%s_%s.csv' %(sample_dir, str(mySims[0][1]), str(snapNum), csv_name, np.log10(galaxy_mass_limit)))
         if print_progress:
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
    
@@ -166,7 +164,7 @@ def _misalignment_sample(mySims = [('RefL0012N0188', 12)],
     
     
 # Reads in a sample file, and does all relevant calculations, and exports as csv file
-def _misalignment_distribution(csv_sample = '28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+def _misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                                 
                                 #--------------------------
                                 # Galaxy extraction properties
@@ -451,7 +449,7 @@ def _misalignment_distribution(csv_sample = '28_all_sample_misalignment_9.0',   
         
     
 # Plots singular graphs by reading in existing csv file
-def _misalignment_plot(csv_sample = '28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+def _misalignment_plot(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                        csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                        #--------------------------
                        print_summary = True,
@@ -460,11 +458,11 @@ def _misalignment_plot(csv_sample = '28_all_sample_misalignment_9.0',     # CSV 
                          use_proj_angle     = True,                   # Whether to use projected or absolute angle
                          lower_mass_limit   = 10**9,            # Whether to plot only certain masses
                          upper_mass_limit   = 10**15,         
-                         ETG_or_LTG         = 'ETG',       # Whether to plot only ETG/LTG
+                         ETG_or_LTG         = 'LTG',       # Whether to plot only ETG/LTG
                          group_or_field     = 'both',       # Whether to plot only field/group
                        #--------------------------
                        showfig       = True,
-                       savefig       = False,
+                       savefig       = True,
                          file_format = 'pdf',
                          savefig_txt = '',
                        #--------------------------
@@ -820,42 +818,50 @@ def _misalignment_plot(csv_sample = '28_all_sample_misalignment_9.0',     # CSV 
         set_rc_params(0.1) 
         
         
+        #=====================================
         ### Print summary
+        
         if print_summary:
             print('CATALOGUE:')
             print(catalogue['total'])
             print(catalogue['sample'])
             print(catalogue['plot'])
-            
             print('\nRAW BIN VALUES:')
-            aligned_tally           = 0
-            aligned_err_tally       = 0
-            misaligned_tally        = 0 
-            misaligned_err_tally    = 0 
-            counter_tally           = 0
-            counter_err_tally       = 0
-            for i, bin_count_i in enumerate(hist_n):
+        aligned_tally           = 0
+        aligned_err_tally       = 0
+        misaligned_tally        = 0 
+        misaligned_err_tally    = 0 
+        counter_tally           = 0
+        counter_err_tally       = 0
+        for i, bin_count_i in enumerate(hist_n):
+            if print_summary:
                 print('  %i' %bin_count_i, end='')
-                
-                if i < 3:
-                    aligned_tally += bin_count_i
-                    aligned_err_tally += bin_count_i**0.5
-                if i >= 3:
-                    misaligned_tally += bin_count_i
-                    misaligned_err_tally += bin_count_i**0.5
-                if i >= 15:
-                    counter_tally += bin_count_i
-                    counter_err_tally += bin_count_i**0.5
             
+            if i < 3:
+                aligned_tally += bin_count_i
+                aligned_err_tally += bin_count_i**0.5
+            if i >= 3:
+                misaligned_tally += bin_count_i
+                misaligned_err_tally += bin_count_i**0.5
+            if i >= 15:
+                counter_tally += bin_count_i
+                counter_err_tally += bin_count_i**0.5
+            
+        if print_summary:    
             print('\n')     # total population includes galaxies that failed sample, so can add to less than 100% (ei. remaining % is galaxies that make up non-sample)
             print('OF TOTAL POPULATION:\n  Aligned:          %.1f ± %.1f %%\n  Misaligned:       %.1f ± %.1f %%\n  Counter-rotating: %.1f ± %.1f %%' %(aligned_tally*100/catalogue['total']['all'], aligned_err_tally*100/catalogue['total']['all'], misaligned_tally*100/catalogue['total']['all'], misaligned_err_tally*100/catalogue['total']['all'], counter_tally*100/catalogue['total']['all'], counter_err_tally*100/catalogue['total']['all']))
             print('OF TOTAL SAMPLE:\n  Aligned:          %.1f ± %.1f %%\n  Misaligned:       %.1f ± %.1f %%\n  Counter-rotating: %.1f ± %.1f %%' %(aligned_tally*100/catalogue['sample']['all'], aligned_err_tally*100/catalogue['sample']['all'], misaligned_tally*100/catalogue['sample']['all'], misaligned_err_tally*100/catalogue['sample']['all'], counter_tally*100/catalogue['sample']['all'], counter_err_tally*100/catalogue['sample']['all']))
-            print('OF PLOT SAMPLE:\n  Aligned:          %.1f ± %.1f %%\n  Misaligned:       %.1f ± %.1f %%\n  Counter-rotating: %.1f ± %.1f %%' %(aligned_tally*100/catalogue['plot']['all'], aligned_err_tally*100/catalogue['plot']['all'], misaligned_tally*100/catalogue['plot']['all'], misaligned_err_tally*100/catalogue['plot']['all'], counter_tally*100/catalogue['plot']['all'], counter_err_tally*100/catalogue['plot']['all']))
-                
+            print('OF PLOT SAMPLE:\n  Aligned:          %.1f ± %.1f %%\n  Misaligned:       %.1f ± %.1f %%\n  Counter-rotating: %.1f ± %.1f %%' %(aligned_tally*100/catalogue['plot']['all'], aligned_err_tally*100/catalogue['plot']['all'], misaligned_tally*100/catalogue['plot']['all'], misaligned_err_tally*100/catalogue['plot']['all'], counter_tally*100/catalogue['plot']['all'], counter_err_tally*100/catalogue['plot']['all']))       
+        
+        
+        metadata_plot = {'Title': 'TOTAL SAMPLE:\nAligned: %.1f ± %.1f %%\nMisaligned: %.1f ± %.1f %%\nCounter-rotating: %.1f ± %.1f %%' %(aligned_tally*100/catalogue['sample']['all'], aligned_err_tally*100/catalogue['sample']['all'], misaligned_tally*100/catalogue['sample']['all'], misaligned_err_tally*100/catalogue['sample']['all'], counter_tally*100/catalogue['sample']['all'], counter_err_tally*100/catalogue['sample']['all']),
+                         'Author': 'PLOT SAMPLE:\nAligned: %.1f ± %.1f %%\nMisaligned: %.1f ± %.1f %%\nCounter-rotating: %.1f ± %.1f %%' %(aligned_tally*100/catalogue['plot']['all'], aligned_err_tally*100/catalogue['plot']['all'], misaligned_tally*100/catalogue['plot']['all'], misaligned_err_tally*100/catalogue['plot']['all'], counter_tally*100/catalogue['plot']['all'], counter_err_tally*100/catalogue['plot']['all']),
+                         'Subject': str(hist_n)}
+       
         
         # Savefig
         if savefig:
-            plt.savefig("%s/%s_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, csv_sample, use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format), format=file_format, bbox_inches='tight', pad_inches=0.1, dpi=600)    
+            plt.savefig("%s/%s_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, csv_sample, use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', pad_inches=0.1, dpi=600)    
             print("\n  SAVED: %s/%s_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, csv_sample, use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format))
         if showfig:
             plt.show()
@@ -867,8 +873,6 @@ def _misalignment_plot(csv_sample = '28_all_sample_misalignment_9.0',     # CSV 
     #---------------------------------
     _plot_misalignment_distributions()
     #---------------------------------
-    
-    
     
 
     

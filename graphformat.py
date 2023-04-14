@@ -6,8 +6,8 @@ def set_rc_params(mult=1):
     #plt.rcParams['text.usetex'] = True
     #plt.rcParams['font.family'] = 'Latin Modern Roman'
     
-    plt.rcParams["font.family"] = "DeJavu Serif"
-    plt.rcParams['font.serif'] = ['Times New Roman']
+    #plt.rcParams["font.family"] = "DeJavu Serif"
+    plt.rcParams['font.serif'] = 'Times New Roman'
     
     plt.rcParams.update({'font.size': 20*mult})
     plt.rcParams['legend.fontsize'] = 17.5*mult
@@ -26,13 +26,15 @@ def set_rc_params(mult=1):
     plt.rcParams['ytick.direction'] = 'in'
     plt.rcParams['xtick.bottom'] = True
     plt.rcParams['ytick.left'] = True
+    plt.rcParams['xtick.top'] = True
+    plt.rcParams['ytick.right'] = True
     #plt.rcParams['ytick.right'] = True
     plt.rcParams["xtick.minor.visible"] = True
     plt.rcParams["ytick.minor.visible"] = False
     #params = {'mathtext.default': 'regular'}
     #plt.rcParams.update(params)
     plt.rcParams['axes.labelsize'] = 20*mult
-
+    
 set_rc_params(0.8) 
 
 
@@ -57,4 +59,4 @@ def graphformat(size1, size2, size3, size4, size5, width, height):
     plt.rc('legend', fontsize=size5)    # legend fontsize
 
     plt.rc('figure', figsize=(width, height))  # figure size [inches]
-    
+

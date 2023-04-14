@@ -5,6 +5,9 @@ import random
 import inspect
 import matplotlib as mpl
 import matplotlib.pyplot as plt 
+import matplotlib.colors as colors
+from matplotlib.ticker import PercentFormatter
+from matplotlib.lines import Line2D
 import csv
 import json
 import time
@@ -135,10 +138,10 @@ def _misalignment_sample(mySims = [('RefL0012N0188', 12)],
         # Writing one massive JSON file
         if use_satellites == 'no':
             json.dump(csv_dict, open('%s/%s_cent_%s_%s.csv' %(sample_dir, str(snapNum), csv_name, np.log10(galaxy_mass_limit)), 'w'), cls=NumpyEncoder)
-            print('\nSAVED: %s/%s_cent_%s_%s.csv' %(sample_dir, str(snapNum), csv_name, np.log10(galaxy_mass_limit)))
+            print('\n  SAVED: %s/%s_cent_%s_%s.csv' %(sample_dir, str(snapNum), csv_name, np.log10(galaxy_mass_limit)))
         else:
             json.dump(csv_dict, open('%s/%s_all_%s_%s.csv' %(sample_dir, str(snapNum), csv_name, np.log10(galaxy_mass_limit)), 'w'), cls=NumpyEncoder)
-            print('\nSAVED: %s/%s_all_%s_%s.csv' %(sample_dir, str(snapNum), csv_name, np.log10(galaxy_mass_limit)))
+            print('\n  SAVED: %s/%s_all_%s_%s.csv' %(sample_dir, str(snapNum), csv_name, np.log10(galaxy_mass_limit)))
         if print_progress:
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
    
@@ -389,7 +392,7 @@ def _misalignment_distribution(csv_sample = '28_all_sample_misalignment_9.0',   
         
         # Writing one massive JSON file
         json.dump(csv_dict, open('%s/%s_%s_%s_%s_%s.csv' %(output_dir, csv_sample, rad_str, uncertainty_str, angle_str, csv_name), 'w'), cls=NumpyEncoder)
-        print('\nSAVED: %s/%s_%s_%s_%s_%s.csv' %(output_dir, csv_sample, rad_str, uncertainty_str, angle_str, csv_name))
+        print('\n  SAVED: %s/%s_%s_%s_%s_%s.csv' %(output_dir, csv_sample, rad_str, uncertainty_str, angle_str, csv_name))
         if print_progress:
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
         
@@ -439,20 +442,20 @@ def _misalignment_plot(csv_sample = '28_all_sample_misalignment_9.0',     # CSV 
                        #--------------------------
                        print_summary = True,
                          use_angle          = 'stars_gas_sf',         # Which angles to plot
-                         use_hmr            = 1.0,                    # Which HMR to use
+                         use_hmr            = 2.0,                    # Which HMR to use
                          use_proj_angle     = True,                   # Whether to use projected or absolute angle
-                         lower_mass_limit   = 0,            # Whether to plot only certain masses
+                         lower_mass_limit   = 10**9,            # Whether to plot only certain masses
                          upper_mass_limit   = 10**15,         
                          ETG_or_LTG         = 'both',       # Whether to plot only ETG/LTG
                          group_or_field     = 'both',       # Whether to plot only field/group
                        #--------------------------
                        showfig       = True,
-                       savefig       = True,
+                       savefig       = False,
                          file_format = 'pdf',
                          savefig_txt = '',
                        #--------------------------
                        print_progress = False,
-                       debug = False ):
+                       debug = False):
                         
                         
                         
@@ -509,48 +512,56 @@ def _misalignment_plot(csv_sample = '28_all_sample_misalignment_9.0',     # CSV 
     assert use_angle in output_input['angle_selection'], 'Requested angle %s not in output_input' %use_angle
     assert use_hmr in output_input['spin_hmr'], 'Requested HMR %s not in output_input' %use_hmr
 
-    # Create particle list of interested values (used later for flag):
+    # Create particle list of interested values (used later for flag), and plot labels:
     use_particles = []
     if use_angle == 'stars_gas':
         if 'stars' not in use_particles:
             use_particles.append('stars')
         if 'gas' not in use_particles:
             use_particles.append('gas')
+        plot_label = 'Stars-gas'
     if use_angle == 'stars_gas_sf':
         if 'stars' not in use_particles:
             use_particles.append('stars')
         if 'gas_sf' not in use_particles:
             use_particles.append('gas_sf')
+        plot_label = 'Stars-gas$_{sf}$'
     if use_angle == 'stars_gas_nsf':
         if 'stars' not in use_particles:
             use_particles.append('stars')
         if 'gas_nsf' not in use_particles:
             use_particles.append('gas_nsf')
+        plot_label = 'Stars-gas$_{nsf}$'
     if use_angle == 'gas_sf_gas_nsf':
         if 'gas_sf' not in use_particles:
             use_particles.append('gas_sf')
         if 'gas_nsf' not in use_particles:
             use_particles.append('gas_nsf')
+        plot_label = 'gas$_{sf}$-gas$_{nsf}$'
     if use_angle == 'stars_dm':
         if 'stars' not in use_particles:
             use_particles.append('stars')
         if 'dm' not in use_particles:
             use_particles.append('dm')
+        plot_label = 'Stars-DM'
     if use_angle == 'gas_dm':
         if 'gas' not in use_particles:
             use_particles.append('gas')
         if 'dm' not in use_particles:
             use_particles.append('dm')
+        plot_label = 'Gas-DM'
     if use_angle == 'gas_sf_dm':
         if 'gas_sf' not in use_particles:
             use_particles.append('gas_sf')
         if 'dm' not in use_particles:
             use_particles.append('dm')
+        plot_label = 'Gas$_{sf}$-DM'
     if use_angle == 'gas_nsf_dm':
         if 'gas_nsf' not in use_particles:
             use_particles.append('gas_nsf')
         if 'dm' not in use_particles:
             use_particles.append('dm')
+        plot_label = 'Gas$_{nsf}$-DM'
     
     
     #-----------------------------
@@ -585,7 +596,7 @@ def _misalignment_plot(csv_sample = '28_all_sample_misalignment_9.0',     # CSV 
     def _plot_misalignment_distributions(debug=False):
         # We have use_angle = 'stars_gas_sf', and use_particles = ['stars', 'gas_sf'] 
         
-        #------------------------------
+        #=================================
         # Collect values to plot
         plot_angles     = []
         plot_angles_err = []
@@ -613,7 +624,7 @@ def _misalignment_plot(csv_sample = '28_all_sample_misalignment_9.0',     # CSV 
             time_start = time.time()
         
         
-        #-------------------------------
+        #--------------------------
         # Loop over all galaxies we have available, and analyse output of flags
         for GalaxyID in GalaxyID_List:
             
@@ -669,8 +680,6 @@ def _misalignment_plot(csv_sample = '28_all_sample_misalignment_9.0',     # CSV 
                     if debug:
                         print('not included group: ', GalaxyID)
                 
-                
-                
             #-----------------------------
             # Determine if ETG or field
             if all_general['%s' %GalaxyID]['kappa_stars'] > LTG_threshold:
@@ -702,27 +711,147 @@ def _misalignment_plot(csv_sample = '28_all_sample_misalignment_9.0',     # CSV 
                         print('not included group: ', GalaxyID)
         
         
-       
+        assert catalogue['plot']['all'] == len(plot_angles), 'Number of angles collected does not equal number in catalogue... for some reason'
+        if debug:
+            print(catalogue['total'])
+            print(catalogue['sample'])
+            print(catalogue['plot'])
         
         
         
-        # option for ETG, LTG
-        # option for field, group
-        # option for mass dependence
-        # option for type of misalignment
-        # add z to plot
-
+        #================================
+        # Plotting
         
-        print(catalogue['total'])
-        print(catalogue['sample'])
-        print(catalogue['plot'])
+        # Graph initialising and base formatting
+        fig, axs = plt.subplots(1, 1, figsize=[7.0, 4.2], sharex=True, sharey=False)
+        plt.subplots_adjust(wspace=0.4, hspace=0.4)
         
         
+        # Setting colors
+        if 'gas' in use_particles:
+            plot_color = 'k'
+        if 'gas_sf' in use_particles:
+            plot_color = 'b'
+        if 'gas_nsf' in use_particles:
+            plot_color = 'r'
+        if 'dm' in use_particles:
+            plot_color = 'indigo'
+        
+        """ Some useful quantities:
+        catalogue['sample']['all']  = number of galaxies that meet criteria
+        catalogue['plot']['all']    = number of galaxies in this particular plot
+        """
+        
+        #-----------
+        ### Creating graphs
+        # Plot histogram
+        axs.hist(plot_angles, weights=np.ones(catalogue['plot']['all'])/catalogue['plot']['all'], bins=np.arange(0, 181, 10), histtype='bar', edgecolor='none', facecolor=plot_color, alpha=0.1)
+        bin_count, _, _ = axs.hist(plot_angles, weights=np.ones(catalogue['plot']['all'])/catalogue['plot']['all'], bins=np.arange(0, 181, 10), histtype='bar', edgecolor=plot_color, facecolor='none', alpha=1.0)
+        
+        # Add poisson errors to each bin (sqrt N)
+        hist_n, _ = np.histogram(plot_angles, bins=np.arange(0, 181, 10), range=(0, 180))
+        axs.errorbar(np.arange(5, 181, 10), hist_n/catalogue['plot']['all'], xerr=None, yerr=np.sqrt(hist_n)/catalogue['plot']['all'], ecolor=plot_color, ls='none', capsize=4, elinewidth=1, markeredgewidth=1)
         
         
+        #-----------
+        ### General formatting
+        # Axis labels
+        axs.yaxis.set_major_formatter(PercentFormatter(1, symbol=''))
+        axs.set_xlim(0, 180)
+        axs.set_xticks(np.arange(0, 181, step=30))
+        if use_proj_angle:
+            axs.set_xlabel('Misalignment angle, $\psi_{z}$')
+        else:
+            axs.set_xlabel('Misalignment angle, $\psi_{3D}$')
+        axs.set_ylabel('Percentage of galaxies')
         
+        # Annotations
+        axs.axvline(30, ls='--', lw=1, c='k')
+        
+        
+        #-----------
+        ### Legend
+        legend_elements = [Line2D([0], [0], marker=' ', color='w')]
+        legend_labels = [plot_label]
+        legend_colors = [plot_color]
+        
+        # Add mass range
+        if (lower_mass_limit != 10**9) and (upper_mass_limit != 10**15):
+            legend_labels.append('10$^{%.1f}$ $\minus$ 10$^{%.1f}$ M$_{\odot}$' %(np.log10(lower_mass_limit), np.log10(upper_mass_limit)))    
+            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+            legend_colors.append('grey')
+        
+        # Add LTG/ETG if specified
+        if ETG_or_LTG != 'both':
+            legend_labels.append('%s' %ETG_or_LTG)
+            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+            legend_colors.append('grey')
+        
+        if group_or_field != 'both':
+            legend_labels.append('%s-galaxies' %group_or_field)
+            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+            legend_colors.append('grey')
+        
+        # Add redshift
+        legend_labels.append('${z=%.2f}$' %sample_input['Redshift'])
+        legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+        legend_colors.append('k')
+        
+        axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
+        
+        
+        #-----------
+        # other
+        plt.tight_layout()
+        set_rc_params(0.1) 
+        
+        
+        ### Print summary
+        if print_summary:
+            print('CATALOGUE:')
+            print(catalogue['total'])
+            print(catalogue['sample'])
+            print(catalogue['plot'])
+            
+            print('\nRAW BIN VALUES:')
+            aligned_tally           = 0
+            aligned_err_tally       = 0
+            misaligned_tally        = 0 
+            misaligned_err_tally    = 0 
+            counter_tally           = 0
+            counter_err_tally       = 0
+            for i, bin_count_i in enumerate(hist_n):
+                print('  %i' %bin_count_i, end='')
+                
+                if i < 3:
+                    aligned_tally += bin_count_i
+                    aligned_err_tally += bin_count_i**0.5
+                if i >= 3:
+                    misaligned_tally += bin_count_i
+                    misaligned_err_tally += bin_count_i**0.5
+                if i >= 15:
+                    counter_tally += bin_count_i
+                    counter_err_tally += bin_count_i**0.5
+            
+            print('\n')
+            print('OF TOTAL SAMPLE:\n  Aligned:          %.1f ± %.1f %%\n  Misaligned:       %.1f ± %.1f %%\n  Counter-rotating: %.1f ± %.1f %%' %(aligned_tally*100/catalogue['sample']['all'], aligned_err_tally*100/catalogue['sample']['all'], misaligned_tally*100/catalogue['sample']['all'], misaligned_err_tally*100/catalogue['sample']['all'], counter_tally*100/catalogue['sample']['all'], counter_err_tally*100/catalogue['sample']['all']))
+            print('OF PLOT SAMPLE:\n  Aligned:          %.1f ± %.1f %%\n  Misaligned:       %.1f ± %.1f %%\n  Counter-rotating: %.1f ± %.1f %%' %(aligned_tally*100/catalogue['plot']['all'], aligned_err_tally*100/catalogue['plot']['all'], misaligned_tally*100/catalogue['plot']['all'], misaligned_err_tally*100/catalogue['plot']['all'], counter_tally*100/catalogue['plot']['all'], counter_err_tally*100/catalogue['plot']['all']))
+                
+        
+        # Savefig
+        if savefig:
+            plt.savefig("%s/%s_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, csv_sample, use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format), format=file_format, bbox_inches='tight', pad_inches=0.1, dpi=600)    
+            print("\n  SAVED: %s/%s_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, csv_sample, use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format))
+        if showfig:
+            plt.show()
+        plt.close()
+        
+            
+            
+        
+    #---------------------------------
     _plot_misalignment_distributions()
-
+    #---------------------------------
     
     
     

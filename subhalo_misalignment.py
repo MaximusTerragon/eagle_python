@@ -149,7 +149,7 @@ def plot_misalignment_angle(manual_GalaxyIDList   = [],           # manually ent
                             orientate_to_axis='z',                              # Keep as z
                             viewing_angle = 0,                                    # Keep as 0
                                     find_uncertainties      = False,                    # whether to find 2D and 3D uncertainties
-                                    spin_hmr_in             = np.array([2.0]),                  # multiples of hmr. Will use lowest value for spin
+                                    spin_hmr_in             = np.array([1.0]),                  # multiples of hmr. Will use lowest value for spin
                                     viewing_axis            = 'z',                     # Which axis to view galaxy from.  DEFAULT 'z'
                                     com_min_distance        = 2.0,                     # [pkpc] min distance between sfgas and stars.  DEFAULT 2.0 
                                     gas_sf_min_particles    = 20,                     # Minimum gas sf particles to use galaxy.  DEFAULT 100
@@ -169,7 +169,7 @@ def plot_misalignment_angle(manual_GalaxyIDList   = [],           # manually ent
                               csv_file           = False,              # .csv file will ALL data
                                 csv_name = 'data_misalignment',
                               showfig   = True,
-                              savefig   = True,  
+                              savefig   = False,  
                                 savefig_txt = '_pdf',            #extra savefile txt
                               debug = False):            
     

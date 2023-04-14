@@ -83,10 +83,10 @@ PURPOSE
 """
 # Now takes a galaxyID, or array of IDs
 def galaxy_render(manual_GalaxyIDList = np.array([]),       # leave empty if ignore
-                    manual_GroupNumList = np.array([4]),                 # leave empty if ignore
+                    manual_GroupNumList = np.array([9]),                 # leave empty if ignore
                     SubGroupNum       = 0,
                     snapNum           = 28, 
-                  spin_hmr_in           = np.array([2.0]),              # multiples of rad
+                  spin_hmr_in           = np.array([1.0, 2.0]),              # multiples of rad
                   kappa_rad_in          = 30,                           # Calculate kappa for this radius [pkpc]
                   aperture_rad_in       = 30,                           # trim all data to this maximum value
                   align_rad_in          = False,                              # Align galaxy to stellar vector in. this radius [pkpc]
@@ -234,8 +234,7 @@ def galaxy_render(manual_GalaxyIDList = np.array([]),       # leave empty if ign
                                             quiet=True)
         
         
-        print('STELMASS: %f\t%f\tDIFF: %f %%' %(np.log10(galaxy.stelmass), np.log10(subhalo.stelmass), 100*abs(galaxy.stelmass-subhalo.stelmass)/subhalo.stelmass))
-        print(subhalo.general.items())
+        
         
         # Add filter to skip pafitting of galaxy if any basic condition not met
         if len(subhalo.flags) != 0:

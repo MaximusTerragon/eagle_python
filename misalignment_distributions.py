@@ -258,6 +258,14 @@ def _misalignment_distribution(csv_sample = '28_all_sample_misalignment_9.0',   
     all_misanglesproj = {}          # has all 2D projected angles from 3d when given a viewing axis and viewing_angle = 0
     
     
+    #============================================
+    # Manual entry
+    #GroupNum_List = [3]
+    #SubGroupNum_List = [3]
+    #GalaxyID_List = [14916079]
+    #SnapNum_List = [28]
+    #====================
+    
     # Run analysis for each individual galaxy in loaded sample
     for GroupNum, SubGroupNum, GalaxyID, SnapNum in tqdm(zip(GroupNum_List, SubGroupNum_List, GalaxyID_List, SnapNum_List), total=len(GroupNum_List)):
         

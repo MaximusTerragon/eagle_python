@@ -96,7 +96,7 @@ def _misalignment_sample(mySims = [('RefL0012N0188', 12)],
         print("  ", sample.GroupNum)
     
     print('\n===================')
-    print('SAMPLE CREATED:\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E\n  Satellites: %s' %(snapNum, sample.Redshift[0], galaxy_mass_limit,  use_satellites))
+    print('SAMPLE CREATED:\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E M*\n  Satellites: %s' %(snapNum, sample.Redshift[0], galaxy_mass_limit,  use_satellites))
     print("  SAMPLE LENGTH: ", len(sample.GalaxyID))
     print('===================')
     
@@ -150,16 +150,32 @@ def _misalignment_sample(mySims = [('RefL0012N0188', 12)],
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
    
         # Reading JSON file
-        """dict_new = json.load(open('%s/%s.csv' %(sample_dir, csv_sample), 'r'))
-        # example nested dictionaries
+        """ 
+        # Loading sample
+        dict_new = json.load(open('%s/%s.csv' %(sample_dir, csv_sample), 'r'))
+    
+    
+        # Extract GroupNum etc.
         GroupNum_List       = np.array(dict_new['GroupNum'])
         SubGroupNum_List    = np.array(dict_new['SubGroupNum'])
         GalaxyID_List       = np.array(dict_new['GalaxyID'])
         SnapNum_List        = np.array(dict_new['SnapNum'])
         sample_input        = dict_new['sample_input']
-        
-        print('\n===================\nSAMPLE LOADED:\n  Mass limit: %.2E\n  SnapNum: %s\n  Satellites: %s' %(sample_input['galaxy_mass_limit'], sample_input['snapNum'], sample_input['use_satellites']))
-        print("  SAMPLE LENGTH: ", len(GroupNum_List))
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+        if debug:
+            print(sample_input)
+            print(GroupNum_List)
+            print(SubGroupNum_List)
+            print(GalaxyID_List)
+            print(SnapNum_List)
+       
+       
+        print('\n===================')
+        print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E M*\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_limit'], sample_input['use_satellites']))
+        print('  SAMPLE LENGTH: ', len(GroupNum_List))
+        print('\nEXTRACT:\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s' %(str(angle_selection), str(spin_hmr), str(find_uncertainties), str(rad_projected)))
+        print('===================')
         """
     
     
@@ -227,7 +243,7 @@ def _misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0'
        
        
     print('\n===================')
-    print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_limit'], sample_input['use_satellites']))
+    print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E M*\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_limit'], sample_input['use_satellites']))
     print('  SAMPLE LENGTH: ', len(GroupNum_List))
     print('\nEXTRACT:\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s' %(str(angle_selection), str(spin_hmr), str(find_uncertainties), str(rad_projected)))
     print('===================')
@@ -408,16 +424,18 @@ def _misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0'
         if print_progress:
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
         
-        """ Reading JSON file
+        # Reading JSON file
+        """ 
+        # Ensuring the sample and output originated together
+        csv_output = csv_sample + csv_output
         
-        #=========================
         # Loading sample
         dict_sample = json.load(open('%s/%s.csv' %(sample_dir, csv_sample), 'r'))
         GroupNum_List       = np.array(dict_sample['GroupNum'])
         SubGroupNum_List    = np.array(dict_sample['SubGroupNum'])
         GalaxyID_List       = np.array(dict_sample['GalaxyID'])
         SnapNum_List        = np.array(dict_sample['SnapNum'])
-            
+        
         # Loading output
         dict_output = json.load(open('%s/%s.csv' %(output_dir, csv_output), 'r'))
         all_general         = dict_output['all_general']
@@ -425,11 +443,12 @@ def _misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0'
         all_masses          = dict_output['all_masses']
         all_misangles       = dict_output['all_misangles']
         all_misanglesproj   = dict_output['all_misanglesproj']
-        
+        all_flags           = dict_output['all_flags']
+    
         # Loading sample criteria
         sample_input        = dict_sample['sample_input']
-        output_input        = dict_new['output_input']
-        
+        output_input        = dict_output['output_input']
+    
         if print_progress:
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
         if debug:
@@ -438,13 +457,13 @@ def _misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0'
             print(SubGroupNum_List)
             print(GalaxyID_List)
             print(SnapNum_List)
-       
-        print('\n===================\nSAMPLE LOADED:\n  %s\n  Mass limit: %.2E\n  SnapNum: %s\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['galaxy_mass_limit'], sample_input['snapNum'], sample_input['use_satellites']))
+   
+        print('\n===================')
+        print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E M*\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_limit'], sample_input['use_satellites']))
         print('  SAMPLE LENGTH: ', len(GroupNum_List))
-        print('\nEXTRACT:\n  Viewing axis: %s\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s\n  COM min distance: %s\n  Min. particles: %s\n  Min. inclination: %s\n' %(output_input['viewing_axis'], output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected'], output_input['com_min_distance'], output_input['min_particles'], output_input['min_inclination']))
-        print('\nCRITERIA:\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s' %(output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected']))
+        print('\nOUTPUT LOADED:\n  Viewing axis: %s\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s\n  COM min distance: %s\n  Min. particles: %s\n  Min. inclination: %s' %(output_input['viewing_axis'], output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected'], output_input['com_min_distance'], output_input['min_particles'], output_input['min_inclination']))
+        print('\nPLOT:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %s\n  Upper mass limit: %s\n  ETG or LTG: %s\n  Group or field: %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field))
         print('===================')
-        
         """
         
     
@@ -452,6 +471,7 @@ def _misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0'
 def _misalignment_plot(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                        csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                        #--------------------------
+                       # Galaxy plotting
                        print_summary = True,
                          use_angle          = 'stars_gas_sf',         # Which angles to plot
                          use_hmr            = 2.0,                    # Which HMR to use
@@ -462,7 +482,7 @@ def _misalignment_plot(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # 
                          group_or_field     = 'both',       # Whether to plot only field/group
                        #--------------------------
                        showfig       = True,
-                       savefig       = True,
+                       savefig       = False,
                          file_format = 'pdf',
                          savefig_txt = '',
                        #--------------------------
@@ -474,14 +494,13 @@ def _misalignment_plot(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # 
     # Ensuring the sample and output originated together
     csv_output = csv_sample + csv_output 
     
-    #---------------------------------------------    
+    #================================================  
     # Load sample csv
     if print_progress:
         print('Loading initial sample')
         time_start = time.time()
     
-    
-    #=========================
+    #--------------------------------
     # Loading sample
     dict_sample = json.load(open('%s/%s.csv' %(sample_dir, csv_sample), 'r'))
     GroupNum_List       = np.array(dict_sample['GroupNum'])
@@ -512,10 +531,10 @@ def _misalignment_plot(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # 
         print(SnapNum_List)
    
     print('\n===================')
-    print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_limit'], sample_input['use_satellites']))
+    print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E M*\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_limit'], sample_input['use_satellites']))
     print('  SAMPLE LENGTH: ', len(GroupNum_List))
     print('\nOUTPUT LOADED:\n  Viewing axis: %s\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s\n  COM min distance: %s\n  Min. particles: %s\n  Min. inclination: %s' %(output_input['viewing_axis'], output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected'], output_input['com_min_distance'], output_input['min_particles'], output_input['min_inclination']))
-    print('\nPLOT:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %s\n  Upper mass limit: %s\n  ETG or LTG: %s\n  Group or field: %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field))
+    print('\nPLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %s M*\n  Upper mass limit: %s M*\n  ETG or LTG: %s\n  Group or field: %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field))
     print('===================')
     
     
@@ -733,6 +752,10 @@ def _misalignment_plot(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # 
         
         #================================
         # Plotting
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+            print('Plotting')
+            time_start = time.time()
         
         # Graph initialising and base formatting
         fig, axs = plt.subplots(1, 1, figsize=[7.0, 4.2], sharex=True, sharey=False)
@@ -853,13 +876,16 @@ def _misalignment_plot(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # 
             print('OF TOTAL SAMPLE:\n  Aligned:          %.1f ± %.1f %%\n  Misaligned:       %.1f ± %.1f %%\n  Counter-rotating: %.1f ± %.1f %%' %(aligned_tally*100/catalogue['sample']['all'], aligned_err_tally*100/catalogue['sample']['all'], misaligned_tally*100/catalogue['sample']['all'], misaligned_err_tally*100/catalogue['sample']['all'], counter_tally*100/catalogue['sample']['all'], counter_err_tally*100/catalogue['sample']['all']))
             print('OF PLOT SAMPLE:\n  Aligned:          %.1f ± %.1f %%\n  Misaligned:       %.1f ± %.1f %%\n  Counter-rotating: %.1f ± %.1f %%' %(aligned_tally*100/catalogue['plot']['all'], aligned_err_tally*100/catalogue['plot']['all'], misaligned_tally*100/catalogue['plot']['all'], misaligned_err_tally*100/catalogue['plot']['all'], counter_tally*100/catalogue['plot']['all'], counter_err_tally*100/catalogue['plot']['all']))       
         
+        #-----------
+        # Savefig
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+            print('Finished')
         
         metadata_plot = {'Title': 'TOTAL SAMPLE:\nAligned: %.1f ± %.1f %%\nMisaligned: %.1f ± %.1f %%\nCounter-rotating: %.1f ± %.1f %%' %(aligned_tally*100/catalogue['sample']['all'], aligned_err_tally*100/catalogue['sample']['all'], misaligned_tally*100/catalogue['sample']['all'], misaligned_err_tally*100/catalogue['sample']['all'], counter_tally*100/catalogue['sample']['all'], counter_err_tally*100/catalogue['sample']['all']),
                          'Author': 'PLOT SAMPLE:\nAligned: %.1f ± %.1f %%\nMisaligned: %.1f ± %.1f %%\nCounter-rotating: %.1f ± %.1f %%' %(aligned_tally*100/catalogue['plot']['all'], aligned_err_tally*100/catalogue['plot']['all'], misaligned_tally*100/catalogue['plot']['all'], misaligned_err_tally*100/catalogue['plot']['all'], counter_tally*100/catalogue['plot']['all'], counter_err_tally*100/catalogue['plot']['all']),
                          'Subject': str(hist_n)}
        
-        
-        # Savefig
         if savefig:
             plt.savefig("%s/%s_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, csv_sample, use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', pad_inches=0.1, dpi=600)    
             print("\n  SAVED: %s/%s_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, csv_sample, use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format))

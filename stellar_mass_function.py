@@ -59,6 +59,7 @@ dataDir_dict['28'] = dataDir_main + 'snapshot_028_z000p000/snap_028_z000p000.0.h
 def _stellar_mass_function(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                            csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                            #--------------------------
+                           # What determines our final sample
                            print_summary = True,
                              pop_mass_limit     = 10**7,            # Lower limit of population plot sampled
                              sample_mass_limit  = 10**9,            # Lower limit of chosen sample
@@ -105,7 +106,6 @@ def _stellar_mass_function(csv_sample = 'L12_28_all_sample_misalignment_9.0',   
     # Loading sample criteria
     sample_input        = dict_sample['sample_input']
     output_input        = dict_output['output_input']
-    
     
     if print_progress:
         print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
@@ -186,7 +186,7 @@ def _stellar_mass_function(csv_sample = 'L12_28_all_sample_misalignment_9.0',   
     def _plot_stellar_mass_func(debug=False):
         
         # Graph initialising and base formatting
-        fig, axs = plt.subplots(1, 1, figsize=[6, 5], sharex=True, sharey=False)
+        fig, axs = plt.subplots(1, 1, figsize=[6, 5.5], sharex=True, sharey=False)
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
     
     
@@ -223,7 +223,7 @@ def _stellar_mass_function(csv_sample = 'L12_28_all_sample_misalignment_9.0',   
             hist = myData['num'][:] / (float(sim_size))**3.
             hist = hist / hist_bin_width
         
-            axs.plot(myData['mass'], np.log10(hist), label=sim_name, linewidth=1, c='indigo')
+            axs.plot(myData['mass'], np.log10(hist), label=sim_name, linewidth=2, c='indigo')
     
         
         #=========================================
@@ -250,7 +250,7 @@ def _stellar_mass_function(csv_sample = 'L12_28_all_sample_misalignment_9.0',   
                 continue
                 
         if print_summary:
-            print('\nSAMPLE CRITERIA SIZE: %s' %(len(plot_stelmass)))
+            print('\nPLOT CRITERIA SIZE: %s' %(len(plot_stelmass)))
             
         
         #--------------------------
@@ -269,7 +269,12 @@ def _stellar_mass_function(csv_sample = 'L12_28_all_sample_misalignment_9.0',   
         
         #=========================================
         # Plotting
-        axs.plot(hist_bins, np.log10(hist_sample), label='Sample selection', ls='--', linewidth=1, c='r')
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+            print('Plotting')
+            time_start = time.time()
+            
+        axs.plot(hist_bins, np.log10(hist_sample), label='Sample selection', ls='--', linewidth=2, c='r')
         
         #-----------
         # Axis formatting
@@ -285,7 +290,7 @@ def _stellar_mass_function(csv_sample = 'L12_28_all_sample_misalignment_9.0',   
         
         #-----------
         # Legend
-        axs.plot(0, 0, label='${z=%.2f}$' %sample_input['Redshift'])    # Creating fake plot to add redshift
+        axs.plot(0, 0, label='${z=%.2f}$' %sample_input['Redshift'], c='k')    # Creating fake plot to add redshift
         axs.legend(loc='upper right', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=0)
         
         #-----------
@@ -295,6 +300,10 @@ def _stellar_mass_function(csv_sample = 'L12_28_all_sample_misalignment_9.0',   
 
         #-----------
         # Savefig
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+            print('Finished')
+        
         metadata_plot = {'Title': 'PLOT CRITERIA SIZE: %s' %len(plot_stelmass)}
         if savefig:
             plt.savefig("%s/%s_%s_HMR%s_stellar_mass_func_%s.%s" %(fig_dir, csv_sample, use_angle, str(use_hmr), savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', pad_inches=0.1, dpi=600)    
@@ -303,13 +312,6 @@ def _stellar_mass_function(csv_sample = 'L12_28_all_sample_misalignment_9.0',   
             plt.show()
         plt.close()
 
-
-    
-    
-        plt.show()
-        
-        
-        
     
     #------------------------
     _plot_stellar_mass_func()

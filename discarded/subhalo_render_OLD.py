@@ -14,7 +14,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.patches import Circle
 import mpl_toolkits.mplot3d.art3d as art3d
 from matplotlib.widgets import Button
-from subhalo_main import Subhalo_Extract, Subhalo, ConvertID, ConvertGN
+from subhalo_main_OLD import Subhalo_Extract, Subhalo, ConvertID, ConvertGN
 from graphformat import graphformat
 
 

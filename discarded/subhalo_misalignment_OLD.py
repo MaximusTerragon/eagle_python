@@ -14,7 +14,7 @@ from datetime import datetime
 from tqdm import tqdm
 from matplotlib.ticker import PercentFormatter
 from matplotlib.lines import Line2D
-from subhalo_main import Subhalo_Extract, Subhalo, ConvertID, ConvertGN
+from subhalo_main_OLD import Subhalo_Extract, Subhalo, ConvertID, ConvertGN
 import eagleSqlTools as sql
 from graphformat import graphformat
 

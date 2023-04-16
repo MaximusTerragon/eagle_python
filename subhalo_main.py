@@ -22,8 +22,10 @@ GroupNum
 SubGroupNum
 GalaxyID
 SnapNum
+Redshift
 
 """
+# Creates a list of GN, SGN, GalaxyID, SnapNum, and Redshift and saves to csv file
 class Initial_Sample:
     def __init__(self, sim, snapNum, mstarLimit, satellite):
         # Allowing these attributes to be called from the object
@@ -37,13 +39,14 @@ class Initial_Sample:
         self.SubGroupNum = myData['SubGroupNumber']
         self.GalaxyID    = myData['GalaxyID']
         self.SnapNum     = myData['SnapNum']
+        self.Redshift    = myData['Redshift']
         
-    def samplesize(self, satellite = 'no'):
+    def samplesize(self, satellite = False):
         # This uses the eagleSqlTools module to connect to the database with your username and password.
         # If the password is not given, the module will prompt for it.
         con = sql.connect('lms192', password='dhuKAP62')
         
-        if satellite == 'yes':
+        if satellite == True:
             for sim_name, sim_size in self.sim:
                 #print(sim_name)
             
@@ -52,7 +55,8 @@ class Initial_Sample:
                              SH.GroupNumber, \
                              SH.SubGroupNumber, \
                              SH.GalaxyID, \
-                             SH.SnapNum \
+                             SH.SnapNum, \
+                             SH.Redshift \
                            FROM \
                              %s_Subhalo as SH, \
                              %s_Aperture as AP \
@@ -67,7 +71,7 @@ class Initial_Sample:
             # Execute query.
             myData = sql.execute_query(con, myQuery)
             
-        else:
+        elif satellite == False:
             for sim_name, sim_size in self.sim:
                 #print(sim_name)
             
@@ -76,7 +80,8 @@ class Initial_Sample:
                              SH.GroupNumber, \
                              SH.SubGroupNumber, \
                              SH.GalaxyID, \
-                             SH.SnapNum \
+                             SH.SnapNum, \
+                             SH.Redshift \
                            FROM \
                              %s_Subhalo as SH, \
                              %s_Aperture as AP \
@@ -91,23 +96,24 @@ class Initial_Sample:
     
             # Execute query.
             myData = sql.execute_query(con, myQuery)
+        
+        else:
+            print('SATELLITE = "no"')
 
         return myData
-
 
 
 
 """ 
 Purpose
 -------
-Will connect to sql database to find halfmassrad, perculiar velocity, 
+Will connect to sql database to find halfmassrad, peculiar velocity, 
 centre coordinates (potential & mass) for a given snapshot, and then
 extract data from local files.
 
 Calling function
 ----------------
-galaxy = Subhalo_Extract(mySims, dataDir, snapNum, GroupNum, SubGroupNum, aperture_rad_in, viewing_axis,
-                                    centre_galaxy=True, load_region_length=2)
+galaxy = Subhalo_Extract(sample_input['mySims'], dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, aperture_rad, viewing_axis)
 
 Input Parameters
 ----------------
@@ -118,7 +124,7 @@ mySims:
 dataDir:
     Location of the snapshot data hdf5 file, 
     eg. '/Users/c22048063/Documents/.../snapshot_028_xx/snap_028_xx.0.hdf5'
-snapNum: int
+SnapNum: int
     Snapshot number, ei. 28
 GroupNum: int
     GroupNumber of the subhalo, starts at 1
@@ -126,17 +132,9 @@ SubGroupNum: int
     SubGroupNumber of the subhalo, starts at 0 for each
     subhalo
 aperture_rad_in: float, [pkpc]
-    Used to trim data, which is used to find perculiar velocity within this sphere
+    Used to trim data, which is used to find peculiar velocity within this sphere
 viewing_axis: 'z'
     Used to find projected halfmass radius
-
-centre_galaxy: boolean
-    Whether to centre the galaxy both in coordinates
-    and in perculiar velocity using the sql values
-load_region_length: value [cMpc/h] (i think)
-    Will use the eagle_data.select_region() routine to 
-    select only a boxed region rather than entire box
-    for speed. Leave at 2 for now.
 
 
 Output Parameters
@@ -148,21 +146,20 @@ Output Parameters
     SubGroupNumber of galaxy
 .a: 
     Scale factor for given snapshot
+.aexp: 
+    Scale factor exponent for given snapshot
 .h:
     0.6777 for z=0
+.hexp: 
+    h exponent for given snapshot
 .boxsize:   [cMpc/h]
     Size of simulation boxsize in [cMpc/h]. Convert
     to [pMpc] by .boxsize / .h
-.stelmass:  [Msun]
-    SQL value for total stellar mass
-.gasmass:   [Msun]
-    SQL value for total gas mass
-.halfmass_rad:  [pkpc]
-    SQL value for halfmass radius
 .centre:    [pkpc]
     SQL value of centre of potential for the galaxy
-.perc_vel:  [pkm/s]
-    value of perculiar velocity of the galaxy within aperture_rad_in
+        
+.halo_mass:     float
+    Value of the halomass within 200 density
 .stars:     dictionary of particle data:
     ['Coordinates']         - [pkpc]
     ['Velocity']            - [pkm/s]
@@ -188,14 +185,6 @@ Output Parameters
     ['Mass']                - [Msun]
     ['GroupNumber']         - int array 
     ['SubGroupNumber']      - int array 
-.MorphoKinem:   dict
-    Includes:
-         'disc_to_total'
-         'disp_ani'
-         'ellip'
-         'triax'
-         'kappa_star'
-         'rot_to_disp_ratio'
 
 If centre_galaxy == True; 'Coordinates' - .centre, 'Velocity' - .perc_vel
 """
@@ -245,29 +234,21 @@ class Subhalo_Extract:
             print('boxsize  [cMpc/h]', self.boxsize)
             print('boxsize  [cMpc]  ', self.boxsize/self.h)
             print('boxsize  [pMpc]  ', self.boxsize*self.a**1)
-        #----------------------------------------------------
         
+        
+        #----------------------------------------------------
         # For a given gn and sgn, run sql query on SubFind catalogue
         if print_progress:
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-            print('Subhalo query')
+            print('Subhalo COP query')
             time_start = time.time()
+        
         myData = self._query(sim, snapNum)
+        self.halo_mass = myData['halo_mass']
         
-        # Assiging subhalo properties
-        self.GalaxyID          = myData['GalaxyID']
-        self.stelmass          = myData['stelmass']            # [Msun]
-        self.gasmass           = myData['gasmass']             # [Msun]
-        self.halfmass_rad      = myData['rad']                 # [pkpc]
-        
-        self.MorphoKinem = {}
-        for arr_name in ['ellip', 'triax', 'kappa_stars', 'disp_ani', 'disc_to_total', 'rot_to_disp_ratio']:
-            self.MorphoKinem[arr_name] = myData[arr_name]
         
         # These were all originally in cMpc, converted to pMpc through self.a and self.aexp
         self.centre       = np.array([myData['x'], myData['y'], myData['z']]) * u.Mpc.to(u.kpc) * self.a**self.aexp                 # [pkpc]
-        self.centre_mass  = np.array([myData['x_mass'], myData['y_mass'], myData['z_mass']]) * u.Mpc.to(u.kpc) * self.a**self.aexp  # [pkpc]
-        self.perc_vel_old = np.array([myData['vel_x'], myData['vel_y'], myData['vel_z']])                                           # [pkm/s]
         
         #-------------------------------------------------------------
         # Load data for stars and gas in non-centred units
@@ -296,11 +277,15 @@ class Subhalo_Extract:
         self.bh     = self._trim_within_rad(bh, aperture_rad_in)
         
         
-        # Finding perculiar velocity and centre of mass for trimmed data
-        self.perc_vel          = self._perculiar_velocity()
-        self.halfmass_rad_proj = self._projected_rad(self.stars, viewing_axis)
+        # Finding peculiar velocity and centre of mass for trimmed data
+        self.perc_vel          = self._peculiar_velocity()
         
-        # account for perculiar velocity within aperture rad
+        # Making the minimum HMR 1 pkpc
+        self.halfmass_rad_proj  = max(self._projected_rad(self.stars, viewing_axis), 1)
+        self.halfmass_rad       = max(self._half_rad(self.stars), 1)
+        
+        
+        # account for peculiar velocity within aperture rad
         if centre_galaxy == True:            
             self.stars['Velocity'] = self.stars['Velocity'] - self.perc_vel
             self.gas['Velocity']   = self.gas['Velocity'] - self.perc_vel
@@ -310,11 +295,8 @@ class Subhalo_Extract:
         
         if debug:
             print('_main DEBUG')
-            print(np.log10(self.stelmass))
-            print(np.log10(self.gasmass))
             print(self.halfmass_rad)
             print(self.halfmass_rad_proj)
-            print(self.perc_vel_old)
             print(self.perc_vel)
             
         if print_progress:
@@ -331,40 +313,20 @@ class Subhalo_Extract:
     
             # Construct and execute query for each simulation. This query returns properties for a single galaxy
             myQuery = 'SELECT \
-                        SH.GalaxyID as GalaxyID, \
-                        AP.Mass_Star as stelmass, \
-                        AP.Mass_Gas as gasmass, \
-                        SI.R_halfmass30 as rad, \
-                        MK.Ellipticity as ellip, \
-                        MK.Triaxiality as triax, \
-                        MK.KappaCoRot as kappa_stars, \
-                        MK.DispAnisotropy as disp_ani, \
-                        MK.DiscToTotal as disc_to_total, \
-                        MK.RotToDispRatio as rot_to_disp_ratio, \
                         SH.CentreOfPotential_x as x, \
                         SH.CentreOfPotential_y as y, \
                         SH.CentreOfPotential_z as z, \
-                        SH.CentreOfMass_x as x_mass, \
-                        SH.CentreOfMass_y as y_mass, \
-                        SH.CentreOfMass_z as z_mass, \
-                        SH.Velocity_x as vel_x, \
-                        SH.Velocity_y as vel_y, \
-                        SH.Velocity_z as vel_z \
+                        FOF.Group_M_Crit200 as halo_mass \
                        FROM \
         			     %s_Subhalo as SH, \
-        			     %s_Aperture as AP, \
-                         %s_MorphoKinem as MK, \
-                         %s_Sizes as SI \
+                         %s_FOF as FOF \
                        WHERE \
         			     SH.SnapNum = %i \
                          and SH.GroupNumber = %i \
                          and SH.SubGroupNumber = %i \
-                         and AP.ApertureSize = 30 \
-                         and SH.GalaxyID = AP.GalaxyID \
-                         and SH.GalaxyID = MK.GalaxyID \
-                         and SH.GalaxyID = SI.GalaxyID \
+                         and SH.GroupID = FOF.GroupID \
                       ORDER BY \
-        			     SH.MassType_Star desc'%(sim_name, sim_name, sim_name, sim_name, snapNum, self.gn, self.sgn)
+        			     SH.MassType_Star desc'%(sim_name, sim_name, snapNum, self.gn, self.sgn)
 	
             # Execute query.
             myData = sql.execute_query(con, myQuery)
@@ -484,7 +446,7 @@ class Subhalo_Extract:
             
         return newData
         
-    def _perculiar_velocity(self, debug=False):        
+    def _peculiar_velocity(self, debug=False):        
         # Mass-weighted formula from subhalo paper
         vel_weighted = 0
         mass_sums = 0
@@ -493,9 +455,9 @@ class Subhalo_Extract:
                 vel_weighted = vel_weighted + np.sum(arr['Velocity'] * arr['Mass'][:, None], axis=0)
                 mass_sums = mass_sums + np.sum(arr['Mass'])
             
-        perc_vel = vel_weighted / mass_sums
+        pec_vel = vel_weighted / mass_sums
             
-        return perc_vel
+        return pec_vel
         
     def _projected_rad(self, arr, viewing_axis, debug=False):
         # Compute distance to centre (projected)        
@@ -508,14 +470,30 @@ class Subhalo_Extract:
             mask = np.argsort(r)
             r = r[mask]
         if viewing_axis == 'x':
-            r = np.linalg.norm(arr['Coordinates'][:,
-            [1,2]], axis=1)
+            r = np.linalg.norm(arr['Coordinates'][:,[1,2]], axis=1)
             mask = np.argsort(r)
             r = r[mask]
             
+        stelmass = np.sum(arr['Mass'][mask])
+            
         # Compute cumulative mass
         cmass = np.cumsum(arr['Mass'][mask])
-        index = np.where(cmass >= self.stelmass*0.5)[0][0]
+        index = np.where(cmass >= stelmass*0.5)[0][0]
+        radius = r[index]
+        
+        return radius
+        
+    def _half_rad(self, arr, debug=False):
+        # Compute distance to centre       
+        r = np.linalg.norm(arr['Coordinates'], axis=1)
+        mask = np.argsort(r)
+        r = r[mask]
+            
+        stelmass = np.sum(arr['Mass'][mask])
+            
+        # Compute cumulative mass
+        cmass = np.cumsum(arr['Mass'][mask])
+        index = np.where(cmass >= stelmass*0.5)[0][0]
         radius = r[index]
         
         return radius
@@ -529,22 +507,23 @@ Will find useful particle data when given stars, gas
 
 Calling function
 ----------------
-subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.stelmass, galaxy.gasmass, galaxy.GalaxyID, galaxy.halfmass_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas,
-                                                angle_selection,
-                                                viewing_angle,
-                                                spin_rad,
-                                                trim_rad,              
-                                                kappa_rad,              # False or value
-                                                aperture_rad,
-                                                align_rad,              # False or value
-                                                orientate_to_axis,
-                                                viewing_axis,
-                                                com_min_distance,
-                                                gas_sf_min_particles,
-                                                particle_list_in,
-                                                angle_type_in,
-                                                find_uncertainties,
-                                                quiet=True)
+Subhalo_Analysis(sample_input['mySims'], GroupNum, SubGroupNum, GalaxyID, SnapNum, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, 
+                                            viewing_axis,
+                                            aperture_rad,
+                                            kappa_rad, 
+                                            trim_hmr, 
+                                            align_rad,              #align_rad = False
+                                            orientate_to_axis,
+                                            viewing_angle,
+                                            
+                                            angle_selection,        
+                                            spin_rad,
+                                            spin_hmr,
+                                            find_uncertainties,
+                                            
+                                            com_min_distance,
+                                            min_particles,                                            
+                                            min_inclination)
 
 If find_uncertainties = False, will append NaNs to uncertainties... so can
         safely plot.
@@ -554,114 +533,98 @@ Input Parameters
 
 galaxy. values all from above function
 
-angle_selection:
-    Will speed up process to find only specific angles. Automated process.
-    [['stars', 'gas'], ['stars', 'gas_sf']]
-viewing_angle:
-    Will rotate output particle data by this angle
-spin_rad_in:    array [pkpc] ... *subhalo.halfmass_rad externally already...
-    When given a list of values, for example:
-    galaxy.halfmass_rad*np.arange(0.5, 10.5, 0.5)
-    will calculate spin values within these values
-spin_hmr_in:    array .
-    When given a list of values, for example:
-    np.arange(0.5, 10.5, 0.5)
-    will calculate spin values within these values
-kappa_rad_in:   False or value [pkpc]
-    Will calculate kappa for this radius from centre
-    of galaxy. Usually 30
-aperture_rad_in:    value [pkpc]
+viewing_axis:   'x', 'y', 'z'
+    Defaults to 'z', speeds up process to only find
+    uncertainties in this viewing axis
+aperture_rad:    value [pkpc]
     Will trim data to this maximum value for quicker processing.
     Usually 30.
-trim_hmr_in:    array [multiples of rad]
+kappa_rad:   False or value [pkpc]
+    Will calculate kappa for this radius from centre
+    of galaxy. Usually 30
+trim_hmr:    array [multiples of rad]
     Will trim the output data to this radius. This is
     used for render and 2dhisto
-align_rad_in:   False or value [pkpc]
+align_rad:   False or value [pkpc]
     Will orientate the galaxy based on the stellar 
     spin vector within this radius. Usually 30
 orientate_to_axis:  'x', 'y', 'z'
     When align_rad_in == value, will orientate galaxy
     to this axis. 
-viewing_axis:   'x', 'y', 'z'
-    Defaults to 'z', speeds up process to only find
-    uncertainties in this viewing axis
-com_min_distance: [pkpc]
-    Will initiate flag if this not met within spin_rad
-    (if c.o.m > 2.0, in 2HMR)
-gas_sf_min_particle:
-    Minimum gas_sf (and gas_nsf, stars) particle within
-    spin_rad. Will flag if not met
-particle_list_in:
-    Lists particles for speed up of process. Will only
-    contain maximum of 1 each.
-angle_type_in:
-    Target angle, ei. 'stars_gas_sf'
+viewing_angle:
+    Will rotate output particle data by this angle
+        
+angle_selection:
+    Will speed up process to find only specific angles' uncertainties. 
+    Automated process.   
+        ['stars_gas',            # stars_gas     stars_gas_sf    stars_gas_nsf
+         'stars_gas_sf',         # gas_dm        gas_sf_dm       gas_nsf_dm
+         'stars_gas_nsf',        # gas_sf_gas_nsf
+         'gas_sf_gas_nsf',
+         'stars_dm']
+spin_rad:    array [pkpc] 
+    When given a list of values, for example:
+    galaxy.halfmass_rad*np.arange(0.5, 10.5, 0.5)
+    will calculate spin values within these values
+spin_hmr:    array .
+    When given a list of values, for example:
+    np.arange(0.5, 10.5, 0.5)
+    will calculate spin values within these values
 find_uncertainties:     Boolean
     If True, will create rand_spins to find estimate of
     uncertainty for 3D angles
-quiet:  boolean
-    Whether to print grid of:
-        RAD, ANGLES-, PARTICLE COUNT, MASS
-    
-
+        
+com_min_distance: [pkpc]
+    Will initiate flag if this not met within spin_rad
+    (if c.o.m > 2.0, in 2HMR)
+    Will flag but continue to extract all values 
+min_particles:
+    Minimum gas_sf (and gas_nsf, stars) particle within spin_rad.
+    Will flag but continue to extract all analytical values
+        uncertainties not calculated if not met
+min_inclination:
+    Minimum and maximum spin inclination for a given rad.
+    Will flag but continue to extract all values 
+        
 Output Parameters
 -----------------
 
-.general: dictionary that also contains most of these:
-.gn: int
-    GroupNumber of galaxy
-.sgn: int
-    SubGroupNumber of galaxy
-.GalaxyID
-    Unique galaxy ID in space and time of galaxy
-.stelmass:  [Msun]
-    Total summed mass of subhalo stellar particles within aperture_rad
-.gasmass:  [Msun]
-    Total summed mass of subhalo gas particles within aperture_rad
-.gasmass_sf:  [Msun]
-    Total summed mass of subhalo gas_sf particles within aperture_rad
-.gasmass_nsf:  [Msun]
-    Total summed mass of subhalo gas_nsf particles within aperture_rad
-.halfmass_rad:  [pkpc]
-    SQL value for halfmass radius
-.centre:    [pkpc]
-    SQL value of centre of potential for the galaxy
-.centre_mass:    [pkpc]
-    SQL value of centre of mass for galaxy. This can
-    be different to .centre
-.perc_vel:  [pkm/s]
-    value of perculiar velocity found manually
-.viewing_angle:     [deg]
-    Angle by which we will rotate the galaxy, can be
-    0
-.kappa_stars:
-    Kappa calculated when galaxy orientated from 
-    kappa_rad_in
-.kappa_gas:
-    Kappa calculated when galaxy orientated from 
-    kappa_rad_in
-.kappa_gas_sf:
-    Kappa calculated when galaxy orientated from 
-    kappa_rad_in
-.kappa_gas_nsf:
-    Kappa calculated when galaxy orientated from 
-    kappa_rad_in
-.ellip
-    stellar ellipticity
-.triax
-    stellar triaxiality
-.disp_ani
-    stellar dispersion anisotropy
-.rot_to_disp_ratio
-    stellar rotation-to-dispersion ratio 
-.disc_to_total
-    stellar disc-to-total ratio from counter-rotation
+.general:       dictionary
+    'GroupNum', 'SubGroupNum', 'GalaxyID', 'SnapNum', 
+    'halo_mass', 'stelmass', 'gasmass', 'gasmass_sf', 'gasmass_nsf', 
+    'halfmass_rad', 'halfmass_rad_proj'
 
-.flags: array
-    Has all flags for when conditions fail. Will have len(self.flags) == 0 
-    if galaxy is good to go
+.flags:     dictionary
+    Has list of arrays that will be != if flagged. Contains hmr at failure, or 30pkpc
+        ['total_particles']
+            will flag if there are missing particles within aperture_rad
+            ['stars']       - [hmr]
+            ['gas']         - [hmr]
+            ['gas_sf']      - [hmr]
+            ['gas_nsf']     - [hmr]
+            ['dm']          - [hmr]
+            ['bh']          - [hmr]
+        ['min_particles']
+            will flag if min. particles not met within spin_rad (will find spin if particles exist, but no uncertainties)
+            ['stars']       - [hmr]
+            ['gas']         - [hmr]
+            ['gas_sf']      - [hmr]
+            ['gas_nsf']     - [hmr]
+            ['dm']          - [hmr]
+        ['min_inclination']
+            will flag if inclination angle not met within spin_rad... all spins and uncertainties still calculated
+            ['stars']       - [hmr]
+            ['gas']         - [hmr]
+            ['gas_sf']      - [hmr]
+            ['gas_nsf']     - [hmr]
+            ['dm']          - [hmr]
+        ['com_min_distance']
+            will flag if com distance not met within spin_rad... all spins and uncertainties still calculated
+            ['stars_gas']   - [hmr]
+            ['stars_gas_sf']- [hmr]
+            ... for all angle_selection ...
               
-.data, .data_align:    dictionary
+.data:    dictionary
     Has aligned/rotated values for 'stars', 'gas', 'gas_sf', 'gas_nsf':
         [hmr]                       - multiples of hmr, ei. '1.0' that data was trimmed to
             ['Coordinates']         - [pkpc]
@@ -675,7 +638,7 @@ Output Parameters
     these values will be trimmed in final output, but still
     used in calculations.
         
-.spins, .spins_align:   dictionary
+.spins:   dictionary
     Has aligned/rotated spin vectors within spin_rad_in's:
         ['rad']     - [pkpc]
         ['hmr']     - multiples of halfmass_rad
@@ -683,121 +646,124 @@ Output Parameters
         ['gas']     - [unit vector]
         ['gas_sf']  - [unit vector]
         ['gas_nsf'] - [unit vector]
-.particles, .particles_align:   dictionary
+        ['dm']      - unit vector at 30pkpc
+.counts:   dictionary
     Has aligned/rotated particle count and mass within spin_rad_in's:
         ['rad']          - [pkpc]
         ['hmr']     - multiples of halfmass_rad
-        ['stars']        - count
-        ['gas']          - count
-        ['gas_sf']       - count
-        ['gas_nsf']      - count
-        ['stars_mass']   - [Msun]
-        ['gas_mass']     - [Msun]
-        ['gas_sf_mass']  - [Msun]
-        ['gas_nsf_mass'] - [Msun]
-.coms, .coms_align:     dictionary
+        ['stars']        - [count]
+        ['gas']          - [count]
+        ['gas_sf']       - [count]
+        ['gas_nsf']      - [count]
+        ['dm']           - count at 30pkpc
+.masses:   dictionary
+    Has aligned/rotated particle count and mass within spin_rad_in's:
+        ['rad']          - [pkpc]
+        ['hmr']     - multiples of halfmass_rad
+        ['stars']        - [Msun]
+        ['gas']          - [Msun]
+        ['gas_sf']       - [Msun]
+        ['gas_nsf']      - [Msun]
+        ['dm']           - Msun at 30pkpc
+.coms:     dictionary
     Has all centres of mass and distances within a spin_rad_in:
         ['rad']          - [pkpc]
         ['hmr']     - multiples of halfmass_rad
-        ['stars']          - [x, y, z] [pkpc]
+        ['stars']          - [x, y, z] [pkpc] distance in 3D
         ['gas']            - [x, y, z] [pkpc]
         ['gas_sf']         - [x, y, z] [pkpc]
         ['gas_nsf']        - [x, y, z] [pkpc]
-        ['stars_gas']      - [pkpc] distance in 3D
-        ['stars_gas_sf']   - [pkpc] distance in 3D
-        ['stars_gas_nsf']  - [pkpc] distance in 3D
-        ['gas_sf_gas_nsf'] - [pkpc] distance in 3D
-.mis_angles, .mis_angles_align:     dictionary
+        ['dm']             - x, y, z [pkpc]  at 30pkpc
+        
+  
+.mis_angles:     dictionary
     Has aligned/rotated misalignment angles between stars 
     and X within spin_rad_in's. Errors given by iterations,
-    which defults to 1000.
+    which defults to 500.
         ['rad']            - [pkpc]
         ['hmr']            - multiples of halfmass_rad
-        ['stars_gas_angle']      - [deg]
-        ['stars_gas_sf_angle']   - [deg]
-        ['stars_gas_nsf_angle']  - [deg]
-        ['gas_sf_gas_nsf_angle'] - [deg]
-        ['stars_gas_angle_err']      - [lo, hi] [deg]       ^
-        ['stars_gas_sf_angle_err']   - [lo, hi] [deg]
-        ['stars_gas_nsf_angle_err']  - [lo, hi] [deg]       (assuming it was passed into _main)
-        ['gas_sf_gas_nsf_angle_err'] - [lo, hi] [deg]       ^
+        ['stars_gas_angle']             - [deg]                -
+        ['stars_gas_sf_angle']          - [deg]                .
+        ['stars_gas_nsf_angle']         - [deg]                .
+        ['gas_sf_gas_nsf_angle']        - [deg]                .
+        ['stars_dm_angle']              - [deg]                .
+        ['gas_dm_angle']                - [deg]                .
+        ['gas_sf_dm_angle']             - [deg]                .
+        ['gas_nsf_dm_angle']            - [deg]                .
+        ['stars_gas_angle_err']         - [lo, hi] [deg]       .
+        ['stars_gas_sf_angle_err']      - [lo, hi] [deg]       .
+        ['stars_gas_nsf_angle_err']     - [lo, hi] [deg]       (assuming it was passed into angle_selection and not flagged)
+        ['gas_sf_gas_nsf_angle_err']    - [lo, hi] [deg]       .
+        ['stars_dm_angle_err']          - [lo, hi] [deg]       . 
+        ['gas_dm_angle_err']            - [lo, hi] [deg]       .
+        ['gas_sf_dm_angle_err']         - [lo, hi] [deg]       .
+        ['gas_nsf_dm_angle_err']        - [lo, hi] [deg]       ^
 .mis_angles_proj                    dictionary
     Has projected misalignment angles. Errors given by iterations,
-    which defults to 1000.
+    which defults to 500.
         ['x']
         ['y']
         ['z']
             ['rad']            - [pkpc]
             ['hmr']            - multiples of halfmass_rad
-            ['stars_gas_angle']      - [deg]
-            ['stars_gas_sf_angle']   - [deg]
-            ['stars_gas_nsf_angle']  - [deg]
-            ['gas_sf_gas_nsf_angle'] - [deg]
-            ['stars_gas_angle_err']      - [lo, hi] [deg]       ^
-            ['stars_gas_sf_angle_err']   - [lo, hi] [deg]
-            ['stars_gas_nsf_angle_err']  - [lo, hi] [deg]       (assuming it was passed into _main)
-            ['gas_sf_gas_nsf_angle_err'] - [lo, hi] [deg]       ^
-        
-        
-        
+            ['stars_gas_angle']             - [deg]                -
+            ['stars_gas_sf_angle']          - [deg]                .
+            ['stars_gas_nsf_angle']         - [deg]                .
+            ['gas_sf_gas_nsf_angle']        - [deg]                .
+            ['stars_dm_angle']              - [deg]                .
+            ['gas_dm_angle']                - [deg]                .
+            ['gas_sf_dm_angle']             - [deg]                .
+            ['gas_nsf_dm_angle']            - [deg]                .
+            ['stars_gas_angle_err']         - [lo, hi] [deg]       -
+            ['stars_gas_sf_angle_err']      - [lo, hi] [deg]       .
+            ['stars_gas_nsf_angle_err']     - [lo, hi] [deg]       (assuming it was passed into angle_selection and not flagged)
+            ['gas_sf_gas_nsf_angle_err']    - [lo, hi] [deg]       .
+            ['stars_dm_angle_err']          - [lo, hi] [deg]       . 
+            ['gas_dm_angle_err']            - [lo, hi] [deg]       .
+            ['gas_sf_dm_angle_err']         - [lo, hi] [deg]       .
+            ['gas_nsf_dm_angle_err']        - [lo, hi] [deg]       ^
         
 """
 # Finds the values we are after
-class Subhalo:
+class Subhalo_Analysis:
     
-    def __init__(self, gn, sgn, GalaxyID, stelmass, gasmass, halfmass_rad, halfmass_rad_proj, centre, centre_mass, perc_vel, stars, gas, dm, bh, MorphoKinem,
-                            angle_selection,    #angle_selection = [['stars', 'gas'], ['stars', 'gas_sf'], ['stars', 'gas_nsf'], ['gas_sf', 'gas_nsf']]
-                            viewing_angle,
-                            spin_rad_in, 
-                            spin_hmr_in,
-                            trim_hmr_in, 
-                            kappa_rad_in,
-                            aperture_rad_in,
-                            align_rad_in, 
+    def __init__(self, sim, GroupNum, SubGroupNum, GalaxyID, SnapNum, halfmass_rad, halfmass_rad_proj, halo_mass, stars, gas, dm, bh,
+                            viewing_axis, 
+                            aperture_rad,
+                            kappa_rad,
+                            trim_hmr, 
+                            align_rad, 
                             orientate_to_axis,
-                            viewing_axis,
-                            com_min_distance,
-                            gas_sf_min_particles,
-                            particle_list_in,
-                            angle_type_in,
+                            viewing_angle,
+                            
+                            angle_selection,        # ['stars_gas', 'stars_gas_sf', ...]
+                            spin_rad, 
+                            spin_hmr,
                             find_uncertainties,
+                            
+                            com_min_distance,
+                            min_particles,
                             min_inclination,
-                            quiet=True,
+                            
                             debug=False,
                             print_progress=False):
+                            
+                            
         
-        
-        time_start = time.time()
-        
-        # Array to note if galaxy fails any extraction based on filters. 
-        # If empty, galaxy is good for further processing
-        self.flags = []
-        
-        
-        #-----------------------------------------------------
-        # Trim data to radius of 30pkpc per aperture_rad_in
-        if print_progress:
-            print('Trimming datasets to aperture_rad_in (aperture 30pkpc)')
-            time_start = time.time()
-        
-        # Create data of raw (0 degree) data
+        #-----------------------------------------------------        
+        # Create data of raw (0 degree) data within aperture_rad_in
         data_nil = {}
         for parttype, parttype_name in zip([stars, gas, dm, bh], ['stars', 'gas', 'dm', 'bh']):
             data_nil['%s'%parttype_name] = parttype
         
         
-        if not quiet:
-            print('HALFMASS RAD PROJECTED', self.halfmass_rad_proj)
-        
         #-----------------------------------------------------
         # Create masks for starforming and non-starforming gas
         if print_progress:
-            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
             print('Masking gas_sf and gas_nsf')
             time_start = time.time()
         mask_sf        = np.nonzero(data_nil['gas']['StarFormationRate'])          
         mask_nsf       = np.where(data_nil['gas']['StarFormationRate'] == 0)
-        
         
         # Create dataset of star-forming and non-star-forming gas
         gas_sf = {}
@@ -808,244 +774,460 @@ class Subhalo:
         
         for parttype, parttype_name in zip([gas_sf, gas_nsf], ['gas_sf', 'gas_nsf']):
             data_nil['%s'%parttype_name] = parttype
-
+        
+        
+        #-----------------------------------------------------
+        # Extracting MorphoKinem query data 
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+            print('Subhalo Morph query')
+            time_start = time.time()
+            
+        if len(data_nil['stars']['Mass']) > 300:
+            # Run query
+            myData = self._query_morph(sim, GroupNum, SubGroupNum, SnapNum)
+        
+            MorphoKinem = {}
+            for arr_name in ['ellip', 'triax', 'kappa_stars', 'disp_ani', 'disc_to_total', 'rot_to_disp_ratio']:
+                MorphoKinem[arr_name] = myData[arr_name]
+        else:
+            MorphoKinem = {}
+            for arr_name in ['ellip', 'triax', 'kappa_stars', 'disp_ani', 'disc_to_total', 'rot_to_disp_ratio']:
+                MorphoKinem[arr_name] = math.nan
+    
+            
+        #-----------------------------------------------------
+        # Creating empty dictionaries
+        self.general            = {}
+        self.data               = {}
+        self.counts             = {}
+        self.masses             = {}
+        self.coms               = {}
+        self.coms_proj          = {}
+        self.spins              = {}
+        self.mis_angles         = {}
+        self.mis_angles_proj    = {}
+        
+        # Array to note if galaxy fails any extraction based on filters. Appends math.nan in dictionary, and radius at which it fails in .flags
+        self.flags = {'total_particles':  {'stars': [], 'gas': [], 'gas_sf': [], 'gas_nsf': [], 'dm': [], 'bh':[]},      # For finding total particle counts       
+                      'min_particles':    {'stars': [], 'gas': [], 'gas_sf': [], 'gas_nsf': [], 'dm': []},               # For finding min. spin particles
+                      'min_inclination':  {'stars': [], 'gas': [], 'gas_sf': [], 'gas_nsf': [], 'dm': []}}               # For finding min. inclination
+        flag_com_min_distance = {}
+        for angle_selection_i in angle_selection:
+            flag_com_min_distance.update({'%s' %(angle_selection_i): []})
+        self.flags.update({'com_min_distance': flag_com_min_distance})               # For flagging min. com distance
+      
+                      
         #----------------------------------------------------
         # Assigning bulk galaxy values
-        self.gn                 = gn
-        self.sgn                = sgn
+        self.GroupNum           = GroupNum
+        self.SubGroupNum        = SubGroupNum
         self.GalaxyID           = GalaxyID
-        self.stelmass           = np.sum(data_nil['stars']['Mass'])     # [Msun] > these are only off by a small amount (order 1/1000) from rounding errors, use these
-        self.gasmass            = np.sum(data_nil['gas']['Mass'])
-        self.gasmass_sf         = np.sum(data_nil['gas_sf']['Mass'])
-        self.gasmass_nsf        = np.sum(data_nil['gas_nsf']['Mass'])
+        self.SnapNum            = SnapNum
+        self.halo_mass          = halo_mass                             # [Msun] at 200p_crit
+        self.stelmass           = np.sum(data_nil['stars']['Mass'])     # [Msun] within 30 pkpc (aperture_rad_in)
+        self.gasmass            = np.sum(data_nil['gas']['Mass'])       # [Msun] within 30 pkpc (aperture_rad_in)
+        self.gasmass_sf         = np.sum(data_nil['gas_sf']['Mass'])    # [Msun] within 30 pkpc (aperture_rad_in)
+        self.gasmass_nsf        = np.sum(data_nil['gas_nsf']['Mass'])   # [Msun] within 30 pkpc (aperture_rad_in)
+        self.dmmass             = np.sum(data_nil['dm']['Mass'])        # [Msun] within 30 pkpc (aperture_rad_in)
         self.halfmass_rad       = halfmass_rad                          # [pkpc]
         self.halfmass_rad_proj  = halfmass_rad_proj                     # [pkpc]
-        self.centre             = centre                                # [pkpc]
-        self.centre_mass        = centre_mass                           # [pkpc]
-        self.perc_vel           = perc_vel                              # [pkm/s]
+        self.viewing_axis       = viewing_axis                          # 'x', 'y', 'z'
+        
         self.viewing_angle      = viewing_angle                         # [deg]
         
-        self.general = {}
-        for general_name, general_item in zip(['gn', 'sgn', 'GalaxyID', 'stelmass', 'gasmass', 'gasmass_sf', 'gasmass_nsf', 'halfmass_rad', 'halfmass_rad_proj', 'centre', 'centre_mass'], [self.gn, self.sgn, self.GalaxyID, self.stelmass, self.gasmass, self.gasmass_sf, self.gasmass_nsf, self.halfmass_rad, self.halfmass_rad_proj, self.centre, self.centre_mass]):
+        
+        
+        #----------------------------------------------------
+        # Filling self.general
+        for general_name, general_item in zip(['GroupNum', 'SubGroupNum', 'GalaxyID', 'SnapNum', 'halo_mass', 'stelmass', 'gasmass', 'gasmass_sf', 'gasmass_nsf', 'dmmass', 'halfmass_rad', 'halfmass_rad_proj', 'viewing_axis'], 
+                                              [self.GroupNum, self.SubGroupNum, self.GalaxyID, self.GalaxyID, self.halo_mass, self.stelmass, self.gasmass, self.gasmass_sf, self.gasmass_nsf, self.dmmass, self.halfmass_rad, self.halfmass_rad_proj, self.viewing_axis]):
             self.general[general_name] = general_item
         self.general.update(MorphoKinem)
             
-        self.data       = {}
-        self.spins      = {}
-        self.particles  = {}
-        self.coms       = {}
-        self.mis_angles = {}
-        self.mis_angles_proj = {}
-        #--------------------------------------------------------------
-        # Start of basic flags: particle counts and coms
         
-        # Flag galaxy if it contains no sf (or nsf) gas in 30pkpc 
-        if len(self.flags) == 0:
+        #====================================================
+        # From here we only calculate particle properties that are linked to misalignment angles requested
+        
+        particle_selection = []         #particle_list_in = []
+        compound_selection = []         #angle_selection  = []
+        if 'stars_gas' in angle_selection:
+            if 'stars' not in particle_selection:
+                particle_selection.append('stars')
+            if 'gas' not in particle_selection:
+                particle_selection.append('gas')
+            compound_selection.append(['stars', 'gas'])
+        if 'stars_gas_sf' in angle_selection:
+            if 'stars' not in particle_selection:
+                particle_selection.append('stars')
+            if 'gas_sf' not in particle_selection:
+                particle_selection.append('gas_sf')
+            compound_selection.append(['stars', 'gas_sf'])
+        if 'stars_gas_nsf' in angle_selection:
+            if 'stars' not in particle_selection:
+                particle_selection.append('stars')
+            if 'gas_nsf' not in particle_selection:
+                particle_selection.append('gas_nsf')
+            compound_selection.append(['stars', 'gas_nsf'])
+        if 'gas_sf_gas_nsf' in angle_selection:
+            if 'gas_sf' not in particle_selection:
+                particle_selection.append('gas_sf')
+            if 'gas_nsf' not in particle_selection:
+                particle_selection.append('gas_nsf')
+            compound_selection.append(['gas_sf', 'gas_nsf'])
+        if 'stars_dm' in angle_selection:
+            if 'stars' not in particle_selection:
+                particle_selection.append('stars')
+            if 'dm' not in particle_selection:
+                particle_selection.append('dm')
+            compound_selection.append(['stars', 'dm'])
+        if 'gas_dm' in angle_selection:
+            if 'gas' not in particle_selection:
+                particle_selection.append('gas')
+            if 'dm' not in particle_selection:
+                particle_selection.append('dm')
+            compound_selection.append(['gas', 'dm'])
+        if 'gas_sf_dm' in angle_selection:
+            if 'gas_sf' not in particle_selection:
+                particle_selection.append('gas_sf')
+            if 'dm' not in particle_selection:
+                particle_selection.append('dm')
+            compound_selection.append(['gas_sf', 'dm'])
+        if 'gas_nsf_dm' in angle_selection:
+            if 'gas_nsf' not in particle_selection:
+                particle_selection.append('gas_nsf')
+            if 'dm' not in particle_selection:
+                particle_selection.append('dm')
+            compound_selection.append(['gas_nsf', 'dm'])
+        
+        
+        #-------------------------------
+        # Flag galaxy 'total_particles' if it contains no particles of a specific kind
+        def total_particles_flag():
             if print_progress:
                 print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
                 print('Flagging total particles')
                 time_start = time.time()
-                
-            if (len(data_nil['gas_sf']['Mass']) == 0) or (len(data_nil['gas_nsf']['Mass']) == 0):
-                self.flags.append(['No gas particles'])
-        
-        # Flag galaxy if particles in smallest radius given in spin_rad_in < gas_sf_min_particles
-        if len(self.flags) == 0:
-            if print_progress:
-                print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                print('Flagging particles in radius')
-                time_start = time.time()
-                
-            for parttype_i in particle_list_in:
-                
-                #perc_vel_rad = self._perculiar_velocity([data_nil['stars'], data_nil['gas'], data_nil['dm'], data_nil['bh']], min(spin_rad_in))
-                #print('  RAD %s\t%s' %(min(spin_rad_in), perc_vel_rad))
-                
-                tmp_particle_count = len(self._trim_within_rad(data_nil['%s' %parttype_i], min(spin_rad_in), [data_nil['stars'], data_nil['gas'], data_nil['dm'], data_nil['bh']])['Mass'])
-                
-                if tmp_particle_count < gas_sf_min_particles:
-                    self.flags.append('%i %s particles in %.2f pkpc (%.2f HMR)' %(tmp_particle_count, parttype_i, min(spin_rad_in), min(spin_hmr_in)))
-        
-        
-        # Flag galaxy if CoM requirement not met between stars and gas_sf (if included)
-        if len(self.flags) == 0:
-            if ('stars' in particle_list_in) & ('gas_sf' in particle_list_in):
-                if print_progress:
-                    print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                    print('Flagging C.o.M in radius')
-                    time_start = time.time()
-                    
-                coord1 = self._centre_of_mass(data_nil['stars'], min(spin_rad_in))
-                coord2 = self._centre_of_mass(data_nil['gas_sf'], min(spin_rad_in))
-                if np.linalg.norm(coord1 - coord2) > com_min_distance:
-                    self.flags.append('stars-gas_sf %.2f pkpc > %f' %(np.linalg.norm(coord1 - coord2), com_min_distance))  
-            if ('stars' in particle_list_in) & ('gas' in particle_list_in):
-                if print_progress:
-                    print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                    print('Flagging C.o.M in radius')
-                    time_start = time.time()
-                    
-                coord1 = self._centre_of_mass(data_nil['stars'], min(spin_rad_in))
-                coord2 = self._centre_of_mass(data_nil['gas'], min(spin_rad_in))
-                if np.linalg.norm(coord1 - coord2) > com_min_distance:
-                    self.flags.append('stars-gas %.2f pkpc > %f' %(np.linalg.norm(coord1 - coord2), com_min_distance))  
-          
-        # Flag galaxy if inclination angle not met to requested viewing angle
-        if len(self.flags) == 0:
-        
-            #============================
-            # Galaxy in box calculations
-            if not align_rad_in:
-                # Find rotation matrix to rotate entire galaxy depending on viewing_angle if viewing_axis is not 0
-                if viewing_angle != 0:
-                    matrix = self._rotate_around_axis('z', 360. - viewing_angle)
-        
-                    for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf', 'dm', 'bh']:
-                        self.data['%s'%parttype_name] = self._rotate_galaxy(matrix, data_nil[parttype_name])
-                else:
-                    self.data = data_nil
-                    
             
-                #-----------------------------------------------------------
-                # Find aligned spin vectors and particle count within radius
-                if print_progress:
-                    print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                    print('Finding spins, particles, COMs')
-                    time_start = time.time()
-                    
-                self.spins['rad']     = spin_rad_in
-                self.spins['hmr']     = spin_hmr_in
-                self.particles['rad'] = spin_rad_in
-                self.particles['hmr'] = spin_hmr_in
-                self.coms['rad']      = spin_rad_in
-                self.coms['hmr']      = spin_hmr_in
-                for parttype_name in particle_list_in:
-                    tmp_spins = []
-                    tmp_particles = []
-                    tmp_mass = []
-                    tmp_coms = []
-                    for rad, i in zip(spin_rad_in, np.arange(len(spin_rad_in))):
-                        spin_x, particle_x, mass_x = self._find_spin(self.data[parttype_name], rad, [self.data['stars'], self.data['gas'], self.data['dm'], self.data['bh']], parttype_name)
-                        tmp_spins.append(spin_x)
-                        tmp_particles.append(particle_x)
-                        tmp_mass.append(mass_x)
-                        tmp_coms.append(self._centre_of_mass(self.data[parttype_name], rad))
+            for particle_type_i in ['stars', 'gas', 'gas_nsf', 'gas_sf', 'dm', 'bh']:
+                if len(data_nil[particle_type_i]['Mass']) == 0:
+                    self.flags['total_particles'][particle_type_i].append(aperture_rad)
+        total_particles_flag()
+        
+        
+        #-----------------------------
+        # Keep data or align galaxy for all components that have particle counts
+        if not align_rad:
+            # Find rotation matrix to rotate entire galaxy depending on viewing_angle if viewing_axis is not 0
+            if viewing_angle != 0:
+                matrix = self._rotate_around_axis('z', 360. - viewing_angle)
+
+                for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf', 'dm', 'bh']:
+                    # If there are no flags for the 30pkpc aperture (ei. there exists particle data for the given type)... rotate, else: keep as before
+                    if len(self.flags['total_particles'][parttype_name]) == 0:
+                        self.data[parttype_name] = self._rotate_galaxy(matrix, data_nil[parttype_name])
+                    else:
+                        self.data[parttype_name] = data_nil[parttype_name]
                         
-                        # this will automatically pick the smallest spin_rad_in and check for inclination
-                        if i == 0:
-                            if viewing_axis == 'x':
-                                if print_progress:
-                                    print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                                    print('Flagging inclination angle in radius')
-                                    time_start = time.time()
-                                    
-                                angle_test = self._misalignment_angle([1, 0, 0], spin_x)
-                                if (angle_test < min_inclination) or (angle_test > 180-min_inclination):
-                                    self.flags.append('min. inclination %s: %.2f deg' %(parttype_name, angle_test))
-                            if viewing_axis == 'y':
-                                if print_progress:
-                                    print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                                    print('Flagging inclination angle in radius')
-                                    time_start = time.time()
-                                    
-                                angle_test = self._misalignment_angle([0, 1, 0], spin_x)
-                                if (angle_test < min_inclination) or (angle_test > 180-min_inclination):
-                                    self.flags.append('min. inclination %s: %.2f deg' %(parttype_name, angle_test))
-                            if viewing_axis == 'z':
-                                if print_progress:
-                                    print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                                    print('Flagging inclination angle in radius')
-                                    time_start = time.time()
-                                    
-                                angle_test = self._misalignment_angle([0, 0, 1], spin_x)
-                                if (angle_test < min_inclination) or (angle_test > 180-min_inclination):
-                                    self.flags.append('min. inclination %s: %.2f deg' %(parttype_name, angle_test))
-                                        
-                    self.spins[parttype_name]     = tmp_spins 
-                    self.particles[parttype_name] = tmp_particles
-                    self.particles[parttype_name + '_mass'] = tmp_mass
-                    self.coms[parttype_name]      = tmp_coms
+            else:
+                self.data = data_nil
+        else:
+            # Large-scale stellar spin vector used to align galaxy
+            # Finding star unit vector within align_rad_in, finding angle between it and z and returning matrix for this
+            stars_spin_align    = self._find_spin(data_nil['stars'])
+            _ , matrix          = self._orientate('z', stars_spin_align)
+            
+            # Orientate entire galaxy according to matrix above
+            for parttype_name in data_nil.keys():
+                # Align if there exists particle data, if not set same as before
+                if len(self.flags['total_particles'][parttype_name]) == 0:
+                    self.data[parttype_name] = self._rotate_galaxy(matrix, data_nil[parttype_name])
+                else:
+                    self.data[parttype_name] = data_nil[parttype_name]
+            
         
-        # If galaxy passes above, run galaxy:
-        if len(self.flags) == 0:
-            #-------------------------------------------------------------------------
-            # Find 3D distance between C.o.M components (stored in existing self.coms)
+        #------------------------------
+        # Find aligned spin vectors and particle count within radius. Will calculate all properties assuming 1 particle
+        # Will also find spins and the likes
+        #-------------------------
+        if find_uncertainties:
+            # 1-sigma
+            use_percentiles = 16
+            iterations = 500 
+            
+            spins_rand = {}
+            
+            ''' structure
+            Will be structured as:
+            spins_rand['2.0']['stars'] .. from then [[ x, y, z], [x, y, z], ... ]
+            '''
+            
+        def find_particle_properties(debug=False):
+            
             if print_progress:
                 print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                print('Finding COMs distances')
+                print('Finding counts, masses, spins, COMs')
+                time_start = time.time()
+                
+            # Create dictionary arrays    
+            for dict_list in [self.spins, self.counts, self.masses, self.coms]:
+                dict_list['rad'] = spin_rad   
+                dict_list['hmr'] = spin_hmr
+                
+                # Create radial distributions of all components, assume dm = 30 pkpc only
+                for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
+                    dict_list[parttype_name] = []
+                dict_list['dm'] = math.nan
+                
+            
+            # DM ONLY (creates single value using aperture radius)
+            for parttype_name in ['dm']:
+                #----------------------------------------------
+                # Find particle counts, masses
+                particle_count  = len(self.data[parttype_name]['Mass'])
+                particle_mass   = np.sum(self.data[parttype_name]['Mass'])
+        
+                self.counts[parttype_name] = particle_count
+                self.masses[parttype_name] = particle_mass
+                
+                #----------------------------------------------
+                # Find COMs (append math.nan for no particles)
+                if particle_count > 0:
+                    particle_com = self._centre_of_mass(self.data[parttype_name])
+                    self.coms[parttype_name] = particle_com
+                else:
+                    self.coms[parttype_name] = np.array([math.nan, math.nan, math.nan])
+                    
+                #---------------------------------------------
+                # Find unit vector spins (append math.nan for no particles)
+                if particle_count > 0:
+                    particle_spin = self._find_spin(self.data[parttype_name])
+                    self.spins[parttype_name] = particle_spin
+                else:
+                    self.spins[parttype_name] = np.array([math.nan, math.nan, math.nan])
+                
+            
+                #---------------------------------------------
+                # Flag for minimum particles, but do nothing
+                if particle_count < min_particles:
+                    self.flags['min_particles'][parttype_name].append(aperture_rad)
+                
+                #---------------------------------------------
+                # Flag for inclination angle, but do nothing
+                if viewing_axis == 'x':  
+                    angle_test = self._misalignment_angle([1, 0, 0], particle_spin)
+                    if (angle_test < min_inclination) or (angle_test > 180-min_inclination):
+                        self.flags['min_inclination'][parttype_name].append(aperture_rad)
+                if viewing_axis == 'y':
+                    angle_test = self._misalignment_angle([0, 1, 0], particle_spin)
+                    if (angle_test < min_inclination) or (angle_test > 180-min_inclination):
+                        self.flags['min_inclination'][parttype_name].append(aperture_rad)
+                if viewing_axis == 'z':
+                    angle_test = self._misalignment_angle([0, 0, 1], particle_spin)
+                    if (angle_test < min_inclination) or (angle_test > 180-min_inclination):
+                        self.flags['min_inclination'][parttype_name].append(aperture_rad)
+                 
+                
+                #---------------------------------------------
+                # Find uncertainty
+                if find_uncertainties:
+                    spins_rand.update({'%s' %str(aperture_rad): {}})
+                    if 'dm' in particle_selection:
+                        tmp_spins = [] 
+                
+                        # Create random array of spins if min_particles met
+                        if particle_count >= min_particles:
+                            for j in range(iterations):
+                                spin_i = self._find_spin(self.data[parttype_name], random_sample=True)
+                                tmp_spins.append(spin_i)
+                        # Else create [[nan, nan, nan], [nan, nan, nan], [nan, nan, nan]]
+                        else:
+                            tmp_spins = np.full((3, 3), math.nan)
+                        spins_rand['%s' %str(aperture_rad)]['%s' %parttype_name] = np.stack(tmp_spins)
+                 
+                
+            # Baryonic matter that is calculated over several radii
+            for rad_i, hmr_i in zip(spin_rad, spin_hmr):
+                # Trim data to particular radius
+                trimmed_data = self._trim_data(self.data, rad_i)
+                
+                # Find peculiar velocity of trimmed data
+                pec_vel_rad = self._peculiar_velocity(trimmed_data)
+                
+                # Adjust velocity of trimmed_data to account for peculiar velocity
+                for parttype_name in trimmed_data.keys():
+                    if len(trimmed_data[parttype_name]['Mass']) == 0:
+                        continue
+                    else:
+                        trimmed_data[parttype_name]['Velocity'] = trimmed_data[parttype_name]['Velocity'] - pec_vel_rad
+                if debug:
+                    print('Peculiar velocity in rad', rad_i)
+                    print(pec_vel_rad)
+                    print('Gas_sf in rad: ', rad_i)
+                    print(len(trimmed_data['gas_sf']['Mass']))
+                
+                
+                #------------------------------
+                for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
+                    #----------------------------------------------
+                    # Find particle counts, masses
+                    particle_count  = len(trimmed_data[parttype_name]['Mass'])
+                    particle_mass   = np.sum(trimmed_data[parttype_name]['Mass'])
+            
+                    self.counts[parttype_name].append(particle_count)
+                    self.masses[parttype_name].append(particle_mass)
+                
+                
+                    #----------------------------------------------
+                    # Find COMs (append math.nan for no particles)
+                    if particle_count > 0:
+                        particle_com = self._centre_of_mass(trimmed_data[parttype_name])
+                        self.coms[parttype_name].append(particle_com)
+                    else:
+                        self.coms[parttype_name].append(np.array([math.nan, math.nan, math.nan]))
+                    
+                    #---------------------------------------------
+                    # Find unit vector spins (append math.nan for no particles)
+                    if particle_count > 0:
+                        particle_spin = self._find_spin(trimmed_data[parttype_name])
+                        self.spins[parttype_name].append(particle_spin)
+                    else:
+                        self.spins[parttype_name].append(np.array([math.nan, math.nan, math.nan]))
+
+                
+                    #---------------------------------------------
+                    # Flag for minimum particles, but do nothing
+                    if particle_count < min_particles:
+                        self.flags['min_particles'][parttype_name].append(hmr_i)
+                    
+                    #---------------------------------------------
+                    # Flag for inclination angle, but do nothing
+                    if viewing_axis == 'x':  
+                        angle_test = self._misalignment_angle([1, 0, 0], particle_spin)
+                        if (angle_test < min_inclination) or (angle_test > 180-min_inclination):
+                            self.flags['min_inclination'][parttype_name].append(hmr_i)
+                    if viewing_axis == 'y':
+                        angle_test = self._misalignment_angle([0, 1, 0], particle_spin)
+                        if (angle_test < min_inclination) or (angle_test > 180-min_inclination):
+                            self.flags['min_inclination'][parttype_name].append(hmr_i)
+                    if viewing_axis == 'z':
+                        angle_test = self._misalignment_angle([0, 0, 1], particle_spin)
+                        if (angle_test < min_inclination) or (angle_test > 180-min_inclination):
+                            self.flags['min_inclination'][parttype_name].append(hmr_i)
+        
+                
+                #------------------------------
+                # Find uncertainties
+                if find_uncertainties:
+                    if print_progress:
+                        print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+                        print('Creating spins_rand')
+                        time_start = time.time()
+                        
+                    spins_rand.update({'%s' %str(hmr_i): {}})
+                    
+                    # for each particle type...
+                    for parttype_name in particle_selection:
+                        
+                        if parttype_name == 'dm':
+                            continue
+                        else:
+                            tmp_spins = [] 
+                    
+                            # Create random array of spins if min_particles met
+                            if len(trimmed_data[parttype_name]['Mass']) >= min_particles:
+                                for j in range(iterations):
+                                    spin_i = self._find_spin(trimmed_data[parttype_name], random_sample=True)
+                                    tmp_spins.append(spin_i)
+                            # Else create [[nan, nan, nan], [nan, nan, nan], [nan, nan, nan]]
+                            else:
+                                tmp_spins = np.full((3, 3), math.nan)
+                            spins_rand['%s' %str(hmr_i)][parttype_name] = np.stack(tmp_spins)          
+        find_particle_properties()
+    
+    
+        #-----------------------------
+        # Finding COM distances and flagging if one is > com_min_distance
+        def flag_coms(debug=False):
+            if print_progress:
+                print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+                print('Flagging C.o.M in radius')
                 time_start = time.time()
             
-            for parttype_name in angle_selection:
-                tmp_distance = []
-                for coord1, coord2 in zip(self.coms[parttype_name[0]], self.coms[parttype_name[1]]):
-                    tmp_distance.append(np.linalg.norm(coord1 - coord2))
-                self.coms['%s_%s' %(parttype_name[0], parttype_name[1])] = tmp_distance
-            
-            
-            #------------------------------------------------
-            # Create 1000 random spin iterations for each rad
-            if find_uncertainties:
-                # 1-sigma
-                use_percentiles = 16
+            # DM handled as individual number self.coms['dm'] = [0, 0, 0]
+            com_dm = self.coms['dm']
+            for hmr_i, com_star, com_gas, com_gas_sf, com_gas_nsf in zip(self.coms['hmr'], self.coms['stars'], self.coms['gas'], self.coms['gas_sf'], self.coms['gas_nsf']):
                 
-                if print_progress:
-                    print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                    print('Creating spins_rand')
-                    time_start = time.time()
-                
-                """ structure
-                Will be structured as:
-                spins_rand['2.0']['stars'] .. from then [[ x, y, z], [x, y, z], ... ]
-                """
-                iterations = 1000 
+                if 'stars_gas' in angle_selection:
+                    # This will be a math.nan if no particles present
+                    if np.linalg.norm(com_star - com_gas) > com_min_distance:
+                        self.flags['com_min_distance']['stars_gas'].append(hmr_i)
+                if 'stars_gas_sf' in angle_selection:
+                    # This will be a math.nan if no particles present
+                    if np.linalg.norm(com_star - com_gas_sf) > com_min_distance:
+                        self.flags['com_min_distance']['stars_gas_sf'].append(hmr_i)
+                if 'stars_gas_nsf' in angle_selection:
+                    # This will be a math.nan if no particles present
+                    if np.linalg.norm(com_star - com_gas_nsf) > com_min_distance:
+                        self.flags['com_min_distance']['stars_gas_nsf'].append(hmr_i)
+                if 'gas_sf_gas_nsf' in angle_selection:
+                    # This will be a math.nan if no particles present
+                    if np.linalg.norm(com_gas_sf - com_gas_nsf) > com_min_distance:
+                        self.flags['com_min_distance']['gas_sf_gas_nsf'].append(hmr_i)
+                if 'stars_dm' in angle_selection:
+                    # This will be a math.nan if no particles present
+                    if np.linalg.norm(com_star - com_dm) > com_min_distance:
+                        self.flags['com_min_distance']['stars_dm'].append(hmr_i)
+                if 'gas_dm' in angle_selection:
+                    # This will be a math.nan if no particles present
+                    if np.linalg.norm(com_gas - com_dm) > com_min_distance:
+                        self.flags['com_min_distance']['gas_dm'].append(hmr_i)
+                if 'gas_sf_dm' in angle_selection:
+                    # This will be a math.nan if no particles present
+                    if np.linalg.norm(com_gas_sf - com_dm) > com_min_distance:
+                        self.flags['com_min_distance']['gas_sf_dm'].append(hmr_i)
+                if 'gas_nsf_dm' in angle_selection:
+                    # This will be a math.nan if no particles present
+                    if np.linalg.norm(com_gas_nsf - com_dm) > com_min_distance:
+                        self.flags['com_min_distance']['gas_nsf_dm'].append(hmr_i)   
+        flag_coms()
         
-                # for each radius...
-                spins_rand = {}
-                for rad_i, hmr_i in zip(spin_rad_in, spin_hmr_in):
-                    spins_rand.update({'%s' %str(hmr_i): {}})
+        
+        #-----------------------------
+        # Finding 3D misalignment angles and uncertainties
+        def find_misalignment_angles(debug=False):
             
-                    # for each particle type...
-                    for parttype_name in particle_list_in:
-                        tmp_spins = []    
-                
-                        # ...append 1000 random spin iterations
-                        for jjjj in range(iterations):
-                            spin_i, _, _ = self._find_spin(self.data[parttype_name], rad_i, [self.data['stars'], self.data['gas'], self.data['dm'], self.data['bh']], parttype_name, random_sample=True)
-                            tmp_spins.append(spin_i)
-                        spins_rand['%s' %str(hmr_i)]['%s' %parttype_name] = np.stack(tmp_spins)
-         
-                if debug:   
-                    print(spins_rand.keys())        
-                    print(spins_rand['2.0']['stars'])
-                    print(spins_rand['2.0']['stars'][:,0])
-                    print(' ')
-                    print(spins_rand['2.0']['stars'][:,[0,1]])
-            
-            
-            #-------------------------------------
-            # Find 3D misalignment angles + errors
             if print_progress:
                 print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
                 print('Finding 3D misalignment angles')
                 time_start = time.time()
-            
-            self.mis_angles['rad'] = spin_rad_in
-            self.mis_angles['hmr'] = spin_hmr_in
-            for parttype_name in angle_selection:   #[['stars', 'gas'], ['stars', '_nsf'], ['gas_sf', 'gas_nsf']]:
-                tmp_angles = []
-                tmp_errors = []
-                for i, hmr_i in zip(np.arange(0, len(spin_rad_in), 1), spin_hmr_in):
-                    # analytical angle
-                    angle = self._misalignment_angle(self.spins[parttype_name[0]][i], self.spins[parttype_name[1]][i])
-                    tmp_angles.append(angle)
-                    
+                
+            # Create arrays
+            for dict_list in [self.mis_angles]:
+                dict_list['rad'] = spin_rad   
+                dict_list['hmr'] = spin_hmr
+                
+                # Create radial distributions of all components, assume dm = 30 pkpc only
+                for angle_selection_i in angle_selection:
+                    dict_list['%s_angle' %angle_selection_i]        = []
+                    dict_list['%s_angle_err' %angle_selection_i]    = []
+                
+            # DM handled individually as there is only 1 entry for spin at 30 pkpc self.spins['dm'] = [x, x, x]
+            spin_dm = self.spins['dm']
+            for rad_i, hmr_i, spin_star, spin_gas, spin_gas_sf, spin_gas_nsf in zip(self.spins['rad'], self.spins['hmr'], self.spins['stars'], self.spins['gas'], self.spins['gas_sf'], self.spins['gas_nsf']):
+                
+                if 'stars_gas' in angle_selection:
+                    # Find 3D angle
+                    angle = self._misalignment_angle(spin_star, spin_gas)
+                    self.mis_angles['stars_gas_angle'].append(angle)            # Will be NAN if none
+                
                     if find_uncertainties:
                         # uncertainty
                         tmp_errors_array = []
-                        for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i][parttype_name[0]], spins_rand['%s' %hmr_i][parttype_name[1]]):
+                        for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i]['stars'], spins_rand['%s' %hmr_i]['gas']):
                             tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
-                        tmp_errors.append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
-                
+                        self.mis_angles['stars_gas_angle_err'].append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            
                         if debug:
                             print('\nHMR_i ', hmr_i)
                             print('percentiles: ', np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
@@ -1054,371 +1236,532 @@ class Subhalo:
                             plt.show()
                             plt.close()
                     else:
-                        tmp_errors.append([math.nan, math.nan])
-                        
-                self.mis_angles['%s_%s_angle' %(parttype_name[0], parttype_name[1])] = tmp_angles
-                self.mis_angles['%s_%s_angle_err' %(parttype_name[0], parttype_name[1])] = tmp_errors
-            
+                        self.mis_angles['stars_gas_angle_err'].append([math.nan, math.nan])
+                if 'stars_gas_sf' in angle_selection:
+                    # Find 3D angle
+                    angle = self._misalignment_angle(spin_star, spin_gas_sf)
+                    self.mis_angles['stars_gas_sf_angle'].append(angle)
+                
+                    if find_uncertainties:
+                        # uncertainty
+                        tmp_errors_array = []
+                        for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i]['stars'], spins_rand['%s' %hmr_i]['gas_sf']):
+                            tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
+                        self.mis_angles['stars_gas_sf_angle_err'].append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            
+                        if debug:
+                            print('\nHMR_i ', hmr_i)
+                            print('percentiles: ', np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            print('angle: ', angle)
+                            plt.hist(tmp_errors_array, 100)
+                            plt.show()
+                            plt.close()
+                    else:
+                        self.mis_angles['stars_gas_sf_angle_err'].append([math.nan, math.nan])
+                if 'stars_gas_nsf' in angle_selection:
+                    # Find 3D angle
+                    angle = self._misalignment_angle(spin_star, spin_gas_nsf)
+                    self.mis_angles['stars_gas_nsf_angle'].append(angle)
+                
+                    if find_uncertainties:
+                        # uncertainty
+                        tmp_errors_array = []
+                        for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i]['stars'], spins_rand['%s' %hmr_i]['gas_nsf']):
+                            tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
+                        self.mis_angles['stars_gas_nsf_angle_err'].append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            
+                        if debug:
+                            print('\nHMR_i ', hmr_i)
+                            print('percentiles: ', np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            print('angle: ', angle)
+                            plt.hist(tmp_errors_array, 100)
+                            plt.show()
+                            plt.close()
+                    else:
+                        self.mis_angles['stars_gas_nsf_angle_err'].append([math.nan, math.nan])
+                if 'gas_sf_gas_nsf' in angle_selection:
+                    # Find 3D angle
+                    angle = self._misalignment_angle(spin_gas_sf, spin_gas_nsf)
+                    self.mis_angles['gas_sf_gas_nsf_angle'].append(angle)
+                
+                    if find_uncertainties:
+                        # uncertainty
+                        tmp_errors_array = []
+                        for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i]['gas_sf'], spins_rand['%s' %hmr_i]['gas_nsf']):
+                            tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
+                        self.mis_angles['gas_sf_gas_nsf_angle_err'].append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            
+                        if debug:
+                            print('\nHMR_i ', hmr_i)
+                            print('percentiles: ', np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            print('angle: ', angle)
+                            plt.hist(tmp_errors_array, 100)
+                            plt.show()
+                            plt.close()
+                    else:
+                        self.mis_angles['gas_sf_gas_nsf_angle_err'].append([math.nan, math.nan])
+                if 'stars_dm' in angle_selection:
+                    # Find 3D angle
+                    angle = self._misalignment_angle(spin_star, spin_dm)
+                    self.mis_angles['stars_dm_angle'].append(angle)
+                    
+                    if find_uncertainties:
+                        # uncertainty
+                        tmp_errors_array = []
+                        for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i]['stars'], spins_rand['%s' %aperture_rad]['dm']):                            
+                            tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
+                        self.mis_angles['stars_dm_angle_err'].append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            
+                        if debug:
+                            print('\nHMR_i ', hmr_i)
+                            print('percentiles: ', np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            print('angle: ', angle)
+                            plt.hist(tmp_errors_array, 100)
+                            plt.show()
+                            plt.close()
+                    else:
+                        self.mis_angles['stars_dm_angle_err'].append([math.nan, math.nan])
+                if 'gas_dm' in angle_selection:
+                    # Find 3D angle
+                    angle = self._misalignment_angle(spin_gas, spin_dm)
+                    self.mis_angles['gas_dm_angle'].append(angle)
+                
+                    if find_uncertainties:
+                        # uncertainty
+                        tmp_errors_array = []
+                        for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i]['gas'], spins_rand['%s' %aperture_rad]['dm']):
+                            tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
+                        self.mis_angles['gas_dm_angle_err'].append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            
+                        if debug:
+                            print('\nHMR_i ', hmr_i)
+                            print('percentiles: ', np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            print('angle: ', angle)
+                            plt.hist(tmp_errors_array, 100)
+                            plt.show()
+                            plt.close()
+                    else:
+                        self.mis_angles['gas_dm_angle_err'].append([math.nan, math.nan])       
+                if 'gas_sf_dm' in angle_selection:
+                    # Find 3D angle
+                    angle = self._misalignment_angle(spin_gas_sf, spin_dm)
+                    self.mis_angles['gas_sf_dm_angle'].append(angle)
+                
+                    if find_uncertainties:
+                        # uncertainty
+                        tmp_errors_array = []
+                        for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i]['gas_sf'], spins_rand['%s' %aperture_rad]['dm']):
+                            tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
+                        self.mis_angles['gas_sf_dm_angle_err'].append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            
+                        if debug:
+                            print('\nHMR_i ', hmr_i)
+                            print('percentiles: ', np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            print('angle: ', angle)
+                            plt.hist(tmp_errors_array, 100)
+                            plt.show()
+                            plt.close()
+                    else:
+                        self.mis_angles['gas_sf_dm_angle_err'].append([math.nan, math.nan])
+                if 'gas_nsf_dm' in angle_selection:
+                    # Find 3D angle
+                    angle = self._misalignment_angle(spin_gas_nsf, spin_dm)
+                    self.mis_angles['gas_nsf_dm_angle'].append(angle)
+                
+                    if find_uncertainties:
+                        # uncertainty
+                        tmp_errors_array = []
+                        for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i]['gas_nsf'], spins_rand['%s' %aperture_rad]['dm']):
+                            tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
+                        self.mis_angles['gas_nsf_dm_angle_err'].append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            
+                        if debug:
+                            print('\nHMR_i ', hmr_i)
+                            print('percentiles: ', np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            print('angle: ', angle)
+                            plt.hist(tmp_errors_array, 100)
+                            plt.show()
+                            plt.close()
+                    else:
+                        self.mis_angles['gas_nsf_dm_angle_err'].append([math.nan, math.nan])
+        find_misalignment_angles()
         
-            #-------------------------------------------------
-            # Find 2D projected misalignment angles + errors 
+        
+        #-----------------------------
+        # Find 2D projected misalignment angles + errors 
+        def find_2d_misalignment_angles(debug=False):
+            
             if print_progress:
                 print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
                 print('Finding 2D projected angles')
                 time_start = time.time()
-            
+        
             self.mis_angles_proj = {'x': {}, 'y': {}, 'z': {}}
             for viewing_axis_i in ['x', 'y', 'z']:
-                self.mis_angles_proj[viewing_axis_i]['rad'] = spin_rad_in
-                self.mis_angles_proj[viewing_axis_i]['hmr'] = spin_hmr_in
-            
-                if viewing_axis_i == 'x':
-                    for parttype_name in angle_selection:
-                        tmp_angles = []
-                        tmp_errors = []
-                        for i, hmr_i in zip(np.arange(0, len(spin_rad_in), 1), spin_hmr_in):
-                            angle = self._misalignment_angle(np.array([self.spins[parttype_name[0]][i][1], self.spins[parttype_name[0]][i][2]]), np.array([self.spins[parttype_name[1]][i][1], self.spins[parttype_name[1]][i][2]]))
-                            tmp_angles.append(angle)
-                        
-                            if find_uncertainties:
-                                # uncertainty
-                                tmp_errors_array = []
-                                for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i][parttype_name[0]][:,[1, 2]], spins_rand['%s' %hmr_i][parttype_name[1]][:, [1, 2]]):
-                                    tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
-                                tmp_errors.append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
-                            else:
-                                tmp_errors.append([math.nan, math.nan])
+                for dict_list in [self.mis_angles_proj]:
+                    dict_list[viewing_axis]['rad'] = spin_rad   
+                    dict_list[viewing_axis]['hmr'] = spin_hmr
+                
+                    # Create radial distributions of all components, assume dm = 30 pkpc only
+                    for angle_selection_i in angle_selection:
+                        dict_list[viewing_axis]['%s_angle' %angle_selection_i]        = []
+                        dict_list[viewing_axis]['%s_angle_err' %angle_selection_i]    = []
+                
+            # Set indicies
+            if viewing_axis == 'x':
+                a = 1
+                b = 2
+            if viewing_axis == 'y':
+                a = 0
+                b = 2
+            if viewing_axis == 'z':
+                a = 0
+                b = 1
+                
+            # DM handled individually as there is only 1 entry for spin at 30 pkpc self.spins['dm'] = [x, x, x]
+            spin_dm = self.spins['dm']
+            for rad_i, hmr_i, spin_star, spin_gas, spin_gas_sf, spin_gas_nsf in zip(self.spins['rad'], self.spins['hmr'], self.spins['stars'], self.spins['gas'], self.spins['gas_sf'], self.spins['gas_nsf']):
+                
+                if 'stars_gas' in angle_selection:
+                    # Find 2D angle
+                    angle = self._misalignment_angle(np.array([spin_star[a], spin_star[b]]), np.array([spin_gas[a], spin_gas[b]]))
+                    self.mis_angles_proj[viewing_axis]['stars_gas_angle'].append(angle)
+                
+                    if find_uncertainties:
+                        # uncertainty
+                        tmp_errors_array = []
+                        for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i]['stars'][:,[a, b]], spins_rand['%s' %hmr_i]['gas'][:,[a, b]]):
+                            tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
+                        self.mis_angles_proj[viewing_axis]['stars_gas_angle_err'].append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
                             
-                        self.mis_angles_proj['x']['%s_%s_angle' %(parttype_name[0], parttype_name[1])] = tmp_angles
-                        self.mis_angles_proj['x']['%s_%s_angle_err' %(parttype_name[0], parttype_name[1])] = tmp_errors
-                    
-                if viewing_axis_i == 'y':
-                    for parttype_name in angle_selection:
-                        tmp_angles = []
-                        tmp_errors = []
-                        for i, hmr_i in zip(np.arange(0, len(spin_rad_in), 1), spin_hmr_in):
-                            tmp_angles.append(self._misalignment_angle(np.array([self.spins[parttype_name[0]][i][0], self.spins[parttype_name[0]][i][2]]), np.array([self.spins[parttype_name[1]][i][0], self.spins[parttype_name[1]][i][2]])))
-                        
-                            if find_uncertainties:
-                                # uncertainty
-                                tmp_errors_array = []
-                                for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i][parttype_name[0]][:,[0, 2]], spins_rand['%s' %hmr_i][parttype_name[1]][:, [0, 2]]):
-                                    tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
-                                tmp_errors.append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
-                            else:
-                                tmp_errors.append([math.nan, math.nan])
+                        if debug:
+                            print('\nHMR_i ', hmr_i)
+                            print('percentiles: ', np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            print('angle: ', angle)
+                            plt.hist(tmp_errors_array, 100)
+                            plt.show()
+                            plt.close()
+                    else:
+                        self.mis_angles_proj[viewing_axis]['stars_gas_angle_err'].append([math.nan, math.nan])
+                if 'stars_gas_sf' in angle_selection:
+                    # Find 2D angle
+                    angle = self._misalignment_angle(np.array([spin_star[a], spin_star[b]]), np.array([spin_gas_sf[a], spin_gas_sf[b]]))
+                    self.mis_angles_proj[viewing_axis]['stars_gas_sf_angle'].append(angle)
+                
+                    if find_uncertainties:
+                        # uncertainty
+                        tmp_errors_array = []
+                        for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i]['stars'][:,[a, b]], spins_rand['%s' %hmr_i]['gas_sf'][:,[a, b]]):
+                            tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
+                        self.mis_angles_proj[viewing_axis]['stars_gas_sf_angle_err'].append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
                             
-                        self.mis_angles_proj['y']['%s_%s_angle' %(parttype_name[0], parttype_name[1])] = tmp_angles
-                        self.mis_angles_proj['y']['%s_%s_angle_err' %(parttype_name[0], parttype_name[1])] = tmp_errors
+                        if debug:
+                            print('\nHMR_i ', hmr_i)
+                            print('percentiles: ', np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            print('angle: ', angle)
+                            plt.hist(tmp_errors_array, 100)
+                            plt.show()
+                            plt.close()
+                    else:
+                        self.mis_angles_proj[viewing_axis]['stars_gas_sf_angle_err'].append([math.nan, math.nan])
+                if 'stars_gas_nsf' in angle_selection:
+                    # Find 2D angle
+                    angle = self._misalignment_angle(np.array([spin_star[a], spin_star[b]]), np.array([spin_gas_nsf[a], spin_gas_nsf[b]]))
+                    self.mis_angles_proj[viewing_axis]['stars_gas_nsf_angle'].append(angle)
+                
+                    if find_uncertainties:
+                        # uncertainty
+                        tmp_errors_array = []
+                        for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i]['stars'][:,[a, b]], spins_rand['%s' %hmr_i]['gas_nsf'][:,[a, b]]):
+                            tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
+                        self.mis_angles_proj[viewing_axis]['stars_gas_nsf_angle_err'].append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            
+                        if debug:
+                            print('\nHMR_i ', hmr_i)
+                            print('percentiles: ', np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            print('angle: ', angle)
+                            plt.hist(tmp_errors_array, 100)
+                            plt.show()
+                            plt.close()
+                    else:
+                        self.mis_angles_proj[viewing_axis]['stars_gas_nsf_angle_err'].append([math.nan, math.nan])
+                if 'gas_sf_gas_nsf' in angle_selection:
+                    # Find 2D angle
+                    angle = self._misalignment_angle(np.array([spin_gas_sf[a], spin_gas_sf[b]]), np.array([spin_gas_nsf[a], spin_gas_nsf[b]]))
+                    self.mis_angles_proj[viewing_axis]['gas_sf_gas_nsf_angle'].append(angle)
+                
+                    if find_uncertainties:
+                        # uncertainty
+                        tmp_errors_array = []
+                        for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i]['gas_sf'][:,[a, b]], spins_rand['%s' %hmr_i]['gas_nsf'][:,[a, b]]):
+                            tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
+                        self.mis_angles_proj[viewing_axis]['gas_sf_gas_nsf_angle_err'].append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            
+                        if debug:
+                            print('\nHMR_i ', hmr_i)
+                            print('percentiles: ', np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            print('angle: ', angle)
+                            plt.hist(tmp_errors_array, 100)
+                            plt.show()
+                            plt.close()
+                    else:
+                        self.mis_angles_proj[viewing_axis]['gas_sf_gas_nsf_angle_err'].append([math.nan, math.nan])
+                if 'stars_dm' in angle_selection:
+                    # Find 2D angle
+                    angle = self._misalignment_angle(np.array([spin_star[a], spin_star[b]]), np.array([spin_dm[a], spin_dm[b]]))
+                    self.mis_angles_proj[viewing_axis]['stars_dm_angle'].append(angle)
                     
-                if viewing_axis_i == 'z':
-                    for parttype_name in angle_selection:
-                        tmp_angles = []
-                        tmp_errors = []
-                        for i, hmr_i in zip(np.arange(0, len(spin_rad_in), 1), spin_hmr_in):
-                            angle = self._misalignment_angle(np.array([self.spins[parttype_name[0]][i][0], self.spins[parttype_name[0]][i][1]]), np.array([self.spins[parttype_name[1]][i][0], self.spins[parttype_name[1]][i][1]]))
-                            tmp_angles.append(angle)
-                        
-                            if find_uncertainties:
-                                # uncertainty
-                                tmp_errors_array = []
-                                for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i][parttype_name[0]][:,[0, 1]], spins_rand['%s' %hmr_i][parttype_name[1]][:, [0, 1]]):
-                                    tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
-                                tmp_errors.append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
-                        
-                                if debug:
-                                    print('\nHMR_i ', hmr_i)
-                                    print('percentiles: ', np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
-                                    print('angle: ', angle)
-                                    plt.hist(tmp_errors_array, 100)
-                                    plt.show()
-                                    plt.close()
-                            else:
-                                tmp_errors.append([math.nan, math.nan])
-                        
-                        self.mis_angles_proj['z']['%s_%s_angle' %(parttype_name[0], parttype_name[1])] = tmp_angles
-                        self.mis_angles_proj['z']['%s_%s_angle_err' %(parttype_name[0], parttype_name[1])] = tmp_errors
-            
-            
-            #-------------------------------------------------
-            # KAPPA
-            if kappa_rad_in:
-                """if 'stars' in particle_list_in:
-                    if print_progress:
-                        print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                        print('Finding kappa star')
-                        time_start = time.time()
-                    
-                    # Finding star unit vector within kappa_rad_in, finding angle between it and z and returning matrix for this
-                    stars_spin_kappa, _, _ = self._find_spin(data_nil['stars'], kappa_rad_in, [self.data['stars'], self.data['gas'], self.data['dm'], self.data['bh']], 'stars')
-                    _ , matrix = self._orientate(orientate_to_axis, stars_spin_kappa)
-                    
-                    # Orientate entire galaxy according to matrix above, use this to find kappa
-                    stars_aligned_kappa  = self._rotate_galaxy(matrix, data_nil['stars'])
-                    self.kappa_old = self._kappa_co(stars_aligned_kappa, kappa_rad_in) 
-                    
-                    self.general.update({'kappa_old': self.kappa_old})
-                """
+                    if find_uncertainties:
+                        # uncertainty
+                        tmp_errors_array = []
+                        for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i]['stars'][:,[a, b]], spins_rand['%s' %aperture_rad]['dm'][:,[a, b]]):                            
+                            tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
+                        self.mis_angles_proj[viewing_axis]['stars_dm_angle_err'].append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            
+                        if debug:
+                            print('\nHMR_i ', hmr_i)
+                            print('percentiles: ', np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            print('angle: ', angle)
+                            plt.hist(tmp_errors_array, 100)
+                            plt.show()
+                            plt.close()
+                    else:
+                        self.mis_angles_proj[viewing_axis]['stars_dm_angle_err'].append([math.nan, math.nan])
+                if 'gas_dm' in angle_selection:
+                    # Find 2D angle
+                    angle = self._misalignment_angle(np.array([spin_gas[a], spin_gas[b]]), np.array([spin_dm[a], spin_dm[b]]))
+                    self.mis_angles_proj[viewing_axis]['gas_dm_angle'].append(angle)
+                
+                    if find_uncertainties:
+                        # uncertainty
+                        tmp_errors_array = []
+                        for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i]['gas'][:,[a, b]], spins_rand['%s' %aperture_rad]['dm'][:,[a, b]]):
+                            tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
+                        self.mis_angles_proj[viewing_axis]['gas_dm_angle_err'].append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            
+                        if debug:
+                            print('\nHMR_i ', hmr_i)
+                            print('percentiles: ', np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            print('angle: ', angle)
+                            plt.hist(tmp_errors_array, 100)
+                            plt.show()
+                            plt.close()
+                    else:
+                        self.mis_angles_proj[viewing_axis]['gas_dm_angle_err'].append([math.nan, math.nan])       
+                if 'gas_sf_dm' in angle_selection:
+                    # Find 2D angle
+                    angle = self._misalignment_angle(np.array([spin_gas_sf[a], spin_gas_sf[b]]), np.array([spin_dm[a], spin_dm[b]]))
+                    self.mis_angles_proj[viewing_axis]['gas_sf_dm_angle'].append(angle)
+                
+                    if find_uncertainties:
+                        # uncertainty
+                        tmp_errors_array = []
+                        for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i]['gas_sf'][:,[a, b]], spins_rand['%s' %aperture_rad]['dm'][:,[a, b]]):
+                            tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
+                        self.mis_angles_proj[viewing_axis]['gas_sf_dm_angle_err'].append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            
+                        if debug:
+                            print('\nHMR_i ', hmr_i)
+                            print('percentiles: ', np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            print('angle: ', angle)
+                            plt.hist(tmp_errors_array, 100)
+                            plt.show()
+                            plt.close()
+                    else:
+                        self.mis_angles_proj[viewing_axis]['gas_sf_dm_angle_err'].append([math.nan, math.nan])
+                if 'gas_nsf_dm' in angle_selection:
+                    # Find 2D angle
+                    angle = self._misalignment_angle(np.array([spin_gas_nsf[a], spin_gas_nsf[b]]), np.array([spin_dm[a], spin_dm[b]]))
+                    self.mis_angles_proj[viewing_axis]['gas_nsf_dm_angle'].append(angle)
+                
+                    if find_uncertainties:
+                        # uncertainty
+                        tmp_errors_array = []
+                        for spin_1, spin_2 in zip(spins_rand['%s' %hmr_i]['gas_nsf'][:,[a, b]], spins_rand['%s' %aperture_rad]['dm'][:,[a, b]]):
+                            tmp_errors_array.append(self._misalignment_angle(spin_1, spin_2))
+                        self.mis_angles_proj[viewing_axis]['gas_nsf_dm_angle_err'].append(np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            
+                        if debug:
+                            print('\nHMR_i ', hmr_i)
+                            print('percentiles: ', np.percentile(tmp_errors_array, [use_percentiles, 100-use_percentiles]))
+                            print('angle: ', angle)
+                            plt.hist(tmp_errors_array, 100)
+                            plt.show()
+                            plt.close()
+                    else:
+                        self.mis_angles_proj[viewing_axis]['gas_nsf_dm_angle_err'].append([math.nan, math.nan])
+        find_2d_misalignment_angles()    
         
-                if 'gas' in particle_list_in:
-                    if print_progress:
-                        print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                        print('Finding kappa gas')
-                        time_start = time.time()
-                
-                    # Finding gas unit vector within kappa_rad_in, finding angle between it and z and returning matrix for this
-                    gas_spin_kappa, _, _ = self._find_spin(data_nil['gas'], kappa_rad_in, [self.data['stars'], self.data['gas'], self.data['dm'], self.data['bh']], 'gas')
-                    _ , matrix = self._orientate(orientate_to_axis, gas_spin_kappa)
-                    
-                    # Orientate entire galaxy according to matrix above, use this to find kappa
-                    gas_aligned_kappa  = self._rotate_galaxy(matrix, data_nil['gas'])
-                    self.kappa_gas = self._kappa_co(gas_aligned_kappa, kappa_rad_in)
-                
-                    self.general.update({'kappa_gas': self.kappa_gas})
-                
-                if 'gas_sf' in particle_list_in:
-                    if print_progress:
-                        print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                        print('Finding kappa gas_sf')
-                        time_start = time.time()
+        #-----------------------------
+        # KAPPA
+        def find_kappa():
             
-                    # Finding gas_sf unit vector within kappa_rad_in, finding angle between it and z and returning matrix for this
-                    gas_sf_spin_kappa, _, _ = self._find_spin(data_nil['gas_sf'], kappa_rad_in, [self.data['stars'], self.data['gas'], self.data['dm'], self.data['bh']], 'gas_sf')
-                    _ , matrix = self._orientate(orientate_to_axis, gas_sf_spin_kappa)
-                    
-                    # Orientate entire galaxy according to matrix above, use this to find kappa
-                    gas_sf_aligned_kappa  = self._rotate_galaxy(matrix, data_nil['gas_sf'])
-                    self.kappa_gas_sf = self._kappa_co(gas_sf_aligned_kappa, kappa_rad_in)
-                                        
-                    self.general.update({'kappa_gas_sf': self.kappa_gas_sf})
-                
-                if 'gas_nsf' in particle_list_in:
-                    if print_progress:
-                        print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                        print('Finding kappa gas_nsf')
-                        time_start = time.time()
-            
-                    # Finding gas_sf unit vector within kappa_rad_in, finding angle between it and z and returning matrix for this
-                    gas_nsf_spin_kappa, _, _ = self._find_spin(data_nil['gas_nsf'], kappa_rad_in, [self.data['stars'], self.data['gas'], self.data['dm'], self.data['bh']], 'gas_nsf')
-                    _ , matrix = self._orientate(orientate_to_axis, gas_nsf_spin_kappa)
-                    
-                    # Orientate entire galaxy according to matrix above, use this to find kappa
-                    gas_nsf_aligned_kappa  = self._rotate_galaxy(matrix, data_nil['gas_nsf'])
-                    self.kappa_gas_nsf = self._kappa_co(gas_nsf_aligned_kappa, kappa_rad_in)
-                    
-                    self.general.update({'kappa_gas_nsf': self.kappa_gas_nsf})
-                    
-        
-            #--------------------------------
-            # Trimming data
-            if len(trim_hmr_in) > 0:
-                if print_progress:
-                    print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                    print('Trimming datasets to trim_hmr_in ', trim_hmr_in)
-                    time_start = time.time()
-                tmp_data = {}
-                for hmr_i in trim_hmr_in:
-                    tmp_data.update({'%s' %str(hmr_i): {}})
-                
-                for hmr_i in trim_hmr_in:
-                    for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf', 'dm', 'bh']:
-                        tmp_data['%s' %str(hmr_i)]['%s' %parttype_name] = self._trim_within_rad(self.data[parttype_name], hmr_i*self.halfmass_rad_proj, [self.data['stars'], self.data['gas'], self.data['dm'], self.data['bh']])
-                
-                self.data = tmp_data
-            
-            
-            #--------------------------------
-            # Print statements
-            if not quiet:
-                print('GALAXY ID', self.GalaxyID)
-                print('STELMASS', np.log10(self.stelmass))
-                print('GASMASS', np.log10(self.gasmass))
-                print('GASMASS_SF', np.log10(self.gasmass_sf))
-                print('GASMASS_NSF', np.log10(self.gasmass_nsf))
-
             if print_progress:
                 print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                print('FINISHED EXTRACTION')
-            #============================
+                print('Finding kappa of components')
+                time_start = time.time()
             
-            #============================
-            # Galaxy aligned calculations
-            if align_rad_in:
-                # Large-scale stellar spin vector used to align galaxy
-                # Finding star unit vector within align_rad_in, finding angle between it and z and returning matrix for this
-                stars_spin_align, _, _  = self._find_spin(data_nil['stars'], align_rad_in, [self.data['stars'], self.data['gas'], self.data['dm'], self.data['bh']], 'stars')
-                _ , matrix = self._orientate('z', stars_spin_align)
+            # If we already found kappa_star, don't run stars kappa
+            if len(data_nil['stars']['Mass']) > 300:
+                kappa_parttype = ['gas', 'gas_sf']
+            else:
+                kappa_parttype = ['stars', 'gas', 'gas_sf']
             
-                # Orientate entire galaxy according to matrix above
-                for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
-                    self.data_align['%s'%parttype_name] = self._rotate_galaxy(matrix, data_nil[parttype_name])
-                
-                # Find aligned spin vectors and particle count within radius
-                self.spins_align     = {}
-                self.particles_align = {}
-                self.coms_align      = {}
-                self.spins_align['rad']     = spin_rad_in
-                self.spins_align['hmr']     = spin_hmr_in
-                self.particles_align['rad'] = spin_rad_in
-                self.particles_align['hmr'] = spin_hmr_in
-                self.coms_align['rad']      = spin_rad_in
-                self.coms_align['hmr']      = spin_hmr_in
-                for parttype_name in particle_list_in:
-                    tmp_spins = []
-                    tmp_particles = []
-                    tmp_mass = []
-                    tmp_coms = []
-                    for rad in spin_rad_in:
-                        spin_x, particle_x, mass_x = self._find_spin(self.data_align[parttype_name], rad, [self.data['stars'], self.data['gas'], self.data['dm'], self.data['bh']], parttype_name)
-                        tmp_spins.append(spin_x)
-                        tmp_particles.append(particle_x)
-                        tmp_mass.append(mass_x)
-                        tmp_coms.append(self._centre_of_mass(self.data_align[parttype_name], rad))
-                    
-                    self.spins_align[parttype_name]     = tmp_spins 
-                    self.particles_align[parttype_name] = tmp_particles
-                    self.particles_align[parttype_name + '_mass'] = tmp_mass
-                    self.coms_align[partytype_name]     = tmp_coms
-                
-                # Find misalignment angles (does not find difference between every component ei. gas_sf and gas_nsf)
-                self.mis_angles_align = {}
-                self.mis_angles_align['rad'] = spin_rad_in
-                self.mis_angles_align['hmr'] = spin_hmr_in
-                for parttype_name in angle_selection:
-                    tmp_angles = []
-                    for i in np.arange(0, len(self.spins_align['stars']), 1):
-                        tmp_angles.append(self._misalignment_angle(self.spins_align[parttype_name[0]][i], self.spins_align[parttype_name[1]][i]))
-                    self.mis_angles_align['%s_%s' %(parttype_name[0], parttype_name[1])] = tmp_angles
-                               
-                    
-                if len(trim_hmr_in) > 0:
-                    tmp_data = {}
-                    for hmr_i in trim_hmr_in:
-                        tmp_data.update({'%s' %str(hmr_i): {}})
-                    
-                    for hmr_i in trim_hmr_in:
-                        for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
-                            tmp_data['%s' %str(hmr_i)]['%s' %parttype_name] = self._trim_within_rad(self.data_align[parttype_name], hmr_i*self.halfmass_rad_proj, [self.data['stars'], self.data['gas'], self.data['dm'], self.data['bh']])
-        
-                    self.data_align = tmp_data
-                  
-                if not quiet:  
-                    print('MISALIGNMENT ANGLES ALIGN [deg]:')
-                    print(' HALF-\tANGLES (STARS-)\t\t\tPARTICLE COUNT\t\t\tMASS')
-                    print(' RAD\tGAS\tSF\tNSF\tSF-NSF\tSTARS\tGAS\tSF\tNSF\tSTARS\tGAS\tSF\tNSF')
-                    for i in np.arange(0, len(self.mis_angles_align['rad']), 1):
-                        with np.errstate(divide='ignore', invalid='ignore'):
-                            print(' %.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%i\t%i\t%i\t%i\t%.1f\t%.1f\t%.1f\t%.1f' %(self.mis_angles_align['hmr'][i], self.mis_angles_align['stars_gas'][i], self.mis_angles_align['stars_gas_sf'][i], self.mis_angles_align['stars_gas_nsf'][i], self.mis_angles_align['gas_sf_gas_nsf'][i], self.particles_align['stars'][i], self.particles_align['gas'][i], self.particles_align['gas_sf'][i], self.particles_align['gas_nsf'][i], np.log10(self.particles_align['stars_mass'][i]), np.log10(self.particles_align['gas_mass'][i]), np.log10(self.particles_align['gas_sf_mass'][i]), np.log10(self.particles_align['gas_nsf_mass'][i])))               
-            #============================
-                    
-                
+            # Trim data to kappa radius
+            trimmed_data = self._trim_data(data_nil, kappa_rad)
+            
+            # Find peculiar velocity of trimmed data
+            pec_vel_rad = self._peculiar_velocity(trimmed_data)
 
-    def _trim_within_rad(self, arr, radius, arr_list, debug=False):
-        # Compute distance to centre and mask all within Radius in pkpc
-        r  = np.linalg.norm(arr['Coordinates'], axis=1)
-        mask = np.where(r <= radius)
-        
-        # find perculiar velocity and adjust arr['Velocity']
-        #perc_vel_rad = self._perculiar_velocity(arr_list, radius)
-        #arr['Velocity'] = arr['Velocity'] - perc_vel_rad
-        
-        newData = {}
-        for header in arr.keys():
-            newData[header] = arr[header][mask]
-            
-        return newData
-        
-    def _find_spin(self, arr, radius, arr_list, desc, random_sample=False, debug=False):
-        # Compute distance to centre and mask all within stelhalfrad
-        r  = np.linalg.norm(arr['Coordinates'], axis=1)
-        mask = np.where(r <= radius)
-        
-        #print("Total %s particles in subhalo: %i"%(desc, len(r)))
-        #r = r[mask]
-        #print("Total %s particles in %.5f kpc: %i\n"%(desc, radius*1000, len(r)))
-        
-        # find perculiar velocity and adjust arr['Velocity']
-        perc_vel_rad = self._perculiar_velocity(arr_list, radius)
-        arr_velocity = arr['Velocity'] - perc_vel_rad      
-        
-        if debug:
-            print(desc)
-            print('perc_vel_rad')
-            print(perc_vel_rad)
-        
-        if random_sample:
-            #
+            # Adjust velocity of trimmed_data to account for peculiar velocity
+            for parttype_name in trimmed_data.keys():
+                if len(trimmed_data[parttype_name]['Mass']) == 0:
+                    continue
+                else:
+                    trimmed_data[parttype_name]['Velocity'] = trimmed_data[parttype_name]['Velocity'] - pec_vel_rad
             if debug:
-                print('\ntotal particle count', len(arr['Mass'][:, None]))
+                print('Peculiar velocity in rad', kappa_rad)
+                print(pec_vel_rad)
+                print('Gas_sf in rad: ', kappa_rad)
+                print(len(trimmed_data['gas_sf']['Mass']))
             
-            # Mask within radius
-            tmp_coords = arr['Coordinates'][mask]
-            tmp_mass = arr['Mass'][:, None][mask]
-            tmp_velocity = arr_velocity[mask]
-            
-            if debug:
-                print('radius', radius)
-                print('particle count in rad', len(tmp_mass))
-            
-            # Making a random mask of (now cropped) data points... 50% = 0.5
-            random_mask = np.random.choice(tmp_coords.shape[0], int(np.ceil(tmp_coords.shape[0] * 0.5)), replace=False)
-            
-            # Applying mask
-            tmp_coords = tmp_coords[random_mask]
-            tmp_mass   = tmp_mass[random_mask]
-            tmp_velocity = tmp_velocity[random_mask]
-            
-            if debug:
-                print('particle count in rad masked', len(tmp_mass))
-            
-            # Finding spin angular momentum vector of each particle
-            L = np.cross(tmp_coords * tmp_mass, tmp_velocity)
-            
-            # Summing for total angular momentum and dividing by mass to get the spin vectors
-            with np.errstate(divide='ignore', invalid='ignore'):
-                spin = np.sum(L, axis=0)/np.sum(tmp_mass)
-            
-        else:
-            # Finding spin angular momentum vector of each individual particle of gas and stars, where [:, None] is done to allow multiplaction of N3*N1 array. Equation D.25
-            L  = np.cross(arr['Coordinates'][mask] * arr['Mass'][:, None][mask], arr_velocity[mask])
-        
-            # Summing for total angular momentum and dividing by mass to get the spin vectors
-            with np.errstate(divide='ignore', invalid='ignore'):
-                spin = np.sum(L, axis=0)/np.sum(arr['Mass'][mask])
-        
-        # Expressing as unit vector
-        spin_unit = spin / np.linalg.norm(spin)
-        
-        # OUTPUTS UNIT VECTOR OF SPIN, PARTICLE COUNT WITHIN RAD, MASS WITHIN RAD 
-        return spin_unit, len(r[mask]), np.sum(arr['Mass'][mask])
-            
-    def _perculiar_velocity(self, arr_list, radius, debug=False):   
-        # Mass-weighted formula from subhalo paper but accounting for radius
-        vel_weighted = 0
-        mass_sums = 0
-        for arr in arr_list:
-            if len(arr['Mass']) > 0:
-                # Masking out particles within the radius we care about
-                r = np.linalg.norm(arr['Coordinates'], axis=1)
-                mask = np.where(r <= radius)
+            #-------------------------------    
+            for parttype_name in kappa_parttype:
                 
-                vel_weighted = vel_weighted + np.sum(arr['Velocity'][mask] * arr['Mass'][:, None][mask], axis=0)
-                mass_sums = mass_sums + np.sum(arr['Mass'][mask])
+                # If particles of type exist within aperture_rad... find kappas
+                if len(trimmed_data[parttype_name]['Mass']) > 0:
+                    # Finding spin vector within aperture_rad for current kappa
+                    spin_kappa = self._find_spin(trimmed_data[parttype_name])
+                    _ , matrix = self._orientate(orientate_to_axis, spin_kappa)
                 
-                if debug:
-                    print('max dist in rad')
-                    print(radius)
-                    print(max(np.linalg.norm(arr['Coordinates'][mask], axis=1)))
-            
-        perc_vel = vel_weighted / mass_sums
-            
-        return perc_vel
+                    # Orientate entire galaxy according to matrix above, use this to find kappa
+                    aligned_data_part = self._rotate_galaxy(matrix, trimmed_data[parttype_name])
+                    kappa = self._kappa_co(aligned_data_part, kappa_rad)
+                
+                    self.general.update({'kappa_%s' %parttype_name: kappa})
+                # If no particles of type exist within aperture_rad, assign math.nan
+                else:
+                    self.general.update({'kappa_%s' %parttype_name: math.nan})   
+        find_kappa()
         
-    def _misalignment_angle(self, angle1, angle2, debug=False):
-        # Find the misalignment angle
-        angle = np.rad2deg(np.arccos(np.clip(np.dot(angle1/np.linalg.norm(angle1), angle2/np.linalg.norm(angle2)), -1.0, 1.0)))     # [deg]
+        #-----------------------------
+        # Trimming data
+        def trim_output_data():
+            if print_progress:
+                print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+                print('Trimming datasets to trim_hmr ', trim_hmr)
+            
+            tmp_data = {}
+            for hmr_i in trim_hmr:
+                tmp_data.update({'%s' %str(hmr_i): {}})
+                
+            trim_rad = trim_hmr * self.halfmass_rad_proj
+            
+            for rad_i in trim_rad:
+                
+                # If trim_rad larger than already cropped data, simply assign existing data to output data
+                if rad_i > aperture_rad:
+                    for parttype_name in self.data.keys():
+                        tmp_data['%s' %str(hmr_i)][parttype_name] = self.data[parttype_name]
+                
+                else:
+                    # Trim data to particular radius
+                    trimmed_data = self._trim_data(self.data, rad_i)
+                
+                    # Find peculiar velocity of trimmed data
+                    pec_vel_rad = self._peculiar_velocity(trimmed_data)
+                
+                    # Adjust velocity of trimmed_data to account for peculiar velocity
+                    for parttype_name in trimmed_data.keys():
+                        if len(trimmed_data[parttype_name]['Mass']) == 0:
+                            continue
+                        else:
+                            trimmed_data[parttype_name]['Velocity'] = trimmed_data[parttype_name]['Velocity'] - pec_vel_rad
+                    if debug:
+                        print('Peculiar velocity in rad', rad_i)
+                        print(pec_vel_rad)
+                        print('Gas_sf in rad: ', rad_i)
+                        print(len(trimmed_data['gas_sf']['Mass']))
+                
+                    for parttype_name in trimmed_data.keys():
+                        tmp_data['%s' %str(hmr_i)][parttype_name] = trimmed_data[parttype_name]   
+            self.data = tmp_data
+        trim_output_data()
         
-        return angle
+        #-----------------------------
+        # Print statements
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+            print('FINISHED EXTRACTION\tGALAXY ID: %s' %GalaxyID)
+        
+        
+                    
+    def _query_morph(self, sim, GroupNum, SubGroupNum, SnapNum, debug=False):
+        # This uses the eagleSqlTools module to connect to the database with your username and password.
+        # If the password is not given, the module will prompt for it.
+        con = sql.connect("lms192", password="dhuKAP62")
+        
+        for sim_name, sim_size in sim:
+            #print(sim_name)
+    
+            # Construct and execute query for each simulation. This query returns properties for a single galaxy
+            myQuery = 'SELECT \
+                        MK.Ellipticity as ellip, \
+                        MK.Triaxiality as triax, \
+                        MK.KappaCoRot as kappa_stars, \
+                        MK.DispAnisotropy as disp_ani, \
+                        MK.DiscToTotal as disc_to_total, \
+                        MK.RotToDispRatio as rot_to_disp_ratio \
+                       FROM \
+        			     %s_Subhalo as SH, \
+                         %s_MorphoKinem as MK \
+                       WHERE \
+        			     SH.SnapNum = %i \
+                         and SH.GroupNumber = %i \
+                         and SH.SubGroupNumber = %i \
+                         and SH.GalaxyID = MK.GalaxyID \
+                      ORDER BY \
+        			     SH.MassType_Star desc'%(sim_name, sim_name, SnapNum, GroupNum, SubGroupNum)
+	
+            # Execute query.
+            myData = sql.execute_query(con, myQuery)
+            
+            return myData      
+
+    def _rotate_galaxy(self, matrix, data, debug=False):
+        """ For a given set of galaxy data, work out the rotated coordinates 
+        and other data centred on [0, 0, 0], accounting for the peculiar 
+        velocity of the galaxy"""
+        
+        # Where we store the new data
+        new_data = {}
+        
+        for header in data.keys():
+            if (header == 'Coordinates') or (header == 'Velocity'):
+                new_data[header] = self._rotate_coords(matrix, data[header])
+            else:
+                new_data[header] = data[header]
+        
+        return new_data
+    
+    def _rotate_around_axis(self, axis, angle, debug=False):
+        # Finds angle given a defined x, y, z axis:
+        if axis == 'z':
+            # Rotate around z-axis
+            axis_of_rotation = np.array([0., 0., 1.])
+            matrix = self._rotation_matrix(axis_of_rotation, angle)
+            
+        if axis == 'y':
+            # Rotate around z-axis
+            axis_of_rotation = np.array([0., 1., 0.])
+            matrix = self._rotation_matrix(axis_of_rotation, angle)
+
+        if axis == 'x':
+            # Rotate around z-axis
+            axis_of_rotation = np.array([1., 0., 0.])
+            matrix = self._rotation_matrix(axis_of_rotation, angle)
+
+        return matrix
     
     def _rotation_matrix(self, axis, theta, debug=False):
         '''Return the rotation matrix associated with counterclockwise rotation about
@@ -1449,60 +1792,7 @@ class Subhalo:
         return np.array([[aa+bb-cc-dd, 2*(bc+ad), 2*(bd-ac)],
                          [2*(bc-ad), aa+cc-bb-dd, 2*(cd+ab)],
                          [2*(bd+ac), 2*(cd-ab), aa+dd-bb-cc]])
-                        
-    def _orientate(self, axis, attribute, debug=False):
-        # Finds angle given a defined x, y, z axis:
-        if axis == 'z':
-            # Compute angle between star spin and z axis
-            angle = self._misalignment_angle(np.array([0., 0., 1.]), attribute)
-        
-            # Find axis of rotation of star spin vector
-            x  = np.array([0., 0., 1.])
-            x -= x.dot(attribute) * attribute
-            x /= np.linalg.norm(x)
-            axis_of_rotation = np.cross(attribute, x)
-            matrix = self._rotation_matrix(axis_of_rotation, angle)
-            
-        if axis == 'y':
-            # Compute angle between star spin and y axis
-            angle = self._misalignment_angle(np.array([0., 1., 0.]), attribute)
-        
-            # Find axis of rotation of star spin vector
-            x  = np.array([0., 1., 0.])
-            x -= x.dot(attribute) * attribute
-            x /= np.linalg.norm(x)
-            axis_of_rotation = np.cross(attribute, x)
-            matrix = self._rotation_matrix(axis_of_rotation, angle)
-            
-        if axis == 'x':
-            # Compute angle between star spin and y axis
-            angle = self._misalignment_angle(np.array([1., 0., 0.]), attribute)
-        
-            # Find axis of rotation of star spin vector
-            x  = np.array([1., 0., 0.])
-            x -= x.dot(attribute) * attribute
-            x /= np.linalg.norm(x)
-            axis_of_rotation = np.cross(attribute, x)
-            matrix = self._rotation_matrix(axis_of_rotation, angle)
-            
-        return angle, matrix
-        
-    def _rotate_galaxy(self, matrix, data, debug=False):
-        """ For a given set of galaxy data, work out the rotated coordinates 
-        and other data centred on [0, 0, 0], accounting for the perculiar 
-        velocity of the galaxy"""
-        
-        # Where we store the new data
-        new_data = {}
-        
-        for header in data.keys():
-            if (header == 'Coordinates') or (header == 'Velocity'):
-                new_data[header] = self._rotate_coords(matrix, data[header])
-            else:
-                new_data[header] = data[header]
-        
-        return new_data
-        
+    
     def _rotate_coords(self, matrix, coords, debug=False):
         
         # Compute new coords after rotation
@@ -1515,57 +1805,174 @@ class Subhalo:
         
         return rotation
         
-    def _rotate_around_axis(self, axis, angle, debug=False):
-        # Finds angle given a defined x, y, z axis:
-        if axis == 'z':
-            # Rotate around z-axis
-            axis_of_rotation = np.array([0., 0., 1.])
-            matrix = self._rotation_matrix(axis_of_rotation, angle)
+    def _trim_data(self, data_dict, radius, debug=False):
+        new_dict = {}
+        for parttype_name in data_dict.keys():
+            # Compute distance to centre and mask all within 3D radius in pkpc
+            r  = np.linalg.norm(data_dict[parttype_name]['Coordinates'], axis=1)
+            mask = np.where(r <= radius)
             
-        if axis == 'y':
-            # Rotate around z-axis
-            axis_of_rotation = np.array([0., 1., 0.])
-            matrix = self._rotation_matrix(axis_of_rotation, angle)
-
-        if axis == 'x':
-            # Rotate around z-axis
-            axis_of_rotation = np.array([1., 0., 0.])
-            matrix = self._rotation_matrix(axis_of_rotation, angle)
-
-        return matrix
+            newData = {}
+            for header in data_dict[parttype_name].keys():
+                newData[header] = data_dict[parttype_name][header][mask]
+            
+            new_dict[parttype_name] = newData
         
-    def _kappa_co(self, arr, radius, debug=False):
-        # Compute distance to centre and mask all within kappa_rad
-        r  = np.linalg.norm(arr['Coordinates'], axis=1)
-        mask = np.where(r <= radius)
+        return new_dict
+    
+    def _trim_data_proj(self, data_dict, radius, viewing_axis, debug=False):
+        new_dict = {}
+        for parttype_name in data_dict.keys():    
+            # Compute distance to centre and mask all within projected radius in pkpc
+            if viewing_axis == 'z':
+                r = np.linalg.norm(data_dict[parttype_name]['Coordinates'][:,[0,1]], axis=1)
+                mask = np.where(r <= radius)
+            
+            if viewing_axis == 'y':
+                r = np.linalg.norm(data_dict[parttype_name]['Coordinates'][:,[0,2]], axis=1)
+                mask = np.where(r <= radius)
+            
+            if viewing_axis == 'x':
+                r = np.linalg.norm(data_dict[parttype_name]['Coordinates'][:,[1,2]], axis=1)
+                mask = np.where(r <= radius)
+            
+            newData = {}
+            for header in data_dict[parttype_name].keys():
+                newData[header] = data_dict[parttype_name][header][mask]
+            
+            new_dict[parttype_name] = newData
         
+        return new_dict
+    
+    def _peculiar_velocity(self, data_dict, debug=False):   
+        # Mass-weighted formula from subhalo paper but accounting for radius
+        vel_weighted    = 0
+        mass_sums       = 0
+        
+        # Don't use gas_sf, and gas_nsf
+        for parttype_name in ['stars', 'gas', 'dm', 'bh']:
+            if len(data_dict[parttype_name]['Mass']) > 0:
+                # Both start at 0, will only append if there are particles to use
+                vel_weighted = vel_weighted + np.sum(data_dict[parttype_name]['Velocity'] * data_dict[parttype_name]['Mass'][:, None], axis=0)
+                mass_sums = mass_sums + np.sum(data_dict[parttype_name]['Mass'])
+                
+        pec_vel_rad = vel_weighted / mass_sums
+            
+        return pec_vel_rad        
+    
+    def _centre_of_mass(self, arr, debug=False):
+        # Mass-weighted formula from subhalo paper
+        mass_weighted  = arr['Coordinates'] * arr['Mass'][:, None]
+        centre_of_mass = np.sum(mass_weighted, axis=0)/np.sum(arr['Mass'])
+    
+        return centre_of_mass
+    
+    def _find_spin(self, arr, random_sample=False, debug=False):
+        
+        # Choose 50% of particles to find spin
+        if random_sample:
+            # For ease of use
+            tmp_coords = arr['Coordinates']
+            tmp_mass = arr['Mass'][:, None]
+            tmp_velocity = arr['Velocity']
+            
+            # Making a random mask of data points... 50% = 0.5
+            random_mask = np.random.choice(tmp_coords.shape[0], int(np.ceil(tmp_coords.shape[0] * 0.5)), replace=False)
+            
+            # Applying mask
+            tmp_coords = tmp_coords[random_mask]
+            tmp_mass   = tmp_mass[random_mask]
+            tmp_velocity = tmp_velocity[random_mask]
+            
+            if debug:
+                print('\ntotal particle count', len(arr['Mass']))
+                print('particle count in rad masked', len(tmp_mass))
+
+            # Finding spin angular momentum vector of each particle
+            L = np.cross(tmp_coords * tmp_mass, tmp_velocity)
+            
+            # Summing for total angular momentum and dividing by mass to get the spin vectors
+            spin = np.sum(L, axis=0)/np.sum(tmp_mass)
+        
+        
+        # Choose all particles to find spin   
+        else:
+            # Finding spin angular momentum vector of each individual particle of gas and stars, where [:, None] is done to allow multiplaction of N3*N1 array. Equation D.25
+            L  = np.cross(arr['Coordinates'] * arr['Mass'][:, None], arr['Velocity'])
+        
+            if debug:
+                print(arr['Mass'][:, None])
+                print(np.sum(arr['Mass']))
+            
+            # Summing for total angular momentum and dividing by mass to get the spin vectors
+            spin = np.sum(L, axis=0)/np.sum(arr['Mass'])
+                
+        # Expressing as unit vector
+        spin_unit = spin / np.linalg.norm(spin)
+        
+        
+        return spin_unit
+        
+    def _misalignment_angle(self, angle1, angle2, debug=False):
+        # Find the misalignment angle
+        angle = np.rad2deg(np.arccos(np.clip(np.dot(angle1/np.linalg.norm(angle1), angle2/np.linalg.norm(angle2)), -1.0, 1.0)))     # [deg]
+        
+        return angle
+
+    def _kappa_co(self, arr, debug=False):        
         # Compute angular momentum within specified radius
-        L  = np.cross(arr['Coordinates'][mask] * arr['Mass'][:, None][mask], arr['Velocity'][mask])
+        L  = np.cross(arr['Coordinates'] * arr['Mass'][:, None], arr['Velocity'])
         # Mask for co-rotating (L_z >= 0)
         L_mask = np.where(L[:,2] >= 0)
         
         # Projected radius along disk within specified radius
-        rad_projected = np.linalg.norm(arr['Coordinates'][:,:2][mask][L_mask], axis=1)
+        rad_projected = np.linalg.norm(arr['Coordinates'][:,:2][L_mask], axis=1)
         
         # Kinetic energy of ordered co-rotation (using only angular momentum in z-axis)
-        K_rot = np.sum(0.5 * np.square(L[:,2][L_mask] / rad_projected) / arr['Mass'][mask][L_mask])
+        K_rot = np.sum(0.5 * np.square(L[:,2][L_mask] / rad_projected) / arr['Mass'][L_mask])
         
         # Total kinetic energy of stars
-        K_tot = np.sum(0.5 * arr['Mass'][mask] * np.square(np.linalg.norm(arr['Velocity'][mask], axis=1)))
+        K_tot = np.sum(0.5 * arr['Mass'] * np.square(np.linalg.norm(arr['Velocity'], axis=1)))
         
-        return K_rot/K_tot
+        return K_rot/K_tot    
         
-    def _centre_of_mass(self, arr, radius, debug=False):
-        # Compute distance to centre and mask all within stelhalfrad
-        r  = np.linalg.norm(arr['Coordinates'], axis=1)
-        mask = np.where(r <= radius)
+    def _orientate(self, axis, att_spin, debug=False):
+        # Finds angle given a defined x, y, z axis:
+        if axis == 'z':
+            # Compute angle between star spin and z axis
+            angle = self._misalignment_angle(np.array([0., 0., 1.]), att_spin)
         
-        # Mass-weighted formula from subhalo paper
-        mass_weighted  = arr['Coordinates'][mask] * arr['Mass'][:, None][mask]
-        centre_of_mass = np.sum(mass_weighted, axis=0)/np.sum(arr['Mass'][mask])
-    
-        return centre_of_mass
-
+            # Find axis of rotation of star spin vector
+            x  = np.array([0., 0., 1.])
+            x -= x.dot(att_spin) * att_spin
+            x /= np.linalg.norm(x)
+            axis_of_rotation = np.cross(att_spin, x)
+            matrix = self._rotation_matrix(axis_of_rotation, angle)
+            
+        if axis == 'y':
+            # Compute angle between star spin and y axis
+            angle = self._misalignment_angle(np.array([0., 1., 0.]), att_spin)
+        
+            # Find axis of rotation of star spin vector
+            x  = np.array([0., 1., 0.])
+            x -= x.dot(att_spin) * att_spin
+            x /= np.linalg.norm(x)
+            axis_of_rotation = np.cross(att_spin, x)
+            matrix = self._rotation_matrix(axis_of_rotation, angle)
+            
+        if axis == 'x':
+            # Compute angle between star spin and y axis
+            angle = self._misalignment_angle(np.array([1., 0., 0.]), att_spin)
+        
+            # Find axis of rotation of star spin vector
+            x  = np.array([1., 0., 0.])
+            x -= x.dot(att_spin) * att_spin
+            x /= np.linalg.norm(x)
+            axis_of_rotation = np.cross(att_spin, x)
+            matrix = self._rotation_matrix(axis_of_rotation, angle)
+            
+        return angle, matrix
+            
 
 
 """ 
@@ -1864,16 +2271,17 @@ def ConvertID(galID, sim):
         myQuery = 'SELECT \
                     SH.GroupNumber, \
                     SH.SubGroupNumber, \
-                    SH.SnapNum \
+                    SH.SnapNum, \
+                    SH.Redshift \
                    FROM \
     			     %s_Subhalo as SH \
                    WHERE \
-    			     SH.GalaxyID = %i'%(sim_name, galID)
+    			     SH.GalaxyID = %s'%(sim_name, galID)
 
         # Execute query.
         myData = sql.execute_query(con, myQuery)
         
-        return myData['GroupNumber'], myData['SubGroupNumber'], myData['SnapNum']
+        return myData['GroupNumber'], myData['SubGroupNumber'], myData['SnapNum'], myData['Redshift']
 
 
 

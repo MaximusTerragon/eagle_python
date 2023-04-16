@@ -11,7 +11,7 @@ import json
 from datetime import datetime
 from tqdm import tqdm
 import eagleSqlTools as sql
-from subhalo_main import Subhalo_Extract, Subhalo, ConvertID, ConvertGN
+from subhalo_main_OLD import Subhalo_Extract, Subhalo, ConvertID, ConvertGN
 from graphformat import graphformat
 
 

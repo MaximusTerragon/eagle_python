@@ -65,6 +65,7 @@ def _plot_stellar_mass_function(csv_sample = 'L12_28_all_sample_misalignment_9.0
                                    sample_mass_limit  = 10**9,            # Lower limit of chosen sample
                                    use_angle          = 'stars_gas_sf',   # Which angles to ensure we have
                                    use_hmr            = 2.0,              # Which HMR ^
+                                   use_satellites     = True,   
                                  #--------------------------
                                  hist_bin_width = 0.2,
                                  #--------------------------
@@ -120,13 +121,15 @@ def _plot_stellar_mass_function(csv_sample = 'L12_28_all_sample_misalignment_9.0
     print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_limit'], sample_input['use_satellites']))
     print('  SAMPLE LENGTH: ', len(GroupNum_List))
     print('\nOUTPUT LOADED:\n  Viewing axis: %s\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s\n  COM min distance: %s\n  Min. particles: %s\n  Min. inclination: %s' %(output_input['viewing_axis'], output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected'], output_input['com_min_distance'], output_input['min_particles'], output_input['min_inclination']))
-    print('\nPLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Population mass limit: %.2E M*\n  Sample mass limit:     %.2E M*' %(use_angle, use_hmr, pop_mass_limit, sample_mass_limit))
+    print('\nPLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Population mass limit: %.2E M*\n  Sample mass limit:     %.2E M*\n  Use satellites:  %s' %(use_angle, use_hmr, pop_mass_limit, sample_mass_limit, use_satellites))
     print('===================')
     
     #------------------------------
     # Check if requested plot is possible with loaded data
     assert use_angle in output_input['angle_selection'], 'Requested angle %s not in output_input' %use_angle
     assert use_hmr in output_input['spin_hmr'], 'Requested HMR %s not in output_input' %use_hmr
+    if use_satellites:
+        assert use_satellites == sample_input['use_satellites'], 'Sample does not contain satellites'
 
     # Create particle list of interested values (used later for flag), and plot labels:
     use_particles = []
@@ -179,6 +182,11 @@ def _plot_stellar_mass_function(csv_sample = 'L12_28_all_sample_misalignment_9.0
             use_particles.append('dm')
         plot_label = 'Gas$_{nsf}$-DM'
     
+    # Setting satellite criteria
+    if use_satellites:
+        satellite_criteria = 99999999
+    if not use_satellites:
+        satellite_criteria = 0
     
     #=================================================  
     # Plotting
@@ -242,7 +250,7 @@ def _plot_stellar_mass_function(csv_sample = 'L12_28_all_sample_misalignment_9.0
             if all_general['%s' %GalaxyID]['stelmass'] >= sample_mass_limit:
                 
                 # Determine if criteria met. If it is, use stelmass
-                if (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[1]]) and use_hmr not in all_flags['%s' %GalaxyID]['com_min_distance'][use_angle]:
+                if (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['com_min_distance'][use_angle]) and (all_general['%s' %GalaxyID]['SubGroupNum'] <= satellite_criteria):
                     plot_stelmass.append(all_general['%s' %GalaxyID]['stelmass'])
                 else:
                     continue
@@ -305,9 +313,15 @@ def _plot_stellar_mass_function(csv_sample = 'L12_28_all_sample_misalignment_9.0
             print('Finished')
         
         metadata_plot = {'Title': 'PLOT CRITERIA SIZE: %s' %len(plot_stelmass)}
+        
+        if use_satellites:
+            sat_str = 'all'
+        if not use_satellites:
+            sat_str = 'cent'
+         
         if savefig:
-            plt.savefig("%s/%s_%s_HMR%s_stellar_mass_func_%s.%s" %(fig_dir, csv_sample, use_angle, str(use_hmr), savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', pad_inches=0.1, dpi=600)    
-            print("\n  SAVED: %s/%s_%s_HMR%s_stellar_mass_func_%s.%s" %(fig_dir, csv_sample, use_angle, str(use_hmr), savefig_txt, file_format))
+            plt.savefig("%s/L%s_%s_%s_misalignment_%s_%s_HMR%s_stellar_mass_func_%s.%s" %(fig_dir, output_input['mySims'][0][1], output_input['snapNum'], sat_str, np.log10(float(output_input['galaxy_mass_limit'])), use_angle, str(use_hmr), savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', pad_inches=0.1, dpi=600)    
+            print("\n  SAVED: %s/L%s_%s_%s_misalignment_%s_%s_HMR%s_stellar_mass_func_%s.%s" %(fig_dir, output_input['mySims'][0][1], output_input['snapNum'], sat_str, np.log10(float(output_input['galaxy_mass_limit'])), use_angle, str(use_hmr), savefig_txt, file_format))
         if showfig:
             plt.show()
         plt.close()

@@ -1,30 +1,45 @@
 import h5py
 import numpy as np
+import math
 import random
 import inspect
 import matplotlib as mpl
 import matplotlib.pyplot as plt 
 import matplotlib.colors as colors
 import matplotlib.cm as cm
+from matplotlib.ticker import PercentFormatter
+from matplotlib.lines import Line2D
 import astropy.units as u
 import csv
 import json
 import time
-import math
 from datetime import datetime
 from tqdm import tqdm
-from matplotlib.ticker import PercentFormatter
-from subhalo_main import Subhalo_Extract, Subhalo, ConvertID, ConvertGN
+from subhalo_main_new import Initial_Sample, Subhalo_Extract, Subhalo_Analysis, ConvertID
 import eagleSqlTools as sql
-from graphformat import graphformat
+from graphformat import set_rc_params
 
 
-# list of simulations
-mySims = np.array([('RefL0012N0188', 12)])   
+# Directories
+EAGLE_dir       = '/Users/c22048063/Documents/EAGLE'
+dataDir_main    = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/'
+# Directories serpens
+#EAGLE_dir       = '/home/user/c22048063/Documents/EAGLE'
+#data_Dir_main   = '/home/universe/spxtd1-shared/RefL0100N1504/'
+
+
+# Other directories
+sample_dir      = EAGLE_dir + '/samples'
+output_dir      = EAGLE_dir + '/outputs'
+fig_dir         = EAGLE_dir + '/plots'
 
 # Directories of data hdf5 file(s)
-dataDir_main = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/'
 dataDir_dict = {}
+dataDir_dict['10'] = dataDir_main + 'snapshot_010_z003p984/snap_010_z003p984.0.hdf5'
+dataDir_dict['11'] = dataDir_main + 'snapshot_011_z003p528/snap_011_z003p528.0.hdf5'
+dataDir_dict['12'] = dataDir_main + 'snapshot_012_z003p017/snap_012_z003p017.0.hdf5'
+dataDir_dict['13'] = dataDir_main + 'snapshot_013_z002p478/snap_013_z002p478.0.hdf5'
+dataDir_dict['14'] = dataDir_main + 'snapshot_014_z002p237/snap_014_z002p237.0.hdf5'
 dataDir_dict['15'] = dataDir_main + 'snapshot_015_z002p012/snap_015_z002p012.0.hdf5'
 dataDir_dict['16'] = dataDir_main + 'snapshot_016_z001p737/snap_016_z001p737.0.hdf5'
 dataDir_dict['17'] = dataDir_main + 'snapshot_017_z001p487/snap_017_z001p487.0.hdf5'
@@ -40,8 +55,9 @@ dataDir_dict['26'] = dataDir_main + 'snapshot_026_z000p183/snap_026_z000p183.0.h
 dataDir_dict['27'] = dataDir_main + 'snapshot_027_z000p101/snap_027_z000p101.0.hdf5'
 dataDir_dict['28'] = dataDir_main + 'snapshot_028_z000p000/snap_028_z000p000.0.hdf5'
 #dataDir = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/snapshot_0%s_z000p101/snap_0%s_z000p101.0.hdf5' %(snapNum, snapNum)
+#dataDir = '/home/universe/spxtd1-shared/RefL0100N1504/snapshot_0%s_z000p000/snap_0%s_z000p000.0.hdf5' %(snapNum, snapNum)
 
- 
+
 
 """  
 DESCRIPTION
@@ -65,467 +81,662 @@ SAMPLE:
 
 
 """
-#1, 2, 3, 4, 6, 5, 7, 9, 14, 16, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
-def plot_radial_misalignment(manual_GalaxyIDList = np.array([3748]),       # leave empty if ignore
-                               manual_GroupNumList = np.array([]),           # manually enter galaxy gns we want
-                               SubGroupNum         = 0,
-                               snapNum             = 28,
-                                 galaxy_mass_limit = 10**9.5,                         # for print 
-                                 csv_load       = True,              # .csv file will ALL data
-                                   csv_load_name = 'data_radial_2023-04-05 23:22:32.160462',       #FIND IN LINUX, mac is weird
-                             kappa_rad_in    = 30,                          # calculate kappa for this radius [pkpc]    
-                             aperture_rad_in = 30,                          # trim all data to this maximum value before calculations
-                             trim_hmr_in     = np.array([100]),             # keep as 100, doesn't matter as capped by aperture anyway
-                             align_rad_in    = False,                       # keep on False   
-                             orientate_to_axis='z',                         # keep as z
-                             viewing_angle=0,                               #keep as 0
-                                     find_uncertainties      = True,                    # whether to find 2D and 3D uncertainties
-                                     spin_hmr_in             = np.arange(0.5, 10.5, 0.25), #np.arange(0.5, 10.01, 0.25),    # multiples of rad
-                                     viewing_axis            = 'z',                     # Which axis to view galaxy from.  DEFAULT 'z'
-                                     com_min_distance        = 2.0,                     # [pkpc] min distance between sfgas and stars. Min radius of spin_rad_in used
-                                     gas_sf_min_particles    = 20,                      # Minimum gas sf particles to use galaxy.  DEFAULT 100
-                                     min_inclination         = 0,                       # Minimum inclination toward viewing axis [deg] DEFAULT 0
-                                     projected_or_abs        = 'projected',              # 'projected' or 'abs'
-                                     angle_type_in           = np.array(['stars_gas', 'stars_gas_sf']),       # analytical results for constituent particles will be found. ei., stars_gas_sf will mean stars and gas_sf properties will be found, and the angles between them                                                           
-                             plot_single = True,                    # whether to create single plots. Keep on TRUE
-                                     plot_2D_3D           = '2D',                # whether to plot 2D or 3D angle
-                                     rad_type_plot        = 'hmr',               # 'rad' whether to use absolute distance or hmr 
-                             root_file = '/Users/c22048063/Documents/EAGLE/plots',
-                             file_format = 'pdf',
-                               print_galaxy       = False,
-                               print_galaxy_short = False,
-                               print_progress     = True,
-                               csv_file = False,                     # whether to create a csv file of used data
-                                 csv_name = 'data_radial',          # name of .csv file
-                               savefig = False,
-                               showfig = True,  
-                                 savefigtxt = '_pdf', 
-                               debug = False):         
-          
-    time_start = time.time()   
-    
-    if csv_load:
-        # Load existing sample
-        dict_new = json.load(open(r'%s/%s.csv' %(root_file, csv_load_name), 'r'))
-        
-        all_misangles       = dict_new['all_misangles']
-        all_coms            = dict_new['all_coms']
-        all_particles       = dict_new['all_particles']
-        all_misanglesproj   = dict_new['all_misanglesproj']
-        all_general         = dict_new['all_general']
-        all_flags           = dict_new['all_flags']
+# Run analysis on individual galaxies and output individual CSV files
+def _radial_analysis(csv_sample = False,              # Whether to read in existing list of galaxies  
+                       #--------------------------
+                       mySims = [('RefL0012N0188', 12)],
+                       GalaxyID_List = [37445],               # Will create a csv file for each galaxy
+                       #--------------------------
+                       # Galaxy extraction properties
+                       viewing_axis        = 'z',                  # Which axis to view galaxy from.  DEFAULT 'z'
+                       aperture_rad        = 30,                   # trim all data to this maximum value before calculations [pkpc]
+                       kappa_rad           = 30,                   # calculate kappa for this radius [pkpc]
+                       trim_hmr = np.array([100]),                 # keep as 100... will be capped by aperture anyway. Doesn't matter
+                       align_rad = False,                          # keep on False
+                       orientate_to_axis='z',                      # Keep as z
+                       viewing_angle = 0,                          # Keep as 0
+                       #-----------------------------------------------------
+                       # Misalignments we want extracted and at which radii
+                       angle_selection     = ['stars_gas',            # stars_gas     stars_gas_sf    stars_gas_nsf
+                                              'stars_gas_sf',         # gas_dm        gas_sf_dm       gas_nsf_dm
+                                              'stars_gas_nsf',        # gas_sf_gas_nsf
+                                              'gas_sf_gas_nsf',
+                                              'stars_dm'],           
+                       spin_hmr            = np.arange(0.5, 10.1, 0.5),          # multiples of hmr for which to find spin
+                       find_uncertainties  = True,                    # whether to find 2D and 3D uncertainties
+                       rad_projected       = True,                     # whether to use rad in projection or 3D
+                       #--------------------------
+                       # Selection criteria
+                       com_min_distance    = 2.0,               # [pkpc] min distance between sfgas and stars.  DEFAULT 2.0 
+                       min_particles       = 20,                # Minimum particles to find spin.  DEFAULT 20
+                       min_inclination     = 0,                 # Minimum inclination toward viewing axis [deg] DEFAULT 0
+                       #--------------------------   
+                       csv_file       = True,                   # Will write sample to csv file in sapmle_dir
+                         csv_name     = '',                     # extra stuff at end
+                       #--------------------------
+                       print_progress = False,
+                       print_galaxy   = True,
+                       debug = False):
 
-        # these will all be lists, they need to be transformed into arrays
-        print('LOADED CSV:')
-        print(dict_new['function_input'])
+
+    #============================================
+    # Extracting GroupNum_List, SubGroupNum_List and SnapNum_List
+    if print_progress:
+        print('Extracting GroupNum, SubGroupNum, SnapNum lists')
+        time_start = time.time()
         
-        GroupNumList = all_general.keys()
-        SubGroupNumList = np.full(len(GroupNumList), SubGroupNum)
+    
+    #---------------------------------------------
+    # Use IDs and such from sample
+    if csv_sample:
+        # Load sample csv
+        if print_progress:
+            print('Loading initial sample')
+            time_start = time.time()
         
-        
-    if not csv_load:
-        
-        # Creating list (usually just single galaxy)
-        if len(manual_GroupNumList) > 0:
-            # Converting names of variables for consistency
-            GroupNumList    = manual_GroupNumList
-            SubGroupNumList = np.full(len(manual_GroupNumList), SubGroupNum)
-        elif len(manual_GalaxyIDList) > 0:
-            # Extract GroupNum, SubGroupNum, and Snap for each ID
-            GroupNumList    = []
-            SubGroupNumList = []
-            for galID in manual_GalaxyIDList:
-                gn, sgn, snap = ConvertID(galID, mySims)
+    
+        # Loading sample
+        dict_new = json.load(open('%s/%s.csv' %(sample_dir, csv_sample), 'r'))
+    
+    
+        # Extract GroupNum etc.
+        GroupNum_List       = np.array(dict_new['GroupNum'])
+        SubGroupNum_List    = np.array(dict_new['SubGroupNum'])
+        GalaxyID_List       = np.array(dict_new['GalaxyID'])
+        SnapNum_List        = np.array(dict_new['SnapNum'])
+        sample_input        = dict_new['sample_input']
+        mySims              = sample_input['mySims']
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+        if debug:
+            print(sample_input)
+            print(GroupNum_List)
+            print(SubGroupNum_List)
+            print(GalaxyID_List)
+            print(SnapNum_List)
        
-                # Append to arrays
-                GroupNumList.append(gn)
-                SubGroupNumList.append(sgn)
+        print('\n===================')
+        print('SAMPLE LOADED:\n  %s\n  GalaxyIDs: %s' %(mySims[0][0], GalaxyID_List))
+        print('  SAMPLE LENGTH: ', len(GroupNum_List))
+        print('===================')
         
-        #-------------------------------------------------------------------
-        # Automating some later variables to avoid putting them in manually
+    #---------------------------------------------
+    # If no csv_sample given, use GalaxyID_List
+    else:
+        # Extract GroupNum, SubGroupNum, and Snap for each ID
+        GroupNum_List    = []
+        SubGroupNum_List = []
+        SnapNum_List     = []
+        Redshift_List    = []
+        for galID in GalaxyID_List:
+            gn, sgn, snap, z = ConvertID(galID, mySims)
     
-        # making particle_list_in and angle_selection obsolete:
-        particle_list_in = []
-        angle_selection  = []
-        if 'stars_gas' in angle_type_in:
-            if 'stars' not in particle_list_in:
-                particle_list_in.append('stars')
-            if 'gas' not in particle_list_in:
-                particle_list_in.append('gas')
-            angle_selection.append(['stars', 'gas'])
-        if 'stars_gas_sf' in angle_type_in:
-            if 'stars' not in particle_list_in:
-                particle_list_in.append('stars')
-            if 'gas_sf' not in particle_list_in:
-                particle_list_in.append('gas_sf')
-            angle_selection.append(['stars', 'gas_sf'])
-        if 'stars_gas_nsf' in angle_type_in:
-            if 'stars' not in particle_list_in:
-                particle_list_in.append('stars')
-            if 'gas_nsf' not in particle_list_in:
-                particle_list_in.append('gas_nsf')
-            angle_selection.append(['stars', 'gas_nsf'])
-        if 'gas_sf_gas_nsf' in angle_type_in:
-            if 'gas_sf' not in particle_list_in:
-                particle_list_in.append('gas_sf')
-            if 'gas_nsf' not in particle_list_in:
-                particle_list_in.append('gas_nsf')
-            angle_selection.append(['gas_sf', 'gas_nsf'])
-        #-------------------------------------------------------------------
+            # Append to arrays
+            GroupNum_List.append(gn)
+            SubGroupNum_List.append(sgn)
+            SnapNum_List.append(snap)
+            Redshift_List.append(z)
+            
+        if debug:
+            print(GroupNum_List)
+            print(SubGroupNum_List)
+            print(GalaxyID_List)
+            print(SnapNum_List)
+            
+        print('\n===================')
+        print('SAMPLE INPUT:\n  %s\n  GalaxyIDs: %s' %(mySims, GalaxyID_List))
+        print('  SAMPLE LENGTH: ', len(GroupNum_List))
+        print('===================')
+        
+    if print_progress:
+        print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
     
-        # Empty dictionaries to collect relevant data
-        all_flags         = {}          # has reason why galaxy failed sample
-        all_general       = {}          # has total masses, kappa, halfmassrad
-        all_coms          = {}
-        all_misangles     = {}          # has all 3d angles
-        all_particles     = {}          # has all the particle count and mass within rad
-        all_misanglesproj = {}   # has all 2d projected angles from 3d when given a viewing axis and viewing_angle = 0
+    
+    #---------------------------------------------
+    # Empty dictionaries to collect relevant data
+    all_flags         = {}          # has reason why galaxy failed sample
+    all_general       = {}          # has total masses, kappa, halfmassrad, etc.
+    #all_coms          = {}          # has all C.o.Ms
+    #all_spins         = {}          # has all spins
+    all_counts        = {}          # has all the particle count within rad
+    all_masses        = {}          # has all the particle mass within rad
+    all_misangles     = {}          # has all 3D angles
+    all_misanglesproj = {}          # has all 2D projected angles from 3d when given a viewing axis and viewing_angle = 0
+    
+    output_input = {'angle_selection': angle_selection,
+                    'spin_hmr': spin_hmr,
+                    'find_uncertainties': find_uncertainties,
+                    'rad_projected': rad_projected,
+                    'viewing_axis': viewing_axis,
+                    'aperture_rad': aperture_rad,
+                    'kappa_rad': kappa_rad,
+                    'com_min_distance': com_min_distance,
+                    'min_particles': min_particles,
+                    'min_inclination': min_inclination,
+                    'mySims': mySims}
+    
+    
+    #=================================================================== 
+    # Run analysis for each individual galaxy in loaded sample
+    for GroupNum, SubGroupNum, GalaxyID, SnapNum in tqdm(zip(GroupNum_List, SubGroupNum_List, GalaxyID_List, SnapNum_List), total=len(GroupNum_List)):
+    
+        if print_progress:
+             print('Extracting particle data Subhalo_Extract()')
+             time_start = time.time()
         
     
-        #=================================================================== 
-        for GroupNum, SubGroupNum in tqdm(zip(GroupNumList, SubGroupNumList), total=len(GroupNumList)): 
+        # Initial extraction of galaxy particle data
+        galaxy = Subhalo_Extract(mySims, dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, aperture_rad, viewing_axis)
+        # Gives: galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, galaxy.halo_mass
         
-            if print_progress:
-                print('Extracting particle data Subhalo_Extract()')
-                time_start = time.time()
+        if debug:
+            print(galaxy.gn, galaxy.sgn, galaxy.centre, galaxy.halfmass_rad, galaxy.halfmass_rad_proj)
+    
         
-            # Initial extraction of galaxy data
-            galaxy = Subhalo_Extract(mySims, dataDir_dict['%s' %str(snapNum)], snapNum, GroupNum, SubGroupNum, aperture_rad_in, viewing_axis)
+        #-----------------------------
+        # Begin subhalo analysis
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+            print('Running particle data analysis Subhalo_Analysis()')
+            time_start = time.time()
+       
+        # Set spin_rad here
+        if rad_projected == True:
+            spin_rad = np.array(spin_hmr) * galaxy.halfmass_rad_proj
+            spin_hmr_tmp = spin_hmr
             
-            #-------------------------------------------------------------------
-            # Automating some later variables to avoid putting them in manually
-            if projected_or_abs == 'projected':
-                use_rad = galaxy.halfmass_rad_proj
-            elif projected_or_abs == 'abs':
-                use_rad = galaxy.halfmass_rad
+            # Reduce spin_rad array if value exceeds aperture_rad... means not all dictionaries will have same number of array spin values
+            spin_rad = [x for x in spin_rad if x <= aperture_rad]
+            spin_hmr = [x for x in spin_hmr if x*galaxy.halfmass_rad_proj <= aperture_rad]
             
-            spin_rad = spin_hmr_in * use_rad                                          #pkpc
-            spin_rad = [x for x in spin_rad if x <= aperture_rad_in]
-            spin_hmr = [x for x in spin_hmr_in if x*use_rad <= aperture_rad_in]
-            if len(spin_rad) != len(spin_hmr_in):
-                print('Capped spin_rad (%s pkpc) at aperture radius (%s pkpc)' %(max(spin_rad), aperture_rad_in))
+            if len(spin_hmr) != len(spin_hmr_tmp):
+                print('Capped spin_rad (%s pkpc) at aperture radius (%s pkpc)' %(spin_rad[-1], aperture_rad))
+        elif rad_projected == False:
+            spin_rad = np.array(spin_hmr) * galaxy.halfmass_rad
+            spin_hmr_tmp = spin_hmr
             
-            trim_hmr = trim_hmr_in
-            aperture_rad = aperture_rad_in
+            # Reduce spin_rad array if value exceeds aperture_rad... means not all dictionaries will have same number of array spin values
+            spin_rad = [x for x in spin_rad if x <= aperture_rad]
+            spin_hmr = [x for x in spin_hmr if x*galaxy.halfmass_rad <= aperture_rad]
             
-            if kappa_rad_in == 'rad':
-                kappa_rad = use_rad
-            elif kappa_rad_in == 'tworad':
-                kappa_rad = 2*use_rad
-            else:
-                kappa_rad = kappa_rad_in
-            if align_rad_in == 'rad':
-                align_rad = use_rad
-            elif align_rad_in == 'tworad':
-                align_rad = use_rad
-            else:
-                align_rad = align_rad_in  
-            #------------------------------------------------------------------
+            if len(spin_hmr) != len(spin_hmr_tmp):
+                print('Capped spin_rad (%s pkpc) at aperture radius (%s pkpc)' %(spin_rad[-1], aperture_rad))
         
+        
+        # If we want the original values, enter 0 for viewing angle
+        subhalo = Subhalo_Analysis(mySims, GroupNum, SubGroupNum, GalaxyID, SnapNum, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, 
+                                            viewing_axis,
+                                            aperture_rad,
+                                            kappa_rad, 
+                                            trim_hmr, 
+                                            align_rad,              #align_rad = False
+                                            orientate_to_axis,
+                                            viewing_angle,
+                                            
+                                            angle_selection,        
+                                            spin_rad,
+                                            spin_hmr,
+                                            find_uncertainties,
+                                            
+                                            com_min_distance,
+                                            min_particles,                                            
+                                            min_inclination)
+    
+
+        """ FLAGS
+        ------------
+        #print(subhalo.flags['total_particles'])            # will flag if there are missing particles within aperture_rad
+        #print(subhalo.flags['min_particles'])              # will flag if min. particles not met within spin_rad (will find spin if particles exist, but no uncertainties)
+        #print(subhalo.flags['min_inclination'])            # will flag if inclination angle not met within spin_rad... all spins and uncertainties still calculated
+        #print(subhalo.flags['com_min_distance'])           # will flag if com distance not met within spin_rad... all spins and uncertainties still calculated
+        ------------
+        """
+        
+        #--------------------------------
+        # Collecting all relevant particle info for galaxy
+        all_flags['%s' %str(subhalo.GalaxyID)]          = subhalo.flags
+        all_general['%s' %str(subhalo.GalaxyID)]        = subhalo.general
+        all_counts['%s' %str(subhalo.GalaxyID)]         = subhalo.counts
+        all_masses['%s' %str(subhalo.GalaxyID)]         = subhalo.masses
+        all_misangles['%s' %str(subhalo.GalaxyID)]      = subhalo.mis_angles
+        all_misanglesproj['%s' %str(subhalo.GalaxyID)]  = subhalo.mis_angles_proj
+        #---------------------------------
+          
+        if print_galaxy:
+            print('ID:\t%s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f' %(str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'])) 
+        
+        
+        #===================================================================
+        if csv_file: 
+            # Converting numpy arrays to lists. When reading, may need to simply convert list back to np.array() (easy)
+            class NumpyEncoder(json.JSONEncoder):
+                ''' Special json encoder for numpy types '''
+                def default(self, obj):
+                    if isinstance(obj, np.integer):
+                        return int(obj)
+                    elif isinstance(obj, np.floating):
+                        return float(obj)
+                    elif isinstance(obj, np.ndarray):
+                        return obj.tolist()
+                    return json.JSONEncoder.default(self, obj)
+                  
             if print_progress:
                 print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                print('Running particle data analysis Subhalo()')
-                time_start = time.time()
+                print('Writing to csv...')
+                time_start = time.time() 
+        
+            # Combining all dictionaries
+            csv_dict = {'all_general': all_general,
+                        'all_counts': all_counts,
+                        'all_masses': all_masses,
+                        'all_misangles': all_misangles,
+                        'all_misanglesproj': all_misanglesproj, 
+                        'all_flags': all_flags,
+                        'output_input': output_input}
+            #csv_dict.update({'function_input': str(inspect.signature(_misalignment_distribution))})
+        
+            #-----------------------------
+            # File names
+            angle_str = ''
+            for angle_name in list(angle_selection):
+                angle_str = '%s_%s' %(str(angle_str), str(angle_name))
             
-            # Galaxy will be rotated to calc_kappa_rad's stellar spin value        
-            with np.errstate(divide='ignore', invalid='ignore'):
-                # subhalo.halfmass_rad_proj will be either projected or absolute, use this
-                subhalo = Subhalo(galaxy.gn, galaxy.sgn, galaxy.GalaxyID, galaxy.stelmass, galaxy.gasmass, galaxy.halfmass_rad, use_rad, galaxy.centre, galaxy.centre_mass, galaxy.perc_vel, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, galaxy.MorphoKinem,
-                                                    angle_selection,
-                                                    viewing_angle,
-                                                    spin_rad,
-                                                    spin_hmr,
-                                                    trim_hmr, 
-                                                    kappa_rad, 
-                                                    aperture_rad,
-                                                    align_rad,              #align_rad = False
-                                                    orientate_to_axis,
-                                                    viewing_axis,
-                                                    com_min_distance,
-                                                    gas_sf_min_particles,
-                                                    particle_list_in,
-                                                    angle_type_in,
-                                                    find_uncertainties,
-                                                    min_inclination,
-                                                    quiet=True)
-            print(subhalo.flags)
+            uncertainty_str = 'noErr'    
+            if find_uncertainties:
+                uncertainty_str = 'Err'   
+            
+            rad_str = 'Rad'    
+            if rad_projected:
+                rad_str = 'RadProj'
         
-            #--------------------------------
-            # Collecting all relevant particle info for galaxy
-            all_general['%s' %str(subhalo.gn)]       = subhalo.general
-            all_flags['%s' %str(subhalo.gn)]         = subhalo.flags
-            all_particles['%s' %str(subhalo.gn)]     = subhalo.particles
-            all_coms['%s' %str(subhalo.gn)]          = subhalo.coms
-            all_misangles['%s' %str(subhalo.gn)]     = subhalo.mis_angles
-            all_misanglesproj['%s' %str(subhalo.gn)] = subhalo.mis_angles_proj
-            #---------------------------------
+            
         
-            # Print galaxy properties
-            if print_galaxy == True:
-                print('\nGROUP NUMBER:           %s' %str(subhalo.gn)) 
-                print('STELLAR MASS [Msun]:    %.3f' %np.log10(subhalo.stelmass))       # [Msun]
-                print('HALFMASS RAD [pkpc]:    %.3f' %subhalo.halfmass_rad)             # [pkpc]
-                print('KAPPA:                  %.2f' %subhalo.kappa)
-                print('KAPPA GAS SF:           %.2f' %subhalo.kappa_gas_sf)
-                print('KAPPA RAD CALC [pkpc]:  %s'   %str(kappa_rad_in))
-                mask = np.where(np.array(subhalo.coms['hmr'] == min(spin_hmr_in)))
-                print('C.O.M %s HMR STARS-SF [pkpc]:  %.2f' %(str(min(spin_hmr_in)), subhalo.coms['stars_gas_sf'][int(mask[0])]))
-            elif print_galaxy_short == True:
-                print('GN:\t%s\t|ID:\t%s\t|HMR:\t%.2f\t|KAPPA / SF:\t%.2f  %.2f' %(str(subhalo.gn), str(subhalo.GalaxyID), subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'], subhalo.general['kappa_gas_sf'])) 
-                
+            # Writing one massive JSON file
+            json.dump(csv_dict, open('%s/L%s_radial_ID%s_%s_%s_%s_%s.csv' %(output_dir, mySims[0][1], GalaxyID, rad_str, uncertainty_str, angle_str, csv_name), 'w'), cls=NumpyEncoder)
+            print('\n  SAVED: %s/L%s_radial_ID%s_%s_%s_%s_%s.csv' %(output_dir, mySims[0][1], GalaxyID, rad_str, uncertainty_str, angle_str, csv_name))
+            if print_progress:
+                print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
         
-            #===================================================================
-            if csv_file: 
-                # Converting numpy arrays to lists. When reading, may need to simply convert list back to np.array() (easy)
-                class NumpyEncoder(json.JSONEncoder):
-                    """ Special json encoder for numpy types """
-                    def default(self, obj):
-                        if isinstance(obj, np.integer):
-                            return int(obj)
-                        elif isinstance(obj, np.floating):
-                            return float(obj)
-                        elif isinstance(obj, np.ndarray):
-                            return obj.tolist()
-                        return json.JSONEncoder.default(self, obj)
-                
-                # Combining all dictionaries
-                csv_dict = {'all_flags': all_flags, 'all_general': all_general, 'all_misangles': all_misangles, 'all_misanglesproj': all_misanglesproj, 'all_coms': all_coms, 'all_particles': all_particles}
-                csv_dict.update({'function_input': str(inspect.signature(plot_radial_misalignment))})
+            # Reading JSON file
+            """ 
+            # Ensuring the sample and output originated together
+            csv_output = csv_sample + csv_output
         
-                # Writing one massive JSON file
-                json.dump(csv_dict, open('%s/%s_%s.csv' %(root_file, csv_name, str(datetime.now())), 'w'), cls=NumpyEncoder)
+            # Loading sample
+            dict_sample = json.load(open('%s/%s.csv' %(sample_dir, csv_sample), 'r'))
+            GroupNum_List       = np.array(dict_sample['GroupNum'])
+            SubGroupNum_List    = np.array(dict_sample['SubGroupNum'])
+            GalaxyID_List       = np.array(dict_sample['GalaxyID'])
+            SnapNum_List        = np.array(dict_sample['SnapNum'])
         
-                """# Reading JSON file
-                dict_new = json.load(open('%s/%s.csv' %(root_file, csv_name), 'r'))
-                # example nested dictionaries
-                new_general = dict_new['all_general']
-                new_misanglesproj = dict_new['all_misanglesproj']
-                # example accessing function input
-                function_input = dict_new['function_input']"""
+            # Loading output
+            dict_output = json.load(open('%s/%s.csv' %(output_dir, csv_output), 'r'))
+            all_general         = dict_output['all_general']
+            all_counts          = dict_output['all_counts']
+            all_masses          = dict_output['all_masses']
+            all_misangles       = dict_output['all_misangles']
+            all_misanglesproj   = dict_output['all_misanglesproj']
+            all_flags           = dict_output['all_flags']
     
-        
- 
-    #===================================================================
-    # Plot for a single galaxy showing how misalignment angle varies with increasing radius
-    def _plot_single(quiet=1, debug=False):
-        
-        # Plots 3D projected misalignment angle from a viewing axis
-        if plot_2D_3D == '2D':
-            for GroupNum in GroupNumList:
-                # Initialise figure
-                graphformat(8, 9, 9, 9, 9, 4.5, 3.75)
-                fig, axs = plt.subplots(nrows=2, ncols=1, gridspec_kw={'height_ratios': [3, 1]}, figsize=(3.15, 3.15), sharex=True, sharey=False)
-                
-                plot_count = 0
-                
-                for angle_type_in_i in angle_type_in:
-                    # Collect values to plot
-                    rad_points    = []
-                    gas_sf_frac   = []
-                    pa_points     = []
-                    pa_points_lo  = []
-                    pa_points_hi  = []
-                    GroupNumPlot       = []
-                    GroupNumNotPlot    = []
-                
-                    
-                    # If galaxy not flagged, use galaxy
-                    if len(all_flags['%s' %str(GroupNum)]) == 0:
-                        for i in np.arange(0, len(all_misanglesproj['%s' %str(GroupNum)][viewing_axis]['%s' %rad_type_plot]), 1):
-                            rad_points.append(all_misanglesproj['%s' %str(GroupNum)][viewing_axis]['%s' %rad_type_plot][i])
-                            pa_points.append(all_misanglesproj['%s' %str(GroupNum)][viewing_axis]['%s_angle' %angle_type_in_i][i])
-                    
-                            # lower and higher, where error is [lo, hi] in _misanglesproj[...]
-                            pa_points_lo.append(all_misanglesproj['%s' %str(GroupNum)][viewing_axis]['%s_angle_err' %angle_type_in_i][i][0])
-                            pa_points_hi.append(all_misanglesproj['%s' %str(GroupNum)][viewing_axis]['%s_angle_err' %angle_type_in_i][i][1])
-                        
-                            if plot_count == 0:
-                                # Gas sf fraction
-                                gas_sf_frac.append(all_particles['%s' %str(GroupNum)]['gas_sf_mass'][i]  / all_particles['%s' %str(GroupNum)]['gas_mass'][i])
-                        
-                    
-                        GroupNumPlot.append(GroupNum)
-                    else:
-                        print('VOID: flagged')
-                        print(all_flags['%s' %str(GroupNum)])
-                        GroupNumNotPlot.append(GroupNum)
-                
-                    if debug == True:
-                        print('\nrad ', rad_points)
-                        print('proj', pa_points)
-                        print('lo', pa_points_lo)
-                        print('hi', pa_points_hi)
+            # Loading sample criteria
+            sample_input        = dict_sample['sample_input']
+            output_input        = dict_output['output_input']
     
-    
-                    # Plot scatter and errorbars
-                    #plt.errorbar(rad_points, pa_points, xerr=None, yerr=pa_points_err, label='2D projected', alpha=0.8, ms=2, capsize=4, elinewidth=1, markeredgewidth=1)
-                    if angle_type_in_i == 'stars_gas':
-                        axs[0].plot(rad_points, pa_points, label='Gas', alpha=1.0, ms=2, lw=1)
-                    if angle_type_in_i == 'stars_gas_sf':
-                        axs[0].plot(rad_points, pa_points, label='SF gas', alpha=1.0, ms=2, lw=1)
-                    axs[0].fill_between(rad_points, pa_points_lo, pa_points_hi, alpha=0.3)
-        
-                    if plot_count == 0:
-                        # Plot star forming fraction
-                        axs[1].plot(rad_points, gas_sf_frac, alpha=1.0, lw=1, c='k')
-        
-        
-                ### General formatting 
-                if rad_type_plot == 'hmr':
-                    axs[0].set_xlim(0, max(spin_hmr_in))
-                    axs[0].set_xticks(np.arange(0, max(spin_hmr_in)+1, 1))
-                    axs[1].set_xlabel('Stellar half-mass radius')
-                if rad_type_plot == 'rad':
-                    axs[0].set_xlim(0, max(spin_hmr_in * float(all_general['%s' %str(GroupNum)]['halfmass_rad_proj'])))
-                    axs[0].set_xticks(np.arange(0, max(spin_hmr_in * float(all_general['%s' %str(GroupNum)]['halfmass_rad_proj']))+1, 5))
-                    axs[1].set_xlabel('Radial distance from centre [pkpc]')
-
-                axs[0].set_ylabel('Stellar-gas PA misalignment')
-                axs[1].set_ylabel('f$_{gas_{sf}/gas_{tot}}$')
-                axs[0].set_yticks(np.arange(0, 181, 30))
-                axs[1].set_yticks(np.arange(0, 1.1, 0.25))
-                axs[1].set_yticklabels(['0', '', '', '', '1'])
-                axs[0].set_ylim(0, 180)
-                axs[1].set_ylim(0, 1)
-                #axs[0].set_title('Radial 2D\nGroupNum %s: %s, particles: %i, com: %.1f, ax: %s' %(str(subhalo.gn), angle_type_in, gas_sf_min_particles, com_min_distance, viewing_axis))
-    
-                axs[0].set_title('GalaxyID: %s' %all_general['%s' %str(GroupNum)]['GalaxyID'])
-                axs[0].legend(loc='lower right', frameon=False, labelspacing=0.1, fontsize=9, labelcolor='linecolor', handlelength=0)
-                for ax in axs:
-                    ax.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='both', width=0.8, length=2)
-    
-                # other
-                axs[0].grid(alpha=0.3)
-                axs[1].grid(alpha=0.3)
-                plt.tight_layout()
-    
-                # savefig
-                if savefig == True:
-                    plt.savefig('%s/Radial2D_gn%s_id%s_mass%s_%s_part%s_com%s_ax%s%s.%s' %(str(root_file), str(all_general['%s' %str(GroupNum)]['gn']), str(all_general['%s' %str(GroupNum)]['GalaxyID']), str('%.2f' %np.log10(float(all_general['%s' %str(GroupNum)]['stelmass']))), angle_type_in, str(gas_sf_min_particles), str(com_min_distance), viewing_axis, savefigtxt, file_format), format='%s' %file_format, dpi=300, bbox_inches='tight', pad_inches=0.2)
-                if showfig == True:
-                    plt.show()
-                plt.close()
-                
-                plot_count = plot_count+1
-                
-            
-           
-            
-            
-        # Plots analytical misalignment angle in 3D space
-        if plot_2D_3D == '3D':
-            for GroupNum in GroupNumList:
-                # Initialise figure
-                graphformat(8, 11, 11, 9, 11, 4.5, 3.75)
-                fig, axs = plt.subplots(nrows=2, ncols=1, gridspec_kw={'height_ratios': [3, 1]}, figsize=(3.15, 3.15), sharex=True, sharey=False)
-                
-                plot_count = 0
-                
-                for angle_type_in_i in angle_type_in:
-                    # Collect values to plot
-                    rad_points    = []
-                    gas_sf_frac   = []
-                    pa_points     = []
-                    pa_points_lo  = []
-                    pa_points_hi  = []
-                    GroupNumPlot       = []
-                    GroupNumNotPlot    = []
-            
-                    # If galaxy not flagged, use galaxy
-                    if len(all_flags['%s' %str(GroupNum)]) == 0:
-                        for i in np.arange(0, len(all_misangles['%s' %str(GroupNum)]['%s' %rad_type_plot]), 1):
-                            rad_points.append(all_misangles['%s' %str(GroupNum)]['%s' %rad_type_plot][i])
-                            pa_points.append(all_misangles['%s' %str(GroupNum)]['%s_angle' %angle_type_in_i][i])
-                        
-                            # lower and higher, where error is [lo, hi] in _misanglesproj[...]
-                            pa_points_lo.append(all_misangles['%s' %str(GroupNum)]['%s_angle_err' %angle_type_in_i][i][0])
-                            pa_points_hi.append(all_misangles['%s' %str(GroupNum)]['%s_angle_err' %angle_type_in_i][i][1])
-                            
-                            if plot_count == 0:
-                                # Gas sf fraction
-                                gas_sf_frac.append(all_particles['%s' %str(GroupNum)]['gas_sf_mass'][i]  / all_particles['%s' %str(GroupNum)]['gas_mass'][i])
-                            
-                        
-                        GroupNumPlot.append(GroupNum)
-                    else:
-                        print('VOID: flagged')
-                        print(all_flags['%s' %str(GroupNum)].items())
-                        GroupNumNotPlot.append(GroupNum)
-                
-                    
-                    if debug == True:
-                        print('\nrad ', rad_points)
-                        print('proj', pa_points)
-                        print('lo', pa_points_lo)
-                        print('hi', pa_points_hi)
-            
-            
-            
-                    # Plot scatter and errorbars
-                    #plt.errorbar(rad_points, pa_points, xerr=None, yerr=pa_points_err, label='2D projected', alpha=0.8, ms=2, capsize=4, elinewidth=1, markeredgewidth=1)
-                    if angle_type_in_i == 'stars_gas':
-                        axs[0].plot(rad_points, pa_points, label='Gas', alpha=1.0, ms=2, lw=1)
-                    if angle_type_in_i == 'stars_gas_sf':
-                        axs[0].plot(rad_points, pa_points, label='SF gas', alpha=1.0, ms=2, lw=1)
-                    axs[0].fill_between(rad_points, pa_points_lo, pa_points_hi, alpha=0.3)
-                
-                    if plot_count == 0:
-                        # Plot star forming fraction
-                        axs[1].plot(rad_points, gas_sf_frac, alpha=1.0, lw=1, c='k')
-                
-               
-            ### General formatting 
-            if rad_type_plot == 'hmr':
-                axs[0].set_xlim(0, max(spin_hmr_in))
-                axs[0].set_xticks(np.arange(0, max(spin_hmr_in)+1, 1))
-                axs[1].set_xlabel('Stellar half-mass radius')
-            if rad_type_plot == 'rad':
-                axs[0].set_xlim(0, max(spin_hmr_in * float(all_general['%s' %str(GroupNum)]['halfmass_rad_proj'])))
-                axs[0].set_xticks(np.arange(0, max(spin_hmr_in * float(all_general['%s' %str(GroupNum)]['halfmass_rad_proj']))+1, 5))
-                axs[1].set_xlabel('Radial distance from centre [pkpc]')
-                
-            axs[0].set_ylabel('Stellar-gas misalignment')
-            axs[1].set_ylabel('f$_{gas_{sf}/gas_{tot}}$')
-            axs[0].set_yticks(np.arange(0, 181, 30))
-            axs[1].set_yticks(np.arange(0, 1.1, 0.25))
-            axs[1].set_yticklabels(['0', '', '', '', '1'])
-            axs[0].set_ylim(0, 180)
-            axs[1].set_ylim(0, 1)
-            axs[0].set_title('GalaxyID: %i' %all_general['%s' %str(GroupNum)]['GalaxyID'])
-            
-            # Annotations
-            
-            # Legend
-            axs[0].legend(loc='lower right', frameon=False, labelspacing=0.1, fontsize=9, labelcolor='linecolor', handlelength=0)
-            for ax in axs:
-                ax.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='both', width=0.8, length=2)
-            
-            # Other
-            plt.tight_layout()
-            axs[0].grid(alpha=0.3)
-            axs[1].grid(alpha=0.3)
-            
-            # Savefig
-            if savefig == True:
-                plt.savefig('%s/Radial3D_gn%s_id%s_mass%s_%s_part%s_com%s_%s.%s' %(str(root_file), str(all_general['%s' %str(GroupNum)]['gn']), str(all_general['%s' %str(GroupNum)]['GalaxyID']), str('%.2f' %np.log10(float(all_general['%s' %str(GroupNum)]['stelmass']))), angle_type_in, str(gas_sf_min_particles), str(com_min_distance), savefigtxt, file_format), format='%s' %file_format, dpi=300, bbox_inches='tight', pad_inches=0.2)
-            if showfig == True:
-                plt.show()
-            plt.close()
-            
-            plot_count = plot_count+1
-         
-            
-    #-------------------------
-    if plot_single == True:
-        _plot_single()
-    #-------------------------
-      
-
-    
-                
-                
+            if print_progress:
+                print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+            if debug:
+                print(sample_input)
+                print(GroupNum_List)
+                print(SubGroupNum_List)
+                print(GalaxyID_List)
+                print(SnapNum_List)
+   
+            print('\n===================')
+            print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E M*\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_limit'], sample_input['use_satellites']))
+            print('  SAMPLE LENGTH: ', len(GroupNum_List))
+            print('\nOUTPUT LOADED:\n  Viewing axis: %s\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s\n  COM min distance: %s\n  Min. particles: %s\n  Min. inclination: %s' %(output_input['viewing_axis'], output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected'], output_input['com_min_distance'], output_input['min_particles'], output_input['min_inclination']))
+            print('\nPLOT:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %s\n  Upper mass limit: %s\n  ETG or LTG: %s\n  Group or field: %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field))
+            print('===================')
+            """
           
+    
+# Plot galaxies fed into from a CSV file
+# Can also take misalignment sample files (will check if criteria met)
+def _radial_plot(csv_output = 'L12_radial_ID3748_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum):
+                 #--------------------------
+                 # Galaxy plotting
+                 print_summary = True,
+                    use_angles         = ['stars_gas',
+                                          'stars_gas_sf',
+                                          'stars_dm'],                 # Which angles to plot
+                    use_hmr            = np.arange(0.5, 10.1, 0.5),         # Which HMR to plot
+                    use_proj_angle     = 'both',                   # Whether to use projected or absolute angle
+                    use_uncertainties  = True,                   # Whether to plot uncertainties or not
+                 #-------------------------
+                 # Plot settings
+                 highlight_criteria = True,       # whether to indicate when criteria not met (but still plot)
+                 rad_type_plot      = 'hmr',      # 'rad' whether to use absolute distance or hmr 
+                 #--------------------------
+                 showfig        = True,
+                 savefig        = False,
+                   file_format  = 'pdf',
+                   savefig_txt  = '',
+                 #--------------------------
+                 print_progress = False,
+                 debug = False):
+    
+    
+    #================================================  
+    # Load sample csv
+    if print_progress:
+        print('Loading initial sample')
+        time_start = time.time()
+    
+    #--------------------------------
+    # Loading output
+    dict_output = json.load(open('%s/%s.csv' %(output_dir, csv_output), 'r'))
+    all_general         = dict_output['all_general']
+    all_counts          = dict_output['all_counts']
+    all_masses          = dict_output['all_masses']
+    all_misangles       = dict_output['all_misangles']
+    all_misanglesproj   = dict_output['all_misanglesproj']
+    all_flags           = dict_output['all_flags']
+    
+    # Loading sample criteria
+    output_input        = dict_output['output_input']
+    
+    
+    # Extract GroupNum, SubGroupNum, and Snap for each ID
+    GalaxyID_List  = list(all_general.keys())
+    GroupNum_List  = []
+    SubGroupNum_List = []
+    SnapNum_List     = []
+    Redshift_List    = []
+    for galID in GalaxyID_List:
+        gn, sgn, snap, z = ConvertID(galID, output_input['mySims'])
+
+        # Append to arrays
+        GroupNum_List.append(gn)
+        SubGroupNum_List.append(sgn)
+        SnapNum_List.append(snap)
+        Redshift_List.append(z)
         
-#------------------------  
-plot_radial_misalignment()
-#------------------------  
+    if print_progress:
+        print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+    if debug:
+        print(GroupNum_List)
+        print(SubGroupNum_List)
+        print(GalaxyID_List)
+        print(SnapNum_List)
+        
+    print('\n===================')
+    print('SAMPLE LOADED:\n  %s\n  GalaxyIDs: %s' %(output_input['mySims'][0][0], GalaxyID_List))
+    print('  SAMPLE LENGTH: ', len(GroupNum_List))
+    print('\nOUTPUT LOADED:\n  Viewing axis: %s\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s\n  COM min distance: %s\n  Min. particles: %s\n  Min. inclination: %s' %(output_input['viewing_axis'], output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected'], output_input['com_min_distance'], output_input['min_particles'], output_input['min_inclination']))
+    print('\nPLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle:    %s\n  Uncertainties:      %s\n  Highlight Criteria: %s\n  Rad or HMR:         %s' %(use_angles, use_hmr, use_proj_angle, use_uncertainties, highlight_criteria, rad_type_plot))
+    print('===================')
+    
+
+    #------------------------------
+    # Check if requested plot is possible with loaded data
+    for use_angles_i in use_angles:
+        assert use_angles_i in output_input['angle_selection'], 'Requested angle %s not in output_input' %use_angles_i
+    for use_hmr_i in use_hmr:
+        assert use_hmr_i in output_input['spin_hmr'], 'Requested HMR %s not in output_input' %use_hmr_i
+    if use_uncertainties:
+        assert use_uncertainties == output_input['find_uncertainties'], 'Output file does not contain uncertainties to plot'
+    
+    # Create particle list of interested values (used later for flag), and plot labels:
+    use_particles = []         
+    if 'stars_gas' in use_angles:
+        if 'stars' not in use_particles:
+            use_particles.append('stars')
+        if 'gas' not in use_particles:
+            use_particles.append('gas')
+    if 'stars_gas_sf' in use_angles:
+        if 'stars' not in use_particles:
+            use_particles.append('stars')
+        if 'gas_sf' not in use_particles:
+            use_particles.append('gas_sf')
+    if 'stars_gas_nsf' in use_angles:
+        if 'stars' not in use_particles:
+            use_particles.append('stars')
+        if 'gas_nsf' not in use_particles:
+            use_particles.append('gas_nsf')
+    if 'gas_sf_gas_nsf' in use_angles:
+        if 'gas_sf' not in use_particles:
+            use_particles.append('gas_sf')
+        if 'gas_nsf' not in use_particles:
+            use_particles.append('gas_nsf')
+    if 'stars_dm' in use_angles:
+        if 'stars' not in use_particles:
+            use_particles.append('stars')
+        if 'dm' not in use_particles:
+            use_particles.append('dm')
+    if 'gas_dm' in use_angles:
+        if 'gas' not in use_particles:
+            use_particles.append('gas')
+        if 'dm' not in use_particles:
+            use_particles.append('dm')
+    if 'gas_sf_dm' in use_angles:
+        if 'gas_sf' not in use_particles:
+            use_particles.append('gas_sf')
+        if 'dm' not in use_particles:
+            use_particles.append('dm')
+    if 'gas_nsf_dm' in use_angles:
+        if 'gas_nsf' not in use_particles:
+            use_particles.append('gas_nsf')
+        if 'dm' not in use_particles:
+            use_particles.append('dm')
+    
+    
+    #=================================================================== 
+    # Run analysis for each individual galaxy in loaded sample
+    for GroupNum, SubGroupNum, GalaxyID, SnapNum, Redshift in tqdm(zip(GroupNum_List, SubGroupNum_List, GalaxyID_List, SnapNum_List, Redshift_List), total=len(GroupNum_List)):
+        
+        # adjust use_rad to whatever current galaxy values are (use hmr in misangles)
+        use_rad = all_misangles['%s' %GalaxyID]['hmr']
+
+
+        #---------------------------------------------------
+        # Graph initialising and base formatting
+        fig, axs = plt.subplots(nrows=2, ncols=1, gridspec_kw={'height_ratios': [3, 1]}, figsize=[6, 7], sharex=True, sharey=False)
+
+        
+        #----------------------
+        # Highlighting selection criteria when broken
+        if highlight_criteria:
+            # Min. particles and inclination angle
+            for parttype_name in use_particles:
+                
+                #---------------------
+                # Highlight min. particles
+                if len(all_flags['%s' %GalaxyID]['min_particles'][parttype_name]) > 0:
+                    for hmr_i in all_flags['%s' %GalaxyID]['min_particles'][parttype_name]:
+                        if rad_type_plot == 'hmr':
+                            axs[0].axvline(hmr_i, c='grey', alpha=0.2, lw=20)
+                        elif rad_type_plot == 'rad':
+                            axs[0].axvline(hmr_i*all_general['%s' %GalaxyID]['halfmass_rad_proj'], c='grey', alpha=0.1, lw=20)
+                
+                #---------------------
+                # Highlight inclination angle
+                if len(all_flags['%s' %GalaxyID]['min_inclination'][parttype_name]) > 0:
+                    for hmr_i in all_flags['%s' %GalaxyID]['min_inclination'][parttype_name]:
+                        if rad_type_plot == 'hmr':
+                            axs[0].axvline(hmr_i, c='indigo', alpha=0.2, lw=20)
+                        elif rad_type_plot == 'rad':
+                            axs[0].axvline(hmr_i*all_general['%s' %GalaxyID]['halfmass_rad_proj'], c='grey', alpha=0.1, lw=20)  
+            
+            # COM distance    
+            for use_angle_i in use_angles:
+        
+                #---------------------
+                # Highlight COM min distance
+                if len(all_flags['%s' %GalaxyID]['com_min_distance'][use_angle_i]) > 0:
+                    for hmr_i in all_flags['%s' %GalaxyID]['com_min_distance'][use_angle_i]:
+                        if rad_type_plot == 'hmr':
+                            axs[0].axvline(hmr_i, c='r', alpha=0.2, lw=20)
+                        elif rad_type_plot == 'rad':
+                            axs[0].axvline(hmr_i*all_general['%s' %GalaxyID]['halfmass_rad_proj'], c='grey', alpha=0.1, lw=20)
+                        
+                        
+        #========================================               
+        # Plot each angle type individually
+        for use_angle_i in use_angles:
+            
+            #------------------------
+            # Setting colors and labels
+            if use_angle_i == 'stars_gas':
+                plot_color = 'green'
+                plot_label = 'Stars-gas'
+            elif use_angle_i == 'stars_gas_sf':
+                plot_color = 'b'
+                plot_label = 'Stars-gas$_{sf}$'
+            elif use_angle_i == 'stars_gas_nsf':
+                plot_color = 'indigo'
+                plot_label = 'Stars-gas$_{nsf}$'
+            elif use_angle_i == 'stars_dm':
+                plot_color = 'r'
+                plot_label = 'Stars-DM'
+            else:
+                plot_color = 'brown'
+                plot_label = use_angle_i
+                 
+            
+            #------------------------
+            # Collect values to plot
+            
+            # Radii for plot
+            if rad_type_plot == 'hmr':
+                plot_rad = np.array(all_misangles['%s' %GalaxyID]['hmr'])
+            elif rad_type_plot == 'rad':
+                plot_rad = np.array(all_misangles['%s' %GalaxyID]['rad'])
+            
+            # Angles for plot
+            if use_proj_angle == True:
+                plot_angles    = np.array(all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle' %use_angle_i])
+                plot_angles_lo = np.array(all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle_err' %use_angle_i])[:,0]
+                plot_angles_hi = np.array(all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle_err' %use_angle_i])[:,1]
+            elif use_proj_angle == False:
+                plot_angles    = np.array(all_misangles['%s' %GalaxyID]['%s_angle' %use_angle_i])
+                plot_angles_lo = np.array(all_misangles['%s' %GalaxyID]['%s_angle_err' %use_angle_i])[:,0]
+                plot_angles_hi = np.array(all_misangles['%s' %GalaxyID]['%s_angle_err' %use_angle_i])[:,1]
+            elif use_proj_angle == 'both':
+                plot_angles    = np.array(all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle' %use_angle_i])
+                plot_angles_lo = np.array(all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle_err' %use_angle_i])[:,0]
+                plot_angles_hi = np.array(all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle_err' %use_angle_i])[:,1]
+                plot_angles_proj    = np.array(all_misangles['%s' %GalaxyID]['%s_angle' %use_angle_i])
+                plot_angles_lo_proj = np.array(all_misangles['%s' %GalaxyID]['%s_angle_err' %use_angle_i])[:,0]
+                plot_angles_hi_proj = np.array(all_misangles['%s' %GalaxyID]['%s_angle_err' %use_angle_i])[:,1]
+            
+            if debug:
+                print('Plot rad:', plot_rad)
+                print('Angles:', plot_angles)
+                print('Errors Lo:', plot_angles_lo)
+                print('Errors Hi:', plot_angles_hi)
+            
+        
+            #-----------------------
+            # Plot scatter and errorbars
+            if use_proj_angle == 'both':
+                axs[0].fill_between(plot_rad, plot_angles_lo, plot_angles_hi, facecolor=plot_color, alpha=0.2)
+                #axs[0].fill_between(plot_rad, plot_angles_lo_proj, plot_angles_hi_proj, facecolor=plot_color, alpha=0.2)
+                axs[0].plot(plot_rad, plot_angles, label=plot_label, c=plot_color, alpha=1.0, ms=2, lw=1.5)
+                axs[0].plot(plot_rad, plot_angles_proj, c=plot_color, alpha=1.0, ms=2, lw=1.5, ls=':')
+            else:
+                axs[0].fill_between(plot_rad, plot_angles_lo, plot_angles_hi, facecolor=plot_color, alpha=0.2)
+                axs[0].plot(plot_rad, plot_angles, label=plot_label, c=plot_color, alpha=1.0, ms=2, lw=1.5)
+            
+                 
+                
+        #================================
+        # Mass fractions
+        plot_stars_gas_frac    = np.divide(np.array(all_masses['%s' %GalaxyID]['gas']), np.array(all_masses['%s' %GalaxyID]['stars']) + np.array(all_masses['%s' %GalaxyID]['gas']))
+        plot_stars_gas_sf_frac = np.divide(np.array(all_masses['%s' %GalaxyID]['gas_sf']), np.array(all_masses['%s' %GalaxyID]['stars']) + np.array(all_masses['%s' %GalaxyID]['gas']))
+        plot_gas_ratio         = np.divide(np.array(all_masses['%s' %GalaxyID]['gas_sf']), np.array(all_masses['%s' %GalaxyID]['gas']))
+        
+        if debug:
+            print('Gas mass fraction: ', plot_stars_gas_frac)
+            print('Gas_sf mass fraction: ', plot_stars_gas_sf_frac)
+            print('Gas_sf:Gas ratio: ', plot_gas_ratio)
+        
+        # Plot mass fractions
+        axs[1].plot(plot_rad, np.log10(plot_stars_gas_frac), alpha=0.8, lw=2, c='green', label='Gas')
+        axs[1].plot(plot_rad, np.log10(plot_stars_gas_sf_frac), alpha=0.8, lw=2, c='b', label='Gas$_{SF}$')
+        #axs[1].plot(plot_rad, plot_gas_ratio, c='k', ls='--', label='Gas$_{SF}$/Gas')
+        
+
+        #-===============================
+        ### General formatting
+        
+        # Axis labels
+        axs[0].set_yticks(np.arange(0, 181, 30))
+        #axs[1].set_yticks(np.arange(0, 1.1, 0.25))
+        #axs[1].set_yticklabels(['0', '', '', '', '1'])
+        #axs[1].set_yscale('log')
+        axs[1].set_ylim(-3, 0)
+        axs[1].set_yticks([-3, -2, -1, 0])
+        axs[0].set_ylim(0, 180)
+        axs[1].set_ylabel('Mass fraction, [log$_{10}$]')
+        axs[0].set_xlim(0, max(plot_rad))
+        axs[0].set_xticks(np.arange(0, max(plot_rad)+1, 1))
+        if rad_type_plot == 'hmr':
+            axs[1].set_xlabel('Stellar half-mass radius, $r_{1/2,z}$')
+        if rad_type_plot == 'rad':
+            axs[1].set_xlabel('Radial distance from centre [pkpc]')
+        if use_proj_angle:
+            axs[0].set_ylabel('Misalignment angle, $\psi$')
+        else:
+            axs[0].set_ylabel('Misalignment angle, $\psi$')        
+               
+        #-----------
+        # Annotations
+        axs[0].text(0, 185, 'GalaxyID: %s' %GalaxyID)
+    
+        #-----------
+        # Legend
+        axs[0].plot(-10, -10, ls=':', c='k', label='$\psi_{3D}$')
+        axs[0].plot(-10, -10, ls='-', c='k', label='$\psi_{z}$')
+        axs[0].legend(loc='lower right', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1)
+        axs[1].legend(loc='lower right', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=0)
+        
+        #-----------
+        # Other
+        axs[0].grid(alpha=0.3)
+        axs[1].grid(alpha=0.3)
+        plt.tight_layout()
+        set_rc_params(0.1)
+    
+    
+        #=====================================
+        ### Print summary
+        
+        #-----------
+        # Savefig
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+            print('Finished')
+        
+        metadata_plot = {'Title': 'GalaxyID %s' %GalaxyID}
+        
+        angle_str = ''
+        for angle_name in list(use_angles):
+            angle_str = '%s_%s' %(str(angle_str), str(angle_name))
+        
+        
+        if savefig:
+            plt.savefig("%s/L%s_radial_ID%s_proj%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], GalaxyID, use_proj_angle, angle_str, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', pad_inches=0.1, dpi=600)    
+            print("\n  SAVED: %s/L%s_radial_ID%s_proj%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], GalaxyID, use_proj_angle, angle_str, savefig_txt, file_format))
+        if showfig:
+            plt.show()
+        plt.close()
+        
+        
+
+#=========================== 
+#_radial_analysis()
+_radial_plot()   
+#===========================
+
+
+

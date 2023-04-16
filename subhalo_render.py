@@ -79,8 +79,9 @@ PURPOSE
 #3748, 20455, 37445, 30494, 43163, 40124, 44545, 48383, 57647, 55343, 51640, 46366, 53904, 52782, 56522, 59467, 49986, 61119, 62355, 63199, 61831
 
 
-def galaxy_render(mySims = [('RefL0012N0188', 12)],
+def galaxy_render(csv_sample = False,              # False, Whether to read in existing list of galaxies  
                     #--------------------------
+                    mySims = [('RefL0012N0188', 12)],
                     GalaxyID_List = [37445],
                     #--------------------------
                     # Galaxy extraction properties
@@ -93,7 +94,7 @@ def galaxy_render(mySims = [('RefL0012N0188', 12)],
                     viewing_axis        = 'z',                  # Which axis to view galaxy from.  DEFAULT 'z'
                     aperture_rad        = 30,                   # trim all data to this maximum value before calculations [pkpc]
                     trim_hmr            = np.array([30]),           # WILL PLOT LOWEST VALUE. trim particles # multiples of hmr
-                    align_rad           = True,                          # keep on False
+                    align_rad           = False,                          # True/False
                     #=====================================================
                     # Misalignments we want extracted and at which radii  
                     angle_selection     = ['stars_gas',                     # stars_gas     stars_gas_sf    stars_gas_nsf
@@ -101,7 +102,7 @@ def galaxy_render(mySims = [('RefL0012N0188', 12)],
                                            'stars_gas_nsf',                 # gas_sf_gas_nsf
                                            'gas_sf_gas_nsf',
                                            'stars_dm'],           
-                    spin_hmr            = np.array([2.0]),                  # multiples of hmr for which to find spin. Will plot lowest value
+                    spin_hmr            = np.array([0.2]),                  # multiples of hmr for which to find spin. Will plot lowest value
                     rad_projected       = True,                             # whether to use rad in projection or 3D
                     #--------------------------
                     # Plot options
@@ -115,7 +116,7 @@ def galaxy_render(mySims = [('RefL0012N0188', 12)],
                     gas                 = False,
                     gas_sf              = True,
                     gas_nsf             = True,    
-                    dark_matter         = True,
+                    dark_matter         = False,
                     black_holes         = True,
                     #=====================================================
                     showfig      = True,
@@ -127,7 +128,7 @@ def galaxy_render(mySims = [('RefL0012N0188', 12)],
                     debug = False):
 
 
-    #----------------------------------------
+    #=========================================
     # Properties that don't change
     spin_vector_rad      = spin_hmr[0]
     min_inclination      = 0           # Minimum inclination toward viewing axis [deg] DEFAULT 0
@@ -140,22 +141,72 @@ def galaxy_render(mySims = [('RefL0012N0188', 12)],
         print('Extracting GroupNum, SubGroupNum, SnapNum lists')
         time_start = time.time()
         
-                  
-    #--------------------
-    # Extract GroupNum, SubGroupNum, and Snap for each ID
-    GroupNum_List    = []
-    SubGroupNum_List = []
-    SnapNum_List     = []
-    for galID in GalaxyID_List:
-        gn, sgn, snap = ConvertID(galID, mySims)
     
-        # Append to arrays
-        GroupNum_List.append(gn)
-        SubGroupNum_List.append(sgn)
-        SnapNum_List.append(snap)            
+    #-----------------------------------------
+    # Use IDs and such from sample
+    if csv_sample:
+        # Load sample csv
+        if print_progress:
+            print('Loading initial sample')
+            time_start = time.time()
         
     
+        # Loading sample
+        dict_new = json.load(open('%s/%s.csv' %(sample_dir, csv_sample), 'r'))
+    
+    
+        # Extract GroupNum etc.
+        GroupNum_List       = np.array(dict_new['GroupNum'])
+        SubGroupNum_List    = np.array(dict_new['SubGroupNum'])
+        GalaxyID_List       = np.array(dict_new['GalaxyID'])
+        SnapNum_List        = np.array(dict_new['SnapNum'])
+        sample_input        = dict_new['sample_input']
+        mySims              = sample_input['mySims']
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+        if debug:
+            print(sample_input)
+            print(GroupNum_List)
+            print(SubGroupNum_List)
+            print(GalaxyID_List)
+            print(SnapNum_List)
+       
+        print('\n===================')
+        print('SAMPLE LOADED:\n  %s\n  GalaxyIDs: %s' %(mySims[0][0], GalaxyID_List))
+        print('  SAMPLE LENGTH: ', len(GroupNum_List))
+        print('===================')
         
+    #---------------------------------------
+    # If no csv_sample given, use GalaxyID_List
+    else:
+        # Extract GroupNum, SubGroupNum, and Snap for each ID
+        GroupNum_List    = []
+        SubGroupNum_List = []
+        SnapNum_List     = []
+        Redshift_List    = []
+        for galID in GalaxyID_List:
+            gn, sgn, snap, z = ConvertID(galID, mySims)
+    
+            # Append to arrays
+            GroupNum_List.append(gn)
+            SubGroupNum_List.append(sgn)
+            SnapNum_List.append(snap)
+            Redshift_List.append(z)
+            
+        if debug:
+            print(GroupNum_List)
+            print(SubGroupNum_List)
+            print(GalaxyID_List)
+            print(SnapNum_List)
+            
+        print('\n===================')
+        print('SAMPLE INPUT:\n  %s\n  GalaxyIDs: %s' %(mySims, GalaxyID_List))
+        print('  SAMPLE LENGTH: ', len(GroupNum_List))
+        print('===================')
+              
+    if print_progress:
+        print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+
     # Run analysis for each individual galaxy in loaded sample
     for GroupNum, SubGroupNum, GalaxyID, SnapNum in tqdm(zip(GroupNum_List, SubGroupNum_List, GalaxyID_List, SnapNum_List), total=len(GroupNum_List)):
         
@@ -222,20 +273,17 @@ def galaxy_render(mySims = [('RefL0012N0188', 12)],
                                             min_inclination)
     
         
+        
         if print_galaxy:
             print('ID:\t%s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f' %(str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'])) 
         
     
- 
         #===========================================
         # Graph initialising and base formatting
         graphformat(8, 11, 11, 11, 11, 5, 5)
         fig = plt.figure() 
         ax = Axes3D(fig, auto_add_to_figure=False, box_aspect=[1,1,1])
         fig.add_axes(ax, computed_zorder=False)
-        
-        
-        
         
         
         def plot_rand_scatter(dict_name, part_type, color, debug=False):
@@ -594,8 +642,8 @@ def galaxy_render(mySims = [('RefL0012N0188', 12)],
             particle_txt += '_bh'
         
         if savefig:
-            plt.savefig("%s/L%s_render_%s_%s_%s.%s" %(fig_dir, mySims[0][1], GalaxyID, particle_txt, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', pad_inches=0.1, dpi=600)    
-            print('\n  SAVED:%s/L%s_render_%s_%s_%s.%s' %(fig_dir, mySims[0][1], GalaxyID, particle_txt, savefig_txt, file_format))
+            plt.savefig("%s/L%s_render_ID%s_%s_%s.%s" %(fig_dir, mySims[0][1], GalaxyID, particle_txt, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', pad_inches=0.1, dpi=600)    
+            print('\n  SAVED:%s/L%s_render_ID%s_%s_%s.%s' %(fig_dir, mySims[0][1], GalaxyID, particle_txt, savefig_txt, file_format))
         if showfig:
             plt.show()
         plt.close()

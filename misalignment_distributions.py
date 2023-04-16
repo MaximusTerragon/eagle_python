@@ -58,8 +58,7 @@ dataDir_dict['28'] = dataDir_main + 'snapshot_028_z000p000/snap_028_z000p000.0.h
 
 
 
-# Creates a sample of galaxies given the inputs.
-# Returns GroupNum, SubGroupNum, SnapNum, and GalaxyID for each galaxy
+# Creates a sample of galaxies given the inputs. Returns GroupNum, SubGroupNum, SnapNum, and GalaxyID for each galaxy
 def _misalignment_sample(mySims = [('RefL0012N0188', 12)],
                          #--------------------------
                             galaxy_mass_limit  = 10**9,            # Lower mass limit within 30pkpc
@@ -68,7 +67,7 @@ def _misalignment_sample(mySims = [('RefL0012N0188', 12)],
                             print_sample       = False,             # Print list of IDs
                          #--------------------------   
                          csv_file = True,                       # Will write sample to csv file in sapmle_dir
-                            csv_name = 'sample_misalignment',
+                            csv_name = '',
                          #--------------------------     
                          print_progress = False,
                          debug = False):
@@ -141,11 +140,11 @@ def _misalignment_sample(mySims = [('RefL0012N0188', 12)],
    
         # Writing one massive JSON file
         if use_satellites == 'no':
-            json.dump(csv_dict, open('%s/L%s_%s_cent_%s_%s.csv' %(sample_dir, str(mySims[0][1]), str(snapNum), csv_name, np.log10(galaxy_mass_limit)), 'w'), cls=NumpyEncoder)
-            print('\n  SAVED: %s/L%s_%s_cent_%s_%s.csv' %(sample_dir, str(mySims[0][1]), str(snapNum), csv_name, np.log10(galaxy_mass_limit)))
+            json.dump(csv_dict, open('%s/L%s_%s_cent_sample_misalignment_%s%s.csv' %(sample_dir, str(mySims[0][1]), str(snapNum), np.log10(galaxy_mass_limit), csv_name), 'w'), cls=NumpyEncoder)
+            print('\n  SAVED: %s/L%s_%s_cent_sample_misalignment_%s%s.csv' %(sample_dir, str(mySims[0][1]), str(snapNum), np.log10(galaxy_mass_limit), csv_name))
         else:
-            json.dump(csv_dict, open('%s/L%s_%s_all_%s_%s.csv' %(sample_dir, str(mySims[0][1]), str(snapNum), csv_name, np.log10(galaxy_mass_limit)), 'w'), cls=NumpyEncoder)
-            print('\n  SAVED: %s/L%s_%s_all_%s_%s.csv' %(sample_dir, str(mySims[0][1]), str(snapNum), csv_name, np.log10(galaxy_mass_limit)))
+            json.dump(csv_dict, open('%s/L%s_%s_all_sample_misalignment_%s%s.csv' %(sample_dir, str(mySims[0][1]), str(snapNum), np.log10(galaxy_mass_limit), csv_name), 'w'), cls=NumpyEncoder)
+            print('\n  SAVED: %s/L%s_%s_all_sample_misalignment_%s%s.csv' %(sample_dir, str(mySims[0][1]), str(snapNum), np.log10(galaxy_mass_limit), csv_name))
         if print_progress:
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
    
@@ -181,7 +180,6 @@ def _misalignment_sample(mySims = [('RefL0012N0188', 12)],
     
 # Reads in a sample file, and does all relevant calculations, and exports as csv file
 def _misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
-                                
                                 #--------------------------
                                 # Galaxy extraction properties
                                 viewing_axis        = 'z',                  # Which axis to view galaxy from.  DEFAULT 'z'
@@ -194,21 +192,21 @@ def _misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0'
                                 #-----------------------------------------------------
                                 # Misalignments we want extracted and at which radii
                                 angle_selection     = ['stars_gas',            # stars_gas     stars_gas_sf    stars_gas_nsf
-                                                                'stars_gas_sf',         # gas_dm        gas_sf_dm       gas_nsf_dm
-                                                                'stars_gas_nsf',        # gas_sf_gas_nsf
-                                                                'gas_sf_gas_nsf',
-                                                                'stars_dm'],           
+                                                       'stars_gas_sf',         # gas_dm        gas_sf_dm       gas_nsf_dm
+                                                       'stars_gas_nsf',        # gas_sf_gas_nsf
+                                                       'gas_sf_gas_nsf',
+                                                       'stars_dm'],           
                                 spin_hmr            = np.array([1.0, 2.0]),          # multiples of hmr for which to find spin
                                 find_uncertainties  = True,                    # whether to find 2D and 3D uncertainties
                                 rad_projected       = True,                     # whether to use rad in projection or 3D
                                 #--------------------------
                                 # Selection criteria
-                                com_min_distance        = 2.0,                    # [pkpc] min distance between sfgas and stars.  DEFAULT 2.0 
-                                min_particles           = 20,                     # Minimum particles to find spin.  DEFAULT 20
-                                min_inclination         = 0,                      # Minimum inclination toward viewing axis [deg] DEFAULT 0
+                                com_min_distance    = 2.0,         # [pkpc] min distance between sfgas and stars.  DEFAULT 2.0 
+                                min_particles       = 20,          # Minimum particles to find spin.  DEFAULT 20
+                                min_inclination     = 0,           # Minimum inclination toward viewing axis [deg] DEFAULT 0
                                 #--------------------------   
-                                csv_file = True,                       # Will write sample to csv file in sapmle_dir
-                                    csv_name        = '',              # extra stuff at end
+                                csv_file       = True,             # Will write sample to csv file in sapmle_dir
+                                  csv_name     = '',               # extra stuff at end
                                 #--------------------------
                                 print_progress = False,
                                 print_galaxy   = False,
@@ -259,6 +257,7 @@ def _misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0'
                     'com_min_distance': com_min_distance,
                     'min_particles': min_particles,
                     'min_inclination': min_inclination}
+    output_input.update(sample_input)
     
     #---------------------------------------------
     # Empty dictionaries to collect relevant data
@@ -280,6 +279,8 @@ def _misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0'
     #SnapNum_List = [28]
     #====================
     
+    
+    #=================================================================== 
     # Run analysis for each individual galaxy in loaded sample
     for GroupNum, SubGroupNum, GalaxyID, SnapNum in tqdm(zip(GroupNum_List, SubGroupNum_List, GalaxyID_List, SnapNum_List), total=len(GroupNum_List)):
         
@@ -313,7 +314,7 @@ def _misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0'
             spin_hmr = [x for x in spin_hmr if x*galaxy.halfmass_rad_proj <= aperture_rad]
             
             if len(spin_hmr) != len(spin_hmr_tmp):
-                print('Capped spin_rad (%s pkpc) at aperture radius (%s pkpc)' %(spin_rad, aperture_rad))
+                print('Capped spin_rad (%s pkpc) at aperture radius (%s pkpc)' %(spin_rad[-1], aperture_rad))
         elif rad_projected == False:
             spin_rad = np.array(spin_hmr) * galaxy.halfmass_rad
             spin_hmr_tmp = spin_hmr
@@ -323,7 +324,7 @@ def _misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0'
             spin_hmr = [x for x in spin_hmr if x*galaxy.halfmass_rad <= aperture_rad]
             
             if len(spin_hmr) != len(spin_hmr_tmp):
-                print('Capped spin_rad (%s pkpc) at aperture radius (%s pkpc)' %(max(spin_rad), aperture_rad))
+                print('Capped spin_rad (%s pkpc) at aperture radius (%s pkpc)' %(spin_rad[-1], aperture_rad))
         
         
         # If we want the original values, enter 0 for viewing angle
@@ -346,14 +347,14 @@ def _misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0'
                                             min_inclination)
                                        
         
-        ''' FLAGS
+        """ FLAGS
         ------------
         #print(subhalo.flags['total_particles'])            # will flag if there are missing particles within aperture_rad
         #print(subhalo.flags['min_particles'])              # will flag if min. particles not met within spin_rad (will find spin if particles exist, but no uncertainties)
         #print(subhalo.flags['min_inclination'])            # will flag if inclination angle not met within spin_rad... all spins and uncertainties still calculated
         #print(subhalo.flags['com_min_distance'])           # will flag if com distance not met within spin_rad... all spins and uncertainties still calculated
         ------------
-        '''
+        """
         
         #--------------------------------
         # Collecting all relevant particle info for galaxy
@@ -371,8 +372,6 @@ def _misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0'
             
     #=====================================
     # End of individual subhalo loop
-    
-    
     
     if csv_file: 
         # Converting numpy arrays to lists. When reading, may need to simply convert list back to np.array() (easy)
@@ -531,7 +530,7 @@ def _misalignment_plot(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # 
         print(SnapNum_List)
    
     print('\n===================')
-    print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E M*\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_limit'], sample_input['use_satellites']))
+    print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E M*\n  Satellites: %s' %(output_input['mySims'][0][0], output_input['snapNum'], output_input['Redshift'], output_input['galaxy_mass_limit'], output_input['use_satellites']))
     print('  SAMPLE LENGTH: ', len(GroupNum_List))
     print('\nOUTPUT LOADED:\n  Viewing axis: %s\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s\n  COM min distance: %s\n  Min. particles: %s\n  Min. inclination: %s' %(output_input['viewing_axis'], output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected'], output_input['com_min_distance'], output_input['min_particles'], output_input['min_inclination']))
     print('\nPLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %s M*\n  Upper mass limit: %s M*\n  ETG or LTG: %s\n  Group or field: %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field))
@@ -764,13 +763,13 @@ def _misalignment_plot(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # 
         
         # Setting colors
         if 'gas' in use_particles:
-            plot_color = 'k'
+            plot_color = 'green'
         if 'gas_sf' in use_particles:
             plot_color = 'b'
         if 'gas_nsf' in use_particles:
-            plot_color = 'r'
-        if 'dm' in use_particles:
             plot_color = 'indigo'
+        if 'dm' in use_particles:
+            plot_color = 'r'
         
         """ Some useful quantities:
         catalogue['sample']['all']  = number of galaxies that meet criteria
@@ -799,7 +798,9 @@ def _misalignment_plot(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # 
         else:
             axs.set_xlabel('Misalignment angle, $\psi_{3D}$')
         axs.set_ylabel('Percentage of galaxies')
+        #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='both', width=0.8, length=2)
         
+        #-----------
         # Annotations
         axs.axvline(30, ls='--', lw=1, c='k')
         

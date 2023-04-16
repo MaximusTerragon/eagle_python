@@ -1216,7 +1216,7 @@ class Subhalo_Analysis:
                 if 'stars_gas' in angle_selection:
                     # Find 3D angle
                     angle = self._misalignment_angle(spin_star, spin_gas)
-                    self.mis_angles['stars_gas_angle'].append(angle)
+                    self.mis_angles['stars_gas_angle'].append(angle)            # Will be NAN if none
                 
                     if find_uncertainties:
                         # uncertainty
@@ -2268,16 +2268,17 @@ def ConvertID(galID, sim):
         myQuery = 'SELECT \
                     SH.GroupNumber, \
                     SH.SubGroupNumber, \
-                    SH.SnapNum \
+                    SH.SnapNum, \
+                    SH.Redshift \
                    FROM \
     			     %s_Subhalo as SH \
                    WHERE \
-    			     SH.GalaxyID = %i'%(sim_name, galID)
+    			     SH.GalaxyID = %s'%(sim_name, galID)
 
         # Execute query.
         myData = sql.execute_query(con, myQuery)
         
-        return myData['GroupNumber'], myData['SubGroupNumber'], myData['SnapNum']
+        return myData['GroupNumber'], myData['SubGroupNumber'], myData['SnapNum'], myData['Redshift']
 
 
 

@@ -56,25 +56,25 @@ dataDir_dict['28'] = dataDir_main + 'snapshot_028_z000p000/snap_028_z000p000.0.h
 #dataDir = '/home/universe/spxtd1-shared/RefL0100N1504/snapshot_0%s_z000p000/snap_0%s_z000p000.0.hdf5' %(snapNum, snapNum)
 
 
-def _stellar_mass_function(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
-                           csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
-                           #--------------------------
-                           # What determines our final sample
-                           print_summary = True,
-                             pop_mass_limit     = 10**7,            # Lower limit of population plot sampled
-                             sample_mass_limit  = 10**9,            # Lower limit of chosen sample
-                             use_angle          = 'stars_gas_sf',   # Which angles to ensure we have
-                             use_hmr            = 2.0,              # Which HMR ^
-                           #--------------------------
-                           hist_bin_width = 0.2,
-                           #--------------------------
-                           showfig       = True,
-                           savefig       = True,
-                             file_format = 'pdf',
-                             savefig_txt = '',
-                           #--------------------------
-                           print_progress = False,
-                           debug = False):
+def _plot_stellar_mass_function(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+                                csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
+                                 #--------------------------
+                                 # What determines our final sample
+                                 print_summary = True,
+                                   pop_mass_limit     = 10**7,            # Lower limit of population plot sampled
+                                   sample_mass_limit  = 10**9,            # Lower limit of chosen sample
+                                   use_angle          = 'stars_gas_sf',   # Which angles to ensure we have
+                                   use_hmr            = 2.0,              # Which HMR ^
+                                 #--------------------------
+                                 hist_bin_width = 0.2,
+                                 #--------------------------
+                                 showfig       = True,
+                                 savefig       = True,
+                                   file_format = 'pdf',
+                                   savefig_txt = '',
+                                 #--------------------------
+                                 print_progress = False,
+                                 debug = False):
     
     
     # Ensuring the sample and output originated together
@@ -317,9 +317,9 @@ def _stellar_mass_function(csv_sample = 'L12_28_all_sample_misalignment_9.0',   
     _plot_stellar_mass_func()
     #------------------------
 
-#======================= 
-_stellar_mass_function()
-#=======================
+#===========================
+_plot_stellar_mass_function()
+#===========================
 
 
 

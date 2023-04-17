@@ -13,7 +13,7 @@ import json
 import time
 from datetime import datetime
 from tqdm import tqdm
-from subhalo_main_new import Initial_Sample, Subhalo_Extract, Subhalo_Analysis
+from subhalo_main import Initial_Sample, Subhalo_Extract, Subhalo_Analysis
 import eagleSqlTools as sql
 from graphformat import set_rc_params
 
@@ -23,7 +23,7 @@ EAGLE_dir       = '/Users/c22048063/Documents/EAGLE'
 dataDir_main    = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/'
 # Directories serpens
 #EAGLE_dir       = '/home/user/c22048063/Documents/EAGLE'
-#data_Dir_main   = '/home/universe/spxtd1-shared/RefL0100N1504/'
+#dataDir_main   = '/home/universe/spxtd1-shared/RefL0100N1504/'
 
 
 # Other directories

@@ -13,7 +13,7 @@ import json
 import time
 from datetime import datetime
 from tqdm import tqdm
-from subhalo_main_new import Initial_Sample, Subhalo_Extract, Subhalo_Analysis
+from subhalo_main import Initial_Sample, Subhalo_Extract, Subhalo_Analysis
 import eagleSqlTools as sql
 from graphformat import set_rc_params
 
@@ -23,7 +23,7 @@ EAGLE_dir       = '/Users/c22048063/Documents/EAGLE'
 dataDir_main    = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/'
 # Directories serpens
 #EAGLE_dir       = '/home/user/c22048063/Documents/EAGLE'
-#data_Dir_main   = '/home/universe/spxtd1-shared/RefL0100N1504/'
+#dataDir_main   = '/home/universe/spxtd1-shared/RefL0100N1504/'
 
 
 # Other directories
@@ -58,8 +58,8 @@ dataDir_dict['28'] = dataDir_main + 'snapshot_028_z000p000/snap_028_z000p000.0.h
 
 
 # Modifies existing csv output file by adding or removing relevant fields
-def _modify_misalignment_csv(csv_sample = 'L12_28_cent_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
-                             csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
+def _modify_misalignment_csv(csv_sample = 'L100_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+                             csv_output = '_RadProj_noErr__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                              #--------------------------   
                              csv_file = True,                       # Will write sample to csv file in sapmle_dir
                                csv_name = '',
@@ -117,9 +117,15 @@ def _modify_misalignment_csv(csv_sample = 'L12_28_cent_sample_misalignment_9.0',
     #===============================================
     # MAKE MODIFICATIONS HERE
     
+    print(output_input.keys())
+    print(output_input['use_satellites'])
     
     # Update sims
     output_input.update(sample_input)
+    
+    print(output_input.keys())
+    print(output_input['mySims'])
+    print(output_input['use_satellites'])
 
     # Update lists
 

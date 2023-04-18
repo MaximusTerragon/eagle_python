@@ -40,6 +40,8 @@ class Initial_Sample:
         self.GalaxyID    = myData['GalaxyID']
         self.SnapNum     = myData['SnapNum']
         self.Redshift    = myData['Redshift']
+        self.GroupMass   = myData['Group_M_Crit200']
+        self.centre      = np.array([myData['x'], myData['y'], myData['z']]) * u.Mpc.to(u.kpc)
         
     def samplesize(self, satellite = False):
         # This uses the eagleSqlTools module to connect to the database with your username and password.
@@ -56,17 +58,23 @@ class Initial_Sample:
                              SH.SubGroupNumber, \
                              SH.GalaxyID, \
                              SH.SnapNum, \
-                             SH.Redshift \
+                             SH.Redshift, \
+                             SH.CentreOfPotential_x as x, \
+                             SH.CentreOfPotential_y as y, \
+                             SH.CentreOfPotential_z as z, \
+                             FOF.Group_M_Crit200 as halo_mass \
                            FROM \
                              %s_Subhalo as SH, \
-                             %s_Aperture as AP \
+                             %s_Aperture as AP, \
+                             %s_FOF as FOF \
                            WHERE \
         			         SH.SnapNum = %i \
                              and AP.Mass_Star >= %f \
                              and AP.ApertureSize = 30 \
                              and SH.GalaxyID = AP.GalaxyID \
+                             and SH.GroupID = FOF.GroupID \
                            ORDER BY \
-        			         AP.Mass_Star desc'%(sim_name, sim_name, self.snapNum, self.mstar_limit)
+        			         AP.Mass_Star desc'%(sim_name, sim_name, sim_name, self.snapNum, self.mstar_limit)
             
             # Execute query.
             myData = sql.execute_query(con, myQuery)
@@ -81,18 +89,24 @@ class Initial_Sample:
                              SH.SubGroupNumber, \
                              SH.GalaxyID, \
                              SH.SnapNum, \
-                             SH.Redshift \
+                             SH.Redshift, \
+                             SH.CentreOfPotential_x as x, \
+                             SH.CentreOfPotential_y as y, \
+                             SH.CentreOfPotential_z as z, \
+                             FOF.Group_M_Crit200 as halo_mass \
                            FROM \
                              %s_Subhalo as SH, \
-                             %s_Aperture as AP \
+                             %s_Aperture as AP, \
+                             %s_FOF as FOF \
                            WHERE \
         			         SH.SnapNum = %i \
                              and AP.Mass_star >= %f \
                              and SH.SubGroupNumber = 0 \
                              and AP.ApertureSize = 30 \
                              and SH.GalaxyID = AP.GalaxyID \
+                             and SH.GroupID = FOF.GroupID \
                            ORDER BY \
-        			         AP.Mass_Star desc'%(sim_name, sim_name, self.snapNum, self.mstar_limit)
+        			         AP.Mass_Star desc'%(sim_name, sim_name, sim_name, self.snapNum, self.mstar_limit)
     
             # Execute query.
             myData = sql.execute_query(con, myQuery)
@@ -1693,8 +1707,6 @@ class Subhalo_Analysis:
         if print_progress:
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
             print('FINISHED EXTRACTION\tGALAXY ID: %s' %GalaxyID)
-        
-        
                     
     def _query_morph(self, sim, GroupNum, SubGroupNum, SnapNum, debug=False):
         # This uses the eagleSqlTools module to connect to the database with your username and password.

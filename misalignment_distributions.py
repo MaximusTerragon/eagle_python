@@ -140,6 +140,8 @@ def _misalignment_sample(mySims = [('RefL0012N0188', 12)],
                     'SubGroupNum': sample.SubGroupNum, 
                     'GalaxyID': sample.GalaxyID,
                     'SnapNum': sample.SnapNum,
+                    'halo_mass': sample.halo_mass,
+                    'centre': sample.centre, 
                     'sample_input':  sample_input}
                     
         csv_dict.update({'function_input': str(inspect.signature(_misalignment_sample))})
@@ -165,6 +167,10 @@ def _misalignment_sample(mySims = [('RefL0012N0188', 12)],
         SubGroupNum_List    = np.array(dict_new['SubGroupNum'])
         GalaxyID_List       = np.array(dict_new['GalaxyID'])
         SnapNum_List        = np.array(dict_new['SnapNum'])
+        halo_mass_List      = np.array(dict_new['halo_mass'])
+        centre_List         = np.array(dict_new['centre'])
+        
+        
         sample_input        = dict_new['sample_input']
         if print_progress:
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
@@ -316,21 +322,21 @@ def _misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0'
             spin_hmr_tmp = spin_hmr
             
             # Reduce spin_rad array if value exceeds aperture_rad_in... means not all dictionaries will have same number of array spin values
-            spin_rad = [x for x in spin_rad if x <= aperture_rad]
-            spin_hmr = [x for x in spin_hmr if x*galaxy.halfmass_rad_proj <= aperture_rad]
+            spin_rad_in = [x for x in spin_rad if x <= aperture_rad]
+            spin_hmr_in = [x for x in spin_hmr if x*galaxy.halfmass_rad_proj <= aperture_rad]
             
-            if len(spin_hmr) != len(spin_hmr_tmp):
-                print('Capped spin_rad (%s pkpc) at aperture radius (%s pkpc)' %(spin_rad[-1], aperture_rad))
+            if len(spin_hmr_in) != len(spin_hmr_tmp):
+                print('Capped spin_rad (%s pkpc) at aperture radius (%s pkpc)' %(spin_rad_in[-1], aperture_rad))
         elif rad_projected == False:
             spin_rad = np.array(spin_hmr) * galaxy.halfmass_rad
             spin_hmr_tmp = spin_hmr
             
             # Reduce spin_rad array if value exceeds aperture_rad_in... means not all dictionaries will have same number of array spin values
-            spin_rad = [x for x in spin_rad if x <= aperture_rad]
-            spin_hmr = [x for x in spin_hmr if x*galaxy.halfmass_rad <= aperture_rad]
+            spin_rad_in = [x for x in spin_rad if x <= aperture_rad]
+            spin_hmr_in = [x for x in spin_hmr if x*galaxy.halfmass_rad <= aperture_rad]
             
             if len(spin_hmr) != len(spin_hmr_tmp):
-                print('Capped spin_rad (%s pkpc) at aperture radius (%s pkpc)' %(spin_rad[-1], aperture_rad))
+                print('Capped spin_rad (%s pkpc) at aperture radius (%s pkpc)' %(spin_rad_in[-1], aperture_rad))
         
         
         # If we want the original values, enter 0 for viewing angle
@@ -344,8 +350,8 @@ def _misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0'
                                             viewing_angle,
                                             
                                             angle_selection,        
-                                            spin_rad,
-                                            spin_hmr,
+                                            spin_rad_in,
+                                            spin_hmr_in,
                                             find_uncertainties,
                                             
                                             com_min_distance,
@@ -483,11 +489,11 @@ def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
                          use_proj_angle     = True,                   # Whether to use projected or absolute angle
                          lower_mass_limit   = 10**9,            # Whether to plot only certain masses
                          upper_mass_limit   = 10**15,         
-                         ETG_or_LTG         = 'ETG',           # Whether to plot only ETG/LTG
+                         ETG_or_LTG         = 'both',           # Whether to plot only ETG/LTG
                          group_or_field     = 'both',           # Whether to plot only field/group
                          use_satellites     = True,             # Whether to include SubGroupNum =/ 0
                        #--------------------------
-                       showfig       = True,
+                       showfig       = False,
                        savefig       = False,
                          file_format = 'pdf',
                          savefig_txt = '',
@@ -676,12 +682,12 @@ def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
                 catalogue['total']['group'] += 1
                 
                 # Determine if criteria met. If it is, it is part of the final sample
-                if (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['com_min_distance'][use_angle]) and (all_general['%s' %GalaxyID]['SubGroupNum'] <= satellite_criteria):
+                if (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['com_min_distance'][use_angle]) and (all_general['%s' %GalaxyID]['SubGroupNum'] <= satellite_criteria) and (use_hmr in all_misangles['%s' %GalaxyID]['hmr']):
                     catalogue['sample']['group'] += 1
                     catalogue['sample']['all'] += 1
                     
                     # Determine if this is a galaxy we want to plot
-                    if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph) and (use_hmr in all_misangles['%s' %GalaxyID]['hmr']):
+                    if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph):
                         catalogue['plot']['group'] += 1
                         catalogue['plot']['all'] += 1
                         
@@ -701,12 +707,12 @@ def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
                 catalogue['total']['field'] += 1
                 
                 # Determine if criteria met. If it is, it is part of the final sample
-                if (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['com_min_distance'][use_angle])and (all_general['%s' %GalaxyID]['SubGroupNum'] <= satellite_criteria):
+                if (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['com_min_distance'][use_angle])and (all_general['%s' %GalaxyID]['SubGroupNum'] <= satellite_criteria) and (use_hmr in all_misangles['%s' %GalaxyID]['hmr']):
                     catalogue['sample']['field'] += 1
                     catalogue['sample']['all'] += 1
                     
                     # Determine if this is a galaxy we want to plot
-                    if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph) and (use_hmr in all_misangles['%s' %GalaxyID]['hmr']):
+                    if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph):
                         catalogue['plot']['field'] += 1
                         catalogue['plot']['all'] += 1
                         
@@ -728,11 +734,11 @@ def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
                 catalogue['total']['LTG'] += 1
                 
                 # Determine if criteria met. If it is, it is part of the final sample
-                if (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['com_min_distance'][use_angle]) and (all_general['%s' %GalaxyID]['SubGroupNum'] <= satellite_criteria):
+                if (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['com_min_distance'][use_angle]) and (all_general['%s' %GalaxyID]['SubGroupNum'] <= satellite_criteria) and (use_hmr in all_misangles['%s' %GalaxyID]['hmr']):
                     catalogue['sample']['LTG'] += 1
                     
                     # Determine if this is a galaxy we want to plot
-                    if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph) and (use_hmr in all_misangles['%s' %GalaxyID]['hmr']):
+                    if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph):
                         catalogue['plot']['LTG'] += 1
                 else:
                     if debug:
@@ -742,11 +748,11 @@ def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
                 catalogue['total']['ETG'] += 1
                 
                 # Determine if criteria met. If it is, it is part of the final sample
-                if (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['com_min_distance'][use_angle]) and (all_general['%s' %GalaxyID]['SubGroupNum'] <= satellite_criteria):
+                if (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['com_min_distance'][use_angle]) and (all_general['%s' %GalaxyID]['SubGroupNum'] <= satellite_criteria) and (use_hmr in all_misangles['%s' %GalaxyID]['hmr']):
                     catalogue['sample']['ETG'] += 1
                     
                     # Determine if this is a galaxy we want to plot
-                    if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph) and (use_hmr in all_misangles['%s' %GalaxyID]['hmr']):
+                    if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph):
                         catalogue['plot']['ETG'] += 1
                 else:
                     if debug:
@@ -886,7 +892,7 @@ def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
         if print_summary:    
             print('\n')     # total population includes galaxies that failed sample, so can add to less than 100% (ei. remaining % is galaxies that make up non-sample)
             print('OF TOTAL POPULATION: \t(all galaxies in mass range)\n  Aligned:          %.1f ± %.1f %%\n  Misaligned:       %.1f ± %.1f %%\n  Counter-rotating: %.1f ± %.1f %%' %(aligned_tally*100/catalogue['total']['all'], aligned_err_tally*100/catalogue['total']['all'], misaligned_tally*100/catalogue['total']['all'], misaligned_err_tally*100/catalogue['total']['all'], counter_tally*100/catalogue['total']['all'], counter_err_tally*100/catalogue['total']['all']))
-            print('OF TOTAL SAMPLE: \t(no flags +/- subhalo):\n  Aligned:          %.1f ± %.1f %%\n  Misaligned:       %.1f ± %.1f %%\n  Counter-rotating: %.1f ± %.1f %%' %(aligned_tally*100/catalogue['sample']['all'], aligned_err_tally*100/catalogue['sample']['all'], misaligned_tally*100/catalogue['sample']['all'], misaligned_err_tally*100/catalogue['sample']['all'], counter_tally*100/catalogue['sample']['all'], counter_err_tally*100/catalogue['sample']['all']))
+            print('OF TOTAL SAMPLE: \t(no flags, hmr exists, +/- subhalo):\n  Aligned:          %.1f ± %.1f %%\n  Misaligned:       %.1f ± %.1f %%\n  Counter-rotating: %.1f ± %.1f %%' %(aligned_tally*100/catalogue['sample']['all'], aligned_err_tally*100/catalogue['sample']['all'], misaligned_tally*100/catalogue['sample']['all'], misaligned_err_tally*100/catalogue['sample']['all'], counter_tally*100/catalogue['sample']['all'], counter_err_tally*100/catalogue['sample']['all']))
             print('OF PLOT SAMPLE: \t(specific plot criteria)\n  Aligned:          %.1f ± %.1f %%\n  Misaligned:       %.1f ± %.1f %%\n  Counter-rotating: %.1f ± %.1f %%' %(aligned_tally*100/catalogue['plot']['all'], aligned_err_tally*100/catalogue['plot']['all'], misaligned_tally*100/catalogue['plot']['all'], misaligned_err_tally*100/catalogue['plot']['all'], counter_tally*100/catalogue['plot']['all'], counter_err_tally*100/catalogue['plot']['all']))       
         
         #-----------
@@ -897,7 +903,8 @@ def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
         
         metadata_plot = {'Title': 'TOTAL SAMPLE:\nAligned: %.1f ± %.1f %%\nMisaligned: %.1f ± %.1f %%\nCounter-rotating: %.1f ± %.1f %%' %(aligned_tally*100/catalogue['sample']['all'], aligned_err_tally*100/catalogue['sample']['all'], misaligned_tally*100/catalogue['sample']['all'], misaligned_err_tally*100/catalogue['sample']['all'], counter_tally*100/catalogue['sample']['all'], counter_err_tally*100/catalogue['sample']['all']),
                          'Author': 'PLOT SAMPLE:\nAligned: %.1f ± %.1f %%\nMisaligned: %.1f ± %.1f %%\nCounter-rotating: %.1f ± %.1f %%' %(aligned_tally*100/catalogue['plot']['all'], aligned_err_tally*100/catalogue['plot']['all'], misaligned_tally*100/catalogue['plot']['all'], misaligned_err_tally*100/catalogue['plot']['all'], counter_tally*100/catalogue['plot']['all'], counter_err_tally*100/catalogue['plot']['all']),
-                         'Subject': str(hist_n)}
+                         'Subject': str(hist_n),
+                         'Producer': str(catalogue)}
        
         if use_satellites:
             sat_str = 'all'
@@ -912,6 +919,36 @@ def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
         plt.close()
         
             
+        
+        fig, axs = plt.subplots(1, 1, figsize=[7.0, 2.2], sharex=True, sharey=False)
+        plt.subplots_adjust(wspace=0.4, hspace=0.4)
+        masses = []
+        hmr_rad = []    
+        colors = []
+        count = 0
+        ID_failure = []
+        for GalaxyID in GalaxyID_List:
+            masses.append(all_general['%s' %GalaxyID]['stelmass'])
+            hmr_rad.append(all_general['%s' %GalaxyID]['halfmass_rad_proj'])
+            
+            if use_hmr in all_misangles['%s' %GalaxyID]['hmr']:
+                count += 1
+                colors.append('b')
+            else:
+                colors.append('r')
+                ID_failure.append(GalaxyID)
+        
+        print(len(masses))
+        print(count)
+        print(all_general['8230966']['stelmass'])
+        print(all_general['8230966']['halfmass_rad_proj'])
+        axs.scatter(np.log10(np.array(masses)), hmr_rad, s=0.5, alpha=0.5, c=colors)
+        axs.set_xlim(9.4, 9.6)
+        axs.set_ylim(0, 20)
+        axs.set_xlabel('Mass', fontsize=12)
+        axs.set_ylabel('HMR', fontsize=12)
+        set_rc_params(0.9) 
+        plt.show()
             
         
     #---------------------------------
@@ -923,7 +960,7 @@ def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
 #===========================    
 #_misalignment_sample()
 #_misalignment_distribution()
-_misalignment_plot()
+#_misalignment_plot()
 #===========================
     
 

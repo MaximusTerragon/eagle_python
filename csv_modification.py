@@ -58,10 +58,11 @@ dataDir_dict['28'] = dataDir_main + 'snapshot_028_z000p000/snap_028_z000p000.0.h
 
 
 # Modifies existing csv output file by adding or removing relevant fields
-def _modify_misalignment_csv(csv_sample = 'L100_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
-                             csv_output = '_RadProj_noErr__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
+def _modify_misalignment_csv(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+                             csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
+                             csv_output2 = 'L12_TEMP_28_all_sample_misalignment_9.0_TEMP_RadProj_noErr__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                              #--------------------------   
-                             csv_file = True,                       # Will write sample to csv file in sapmle_dir
+                             csv_file = False,                       # Will write sample to csv file in sapmle_dir
                                csv_name = '',
                              #--------------------------
                              print_progress = False,
@@ -117,22 +118,46 @@ def _modify_misalignment_csv(csv_sample = 'L100_28_all_sample_misalignment_9.0',
     #===============================================
     # MAKE MODIFICATIONS HERE
     
-    print(output_input.keys())
-    print(output_input['use_satellites'])
-    
     # Update sims
-    output_input.update(sample_input)
-    
-    print(output_input.keys())
-    print(output_input['mySims'])
-    print(output_input['use_satellites'])
+    #output_input.update(sample_input)
 
     # Update lists
+    
+    
+    
+    # SPLICE CSVS
+    # Loading output
+    dict_output2 = json.load(open('%s/%s.csv' %(output_dir, csv_output2), 'r'))
+    old2_general         = dict_output2['all_general']
+    old2_counts          = dict_output2['all_counts']
+    old2_masses          = dict_output2['all_masses']
+    old2_misangles       = dict_output2['all_misangles']
+    old2_misanglesproj   = dict_output2['all_misanglesproj']
+    old2_flags           = dict_output2['all_flags']
+    
+    
+    print('OLD:')
+    print(old_misangles['12431873']['hmr'])
+    print(old_misangles['8230966']['hmr'])
+    print(old_misangles['11861302']['hmr'])
+    
+    # old_ is my incomplete csv array
+    # old2_ is my shorter, updated csv array
+    for GalaxyID in old2_general.keys():
+        old_general['%s' %GalaxyID] = old2_general['%s' %GalaxyID]
+        old_counts['%s' %GalaxyID]  = old2_counts['%s' %GalaxyID]
+        old_masses['%s' %GalaxyID]  = old2_masses['%s' %GalaxyID]
+        old_misangles['%s' %GalaxyID] = old2_misangles['%s' %GalaxyID]
+        old_misanglesproj['%s' %GalaxyID] = old2_misanglesproj['%s' %GalaxyID]
+        old_flags['%s' %GalaxyID] = old2_flags['%s' %GalaxyID]
 
+    
+    print('NEW:')
+    print(old_misangles['12431873']['hmr'])
+    print(old_misangles['8230966']['hmr'])
+    print(old_misangles['11861302']['hmr'])
 
-
-    # Check whether we can efficiently distinguish between satellite and main using _all_
-
+    
     # Create _main to analyse smaller galaxies of mass 10^8, append them to sample anyway
     # Check whether we get same results
 
@@ -176,8 +201,8 @@ def _modify_misalignment_csv(csv_sample = 'L100_28_all_sample_misalignment_9.0',
     
         #-----------------------------
         # Writing one massive JSON file
-        json.dump(csv_dict, open('%s/%s.csv' %(output_dir, csv_output), 'w'), cls=NumpyEncoder)
-        print('\n  SAVED: %s/%s.csv' %(output_dir, csv_output))
+        json.dump(csv_dict, open('%s/MOD_%s.csv' %(output_dir, csv_output), 'w'), cls=NumpyEncoder)
+        print('\n  SAVED: %s/MOD_%s.csv' %(output_dir, csv_output))
         if print_progress:
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
     

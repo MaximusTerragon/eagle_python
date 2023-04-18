@@ -235,26 +235,26 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
             spin_rad = np.array(spin_hmr) * galaxy.halfmass_rad_proj
             spin_hmr_tmp = spin_hmr
             
-            # Reduce spin_rad array if value exceeds aperture_rad... means not all dictionaries will have same number of array spin values
-            spin_rad = [x for x in spin_rad if x <= aperture_rad]
-            spin_hmr = [x for x in spin_hmr if x*galaxy.halfmass_rad_proj <= aperture_rad]
+            # Reduce spin_rad array if value exceeds aperture_rad_in... means not all dictionaries will have same number of array spin values
+            spin_rad_in = [x for x in spin_rad if x <= aperture_rad]
+            spin_hmr_in = [x for x in spin_hmr if x*galaxy.halfmass_rad_proj <= aperture_rad]
             
-            if len(spin_hmr) != len(spin_hmr_tmp):
-                print('Capped spin_rad (%s pkpc) at aperture radius (%s pkpc)' %(spin_rad, aperture_rad))
+            if len(spin_hmr_in) != len(spin_hmr_tmp):
+                print('Capped spin_rad (%s pkpc) at aperture radius (%s pkpc)' %(spin_rad_in[-1], aperture_rad))
         elif rad_projected == False:
             spin_rad = np.array(spin_hmr) * galaxy.halfmass_rad
             spin_hmr_tmp = spin_hmr
             
-            # Reduce spin_rad array if value exceeds aperture_rad... means not all dictionaries will have same number of array spin values
-            spin_rad = [x for x in spin_rad if x <= aperture_rad]
-            spin_hmr = [x for x in spin_hmr if x*galaxy.halfmass_rad <= aperture_rad]
+            # Reduce spin_rad array if value exceeds aperture_rad_in... means not all dictionaries will have same number of array spin values
+            spin_rad_in = [x for x in spin_rad if x <= aperture_rad]
+            spin_hmr_in = [x for x in spin_hmr if x*galaxy.halfmass_rad <= aperture_rad]
             
             if len(spin_hmr) != len(spin_hmr_tmp):
-                print('Capped spin_rad (%s pkpc) at aperture radius (%s pkpc)' %(max(spin_rad), aperture_rad))
+                print('Capped spin_rad (%s pkpc) at aperture radius (%s pkpc)' %(spin_rad_in[-1], aperture_rad))
         
         
         # If we want the original values, enter 0 for viewing angle
-        subhalo = Subhalo_Analysis(mySims, GroupNum, SubGroupNum, GalaxyID, SnapNum, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, 
+        subhalo = Subhalo_Analysis(sample_input['mySims'], GroupNum, SubGroupNum, GalaxyID, SnapNum, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, 
                                             viewing_axis,
                                             aperture_rad,
                                             kappa_rad, 
@@ -264,8 +264,8 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                                             viewing_angle,
                                             
                                             angle_selection,        
-                                            spin_rad,
-                                            spin_hmr,
+                                            spin_rad_in,
+                                            spin_hmr_in,
                                             find_uncertainties,
                                             
                                             com_min_distance,

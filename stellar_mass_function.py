@@ -70,7 +70,7 @@ def _plot_stellar_mass_function(csv_sample = 'L12_28_all_sample_misalignment_9.0
                                  hist_bin_width = 0.2,
                                  #--------------------------
                                  showfig       = True,
-                                 savefig       = True,
+                                 savefig       = False,
                                    file_format = 'pdf',
                                    savefig_txt = '',
                                  #--------------------------

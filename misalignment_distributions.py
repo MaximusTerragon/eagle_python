@@ -115,7 +115,7 @@ def _misalignment_sample(mySims = [('RefL0012N0188', 12)],
                     'mySims': mySims}
     if debug:
         print(sample_input.items())
-
+    
     
     #=====================================
     if csv_file: 
@@ -140,8 +140,10 @@ def _misalignment_sample(mySims = [('RefL0012N0188', 12)],
                     'SubGroupNum': sample.SubGroupNum, 
                     'GalaxyID': sample.GalaxyID,
                     'SnapNum': sample.SnapNum,
+                    'Redshift': sample.Redshift,
                     'halo_mass': sample.halo_mass,
-                    'centre': sample.centre, 
+                    'centre': sample.centre,
+                    'MorphoKinem': sample.MorphoKinem, 
                     'sample_input':  sample_input}
                     
         csv_dict.update({'function_input': str(inspect.signature(_misalignment_sample))})
@@ -167,8 +169,9 @@ def _misalignment_sample(mySims = [('RefL0012N0188', 12)],
         SubGroupNum_List    = np.array(dict_new['SubGroupNum'])
         GalaxyID_List       = np.array(dict_new['GalaxyID'])
         SnapNum_List        = np.array(dict_new['SnapNum'])
-        halo_mass_List      = np.array(dict_new['halo_mass'])
-        centre_List         = np.array(dict_new['centre'])
+        HaloMass_List       = np.array(dict_new['halo_mass'])
+        Centre_List         = np.array(dict_new['centre'])
+        MorphoKinem_List    = np.array(dict_new['MorphoKinem'])
         
         
         sample_input        = dict_new['sample_input']
@@ -209,7 +212,7 @@ def _misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0'
                                                        'gas_sf_gas_nsf',
                                                        'stars_dm'],           
                                 spin_hmr            = np.array([1.0, 2.0]),          # multiples of hmr for which to find spin
-                                find_uncertainties  = False,                    # whether to find 2D and 3D uncertainties
+                                find_uncertainties  = True,                    # whether to find 2D and 3D uncertainties
                                 rad_projected       = True,                     # whether to use rad in projection or 3D
                                 #--------------------------
                                 # Selection criteria
@@ -241,7 +244,12 @@ def _misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0'
     SubGroupNum_List    = np.array(dict_new['SubGroupNum'])
     GalaxyID_List       = np.array(dict_new['GalaxyID'])
     SnapNum_List        = np.array(dict_new['SnapNum'])
+    Redshift_List       = np.array(dict_new['Redshift'])
+    HaloMass_List       = np.array(dict_new['halo_mass'])
+    Centre_List         = np.array(dict_new['centre'])
+    MorphoKinem_List    = np.array(dict_new['MorphoKinem'])
     sample_input        = dict_new['sample_input']
+    
     if print_progress:
         print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
     if debug:
@@ -250,6 +258,9 @@ def _misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0'
         print(SubGroupNum_List)
         print(GalaxyID_List)
         print(SnapNum_List)
+        print(HaloMass_List)
+        print(Centre_List)
+        print(MorphoKinem_List)
        
        
     print('\n===================')
@@ -270,6 +281,9 @@ def _misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0'
                     'min_particles': min_particles,
                     'min_inclination': min_inclination}
     output_input.update(sample_input)
+    
+
+    
     
     #---------------------------------------------
     # Empty dictionaries to collect relevant data
@@ -294,7 +308,7 @@ def _misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0'
     
     #=================================================================== 
     # Run analysis for each individual galaxy in loaded sample
-    for GroupNum, SubGroupNum, GalaxyID, SnapNum in tqdm(zip(GroupNum_List, SubGroupNum_List, GalaxyID_List, SnapNum_List), total=len(GroupNum_List)):
+    for GroupNum, SubGroupNum, GalaxyID, SnapNum, Redshift, HaloMass, Centre, MorphoKinem in tqdm(zip(GroupNum_List, SubGroupNum_List, GalaxyID_List, SnapNum_List, Redshift_List, HaloMass_List, Centre_List, MorphoKinem_List), total=len(GroupNum_List)):
         
         #-----------------------------
         if print_progress:
@@ -302,8 +316,8 @@ def _misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0'
             time_start = time.time()
             
         # Initial extraction of galaxy particle data
-        galaxy = Subhalo_Extract(sample_input['mySims'], dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, aperture_rad, viewing_axis)
-        # Gives: galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, galaxy.halo_mass
+        galaxy = Subhalo_Extract(sample_input['mySims'], dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, Centre, HaloMass, aperture_rad, viewing_axis)
+        # Gives: galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh
         
         if debug:
             print(galaxy.gn, galaxy.sgn, galaxy.centre, galaxy.halfmass_rad, galaxy.halfmass_rad_proj)
@@ -340,7 +354,7 @@ def _misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0'
         
         
         # If we want the original values, enter 0 for viewing angle
-        subhalo = Subhalo_Analysis(sample_input['mySims'], GroupNum, SubGroupNum, GalaxyID, SnapNum, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, 
+        subhalo = Subhalo_Analysis(sample_input['mySims'], GroupNum, SubGroupNum, GalaxyID, SnapNum, MorphoKinem, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, 
                                             viewing_axis,
                                             aperture_rad,
                                             kappa_rad, 
@@ -357,8 +371,8 @@ def _misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0'
                                             com_min_distance,
                                             min_particles,                                            
                                             min_inclination)
-                                       
-        
+          
+          
         """ FLAGS
         ------------
         #print(subhalo.flags['total_particles'])            # will flag if there are missing particles within aperture_rad
@@ -379,7 +393,7 @@ def _misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0'
         #---------------------------------
           
         if print_galaxy:
-            print('ID:\t%s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f' %(str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'])) 
+            print('|%s| |ID:   %s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f' %(SnapNum, str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'])) 
             
             
     #=====================================
@@ -479,8 +493,8 @@ def _misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0'
         
     
 # Plots singular graphs by reading in existing csv file
-def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
-                       csv_output = '_RadProj_noErr__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
+def _misalignment_plot(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+                       csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                        #--------------------------
                        # Galaxy plotting
                        print_summary = True,
@@ -489,11 +503,11 @@ def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
                          use_proj_angle     = True,                   # Whether to use projected or absolute angle
                          lower_mass_limit   = 10**9,            # Whether to plot only certain masses
                          upper_mass_limit   = 10**15,         
-                         ETG_or_LTG         = 'both',           # Whether to plot only ETG/LTG
+                         ETG_or_LTG         = 'ETG',           # Whether to plot only ETG/LTG
                          group_or_field     = 'both',           # Whether to plot only field/group
                          use_satellites     = True,             # Whether to include SubGroupNum =/ 0
                        #--------------------------
-                       showfig       = False,
+                       showfig       = True,
                        savefig       = False,
                          file_format = 'pdf',
                          savefig_txt = '',
@@ -834,6 +848,14 @@ def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
             legend_labels.append('10$^{%.1f}$ $\minus$ 10$^{%.1f}$ M$_{\odot}$' %(np.log10(lower_mass_limit), np.log10(upper_mass_limit)))    
             legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
             legend_colors.append('grey')
+        if (lower_mass_limit != 10**9):
+            legend_labels.append('$>$10$^{%.1f}$ M$_{\odot}$' %(np.log10(lower_mass_limit)))    
+            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+            legend_colors.append('grey')
+        if (upper_mass_limit != 10**15):
+            legend_labels.append('$<$10$^{%.1f}$ M$_{\odot}$' %(np.log10(lower_mass_limit)))    
+            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+            legend_colors.append('grey')
         
         # Add LTG/ETG if specified
         if ETG_or_LTG != 'both':
@@ -919,8 +941,8 @@ def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
         plt.close()
         
             
-        
-        fig, axs = plt.subplots(1, 1, figsize=[7.0, 2.2], sharex=True, sharey=False)
+        # Check what is plotted
+        """fig, axs = plt.subplots(1, 1, figsize=[7.0, 2.2], sharex=True, sharey=False)
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
         masses = []
         hmr_rad = []    
@@ -949,7 +971,7 @@ def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
         axs.set_ylabel('HMR', fontsize=12)
         set_rc_params(0.9) 
         plt.show()
-            
+        """
         
     #---------------------------------
     _plot_misalignment_distributions()
@@ -958,8 +980,8 @@ def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
 
     
 #===========================    
-#_misalignment_sample()
-#_misalignment_distribution()
+_misalignment_sample()
+_misalignment_distribution()
 #_misalignment_plot()
 #===========================
     

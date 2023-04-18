@@ -27,23 +27,120 @@ Redshift
 """
 # Creates a list of GN, SGN, GalaxyID, SnapNum, and Redshift and saves to csv file
 class Initial_Sample:
+    
     def __init__(self, sim, snapNum, mstarLimit, satellite):
         # Allowing these attributes to be called from the object
         self.mstar_limit = mstarLimit
         self.sim         = sim
         self.snapNum     = snapNum
         
-        myData = self.samplesize(satellite)
+        if mstarLimit > 5E+8:
+            myData = self.samplesize_morph(satellite)
+        else:
+            myData = self.samplesize_basic(satellite)
+            
         
         self.GroupNum    = myData['GroupNumber']
         self.SubGroupNum = myData['SubGroupNumber']
         self.GalaxyID    = myData['GalaxyID']
         self.SnapNum     = myData['SnapNum']
         self.Redshift    = myData['Redshift']
-        self.GroupMass   = myData['Group_M_Crit200']
-        self.centre      = np.array([myData['x'], myData['y'], myData['z']]) * u.Mpc.to(u.kpc)
+        self.halo_mass   = myData['halo_mass']
+        self.centre      = np.transpose(np.array([myData['x'], myData['y'], myData['z']]))
         
-    def samplesize(self, satellite = False):
+        if mstarLimit > 5E+8:
+            self.MorphoKinem = np.transpose(np.array([myData['ellip'], myData['triax'], myData['kappa_stars'], myData['disp_ani'], myData['disc_to_total'], myData['rot_to_disp_ratio']]))            
+        
+    def samplesize_morph(self, satellite = False):
+        # This uses the eagleSqlTools module to connect to the database with your username and password.
+        # If the password is not given, the module will prompt for it.
+        con = sql.connect('lms192', password='dhuKAP62')
+        
+        if satellite == True:
+            for sim_name, sim_size in self.sim:
+                #print(sim_name)
+            
+                # Construct and execute query for each simulation. This query returns properties for a single galaxy
+                myQuery = 'SELECT \
+                             SH.GroupNumber, \
+                             SH.SubGroupNumber, \
+                             SH.GalaxyID, \
+                             SH.SnapNum, \
+                             SH.Redshift, \
+                             SH.CentreOfPotential_x as x, \
+                             SH.CentreOfPotential_y as y, \
+                             SH.CentreOfPotential_z as z, \
+                             FOF.Group_M_Crit200 as halo_mass, \
+                             MK.Ellipticity as ellip, \
+                             MK.Triaxiality as triax, \
+                             MK.KappaCoRot as kappa_stars, \
+                             MK.DispAnisotropy as disp_ani, \
+                             MK.DiscToTotal as disc_to_total, \
+                             MK.RotToDispRatio as rot_to_disp_ratio \
+                           FROM \
+                             %s_Subhalo as SH, \
+                             %s_Aperture as AP, \
+                             %s_FOF as FOF, \
+                             %s_MorphoKinem as MK \
+                           WHERE \
+        			         SH.SnapNum = %i \
+                             and AP.Mass_Star >= %f \
+                             and AP.ApertureSize = 30 \
+                             and SH.GalaxyID = AP.GalaxyID \
+                             and SH.GalaxyID = MK.GalaxyID \
+                             and SH.GroupID = FOF.GroupID \
+                           ORDER BY \
+        			         AP.Mass_Star desc'%(sim_name, sim_name, sim_name, sim_name, self.snapNum, self.mstar_limit)
+            
+            # Execute query.
+            myData = sql.execute_query(con, myQuery)
+            
+        elif satellite == False:
+            for sim_name, sim_size in self.sim:
+                #print(sim_name)
+            
+                # Construct and execute query for each simulation. This query returns properties for a single galaxy
+                myQuery = 'SELECT \
+                             SH.GroupNumber, \
+                             SH.SubGroupNumber, \
+                             SH.GalaxyID, \
+                             SH.SnapNum, \
+                             SH.Redshift, \
+                             SH.CentreOfPotential_x as x, \
+                             SH.CentreOfPotential_y as y, \
+                             SH.CentreOfPotential_z as z, \
+                             FOF.Group_M_Crit200 as halo_mass, \
+                             MK.Ellipticity as ellip, \
+                             MK.Triaxiality as triax, \
+                             MK.KappaCoRot as kappa_stars, \
+                             MK.DispAnisotropy as disp_ani, \
+                             MK.DiscToTotal as disc_to_total, \
+                             MK.RotToDispRatio as rot_to_disp_ratio \
+                           FROM \
+                             %s_Subhalo as SH, \
+                             %s_Aperture as AP, \
+                             %s_FOF as FOF, \
+                             %s_MorphoKinem as MK \
+                           WHERE \
+        			         SH.SnapNum = %i \
+                             and AP.Mass_star >= %f \
+                             and SH.SubGroupNumber = 0 \
+                             and AP.ApertureSize = 30 \
+                             and SH.GalaxyID = AP.GalaxyID \
+                             and SH.GalaxyID = MK.GalaxyID \
+                             and SH.GroupID = FOF.GroupID \
+                           ORDER BY \
+        			         AP.Mass_Star desc'%(sim_name, sim_name, sim_name, sim_name, self.snapNum, self.mstar_limit)
+    
+            # Execute query.
+            myData = sql.execute_query(con, myQuery)
+        
+        else:
+            print('SATELLITE = "no"')
+
+        return myData
+
+    def samplesize_basic(self, satellite = False):
         # This uses the eagleSqlTools module to connect to the database with your username and password.
         # If the password is not given, the module will prompt for it.
         con = sql.connect('lms192', password='dhuKAP62')
@@ -115,8 +212,7 @@ class Initial_Sample:
             print('SATELLITE = "no"')
 
         return myData
-
-
+    
 
 """ 
 Purpose
@@ -204,7 +300,8 @@ If centre_galaxy == True; 'Coordinates' - .centre, 'Velocity' - .perc_vel
 """
 # Extracts the particle and SQL data
 class Subhalo_Extract:
-    def __init__(self, sim, data_dir, snapNum, gn, sgn, aperture_rad_in, viewing_axis,
+    
+    def __init__(self, sim, data_dir, snapNum, gn, sgn, centre_in, halo_mass_in, aperture_rad_in, viewing_axis,
                             centre_galaxy=True, 
                             load_region_length=2.0,   # cMpc/h 
                             nfiles=16, 
@@ -257,12 +354,11 @@ class Subhalo_Extract:
             print('Subhalo COP query')
             time_start = time.time()
         
-        myData = self._query(sim, snapNum)
-        self.halo_mass = myData['halo_mass']
-        
+        # Assigning halo mass
+        self.halo_mass = halo_mass_in
         
         # These were all originally in cMpc, converted to pMpc through self.a and self.aexp
-        self.centre       = np.array([myData['x'], myData['y'], myData['z']]) * u.Mpc.to(u.kpc) * self.a**self.aexp                 # [pkpc]
+        self.centre       = centre_in * u.Mpc.to(u.kpc) * self.a**self.aexp                 # [pkpc]
         
         #-------------------------------------------------------------
         # Load data for stars and gas in non-centred units
@@ -316,36 +412,6 @@ class Subhalo_Extract:
         if print_progress:
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
             print('  EXTRACTION COMPLETE')
-
-    def _query(self, sim, snapNum, debug=False):
-        # This uses the eagleSqlTools module to connect to the database with your username and password.
-        # If the password is not given, the module will prompt for it.
-        con = sql.connect("lms192", password="dhuKAP62")
-        
-        for sim_name, sim_size in sim:
-            #print(sim_name)
-    
-            # Construct and execute query for each simulation. This query returns properties for a single galaxy
-            myQuery = 'SELECT \
-                        SH.CentreOfPotential_x as x, \
-                        SH.CentreOfPotential_y as y, \
-                        SH.CentreOfPotential_z as z, \
-                        FOF.Group_M_Crit200 as halo_mass \
-                       FROM \
-        			     %s_Subhalo as SH, \
-                         %s_FOF as FOF \
-                       WHERE \
-        			     SH.SnapNum = %i \
-                         and SH.GroupNumber = %i \
-                         and SH.SubGroupNumber = %i \
-                         and SH.GroupID = FOF.GroupID \
-                      ORDER BY \
-        			     SH.MassType_Star desc'%(sim_name, sim_name, snapNum, self.gn, self.sgn)
-	
-            # Execute query.
-            myData = sql.execute_query(con, myQuery)
-            
-            return myData    
         
     def _read_galaxy(self, data_dir, itype, gn, sgn, centre, load_region_length, debug=False):
         """ For a given galaxy (defined by its GroupNumber and SubGroupNumber)
@@ -741,7 +807,7 @@ Output Parameters
 # Finds the values we are after
 class Subhalo_Analysis:
     
-    def __init__(self, sim, GroupNum, SubGroupNum, GalaxyID, SnapNum, halfmass_rad, halfmass_rad_proj, halo_mass, stars, gas, dm, bh,
+    def __init__(self, sim, GroupNum, SubGroupNum, GalaxyID, SnapNum, MorphoKinem_in, halfmass_rad, halfmass_rad_proj, halo_mass_in, stars, gas, dm, bh,
                             viewing_axis, 
                             aperture_rad,
                             kappa_rad,
@@ -796,19 +862,10 @@ class Subhalo_Analysis:
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
             print('Subhalo Morph query')
             time_start = time.time()
-            
-        if len(data_nil['stars']['Mass']) > 300:
-            # Run query
-            myData = self._query_morph(sim, GroupNum, SubGroupNum, SnapNum)
-        
-            MorphoKinem = {}
-            for arr_name in ['ellip', 'triax', 'kappa_stars', 'disp_ani', 'disc_to_total', 'rot_to_disp_ratio']:
-                MorphoKinem[arr_name] = myData[arr_name]
-        else:
-            MorphoKinem = {}
-            for arr_name in ['ellip', 'triax', 'kappa_stars', 'disp_ani', 'disc_to_total', 'rot_to_disp_ratio']:
-                MorphoKinem[arr_name] = math.nan
-    
+          
+        MorphoKinem = {}    
+        for arr_name, arr_value in zip(['ellip', 'triax', 'kappa_stars', 'disp_ani', 'disc_to_total', 'rot_to_disp_ratio'], MorphoKinem_in):
+            MorphoKinem[arr_name] = arr_value
             
         #-----------------------------------------------------
         # Creating empty dictionaries
@@ -838,7 +895,7 @@ class Subhalo_Analysis:
         self.SubGroupNum        = SubGroupNum
         self.GalaxyID           = GalaxyID
         self.SnapNum            = SnapNum
-        self.halo_mass          = halo_mass                             # [Msun] at 200p_crit
+        self.halo_mass          = halo_mass_in                          # [Msun] at 200p_crit
         self.stelmass           = np.sum(data_nil['stars']['Mass'])     # [Msun] within 30 pkpc (aperture_rad_in)
         self.gasmass            = np.sum(data_nil['gas']['Mass'])       # [Msun] within 30 pkpc (aperture_rad_in)
         self.gasmass_sf         = np.sum(data_nil['gas_sf']['Mass'])    # [Msun] within 30 pkpc (aperture_rad_in)
@@ -1708,38 +1765,6 @@ class Subhalo_Analysis:
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
             print('FINISHED EXTRACTION\tGALAXY ID: %s' %GalaxyID)
                     
-    def _query_morph(self, sim, GroupNum, SubGroupNum, SnapNum, debug=False):
-        # This uses the eagleSqlTools module to connect to the database with your username and password.
-        # If the password is not given, the module will prompt for it.
-        con = sql.connect("lms192", password="dhuKAP62")
-        
-        for sim_name, sim_size in sim:
-            #print(sim_name)
-    
-            # Construct and execute query for each simulation. This query returns properties for a single galaxy
-            myQuery = 'SELECT \
-                        MK.Ellipticity as ellip, \
-                        MK.Triaxiality as triax, \
-                        MK.KappaCoRot as kappa_stars, \
-                        MK.DispAnisotropy as disp_ani, \
-                        MK.DiscToTotal as disc_to_total, \
-                        MK.RotToDispRatio as rot_to_disp_ratio \
-                       FROM \
-        			     %s_Subhalo as SH, \
-                         %s_MorphoKinem as MK \
-                       WHERE \
-        			     SH.SnapNum = %i \
-                         and SH.GroupNumber = %i \
-                         and SH.SubGroupNumber = %i \
-                         and SH.GalaxyID = MK.GalaxyID \
-                      ORDER BY \
-        			     SH.MassType_Star desc'%(sim_name, sim_name, SnapNum, GroupNum, SubGroupNum)
-	
-            # Execute query.
-            myData = sql.execute_query(con, myQuery)
-            
-            return myData      
-
     def _rotate_galaxy(self, matrix, data, debug=False):
         """ For a given set of galaxy data, work out the rotated coordinates 
         and other data centred on [0, 0, 0], accounting for the peculiar 
@@ -2244,32 +2269,6 @@ class MergerTree:
 
 
 
-
-# Will find ID of galaxy when given gn, sgn, snap, and sim
-def ConvertGN(gn, sgn, snapNum, sim):
-    # This uses the eagleSqlTools module to connect to the database with your username and password.
-    # If the password is not given, the module will prompt for it.
-    con = sql.connect("lms192", password="dhuKAP62")
-    
-    for sim_name, sim_size in sim:
-        #print(sim_name)
-
-        # Construct and execute query for each simulation. This query returns properties for a single galaxy
-        myQuery = 'SELECT \
-                    SH.GalaxyID \
-                   FROM \
-    			     %s_Subhalo as SH \
-                   WHERE \
-    			     SH.SnapNum = %i \
-                     and SH.GroupNumber = %i \
-                     and SH.SubGroupNumber = %i'%(sim_name, snapNum, gn, sgn)
-
-        # Execute query.
-        myData = sql.execute_query(con, myQuery)
-        
-        return myData['GalaxyID']
-
-
 # Will find gn, sgn, and snap of galaxy when given ID and sim
 def ConvertID(galID, sim):
     # This uses the eagleSqlTools module to connect to the database with your username and password.
@@ -2284,16 +2283,29 @@ def ConvertID(galID, sim):
                     SH.GroupNumber, \
                     SH.SubGroupNumber, \
                     SH.SnapNum, \
-                    SH.Redshift \
+                    SH.Redshift, \
+                    SH.CentreOfPotential_x as x, \
+                    SH.CentreOfPotential_y as y, \
+                    SH.CentreOfPotential_z as z, \
+                    FOF.Group_M_Crit200 as halo_mass, \
+                    MK.Ellipticity as ellip, \
+                    MK.Triaxiality as triax, \
+                    MK.KappaCoRot as kappa_stars, \
+                    MK.DispAnisotropy as disp_ani, \
+                    MK.DiscToTotal as disc_to_total, \
+                    MK.RotToDispRatio as rot_to_disp_ratio \
                    FROM \
-    			     %s_Subhalo as SH \
+    			     %s_Subhalo as SH, \
+                     %s_FOF as FOF, \
+                     %s_MorphoKinem as MK \
                    WHERE \
-    			     SH.GalaxyID = %s'%(sim_name, galID)
+    			     SH.GalaxyID = %s \
+                     and SH.GalaxyID = MK.GalaxyID \
+                     and SH.GroupID = FOF.GroupID'%(sim_name, sim_name, sim_name, galID)
 
         # Execute query.
         myData = sql.execute_query(con, myQuery)
         
-        return myData['GroupNumber'], myData['SubGroupNumber'], myData['SnapNum'], myData['Redshift']
-
+        return myData['GroupNumber'], myData['SubGroupNumber'], myData['SnapNum'], myData['Redshift'], myData['halo_mass'], np.array([myData['x'], myData['y'], myData['z']]), np.array([myData['ellip'], myData['triax'], myData['kappa_stars'], myData['disp_ani'], myData['disc_to_total'], myData['rot_to_disp_ratio']])
 
 

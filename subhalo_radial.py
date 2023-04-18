@@ -85,7 +85,7 @@ SAMPLE:
 def _radial_analysis(csv_sample = False,              # Whether to read in existing list of galaxies  
                        #--------------------------
                        mySims = [('RefL0012N0188', 12)],
-                       GalaxyID_List = [37445],               # Will create a csv file for each galaxy
+                       GalaxyID_List = [3748],               # Will create a csv file for each galaxy
                        #--------------------------
                        # Galaxy extraction properties
                        viewing_axis        = 'z',                  # Which axis to view galaxy from.  DEFAULT 'z'
@@ -144,6 +144,10 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
         SubGroupNum_List    = np.array(dict_new['SubGroupNum'])
         GalaxyID_List       = np.array(dict_new['GalaxyID'])
         SnapNum_List        = np.array(dict_new['SnapNum'])
+        Redshift_List       = np.array(dict_new['Redshift'])
+        HaloMass_List       = np.array(dict_new['halo_mass'])
+        Centre_List         = np.array(dict_new['centre'])
+        MorphoKinem_List    = np.array(dict_new['MorphoKinem'])
         sample_input        = dict_new['sample_input']
         mySims              = sample_input['mySims']
         if print_progress:
@@ -168,14 +172,21 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
         SubGroupNum_List = []
         SnapNum_List     = []
         Redshift_List    = []
+        HaloMass_List    = []
+        Centre_List      = []
+        MorphoKinem_List = []
+        
         for galID in GalaxyID_List:
-            gn, sgn, snap, z = ConvertID(galID, mySims)
+            gn, sgn, snap, z, halomass_i, centre_i, morphkinem_i = ConvertID(galID, mySims)
     
             # Append to arrays
             GroupNum_List.append(gn)
             SubGroupNum_List.append(sgn)
             SnapNum_List.append(snap)
             Redshift_List.append(z)
+            HaloMass_List.append(halomass_i) 
+            Centre_List.append(centre_i)
+            MorphoKinem_List.append(morphkinem_i)
             
         if debug:
             print(GroupNum_List)
@@ -218,16 +229,16 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
     
     #=================================================================== 
     # Run analysis for each individual galaxy in loaded sample
-    for GroupNum, SubGroupNum, GalaxyID, SnapNum in tqdm(zip(GroupNum_List, SubGroupNum_List, GalaxyID_List, SnapNum_List), total=len(GroupNum_List)):
-    
+    for GroupNum, SubGroupNum, GalaxyID, SnapNum, Redshift, HaloMass, Centre_i, MorphoKinem in tqdm(zip(GroupNum_List, SubGroupNum_List, GalaxyID_List, SnapNum_List, Redshift_List, HaloMass_List, Centre_List, MorphoKinem_List), total=len(GroupNum_List)):
+   
         if print_progress:
              print('Extracting particle data Subhalo_Extract()')
              time_start = time.time()
         
     
         # Initial extraction of galaxy particle data
-        galaxy = Subhalo_Extract(mySims, dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, aperture_rad, viewing_axis)
-        # Gives: galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, galaxy.halo_mass
+        galaxy = Subhalo_Extract(mySims, dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, Centre_i, HaloMass, aperture_rad, viewing_axis)
+        # Gives: galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh
         
         if debug:
             print(galaxy.gn, galaxy.sgn, galaxy.centre, galaxy.halfmass_rad, galaxy.halfmass_rad_proj)
@@ -264,7 +275,7 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
         
         
         # If we want the original values, enter 0 for viewing angle
-        subhalo = Subhalo_Analysis(sample_input['mySims'], GroupNum, SubGroupNum, GalaxyID, SnapNum, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, 
+        subhalo = Subhalo_Analysis(mySims, GroupNum, SubGroupNum, GalaxyID, SnapNum, MorphoKinem, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, 
                                             viewing_axis,
                                             aperture_rad,
                                             kappa_rad, 
@@ -448,18 +459,25 @@ def _radial_plot(csv_output = 'L12_radial_ID3748_RadProj_Err__stars_gas_stars_ga
     
     # Extract GroupNum, SubGroupNum, and Snap for each ID
     GalaxyID_List  = list(all_general.keys())
-    GroupNum_List  = []
+    GroupNum_List    = []
     SubGroupNum_List = []
     SnapNum_List     = []
     Redshift_List    = []
+    HaloMass_List    = []
+    Centre_List      = []
+    MorphoKinem_List = []
+    
     for galID in GalaxyID_List:
-        gn, sgn, snap, z = ConvertID(galID, output_input['mySims'])
+        gn, sgn, snap, z, halomass_i, centre_i, morphkinem_i = ConvertID(galID, output_input['mySims'])
 
         # Append to arrays
         GroupNum_List.append(gn)
         SubGroupNum_List.append(sgn)
         SnapNum_List.append(snap)
         Redshift_List.append(z)
+        HaloMass_List.append(halomass_i) 
+        Centre_List.append(centre_i)
+        MorphoKinem_List.append(morphkinem_i)
         
     if print_progress:
         print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
@@ -532,7 +550,7 @@ def _radial_plot(csv_output = 'L12_radial_ID3748_RadProj_Err__stars_gas_stars_ga
     
     #=================================================================== 
     # Run analysis for each individual galaxy in loaded sample
-    for GroupNum, SubGroupNum, GalaxyID, SnapNum, Redshift in tqdm(zip(GroupNum_List, SubGroupNum_List, GalaxyID_List, SnapNum_List, Redshift_List), total=len(GroupNum_List)):
+    for GroupNum, SubGroupNum, GalaxyID, SnapNum, Redshift, HaloMass, Centre, MorphoKinem in tqdm(zip(GroupNum_List, SubGroupNum_List, GalaxyID_List, SnapNum_List, Redshift_List, HaloMass_List, Centre_List, MorphoKinem_List), total=len(GroupNum_List)):
         
         # adjust use_rad to whatever current galaxy values are (use hmr in misangles)
         use_rad = all_misangles['%s' %GalaxyID]['hmr']

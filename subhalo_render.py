@@ -82,7 +82,7 @@ PURPOSE
 def galaxy_render(csv_sample = False,              # False, Whether to read in existing list of galaxies  
                     #--------------------------
                     mySims = [('RefL0012N0188', 12)],
-                    GalaxyID_List = [43163],
+                    GalaxyID_List = [37445],
                     #--------------------------
                     # Galaxy extraction properties
                     kappa_rad            = 30,          # calculate kappa for this radius [pkpc]
@@ -283,11 +283,6 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                                             min_particles,                                            
                                             min_inclination)
     
-        
-        
-        print(subhalo.spins.items())
-        
-        
         
         if print_galaxy:
             print('|%s| |ID:   %s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f' %(SnapNum, str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'])) 

@@ -68,7 +68,7 @@ dataDir_dict['28'] = dataDir_main + 'snapshot_028_z000p000/snap_028_z000p000.0.h
 def _misalignment_sample(mySims = [('RefL0012N0188', 12)],
                          #--------------------------
                          galaxy_mass_limit  = 10**9,            # Lower mass limit within 30pkpc
-                         snapNum            = 28,               # Target snapshot
+                         snapNum            = 19,               # Target snapshot
                          use_satellites     = True,             # Whether to include SubGroupNum =/ 0
                          print_sample       = False,             # Print list of IDs
                          #--------------------------   
@@ -194,7 +194,7 @@ def _misalignment_sample(mySims = [('RefL0012N0188', 12)],
     
     
 # Reads in a sample file, and does all relevant calculations, and exports as csv file
-def _misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+def _misalignment_distribution(csv_sample = 'L12_19_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                                 #--------------------------
                                 # Galaxy extraction properties
                                 viewing_axis        = 'z',                  # Which axis to view galaxy from.  DEFAULT 'z'
@@ -493,8 +493,8 @@ def _misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0'
         
     
 # Plots singular graphs by reading in existing csv file
-def _misalignment_plot(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
-                       csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
+def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+                       csv_output = '_RadProj_noErr__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                        #--------------------------
                        # Galaxy plotting
                        print_summary = True,
@@ -503,12 +503,12 @@ def _misalignment_plot(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # 
                          use_proj_angle     = True,                   # Whether to use projected or absolute angle
                          lower_mass_limit   = 10**9,            # Whether to plot only certain masses
                          upper_mass_limit   = 10**15,         
-                         ETG_or_LTG         = 'ETG',           # Whether to plot only ETG/LTG
+                         ETG_or_LTG         = 'both',           # Whether to plot only ETG/LTG
                          group_or_field     = 'both',           # Whether to plot only field/group
-                         use_satellites     = True,             # Whether to include SubGroupNum =/ 0
+                         use_satellites     = False,             # Whether to include SubGroupNum =/ 0
                        #--------------------------
                        showfig       = True,
-                       savefig       = False,
+                       savefig       = True,
                          file_format = 'pdf',
                          savefig_txt = '',
                        #--------------------------
@@ -980,9 +980,9 @@ def _misalignment_plot(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # 
 
     
 #===========================    
-_misalignment_sample()
-_misalignment_distribution()
-#_misalignment_plot()
+#_misalignment_sample()
+#_misalignment_distribution()
+_misalignment_plot()
 #===========================
     
 

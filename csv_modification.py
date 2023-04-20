@@ -58,11 +58,11 @@ dataDir_dict['28'] = dataDir_main + 'snapshot_028_z000p000/snap_028_z000p000.0.h
 
 
 # Modifies existing csv output file by adding or removing relevant fields
-def _modify_misalignment_csv(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
-                             csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
+def _modify_misalignment_csv(csv_sample = '#L100_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+                             csv_output = '_RadProj_noErr__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                              csv_output2 = 'L12_TEMP_28_all_sample_misalignment_9.0_TEMP_RadProj_noErr__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                              #--------------------------   
-                             csv_file = False,                       # Will write sample to csv file in sapmle_dir
+                             csv_file = True,                       # Will write sample to csv file in sapmle_dir
                                csv_name = '',
                              #--------------------------
                              print_progress = False,
@@ -80,14 +80,14 @@ def _modify_misalignment_csv(csv_sample = 'L12_28_all_sample_misalignment_9.0', 
     #--------------------------------
     # Loading sample
     dict_sample = json.load(open('%s/%s.csv' %(sample_dir, csv_sample), 'r'))
-    GroupNum_List       = np.array(dict_new['GroupNum'])
-    SubGroupNum_List    = np.array(dict_new['SubGroupNum'])
-    GalaxyID_List       = np.array(dict_new['GalaxyID'])
-    SnapNum_List        = np.array(dict_new['SnapNum'])
-    Redshift_List       = np.array(dict_new['Redshift'])
-    HaloMass_List       = np.array(dict_new['halo_mass'])
-    Centre_List         = np.array(dict_new['centre'])
-    MorphoKinem_List    = np.array(dict_new['MorphoKinem'])
+    GroupNum_List       = np.array(dict_sample['GroupNum'])
+    SubGroupNum_List    = np.array(dict_sample['SubGroupNum'])
+    GalaxyID_List       = np.array(dict_sample['GalaxyID'])
+    SnapNum_List        = np.array(dict_sample['SnapNum'])
+    Redshift_List       = np.array(dict_sample['Redshift'])
+    HaloMass_List       = np.array(dict_sample['halo_mass'])
+    Centre_List         = np.array(dict_sample['centre'])
+    MorphoKinem_List    = np.array(dict_sample['MorphoKinem'])
     
         
     # Loading output
@@ -131,7 +131,8 @@ def _modify_misalignment_csv(csv_sample = 'L12_28_all_sample_misalignment_9.0', 
     #------------------------
     # Update lists
     
-    
+    """for GalaxyID in old_general.keys():
+        old_general['%s' %GalaxyID]['SnapNum'] = 28"""
     
     #------------------------
     # SPLICE CSVS
@@ -316,6 +317,7 @@ def _modify_radial_csv(csv_output = 'L12_radial_ID37445_RadProj_Err__stars_gas_s
     """
 
     # Update lists
+    
 
 
 

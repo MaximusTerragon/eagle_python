@@ -289,7 +289,7 @@ def _misalignment_distribution(csv_sample = 'L12_19_all_sample_misalignment_9.0'
     # Empty dictionaries to collect relevant data
     all_flags         = {}          # has reason why galaxy failed sample
     all_general       = {}          # has total masses, kappa, halfmassrad, etc.
-    #all_coms          = {}          # has all C.o.Ms
+    all_coms          = {}          # has all C.o.Ms
     #all_spins         = {}          # has all spins
     all_counts        = {}          # has all the particle count within rad
     all_masses        = {}          # has all the particle mass within rad
@@ -339,8 +339,12 @@ def _misalignment_distribution(csv_sample = 'L12_19_all_sample_misalignment_9.0'
             spin_rad_in = [x for x in spin_rad if x <= aperture_rad]
             spin_hmr_in = [x for x in spin_hmr if x*galaxy.halfmass_rad_proj <= aperture_rad]
             
-            if len(spin_hmr_in) != len(spin_hmr_tmp):
-                print('Capped spin_rad (%s pkpc) at aperture radius (%s pkpc)' %(spin_rad_in[-1], aperture_rad))
+            # Ensure min. rad is >1 pkpc
+            spin_rad_in = [x for x in spin_rad_in if x >= 1.0]
+            spin_hmr_in = [x for x in spin_hmr_in if x*galaxy.halfmass_rad_proj >= 1.0]
+        
+            if len(spin_hmr) != len(spin_hmr_tmp):
+                print('Capped spin_rad: %.2f - %.2f - %.2f HMR | Min/Max %.2f / %.2f pkpc' %(min(spin_hmr_in), (max(spin_hmr_in) - max(spin_hmr_in))/len(spin_hmr_in), max(spin_hmr_in), min(spin_rad_in), max(spin_rad_in)))
         elif rad_projected == False:
             spin_rad = np.array(spin_hmr) * galaxy.halfmass_rad
             spin_hmr_tmp = spin_hmr
@@ -349,8 +353,12 @@ def _misalignment_distribution(csv_sample = 'L12_19_all_sample_misalignment_9.0'
             spin_rad_in = [x for x in spin_rad if x <= aperture_rad]
             spin_hmr_in = [x for x in spin_hmr if x*galaxy.halfmass_rad <= aperture_rad]
             
+            # Ensure min. rad is >1 pkpc
+            spin_rad_in = [x for x in spin_rad_in if x >= 1.0]
+            spin_hmr_in = [x for x in spin_hmr_in if x*galaxy.halfmass_rad_proj >= 1.0]
+        
             if len(spin_hmr) != len(spin_hmr_tmp):
-                print('Capped spin_rad (%s pkpc) at aperture radius (%s pkpc)' %(spin_rad_in[-1], aperture_rad))
+                print('Capped spin_rad: %.2f - %.2f - %.2f HMR | Min/Max %.2f / %.2f pkpc' %(min(spin_hmr_in), (max(spin_hmr_in) - max(spin_hmr_in))/len(spin_hmr_in), max(spin_hmr_in), min(spin_rad_in), max(spin_rad_in)))
         
         
         # If we want the original values, enter 0 for viewing angle
@@ -386,6 +394,7 @@ def _misalignment_distribution(csv_sample = 'L12_19_all_sample_misalignment_9.0'
         # Collecting all relevant particle info for galaxy
         all_flags['%s' %str(subhalo.GalaxyID)]          = subhalo.flags
         all_general['%s' %str(subhalo.GalaxyID)]        = subhalo.general
+        all_coms['%s' %str(subhalo.GalaxyID)]           = subhalo.coms
         all_counts['%s' %str(subhalo.GalaxyID)]         = subhalo.counts
         all_masses['%s' %str(subhalo.GalaxyID)]         = subhalo.masses
         all_misangles['%s' %str(subhalo.GalaxyID)]      = subhalo.mis_angles
@@ -419,6 +428,7 @@ def _misalignment_distribution(csv_sample = 'L12_19_all_sample_misalignment_9.0'
         
         # Combining all dictionaries
         csv_dict = {'all_general': all_general,
+                    'all_coms': all_coms,
                     'all_counts': all_counts,
                     'all_masses': all_masses,
                     'all_misangles': all_misangles,
@@ -503,11 +513,11 @@ def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
                          use_proj_angle     = True,                   # Whether to use projected or absolute angle
                          lower_mass_limit   = 10**9,            # Whether to plot only certain masses
                          upper_mass_limit   = 10**15,         
-                         ETG_or_LTG         = 'both',           # Whether to plot only ETG/LTG
+                         ETG_or_LTG         = 'LTG',           # Whether to plot only ETG/LTG
                          group_or_field     = 'both',           # Whether to plot only field/group
                          use_satellites     = False,             # Whether to include SubGroupNum =/ 0
                        #--------------------------
-                       showfig       = True,
+                       showfig       = False,
                        savefig       = True,
                          file_format = 'pdf',
                          savefig_txt = '',
@@ -583,19 +593,19 @@ def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
             use_particles.append('stars')
         if 'gas_sf' not in use_particles:
             use_particles.append('gas_sf')
-        plot_label = 'Stars-gas$_{sf}$'
+        plot_label = 'Stars-gas$_{\mathrm{sf}}$'
     if use_angle == 'stars_gas_nsf':
         if 'stars' not in use_particles:
             use_particles.append('stars')
         if 'gas_nsf' not in use_particles:
             use_particles.append('gas_nsf')
-        plot_label = 'Stars-gas$_{nsf}$'
+        plot_label = 'Stars-gas$_{\mathrm{nsf}}$'
     if use_angle == 'gas_sf_gas_nsf':
         if 'gas_sf' not in use_particles:
             use_particles.append('gas_sf')
         if 'gas_nsf' not in use_particles:
             use_particles.append('gas_nsf')
-        plot_label = 'gas$_{sf}$-gas$_{nsf}$'
+        plot_label = 'gas$_{\mathrm{sf}}$-gas$_{\mathrm{nsf}}$'
     if use_angle == 'stars_dm':
         if 'stars' not in use_particles:
             use_particles.append('stars')
@@ -613,13 +623,13 @@ def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
             use_particles.append('gas_sf')
         if 'dm' not in use_particles:
             use_particles.append('dm')
-        plot_label = 'Gas$_{sf}$-DM'
+        plot_label = 'Gas$_{\mathrm{sf}}$-DM'
     if use_angle == 'gas_nsf_dm':
         if 'gas_nsf' not in use_particles:
             use_particles.append('gas_nsf')
         if 'dm' not in use_particles:
             use_particles.append('dm')
-        plot_label = 'Gas$_{nsf}$-DM'
+        plot_label = 'Gas$_{\mathrm{nsf}}$-DM'
     
     
     #-----------------------------
@@ -828,7 +838,7 @@ def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
         if use_proj_angle:
             axs.set_xlabel('Misalignment angle, $\psi_{z}$')
         else:
-            axs.set_xlabel('Misalignment angle, $\psi_{3D}$')
+            axs.set_xlabel('Misalignment angle, $\psi_{\mathrm{3D}}$')
         axs.set_ylabel('Percentage of galaxies')
         #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='both', width=0.8, length=2)
         
@@ -845,15 +855,15 @@ def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
         
         # Add mass range
         if (lower_mass_limit != 10**9) and (upper_mass_limit != 10**15):
-            legend_labels.append('10$^{%.1f}$ $\minus$ 10$^{%.1f}$ M$_{\odot}$' %(np.log10(lower_mass_limit), np.log10(upper_mass_limit)))    
+            legend_labels.append('$10 ^{%.1f} \minus 10 ^{%.1f}$ M$_{\odot}$' %(np.log10(lower_mass_limit), np.log10(upper_mass_limit)))    
             legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
             legend_colors.append('grey')
         if (lower_mass_limit != 10**9):
-            legend_labels.append('$>$10$^{%.1f}$ M$_{\odot}$' %(np.log10(lower_mass_limit)))    
+            legend_labels.append('$> ^{%.1f} M$_{\odot}$' %(np.log10(lower_mass_limit)))    
             legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
             legend_colors.append('grey')
         if (upper_mass_limit != 10**15):
-            legend_labels.append('$<$10$^{%.1f}$ M$_{\odot}$' %(np.log10(lower_mass_limit)))    
+            legend_labels.append('$< 10 ^{%.1f}$ M$_{\odot}$' %(np.log10(lower_mass_limit)))    
             legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
             legend_colors.append('grey')
         
@@ -879,7 +889,6 @@ def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
         #-----------
         # other
         plt.tight_layout()
-        set_rc_params(0.1) 
         
         
         #=====================================
@@ -934,7 +943,7 @@ def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
             sat_str = 'cent'
        
         if savefig:
-            plt.savefig("%s/L%s_%s_%s_misalignment_%s_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], output_input['snapNum'], sat_str, np.log10(float(output_input['galaxy_mass_limit'])), use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', pad_inches=0.1, dpi=600)    
+            plt.savefig("%s/L%s_%s_%s_misalignment_%s_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], output_input['snapNum'], sat_str, np.log10(float(output_input['galaxy_mass_limit'])), use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
             print("\n  SAVED: %s/L%s_%s_%s_misalignment_%s_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], output_input['snapNum'], sat_str, np.log10(float(output_input['galaxy_mass_limit'])), use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format))
         if showfig:
             plt.show()

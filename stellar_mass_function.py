@@ -69,7 +69,7 @@ def _plot_stellar_mass_function(csv_sample = 'L100_28_all_sample_misalignment_9.
                                  #--------------------------
                                  hist_bin_width = 0.2,
                                  #--------------------------
-                                 showfig       = True,
+                                 showfig       = False,
                                  savefig       = True,
                                    file_format = 'pdf',
                                    savefig_txt = '',
@@ -194,7 +194,7 @@ def _plot_stellar_mass_function(csv_sample = 'L100_28_all_sample_misalignment_9.
     def _plot_stellar_mass_func(debug=False):
         
         # Graph initialising and base formatting
-        fig, axs = plt.subplots(1, 1, figsize=[6, 5.5], sharex=True, sharey=False)
+        fig, axs = plt.subplots(1, 1, figsize=[7, 6.2], sharex=True, sharey=False)
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
     
     
@@ -304,7 +304,6 @@ def _plot_stellar_mass_function(csv_sample = 'L100_28_all_sample_misalignment_9.
         #-----------
         # other
         plt.tight_layout()
-        set_rc_params(0.1)
 
         #-----------
         # Savefig
@@ -320,7 +319,7 @@ def _plot_stellar_mass_function(csv_sample = 'L100_28_all_sample_misalignment_9.
             sat_str = 'cent'
          
         if savefig:
-            plt.savefig("%s/L%s_%s_%s_misalignment_%s_%s_HMR%s_stellar_mass_func_%s.%s" %(fig_dir, output_input['mySims'][0][1], output_input['snapNum'], sat_str, np.log10(float(output_input['galaxy_mass_limit'])), use_angle, str(use_hmr), savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', pad_inches=0.1, dpi=600)    
+            plt.savefig("%s/L%s_%s_%s_misalignment_%s_%s_HMR%s_stellar_mass_func_%s.%s" %(fig_dir, output_input['mySims'][0][1], output_input['snapNum'], sat_str, np.log10(float(output_input['galaxy_mass_limit'])), use_angle, str(use_hmr), savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
             print("\n  SAVED: %s/L%s_%s_%s_misalignment_%s_%s_HMR%s_stellar_mass_func_%s.%s" %(fig_dir, output_input['mySims'][0][1], output_input['snapNum'], sat_str, np.log10(float(output_input['galaxy_mass_limit'])), use_angle, str(use_hmr), savefig_txt, file_format))
         if showfig:
             plt.show()

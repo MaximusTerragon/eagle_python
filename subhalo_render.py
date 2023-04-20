@@ -191,7 +191,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         HaloMass_List    = []
         Centre_List      = []
         MorphoKinem_List = []
-        
+         
         for galID in GalaxyID_List:
             gn, sgn, snap, z, halomass_i, centre_i, morphkinem_i = ConvertID(galID, mySims)
     
@@ -211,7 +211,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
             print(SnapNum_List)
             
         print('\n===================')
-        print('SAMPLE INPUT:\n  %s\n  GalaxyIDs: %s' %(mySims, GalaxyID_List))
+        print('SAMPLE INPUT:\n  %s\n  GalaxyIDs: %s' %(mySims[0][0], GalaxyID_List))
         print('  SAMPLE LENGTH: ', len(GroupNum_List))
         print('===================')
               
@@ -250,8 +250,12 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
             spin_rad_in = [x for x in spin_rad if x <= aperture_rad]
             spin_hmr_in = [x for x in spin_hmr if x*galaxy.halfmass_rad_proj <= aperture_rad]
             
-            if len(spin_hmr_in) != len(spin_hmr_tmp):
-                print('Capped spin_rad (%s pkpc) at aperture radius (%s pkpc)' %(spin_rad_in[-1], aperture_rad))
+            # Ensure min. rad is >1 pkpc
+            spin_rad_in = [x for x in spin_rad_in if x >= 1.0]
+            spin_hmr_in = [x for x in spin_hmr_in if x*galaxy.halfmass_rad_proj >= 1.0]
+        
+            if len(spin_hmr) != len(spin_hmr_tmp):
+                print('Capped spin_rad: %.2f - %.2f - %.2f HMR | Min/Max %.2f / %.2f pkpc' %(min(spin_hmr_in), (max(spin_hmr_in) - max(spin_hmr_in))/len(spin_hmr_in), max(spin_hmr_in), min(spin_rad_in), max(spin_rad_in)))
         elif rad_projected == False:
             spin_rad = np.array(spin_hmr) * galaxy.halfmass_rad
             spin_hmr_tmp = spin_hmr
@@ -260,9 +264,13 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
             spin_rad_in = [x for x in spin_rad if x <= aperture_rad]
             spin_hmr_in = [x for x in spin_hmr if x*galaxy.halfmass_rad <= aperture_rad]
             
-            if len(spin_hmr) != len(spin_hmr_tmp):
-                print('Capped spin_rad (%s pkpc) at aperture radius (%s pkpc)' %(spin_rad_in[-1], aperture_rad))
+            # Ensure min. rad is >1 pkpc
+            spin_rad_in = [x for x in spin_rad_in if x >= 1.0]
+            spin_hmr_in = [x for x in spin_hmr_in if x*galaxy.halfmass_rad_proj >= 1.0]
         
+            if len(spin_hmr) != len(spin_hmr_tmp):
+                print('Capped spin_rad: %.2f - %.2f - %.2f HMR | Min/Max %.2f / %.2f pkpc' %(min(spin_hmr_in), (max(spin_hmr_in) - max(spin_hmr_in))/len(spin_hmr_in), max(spin_hmr_in), min(spin_rad_in), max(spin_rad_in)))
+            
         
         # If we want the original values, enter 0 for viewing angle
         subhalo = Subhalo_Analysis(mySims, GroupNum, SubGroupNum, GalaxyID, SnapNum, MorphoKinem, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, 
@@ -652,7 +660,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
             particle_txt += '_bh'
         
         if savefig:
-            plt.savefig("%s/L%s_render_ID%s_%s_%s.%s" %(fig_dir, mySims[0][1], GalaxyID, particle_txt, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', pad_inches=0.1, dpi=600)    
+            plt.savefig("%s/L%s_render_ID%s_%s_%s.%s" %(fig_dir, mySims[0][1], GalaxyID, particle_txt, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
             print('\n  SAVED:%s/L%s_render_ID%s_%s_%s.%s' %(fig_dir, mySims[0][1], GalaxyID, particle_txt, savefig_txt, file_format))
         if showfig:
             plt.show()

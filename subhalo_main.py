@@ -214,6 +214,8 @@ class Initial_Sample:
         return myData
     
 
+
+
 """ 
 Purpose
 -------
@@ -303,7 +305,7 @@ class Subhalo_Extract:
     
     def __init__(self, sim, data_dir, snapNum, gn, sgn, centre_in, halo_mass_in, aperture_rad_in, viewing_axis,
                             centre_galaxy=True, 
-                            load_region_length=2.0,   # cMpc/h 
+                            load_region_length=1.0,   # cMpc/h 
                             nfiles=16, 
                             debug=False,
                             print_progress=False):       
@@ -577,7 +579,6 @@ class Subhalo_Extract:
         radius = r[index]
         
         return radius
-
 
 
 """ 
@@ -912,7 +913,7 @@ class Subhalo_Analysis:
         #----------------------------------------------------
         # Filling self.general
         for general_name, general_item in zip(['GroupNum', 'SubGroupNum', 'GalaxyID', 'SnapNum', 'halo_mass', 'stelmass', 'gasmass', 'gasmass_sf', 'gasmass_nsf', 'dmmass', 'halfmass_rad', 'halfmass_rad_proj', 'viewing_axis'], 
-                                              [self.GroupNum, self.SubGroupNum, self.GalaxyID, self.GalaxyID, self.halo_mass, self.stelmass, self.gasmass, self.gasmass_sf, self.gasmass_nsf, self.dmmass, self.halfmass_rad, self.halfmass_rad_proj, self.viewing_axis]):
+                                              [self.GroupNum, self.SubGroupNum, self.GalaxyID, self.SnapNum, self.halo_mass, self.stelmass, self.gasmass, self.gasmass_sf, self.gasmass_nsf, self.dmmass, self.halfmass_rad, self.halfmass_rad_proj, self.viewing_axis]):
             self.general[general_name] = general_item
         self.general.update(MorphoKinem)
             
@@ -1673,7 +1674,7 @@ class Subhalo_Analysis:
                 time_start = time.time()
             
             # If we already found kappa_star, don't run stars kappa
-            if len(data_nil['stars']['Mass']) > 300:
+            if not math.isnan(MorphoKinem['kappa_stars']):
                 kappa_parttype = ['gas', 'gas_sf']
             else:
                 kappa_parttype = ['stars', 'gas', 'gas_sf']
@@ -2011,6 +2012,269 @@ class Subhalo_Analysis:
         return angle, matrix
             
 
+""" 
+Purpose
+-------
+Will extract basic properties for small galaxies which don't require full analysis
+
+Calling function
+----------------
+galaxy = Subhalo_Extract(sample_input['mySims'], dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, GalaxyID, aperture_rad, viewing_axis)
+
+Input Parameters
+----------------
+
+mySims:
+    mySims = np.array([('RefL0012N0188', 12)])  
+    Name and boxsize
+dataDir:
+    Location of the snapshot data hdf5 file, 
+    eg. '/Users/c22048063/Documents/.../snapshot_028_xx/snap_028_xx.0.hdf5'
+SnapNum: int
+    Snapshot number, ei. 28
+GroupNum: int
+    GroupNumber of the subhalo, starts at 1
+SubGroupNum: int
+    SubGroupNumber of the subhalo, starts at 0 for each
+    subhalo
+GalaxyID:   int
+    As before.
+aperture_rad_in: float, [pkpc]
+    Used to trim data, which is used to find peculiar velocity within this sphere
+viewing_axis: 'z'
+    Used to find projected halfmass radius
+
+
+Output Parameters
+-----------------
+
+.gn: int
+    GroupNumber of galaxy
+.sgn: int
+    SubGroupNumber of galaxy
+.a: 
+    Scale factor for given snapshot
+.aexp: 
+    Scale factor exponent for given snapshot
+.h:
+    0.6777 for z=0
+.hexp: 
+    h exponent for given snapshot
+.boxsize:   [cMpc/h]
+    Size of simulation boxsize in [cMpc/h]. Convert
+    to [pMpc] by .boxsize / .h
+.centre:    [pkpc]
+    SQL value of centre of potential for the galaxy
+        
+.general:     dictionary of particle data:
+    ['GroupNum']
+    ['SubGroupNum']
+    ['GalaxyID']
+    ['SnapNum']
+    ['stelmass']        - Masses within 30pkpc
+    ['gasmass']
+    ['gasmass_sf']
+    ['gasmass_nsf']
+
+
+"""
+# Extracts the particle and SQL data
+class Subhalo_Extract_Basic:
+    
+    def __init__(self, sim, data_dir, snapNum, gn, sgn, GalaxyID, centre_in, halo_mass_in, aperture_rad_in, viewing_axis,
+                            centre_galaxy=True, 
+                            load_region_length=1.0,   # cMpc/h 
+                            nfiles=16, 
+                            debug=False,
+                            print_progress=False):       
+                            
+        # Begining time
+        time_start = time.time()
+        
+        # Assigning subhalo properties
+        self.gn           = gn
+        self.sgn          = sgn
+        
+        #----------------------------------------------------
+        # Load information from the header for this snapshot to find a, aexp, h, hexp, boxsize
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+            print('Reading header')
+            time_start = time.time()
+        self.a, self.h, self.boxsize = read_header(data_dir) # units of scale factor, h, and L [cMpc/h]  
+        
+        
+        # Distances:    [cMpc/h] * a^1 *h^-1 -> [pMpc]. [pMpc/h] * h^-1 -> [pMpc], [cMpc/h] * h^-1 -> [cMpc]
+        # Velocity:     [cx/sh] * a^0.5 * h^0 -> [x/s]
+        # Mass:         [Mass/h] * a^0 * h*-1 -> [Mass]
+        for i in range(nfiles):
+            f = h5py.File(data_dir, 'r')
+            tmp = f['PartType4/Coordinates']
+
+            # Get conversion factors.
+            self.aexp    = f['PartType4/Coordinates'].attrs.get('aexp-scale-exponent')
+            self.hexp    = f['PartType4/Coordinates'].attrs.get('h-scale-exponent')
+
+            f.close()
+        
+        if debug:
+            print('a        ', self.a)
+            print('aexp     ', self.aexp)
+            print('h        ', self.h)
+            print('hexp     ', self.hexp)
+            print('boxsize  [cMpc/h]', self.boxsize)
+            print('boxsize  [cMpc]  ', self.boxsize/self.h)
+            print('boxsize  [pMpc]  ', self.boxsize*self.a**1)
+        
+        
+        #----------------------------------------------------
+        # For a given gn and sgn, run sql query on SubFind catalogue
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+            print('Subhalo COP query')
+            time_start = time.time()
+        
+        # Assigning halo mass
+        self.halo_mass = halo_mass_in
+        
+        # These were all originally in cMpc, converted to pMpc through self.a and self.aexp
+        self.centre    = centre_in * u.Mpc.to(u.kpc) * self.a**self.aexp                 # [pkpc]
+        
+        #-------------------------------------------------------------
+        # Load data for stars and gas in non-centred units
+        # Msun, pkpc, and pkpc/s
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+            print('Reading particle data _read_galaxy')
+            time_start = time.time()
+        stars     = self._read_galaxy(data_dir, 4, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length) 
+        gas       = self._read_galaxy(data_dir, 0, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length)
+        
+        
+        # CENTER COORDS, VELOCITY NOT ADJUSTED
+        if centre_galaxy == True:
+            stars['Coordinates'] = stars['Coordinates'] - self.centre
+            gas['Coordinates']   = gas['Coordinates'] - self.centre
+            
+        # Trim data
+        stars  = self._trim_within_rad(stars, aperture_rad_in)
+        gas    = self._trim_within_rad(gas, aperture_rad_in)
+        
+        
+        
+        #====================================================
+        # Find basic values we are after
+        
+        #--------------------------------------
+        # Create masks for starforming and non-starforming gas
+        if print_progress:
+            print('Masking gas_sf and gas_nsf')
+            time_start = time.time()
+        mask_sf        = np.nonzero(gas['StarFormationRate'])          
+        mask_nsf       = np.where(gas['StarFormationRate'] == 0)
+        
+        # Create dataset of star-forming and non-star-forming gas
+        gas_sf = {}
+        gas_nsf = {}
+        for arr in gas.keys():
+            gas_sf[arr]  = data_nil['gas'][arr][mask_sf]
+            gas_nsf[arr] = data_nil['gas'][arr][mask_nsf]
+            
+        #--------------------------------------
+        GroupNum           = self.gn
+        SubGroupNum        = self.sgn
+        self.SnapNum            = snapNum
+        self.stelmass           = np.sum(stars['Mass'])     # [Msun] within 30 pkpc (aperture_rad_in)
+        self.gasmass            = np.sum(gas['Mass'])       # [Msun] within 30 pkpc (aperture_rad_in)
+        self.gasmass_sf         = np.sum(gas_sf['Mass'])    # [Msun] within 30 pkpc (aperture_rad_in)
+        self.gasmass_nsf        = np.sum(gas_nsf['Mass'])   # [Msun] within 30 pkpc (aperture_rad_in)  
+            
+        #----------------------------------------------------
+        # Filling self.general
+        for general_name, general_item in zip(['GroupNum', 'SubGroupNum', 'GalaxyID', 'SnapNum', 'stelmass', 'gasmass', 'gasmass_sf', 'gasmass_nsf'], 
+                                              [self.gn, self.sgn, GalaxyID, snapNum, np.sum(stars['Mass']) , np.sum(gas['Mass']), np.sum(gas_sf['Mass']), np.sum(gas_nsf['Mass'])]):
+            self.general[general_name] = general_item
+            
+        # Left with all masses at 30pkpc
+              
+    def _read_galaxy(self, data_dir, itype, gn, sgn, centre, load_region_length, debug=False):
+        """ For a given galaxy (defined by its GroupNumber and SubGroupNumber)
+        extract the coordinates, velocty, and mass of all particles of a selected type.
+        Coordinates are then wrapped around the centre to account for periodicity."""
+        
+        # Where we store all the data
+        data = {}
+        
+        # Initialize read_eagle module.
+        eagle_data = EagleSnapshot(data_dir)
+        
+        # Put centre from pMpc -> cMpc/h units.
+        centre_cMpc = centre * self.a**-1 * self.h
+
+        # Select region to load, a 'load_region_length' cMpc/h cube centred on 'centre'.
+        region = np.array([
+            (centre_cMpc[0]-0.5*load_region_length), (centre_cMpc[0]+0.5*load_region_length),
+            (centre_cMpc[1]-0.5*load_region_length), (centre_cMpc[1]+0.5*load_region_length),
+            (centre_cMpc[2]-0.5*load_region_length), (centre_cMpc[2]+0.5*load_region_length)
+        ])
+        eagle_data.select_region(*region)
+                
+        # Load data using read_eagle, load conversion factors manually.
+        f = h5py.File(data_dir, 'r')
+        # If gas, load StarFormationRate
+        if itype == 0:
+            for att in ['GroupNumber', 'SubGroupNumber', 'Mass', 'Coordinates', 'StarFormationRate']:
+                tmp  = eagle_data.read_dataset(itype, att)
+                cgs  = f['PartType%i/%s'%(itype, att)].attrs.get('CGSConversionFactor')
+                aexp = f['PartType%i/%s'%(itype, att)].attrs.get('aexp-scale-exponent')
+                hexp = f['PartType%i/%s'%(itype, att)].attrs.get('h-scale-exponent')
+                data[att] = np.multiply(tmp, cgs * self.a**aexp * self.h**hexp, dtype='f8')
+            f.close()
+        # If stars, do not load StarFormationRate (as not contained in database)
+        elif itype == 4:
+            for att in ['GroupNumber', 'SubGroupNumber', 'Mass', 'Coordinates']:
+                tmp  = eagle_data.read_dataset(itype, att)
+                cgs  = f['PartType%i/%s'%(itype, att)].attrs.get('CGSConversionFactor')
+                aexp = f['PartType%i/%s'%(itype, att)].attrs.get('aexp-scale-exponent')
+                hexp = f['PartType%i/%s'%(itype, att)].attrs.get('h-scale-exponent')
+                data[att] = np.multiply(tmp, cgs * self.a**aexp * self.h**hexp, dtype='f8')
+                
+            f.close()
+        
+        # Mask to selected GroupNumber and SubGroupNumber.
+        mask = np.logical_and(data['GroupNumber'] == gn, data['SubGroupNumber'] == sgn)
+        for att in data.keys():
+            data[att] = data[att][mask]
+               
+        # Load data, then mask to selected GroupNumber and SubGroupNumber. Automatically converts to pcm from read_dataset, converted to pMpc
+        data['Mass'] = data['Mass'] * u.g.to(u.Msun)                   # [Msun]
+        data['Coordinates'] = data['Coordinates'] * u.cm.to(u.Mpc)     # [pMpc]
+        if itype == 0:
+            data['StarFormationRate'] = data['StarFormationRate'] * u.g.to(u.Msun)  # [Msun/s]
+        
+        # Periodic wrap coordinates around centre (in proper units). 
+        # boxsize converted from cMpc/h -> pMpc
+        boxsize = self.boxsize * self.h**-1 * self.a**1       # [pkpc]
+        data['Coordinates'] = np.mod(data['Coordinates']-centre+0.5*boxsize, boxsize) + centre-0.5*boxsize
+        
+        # Converting to pkpc
+        data['Coordinates'] = data['Coordinates'] * u.Mpc.to(u.kpc)     # [pkpc]
+        
+        return data
+        
+    def _trim_within_rad(self, arr, radius, debug=False):
+        # Compute distance to centre and mask all within Radius in pkpc
+        r  = np.linalg.norm(arr['Coordinates'], axis=1)
+        mask = np.where(r <= radius)
+        
+        newData = {}
+        for header in arr.keys():
+            newData[header] = arr[header][mask]
+            
+        return newData
+        
+
+
 
 """ 
 DESCRIPTION
@@ -2308,4 +2572,33 @@ def ConvertID(galID, sim):
         
         return myData['GroupNumber'], myData['SubGroupNumber'], myData['SnapNum'], myData['Redshift'], myData['halo_mass'], np.array([myData['x'], myData['y'], myData['z']]), np.array([myData['ellip'], myData['triax'], myData['kappa_stars'], myData['disp_ani'], myData['disc_to_total'], myData['rot_to_disp_ratio']])
 
+def ConvertID_noMK(galID, sim):
+    # This uses the eagleSqlTools module to connect to the database with your username and password.
+    # If the password is not given, the module will prompt for it.
+    con = sql.connect("lms192", password="dhuKAP62")
+    
+    for sim_name, sim_size in sim:
+        #print(sim_name)
+
+        # Construct and execute query for each simulation. This query returns properties for a single galaxy
+        myQuery = 'SELECT \
+                    SH.GroupNumber, \
+                    SH.SubGroupNumber, \
+                    SH.SnapNum, \
+                    SH.Redshift, \
+                    SH.CentreOfPotential_x as x, \
+                    SH.CentreOfPotential_y as y, \
+                    SH.CentreOfPotential_z as z, \
+                    FOF.Group_M_Crit200 as halo_mass \
+                   FROM \
+    			     %s_Subhalo as SH, \
+                     %s_FOF as FOF \
+                   WHERE \
+    			     SH.GalaxyID = %s \
+                     and SH.GroupID = FOF.GroupID'%(sim_name, sim_name, galID)
+
+        # Execute query.
+        myData = sql.execute_query(con, myQuery)
+        
+        return myData['GroupNumber'], myData['SubGroupNumber'], myData['SnapNum'], myData['Redshift'], myData['halo_mass'], np.array([myData['x'], myData['y'], myData['z']]), np.array([math.nan, math.nan, math.nan, math.nan, math.nan, math.nan])
 

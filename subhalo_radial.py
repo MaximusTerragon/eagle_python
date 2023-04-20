@@ -195,7 +195,7 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
             print(SnapNum_List)
             
         print('\n===================')
-        print('SAMPLE INPUT:\n  %s\n  GalaxyIDs: %s' %(mySims, GalaxyID_List))
+        print('SAMPLE INPUT:\n  %s\n  GalaxyIDs: %s' %(mySims[0][0], GalaxyID_List))
         print('  SAMPLE LENGTH: ', len(GroupNum_List))
         print('===================')
         
@@ -234,7 +234,6 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
         if print_progress:
              print('Extracting particle data Subhalo_Extract()')
              time_start = time.time()
-        
     
         # Initial extraction of galaxy particle data
         galaxy = Subhalo_Extract(mySims, dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, Centre_i, HaloMass, aperture_rad, viewing_axis)
@@ -260,8 +259,12 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
             spin_rad_in = [x for x in spin_rad if x <= aperture_rad]
             spin_hmr_in = [x for x in spin_hmr if x*galaxy.halfmass_rad_proj <= aperture_rad]
             
-            if len(spin_hmr_in) != len(spin_hmr_tmp):
-                print('Capped spin_rad (%s pkpc) at aperture radius (%s pkpc)' %(spin_rad_in[-1], aperture_rad))
+            # Ensure min. rad is >1 pkpc
+            spin_rad_in = [x for x in spin_rad_in if x >= 1.0]
+            spin_hmr_in = [x for x in spin_hmr_in if x*galaxy.halfmass_rad_proj >= 1.0]
+        
+            if len(spin_hmr) != len(spin_hmr_tmp):
+                print('Capped spin_rad: %.2f - %.2f - %.2f HMR | Min/Max %.2f / %.2f pkpc' %(min(spin_hmr_in), (max(spin_hmr_in) - max(spin_hmr_in))/len(spin_hmr_in), max(spin_hmr_in), min(spin_rad_in), max(spin_rad_in)))
         elif rad_projected == False:
             spin_rad = np.array(spin_hmr) * galaxy.halfmass_rad
             spin_hmr_tmp = spin_hmr
@@ -270,9 +273,13 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
             spin_rad_in = [x for x in spin_rad if x <= aperture_rad]
             spin_hmr_in = [x for x in spin_hmr if x*galaxy.halfmass_rad <= aperture_rad]
             
-            if len(spin_hmr) != len(spin_hmr_tmp):
-                print('Capped spin_rad (%s pkpc) at aperture radius (%s pkpc)' %(spin_rad_in[-1], aperture_rad))
+            # Ensure min. rad is >1 pkpc
+            spin_rad_in = [x for x in spin_rad_in if x >= 1.0]
+            spin_hmr_in = [x for x in spin_hmr_in if x*galaxy.halfmass_rad_proj >= 1.0]
         
+            if len(spin_hmr) != len(spin_hmr_tmp):
+                print('Capped spin_rad: %.2f - %.2f - %.2f HMR | Min/Max %.2f / %.2f pkpc' %(min(spin_hmr_in), (max(spin_hmr_in) - max(spin_hmr_in))/len(spin_hmr_in), max(spin_hmr_in), min(spin_rad_in), max(spin_rad_in)))
+            
         
         # If we want the original values, enter 0 for viewing angle
         subhalo = Subhalo_Analysis(mySims, GroupNum, SubGroupNum, GalaxyID, SnapNum, MorphoKinem, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, 
@@ -303,6 +310,9 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
         ------------
         """
         
+        if print_galaxy:
+            print('|%s| |ID:   %s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f' %(SnapNum, str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'])) 
+        
         #--------------------------------
         # Collecting all relevant particle info for galaxy
         all_flags['%s' %str(subhalo.GalaxyID)]          = subhalo.flags
@@ -312,10 +322,7 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
         all_misangles['%s' %str(subhalo.GalaxyID)]      = subhalo.mis_angles
         all_misanglesproj['%s' %str(subhalo.GalaxyID)]  = subhalo.mis_angles_proj
         #---------------------------------
-          
-        if print_galaxy:
-            print('ID:\t%s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f' %(str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'])) 
-        
+
         
         #===================================================================
         if csv_file: 
@@ -413,7 +420,7 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
     
 # Plot galaxies fed into from a CSV file
 # Can also take misalignment sample files (will check if criteria met)
-def _radial_plot(csv_output = 'L12_radial_ID3748_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum):
+def _radial_plot(csv_output = 'L12_radial_ID37445_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum):
                  #--------------------------
                  # Galaxy plotting
                  print_summary = True,
@@ -428,8 +435,8 @@ def _radial_plot(csv_output = 'L12_radial_ID3748_RadProj_Err__stars_gas_stars_ga
                  highlight_criteria = True,       # whether to indicate when criteria not met (but still plot)
                  rad_type_plot      = 'hmr',      # 'rad' whether to use absolute distance or hmr 
                  #--------------------------
-                 showfig        = True,
-                 savefig        = False,
+                 showfig        = False,
+                 savefig        = True,
                    file_format  = 'pdf',
                    savefig_txt  = '',
                  #--------------------------
@@ -440,7 +447,7 @@ def _radial_plot(csv_output = 'L12_radial_ID3748_RadProj_Err__stars_gas_stars_ga
     #================================================  
     # Load sample csv
     if print_progress:
-        print('Loading initial sample')
+        print('Loading output')
         time_start = time.time()
     
     #--------------------------------
@@ -558,7 +565,7 @@ def _radial_plot(csv_output = 'L12_radial_ID3748_RadProj_Err__stars_gas_stars_ga
 
         #---------------------------------------------------
         # Graph initialising and base formatting
-        fig, axs = plt.subplots(nrows=2, ncols=1, gridspec_kw={'height_ratios': [3, 1]}, figsize=[6, 7], sharex=True, sharey=False)
+        fig, axs = plt.subplots(nrows=2, ncols=1, gridspec_kw={'height_ratios': [3, 1]}, figsize=[7, 8], sharex=True, sharey=False)
 
         
         #----------------------
@@ -609,10 +616,10 @@ def _radial_plot(csv_output = 'L12_radial_ID3748_RadProj_Err__stars_gas_stars_ga
                 plot_label = 'Stars-gas'
             elif use_angle_i == 'stars_gas_sf':
                 plot_color = 'b'
-                plot_label = 'Stars-gas$_{sf}$'
+                plot_label = 'Stars-gas$_{\mathrm{sf}}$'
             elif use_angle_i == 'stars_gas_nsf':
                 plot_color = 'indigo'
-                plot_label = 'Stars-gas$_{nsf}$'
+                plot_label = 'Stars-gas$_{\mathrm{nsf}}$'
             elif use_angle_i == 'stars_dm':
                 plot_color = 'r'
                 plot_label = 'Stars-DM'
@@ -679,8 +686,8 @@ def _radial_plot(csv_output = 'L12_radial_ID3748_RadProj_Err__stars_gas_stars_ga
             print('Gas_sf:Gas ratio: ', plot_gas_ratio)
         
         # Plot mass fractions
-        axs[1].plot(plot_rad, np.log10(plot_stars_gas_frac), alpha=0.8, lw=2, c='green', label='Gas')
-        axs[1].plot(plot_rad, np.log10(plot_stars_gas_sf_frac), alpha=0.8, lw=2, c='b', label='Gas$_{SF}$')
+        axs[1].plot(plot_rad, np.log10(plot_stars_gas_frac), alpha=0.8, lw=2, c='green', label='$f_{\mathrm{gas}}$')
+        axs[1].plot(plot_rad, np.log10(plot_stars_gas_sf_frac), alpha=0.8, lw=2, c='b', label='$f_{\mathrm{SF}}$')
         #axs[1].plot(plot_rad, plot_gas_ratio, c='k', ls='--', label='Gas$_{SF}$/Gas')
         
 
@@ -695,17 +702,14 @@ def _radial_plot(csv_output = 'L12_radial_ID3748_RadProj_Err__stars_gas_stars_ga
         axs[1].set_ylim(-3, 0)
         axs[1].set_yticks([-3, -2, -1, 0])
         axs[0].set_ylim(0, 180)
-        axs[1].set_ylabel('Mass fraction, [log$_{10}$]')
+        axs[1].set_ylabel('log$_{10}$(Mass fraction)')
         axs[0].set_xlim(0, max(plot_rad))
         axs[0].set_xticks(np.arange(0, max(plot_rad)+1, 1))
         if rad_type_plot == 'hmr':
             axs[1].set_xlabel('Stellar half-mass radius, $r_{1/2,z}$')
         if rad_type_plot == 'rad':
             axs[1].set_xlabel('Radial distance from centre [pkpc]')
-        if use_proj_angle:
-            axs[0].set_ylabel('Misalignment angle, $\psi$')
-        else:
-            axs[0].set_ylabel('Misalignment angle, $\psi$')        
+        axs[0].set_ylabel('Misalignment angle, $\psi$')     
                
         #-----------
         # Annotations
@@ -713,9 +717,9 @@ def _radial_plot(csv_output = 'L12_radial_ID3748_RadProj_Err__stars_gas_stars_ga
     
         #-----------
         # Legend
-        axs[0].plot(-10, -10, ls=':', c='k', label='$\psi_{3D}$')
+        axs[0].plot(-10, -10, ls=':', c='k', label='$\psi_{\mathrm{3D}}$')
         axs[0].plot(-10, -10, ls='-', c='k', label='$\psi_{z}$')
-        axs[0].legend(loc='lower right', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1)
+        axs[0].legend(loc='center right', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1)
         axs[1].legend(loc='lower right', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=0)
         
         #-----------
@@ -723,7 +727,6 @@ def _radial_plot(csv_output = 'L12_radial_ID3748_RadProj_Err__stars_gas_stars_ga
         axs[0].grid(alpha=0.3)
         axs[1].grid(alpha=0.3)
         plt.tight_layout()
-        set_rc_params(0.1)
     
     
         #=====================================
@@ -743,7 +746,7 @@ def _radial_plot(csv_output = 'L12_radial_ID3748_RadProj_Err__stars_gas_stars_ga
         
         
         if savefig:
-            plt.savefig("%s/L%s_radial_ID%s_proj%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], GalaxyID, use_proj_angle, angle_str, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', pad_inches=0.1, dpi=600)    
+            plt.savefig("%s/L%s_radial_ID%s_proj%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], GalaxyID, use_proj_angle, angle_str, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
             print("\n  SAVED: %s/L%s_radial_ID%s_proj%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], GalaxyID, use_proj_angle, angle_str, savefig_txt, file_format))
         if showfig:
             plt.show()

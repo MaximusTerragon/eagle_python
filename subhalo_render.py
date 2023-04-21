@@ -21,7 +21,7 @@ from datetime import datetime
 from tqdm import tqdm
 from subhalo_main import Initial_Sample, Subhalo_Extract, Subhalo_Analysis, ConvertID
 import eagleSqlTools as sql
-from graphformat import graphformat, set_rc_params
+from graphformat import set_rc_params
 
 
 # Directories
@@ -92,7 +92,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                     boxradius           = 30,                  # boxradius of render [kpc], 'rad', 'tworad'
                     particles           = 5000,
                     viewing_axis        = 'z',                  # Which axis to view galaxy from.  DEFAULT 'z'
-                    aperture_rad        = 30,                   # trim all data to this maximum value before calculations [pkpc]
+                    aperture_rad        = 100,                   # trim all data to this maximum value before calculations [pkpc]
                     trim_hmr            = np.array([30]),           # WILL PLOT LOWEST VALUE. trim particles # multiples of hmr
                     align_rad           = False,                          # True/False
                     #=====================================================
@@ -298,6 +298,25 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
     
         #===========================================
         # Graph initialising and base formatting
+        def graphformat(size1, size2, size3, size4, size5, width, height):
+            plt.rcParams['text.usetex'] = False
+            plt.rcParams["font.family"] = "DeJavu Serif"
+            plt.rcParams['font.serif'] = ['Times New Roman']
+    
+            # General graph font size formatting
+            plt.rc('font', size=size1)          # controls default text sizes
+    
+            plt.rc('figure', titlesize=size2)   # fontsize of the figure title
+    
+            plt.rc('axes', titlesize=size3)     # fontsize of the axes title
+            plt.rc('axes', labelsize=size3)     # fontsize of the x and y labels
+    
+            plt.rc('xtick', labelsize=size4)    # fontsize of the tick labels
+            plt.rc('ytick', labelsize=size4)    # fontsize of the tick labels
+
+            plt.rc('legend', fontsize=size5)    # legend fontsize
+
+            plt.rc('figure', figsize=(width, height))  # figure size [inches]
         graphformat(8, 11, 11, 11, 11, 5, 5)
         fig = plt.figure() 
         ax = Axes3D(fig, auto_add_to_figure=False, box_aspect=[1,1,1])
@@ -497,22 +516,36 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                 for ii in np.arange(ax.azim, ax.azim+360, 1):
                     ax.view_init(elev=ax.elev, azim=ii)
                     plt.pause(0.01)
-                    ax.set_zlim(-boxradius, boxradius)
+                    ax.set_zlim(ax.get_ylim())
                     fig.canvas.draw_idle()
             def view_x(self, event):
                 fig.canvas.draw_idle()
                 ax.view_init(elev=0, azim=0)
-                ax.set_zlim(-boxradius, boxradius)
+                ax.set_zlim(ax.get_ylim())
                 fig.canvas.draw_idle()
             def view_y(self, event):
                 fig.canvas.draw_idle()
                 ax.view_init(elev=0, azim=90)
-                ax.set_zlim(-boxradius, boxradius)
+                ax.set_zlim(ax.get_ylim())
                 fig.canvas.draw_idle()
             def view_z(self, event):
                 fig.canvas.draw_idle()
                 ax.view_init(elev=90, azim=0)
-                ax.set_zlim(-boxradius, boxradius)
+                ax.set_zlim(ax.get_ylim())
+                fig.canvas.draw_idle()
+            def zoom_plus(self, event):
+                fig.canvas.draw_idle()
+                current_lim = ax.get_ylim()
+                ax.set_xlim(current_lim[0]*0.8, current_lim[1]*0.8)
+                ax.set_ylim(current_lim[0]*0.8, current_lim[1]*0.8)
+                ax.set_zlim(current_lim[0]*0.8, current_lim[1]*0.8)
+                fig.canvas.draw_idle()
+            def zoom_minus(self, event):
+                fig.canvas.draw_idle()
+                current_lim = ax.get_ylim()
+                ax.set_xlim(current_lim[0]/0.8, current_lim[1]/0.8)
+                ax.set_ylim(current_lim[0]/0.8, current_lim[1]/0.8)
+                ax.set_zlim(current_lim[0]/0.8, current_lim[1]/0.8)
                 fig.canvas.draw_idle()
             
         callback = Index()     
@@ -543,6 +576,9 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         bviewx  = Button(fig.add_axes([0.81, 0.92, 0.05, 0.03]), 'x')
         bviewy  = Button(fig.add_axes([0.87, 0.92, 0.05, 0.03]), 'y')
         bviewz  = Button(fig.add_axes([0.93, 0.92, 0.05, 0.03]), 'z')
+        #-----------
+        bplus   = Button(fig.add_axes([0.93, 0.10, 0.05, 0.05]), '+')
+        bminus  = Button(fig.add_axes([0.93, 0.05, 0.05, 0.05]), '-')
     
         #-----------
         bclear.on_clicked(callback.plot_clear_button)
@@ -570,6 +606,9 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         bviewx.on_clicked(callback.view_x)
         bviewy.on_clicked(callback.view_y)
         bviewz.on_clicked(callback.view_z)
+        #-----------
+        bplus.on_clicked(callback.zoom_plus)
+        bminus.on_clicked(callback.zoom_minus)
         #--------------------------------------------
         
         

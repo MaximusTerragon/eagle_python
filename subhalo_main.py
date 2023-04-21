@@ -1068,7 +1068,8 @@ class Subhalo_Analysis:
                     particle_com = self._centre_of_mass(self.data[parttype_name])
                     self.coms[parttype_name] = particle_com
                 else:
-                    self.coms[parttype_name] = np.array([math.nan, math.nan, math.nan])
+                    particle_com = p.array([math.nan, math.nan, math.nan])
+                    self.coms[parttype_name] = particle_com
                     
                 #---------------------------------------------
                 # Find unit vector spins (append math.nan for no particles)
@@ -1076,7 +1077,8 @@ class Subhalo_Analysis:
                     particle_spin = self._find_spin(self.data[parttype_name])
                     self.spins[parttype_name] = particle_spin
                 else:
-                    self.spins[parttype_name] = np.array([math.nan, math.nan, math.nan])
+                    particle_spin = np.array([math.nan, math.nan, math.nan])
+                    self.spins[parttype_name] = particle_spin
                 
             
                 #---------------------------------------------

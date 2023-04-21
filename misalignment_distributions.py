@@ -513,7 +513,7 @@ def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
                          use_proj_angle     = True,                   # Whether to use projected or absolute angle
                          lower_mass_limit   = 10**9,            # Whether to plot only certain masses
                          upper_mass_limit   = 10**15,         
-                         ETG_or_LTG         = 'LTG',           # Whether to plot only ETG/LTG
+                         ETG_or_LTG         = 'both',           # Whether to plot only ETG/LTG
                          group_or_field     = 'both',           # Whether to plot only field/group
                          use_satellites     = False,             # Whether to include SubGroupNum =/ 0
                        #--------------------------

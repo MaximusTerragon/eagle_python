@@ -102,7 +102,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                     boxradius           = 30,                  # boxradius of render [kpc], 'rad', 'tworad'
                     particles           = 5000,
                     viewing_axis        = 'z',                  # Which axis to view galaxy from.  DEFAULT 'z'
-                    aperture_rad        = 100,                   # trim all data to this maximum value before calculations [pkpc]
+                    aperture_rad        = 30,                   # trim all data to this maximum value before calculations [pkpc]
                     trim_hmr            = np.array([30]),           # WILL PLOT LOWEST VALUE. trim particles # multiples of hmr
                     align_rad           = False,                          # True/False
                     #=====================================================
@@ -112,7 +112,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                                            'stars_gas_nsf',                 # gas_sf_gas_nsf
                                            'gas_sf_gas_nsf',
                                            'stars_dm'],           
-                    spin_hmr            = np.array([2]),                  # multiples of hmr for which to find spin. Will plot lowest value
+                    spin_hmr            = np.array([2.0]),                  # multiples of hmr for which to find spin. Will plot lowest value
                     rad_projected       = True,                             # whether to use rad in projection or 3D
                     #--------------------------
                     # Plot options
@@ -280,8 +280,16 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         
             if len(spin_hmr) != len(spin_hmr_tmp):
                 print('Capped spin_rad: %.2f - %.2f - %.2f HMR | Min/Max %.2f / %.2f pkpc' %(min(spin_hmr_in), (max(spin_hmr_in) - max(spin_hmr_in))/len(spin_hmr_in), max(spin_hmr_in), min(spin_rad_in), max(spin_rad_in)))
+          
+          
+        print(angle_selection)
+        print(spin_hmr_in)
+        print(spin_rad_in)   
+        print(find_uncertainties)
+        print(com_min_distance)
+        print(min_particles)
+        print(min_inclination) 
             
-        
         # If we want the original values, enter 0 for viewing angle
         subhalo = Subhalo_Analysis(mySims, GroupNum, SubGroupNum, GalaxyID, SnapNum, MorphoKinem, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, 
                                             viewing_axis,
@@ -301,7 +309,6 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                                             min_particles,                                            
                                             min_inclination)
     
-        
         if print_galaxy:
             print('|%s| |ID:   %s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f' %(SnapNum, str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'])) 
         
@@ -490,10 +497,13 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                 # Plot 1 and 2 HMR projected rad 
                 radius_circle = Circle((0, 0), subhalo.halfmass_rad_proj, linewidth=1, edgecolor='w', alpha=0.7, facecolor=None, fill=False)
                 radius_circle2 = Circle((0, 0), 2*subhalo.halfmass_rad_proj, linewidth=1, edgecolor='w', alpha=0.7, facecolor=None, fill=False)
+                #radius_circle3 = Circle((0, 0), 0.5*subhalo.halfmass_rad_proj, linewidth=1, edgecolor='w', alpha=0.7, facecolor=None, fill=False)
                 ax.add_patch(radius_circle)
                 ax.add_patch(radius_circle2)
+                #ax.add_patch(radius_circle3)
                 art3d.pathpatch_2d_to_3d(radius_circle, z=0, zdir=viewing_axis)
                 art3d.pathpatch_2d_to_3d(radius_circle2, z=0, zdir=viewing_axis)
+                #art3d.pathpatch_2d_to_3d(radius_circle3, z=0, zdir=viewing_axis)
             
                 fig.canvas.draw_idle()    
             def draw_aperture(self, event):

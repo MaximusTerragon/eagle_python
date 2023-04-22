@@ -544,7 +544,7 @@ def _radial_evolution_analysis(csv_sample = False,              # Whether to rea
         """           
                                
                                                     
-def _radial_evolution_plot(csv_output = 'L12_evolution_ID3748_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load 
+def _radial_evolution_plot(csv_output = 'L12_evolution_ID37445_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load 
                            #--------------------------
                            # Galaxy plotting
                            print_summary = True,
@@ -1020,7 +1020,9 @@ def _radial_evolution_plot(csv_output = 'L12_evolution_ID3748_RadProj_Err__stars
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
             print('Finished')
         
-        metadata_plot = {'Title': 'GalaxyID %s' %target_GalaxyID}
+        
+        metadata_plot = {'Title': 'GalaxyID: %s\nM*: %.2e\nHMR: %.2f\nKappa: %.2f\nTriax: %.2f' %(target_GalaxyID, total_general['%s' %target_GalaxyID]['%s' %target_GalaxyID]['stelmass'], total_general['%s' %target_GalaxyID]['%s' %target_GalaxyID]['halfmass_rad_proj'], total_general['%s' %target_GalaxyID]['%s' %target_GalaxyID]['kappa_stars'], total_general['%s' %target_GalaxyID]['%s' %target_GalaxyID]['triax'])}
+        
         
         angle_str = ''
         for angle_name in list(use_angles):

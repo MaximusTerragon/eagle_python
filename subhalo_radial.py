@@ -95,7 +95,7 @@ SAMPLE:
 def _radial_analysis(csv_sample = False,              # Whether to read in existing list of galaxies  
                        #--------------------------
                        mySims = [('RefL0012N0188', 12)],
-                       GalaxyID_List = [3748],               # Will create a csv file for each galaxy
+                       GalaxyID_List = [37445],               # Will create a csv file for each galaxy
                        #--------------------------
                        # Galaxy extraction properties
                        viewing_axis        = 'z',                  # Which axis to view galaxy from.  DEFAULT 'z'
@@ -121,7 +121,7 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
                        min_particles       = 20,                # Minimum particles to find spin.  DEFAULT 20
                        min_inclination     = 0,                 # Minimum inclination toward viewing axis [deg] DEFAULT 0
                        #--------------------------   
-                       csv_file       = True,                   # Will write sample to csv file in sapmle_dir
+                       csv_file       = False,                   # Will write sample to csv file in sapmle_dir
                          csv_name     = '',                     # extra stuff at end
                        #--------------------------
                        print_progress = False,
@@ -311,6 +311,7 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
                                             min_inclination)
     
 
+        print(subhalo.flags.items())
         """ FLAGS
         ------------
         #print(subhalo.flags['total_particles'])            # will flag if there are missing particles within aperture_rad
@@ -430,7 +431,7 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
     
 # Plot galaxies fed into from a CSV file
 # Can also take misalignment sample files (will check if criteria met)
-def _radial_plot(csv_output = 'L12_radial_ID37445_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum):
+def _radial_plot(csv_output = 'L12_radial_ID3748_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum):
                  #--------------------------
                  # Galaxy plotting
                  print_summary = True,
@@ -751,7 +752,7 @@ def _radial_plot(csv_output = 'L12_radial_ID37445_RadProj_Err__stars_gas_stars_g
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
             print('Finished')
         
-        metadata_plot = {'Title': 'GalaxyID %s' %GalaxyID}
+        metadata_plot = {'Title': 'GalaxyID: %s\nM*: %.2e\nHMR: %.2f\nKappa: %.2f\nTriax: %.2f' %(GalaxyID, all_general['%s' %GalaxyID]['stelmass'], all_general['%s' %GalaxyID]['halfmass_rad_proj'], all_general['%s' %GalaxyID]['kappa_stars'], all_general['%s' %GalaxyID]['triax'])}
         
         angle_str = ''
         for angle_name in list(use_angles):

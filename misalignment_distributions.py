@@ -21,9 +21,11 @@ from graphformat import set_rc_params
 # Directories
 EAGLE_dir       = '/Users/c22048063/Documents/EAGLE'
 dataDir_main    = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/'
+dataDir_alt     = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/'
 # Directories serpens
 #EAGLE_dir       = '/home/user/c22048063/Documents/EAGLE'
 #dataDir_main   = '/home/universe/spxtd1-shared/RefL0100N1504/'
+#dataDir_alt    = '/home/cosmos/c22048063/EAGLE_snapshots/RefL0100N1504/'
 
 
 # Other directories
@@ -33,15 +35,15 @@ fig_dir         = EAGLE_dir + '/plots'
 
 # Directories of data hdf5 file(s)
 dataDir_dict = {}
-dataDir_dict['10'] = dataDir_main + 'snapshot_010_z003p984/snap_010_z003p984.0.hdf5'
-dataDir_dict['11'] = dataDir_main + 'snapshot_011_z003p528/snap_011_z003p528.0.hdf5'
-dataDir_dict['12'] = dataDir_main + 'snapshot_012_z003p017/snap_012_z003p017.0.hdf5'
-dataDir_dict['13'] = dataDir_main + 'snapshot_013_z002p478/snap_013_z002p478.0.hdf5'
-dataDir_dict['14'] = dataDir_main + 'snapshot_014_z002p237/snap_014_z002p237.0.hdf5'
-dataDir_dict['15'] = dataDir_main + 'snapshot_015_z002p012/snap_015_z002p012.0.hdf5'
-dataDir_dict['16'] = dataDir_main + 'snapshot_016_z001p737/snap_016_z001p737.0.hdf5'
-dataDir_dict['17'] = dataDir_main + 'snapshot_017_z001p487/snap_017_z001p487.0.hdf5'
-dataDir_dict['18'] = dataDir_main + 'snapshot_018_z001p259/snap_018_z001p259.0.hdf5'
+dataDir_dict['10'] = dataDir_alt + 'snapshot_010_z003p984/snap_010_z003p984.0.hdf5'
+dataDir_dict['11'] = dataDir_alt + 'snapshot_011_z003p528/snap_011_z003p528.0.hdf5'
+dataDir_dict['12'] = dataDir_alt + 'snapshot_012_z003p017/snap_012_z003p017.0.hdf5'
+dataDir_dict['13'] = dataDir_alt + 'snapshot_013_z002p478/snap_013_z002p478.0.hdf5'
+dataDir_dict['14'] = dataDir_alt + 'snapshot_014_z002p237/snap_014_z002p237.0.hdf5'
+dataDir_dict['15'] = dataDir_alt + 'snapshot_015_z002p012/snap_015_z002p012.0.hdf5'
+dataDir_dict['16'] = dataDir_alt + 'snapshot_016_z001p737/snap_016_z001p737.0.hdf5'
+dataDir_dict['17'] = dataDir_alt + 'snapshot_017_z001p487/snap_017_z001p487.0.hdf5'
+dataDir_dict['18'] = dataDir_alt + 'snapshot_018_z001p259/snap_018_z001p259.0.hdf5'
 dataDir_dict['19'] = dataDir_main + 'snapshot_019_z001p004/snap_019_z001p004.0.hdf5'
 dataDir_dict['20'] = dataDir_main + 'snapshot_020_z000p865/snap_020_z000p865.0.hdf5'
 dataDir_dict['21'] = dataDir_main + 'snapshot_021_z000p736/snap_021_z000p736.0.hdf5'
@@ -508,12 +510,12 @@ def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
                        #--------------------------
                        # Galaxy plotting
                        print_summary = True,
-                         use_angle          = 'stars_gas_sf',         # Which angles to plot
+                         use_angle          = 'gas_sf_gas_nsf',         # Which angles to plot
                          use_hmr            = 2.0,                    # Which HMR to use
-                         use_proj_angle     = True,                   # Whether to use projected or absolute angle
-                         lower_mass_limit   = 10**9,            # Whether to plot only certain masses
+                         use_proj_angle     = True,                   # Whether to use projected or absolute angle 10**9
+                         lower_mass_limit   = 10**9,            # Whether to plot only certain masses 10**15
                          upper_mass_limit   = 10**15,         
-                         ETG_or_LTG         = 'both',           # Whether to plot only ETG/LTG
+                         ETG_or_LTG         = 'LTG',           # Whether to plot only ETG/LTG
                          group_or_field     = 'both',           # Whether to plot only field/group
                          use_satellites     = False,             # Whether to include SubGroupNum =/ 0
                        #--------------------------
@@ -855,15 +857,15 @@ def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
         
         # Add mass range
         if (lower_mass_limit != 10**9) and (upper_mass_limit != 10**15):
-            legend_labels.append('$10 ^{%.1f} \minus 10 ^{%.1f}$ M$_{\odot}$' %(np.log10(lower_mass_limit), np.log10(upper_mass_limit)))    
+            legend_labels.append('$10 ^{%.1f} - 10 ^{%.1f}$ M$_{\odot}$' %(np.log10(lower_mass_limit), np.log10(upper_mass_limit)))    
             legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
             legend_colors.append('grey')
-        if (lower_mass_limit != 10**9):
-            legend_labels.append('$> ^{%.1f} M$_{\odot}$' %(np.log10(lower_mass_limit)))    
+        elif (lower_mass_limit != 10**9):
+            legend_labels.append('$> 10 ^{%.1f}$ M$_{\odot}$' %(np.log10(lower_mass_limit)))    
             legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
             legend_colors.append('grey')
-        if (upper_mass_limit != 10**15):
-            legend_labels.append('$< 10 ^{%.1f}$ M$_{\odot}$' %(np.log10(lower_mass_limit)))    
+        elif (upper_mass_limit != 10**15):
+            legend_labels.append('$< 10 ^{%.1f}$ M$_{\odot}$' %(np.log10(upper_mass_limit)))    
             legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
             legend_colors.append('grey')
         

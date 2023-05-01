@@ -19,7 +19,7 @@ import json
 import time
 from datetime import datetime
 from tqdm import tqdm
-from subhalo_main import Initial_Sample, Subhalo_Extract, Subhalo_Analysis, ConvertID
+from subhalo_main_COP import Initial_Sample, Subhalo_Extract, Subhalo_Analysis, ConvertID
 import eagleSqlTools as sql
 from graphformat import set_rc_params
 
@@ -103,8 +103,8 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                     particles           = 5000,
                     viewing_axis        = 'z',                  # Which axis to view galaxy from.  DEFAULT 'z'
                     aperture_rad        = 30,                   # trim all data to this maximum value before calculations [pkpc]
-                    trim_hmr            = np.array([30]),           # WILL PLOT LOWEST VALUE. trim particles # multiples of hmr
-                    align_rad           = False,                          # True/False
+                    trim_rad            = np.array([50]),           # pkpc WILL PLOT LOWEST VALUE. trim particles 
+                    align_rad           = False,                          # False/Value
                     #=====================================================
                     # Misalignments we want extracted and at which radii  
                     angle_selection     = ['stars_gas',                     # stars_gas     stars_gas_sf    stars_gas_nsf
@@ -112,12 +112,12 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                                            'stars_gas_nsf',                 # gas_sf_gas_nsf
                                            'gas_sf_gas_nsf',
                                            'stars_dm'],           
-                    spin_hmr            = np.array([2.0]),                  # multiples of hmr for which to find spin. Will plot lowest value
+                    spin_hmr            = np.array([1.0, 2.0, 6.0]),                  # multiples of hmr for which to find spin. Will plot lowest value
                     rad_projected       = True,                             # whether to use rad in projection or 3D
                     #--------------------------
                     # Plot options
                     plot_spin_vectors   = True,
-                    centre_of_pot       = True,                             # Plot most bound object (default centre)
+                    centre_of_pot       = True,                             # Plot most bound object 
                     centre_of_mass      = False,                            # Plot total centre of mass
                     axis                = True,                             # Plot small axis below galaxy
                     #--------------------------
@@ -281,21 +281,13 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
             if len(spin_hmr) != len(spin_hmr_tmp):
                 print('Capped spin_rad: %.2f - %.2f - %.2f HMR | Min/Max %.2f / %.2f pkpc' %(min(spin_hmr_in), (max(spin_hmr_in) - max(spin_hmr_in))/len(spin_hmr_in), max(spin_hmr_in), min(spin_rad_in), max(spin_rad_in)))
           
-          
-        print(angle_selection)
-        print(spin_hmr_in)
-        print(spin_rad_in)   
-        print(find_uncertainties)
-        print(com_min_distance)
-        print(min_particles)
-        print(min_inclination) 
             
         # If we want the original values, enter 0 for viewing angle
-        subhalo = Subhalo_Analysis(mySims, GroupNum, SubGroupNum, GalaxyID, SnapNum, MorphoKinem, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, 
+        subhalo = Subhalo_Analysis(mySims, GroupNum, SubGroupNum, GalaxyID, SnapNum, MorphoKinem, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.data_nil, 
                                             viewing_axis,
                                             aperture_rad,
                                             kappa_rad, 
-                                            trim_hmr, 
+                                            trim_rad, 
                                             align_rad,              #align_rad = False
                                             orientate_to_axis,
                                             viewing_angle,
@@ -312,7 +304,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         if print_galaxy:
             print('|%s| |ID:   %s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f' %(SnapNum, str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'])) 
         
-    
+        
         #===========================================
         # Graph initialising and base formatting
         def graphformat(size1, size2, size3, size4, size5, width, height):
@@ -378,18 +370,14 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
             ax.set_ylim(-boxradius, boxradius)
             ax.set_zlim(-boxradius, boxradius)
             
-            if part_type == 'dm':
-                arrow = dict_name[part_type]
-            
-                # Plot original stars spin vector
-                ax.quiver(0, 0, 0, arrow[0]*boxradius*0.6, arrow[1]*boxradius*0.6, arrow[2]*boxradius*0.6, color=color, alpha=1, linewidth=1, zorder=50)
-            else:
-                mask = np.where(dict_name['hmr'] == rad)
-                        
-                arrow = dict_name[part_type][int(min(mask))]
-            
-                # Plot original stars spin vector
-                ax.quiver(0, 0, 0, arrow[0]*boxradius*0.6, arrow[1]*boxradius*0.6, arrow[2]*boxradius*0.6, color=color, alpha=1, linewidth=1, zorder=50)
+
+            mask = np.where(dict_name['hmr'] == rad)
+                    
+            arrow = dict_name[part_type][int(min(mask))]
+            point = subhalo.coms['adjust'][int(min(mask))]
+        
+            # Plot original stars spin vector
+            ax.quiver(point[0], point[1], point[2], arrow[0]*boxradius*0.6, arrow[1]*boxradius*0.6, arrow[2]*boxradius*0.6, color=color, alpha=1, linewidth=1, zorder=50)
 
         def plot_coms(dict_name, part_type, rad, color, debug=False):
             # Plot formatting
@@ -411,7 +399,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
             else:
                 mask = np.where(dict_name['hmr'] == rad)
                 
-                com = dict_name[part_type][int(min(mask))]
+                com = dict_name[part_type][int(min(mask))] + dict_name['adjust'][int(min(mask))]
                 
                 # Plot COM
                 ax.scatter(com[0], com[1], com[2], color=color, alpha=1, s=3, zorder=10)
@@ -433,37 +421,37 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                 ax.set_zlim(-boxradius, boxradius)
                 fig.canvas.draw_idle()
             def stars_button(self, event):
-                plot_rand_scatter(subhalo.data['%s' %str(trim_hmr[0])], 'stars', 'lightyellow')
+                plot_rand_scatter(subhalo.data['%s' %str(trim_rad[0])], 'stars', 'lightyellow')
                 fig.canvas.draw_idle()
             def stars_v_button(self, event):
                 plot_spin_vector(subhalo.spins, 'stars', spin_vector_rad, 'r')
                 fig.canvas.draw_idle()
             def gas_button(self, event):
-                plot_rand_scatter(subhalo.data['%s' %str(trim_hmr[0])], 'gas', 'lime')
+                plot_rand_scatter(subhalo.data['%s' %str(trim_rad[0])], 'gas', 'lime')
                 fig.canvas.draw_idle()    
             def gas_v_button(self, event):
                 plot_spin_vector(subhalo.spins, 'gas', spin_vector_rad, 'forestgreen')
                 fig.canvas.draw_idle()
             def gas_sf_button(self, event):
-                plot_rand_scatter(subhalo.data['%s' %str(trim_hmr[0])], 'gas_sf', 'cyan')
+                plot_rand_scatter(subhalo.data['%s' %str(trim_rad[0])], 'gas_sf', 'cyan')
                 fig.canvas.draw_idle()
             def gas_sf_v_button(self, event):
                 plot_spin_vector(subhalo.spins, 'gas_sf', spin_vector_rad, 'darkturquoise')
                 fig.canvas.draw_idle()
             def gas_nsf_button(self, event):
-                plot_rand_scatter(subhalo.data['%s' %str(trim_hmr[0])], 'gas_nsf', 'royalblue')
+                plot_rand_scatter(subhalo.data['%s' %str(trim_rad[0])], 'gas_nsf', 'royalblue')
                 fig.canvas.draw_idle()
             def gas_nsf_v_button(self, event):
                 plot_spin_vector(subhalo.spins, 'gas_nsf', spin_vector_rad, 'blue')   
                 fig.canvas.draw_idle()
             def dm_button(self, event):
-                plot_rand_scatter(subhalo.data['%s' %str(trim_hmr[0])], 'dm', 'saddlebrown')
+                plot_rand_scatter(subhalo.data['%s' %str(trim_rad[0])], 'dm', 'saddlebrown')
                 fig.canvas.draw_idle()
             def dm_v_button(self, event):
-                plot_spin_vector(subhalo.spins, 'dm', aperture_rad, 'maroon') 
+                plot_spin_vector(subhalo.spins, 'dm', spin_vector_rad, 'maroon') 
                 fig.canvas.draw_idle()
             def bh_button(self, event):
-                plot_rand_scatter(subhalo.data['%s' %str(trim_hmr[0])], 'bh', 'blueviolet')
+                plot_rand_scatter(subhalo.data['%s' %str(trim_rad[0])], 'bh', 'blueviolet')
                 fig.canvas.draw_idle()
             def com_button(self, event):
                 plot_coms(subhalo.coms, 'stars', spin_vector_rad, 'r')
@@ -474,7 +462,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                 
                 fig.canvas.draw_idle()
             def cop_button(self, event):
-                ax.scatter(0, 0, 0, c='pink', s=20, zorder=10, marker='x')
+                ax.scatter(galaxy.stars_com[0], galaxy.stars_com[1], galaxy.stars_com[2], c='pink', s=20, zorder=10, marker='x')
                 fig.canvas.draw_idle()    
             def draw_hmr(self, event):
                 # Plot 1 and 2 HMR projected rad 
@@ -637,41 +625,37 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         #--------------------------------------------
         # Plot scatters and spin vectors, COMs 
         if stars:
-            plot_rand_scatter(subhalo.data['%s' %str(trim_hmr[0])], 'stars', 'lightyellow')
+            plot_rand_scatter(subhalo.data['%s' %str(trim_rad[0])], 'stars', 'lightyellow')
             if plot_spin_vectors:
                 plot_spin_vector(subhalo.spins, 'stars', spin_vector_rad, 'r')
             if centre_of_mass:
                 plot_coms(subhalo.coms, 'stars', spin_vector_rad, 'r')
         if gas:
-            plot_rand_scatter(subhalo.data['%s' %str(trim_hmr[0])], 'gas', 'lime')
+            plot_rand_scatter(subhalo.data['%s' %str(trim_rad[0])], 'gas', 'lime')
             if plot_spin_vectors:
                 plot_spin_vector(subhalo.spins, 'gas', spin_vector_rad, 'forestgreen')
             if centre_of_mass:
                 plot_coms(subhalo.coms, 'gas', spin_vector_rad, 'forestgreen')
         if gas_sf:
-            plot_rand_scatter(subhalo.data['%s' %str(trim_hmr[0])], 'gas_sf', 'cyan')
+            plot_rand_scatter(subhalo.data['%s' %str(trim_rad[0])], 'gas_sf', 'cyan')
             if plot_spin_vectors:
                 plot_spin_vector(subhalo.spins, 'gas_sf', spin_vector_rad, 'darkturquoise')
             if centre_of_mass:
                 plot_coms(subhalo.coms, 'gas_sf', spin_vector_rad, 'darkturquoise')
         if gas_nsf:
-            plot_rand_scatter(subhalo.data['%s' %str(trim_hmr[0])], 'gas_nsf', 'royalblue')
+            plot_rand_scatter(subhalo.data['%s' %str(trim_rad[0])], 'gas_nsf', 'royalblue')
             if plot_spin_vectors:
                 plot_spin_vector(subhalo.spins, 'gas_nsf', spin_vector_rad, 'blue')  
             if centre_of_mass:
                 plot_coms(subhalo.coms, 'gas_nsf', spin_vector_rad, 'blue')
         if dark_matter:
-            plot_rand_scatter(subhalo.data['%s' %str(trim_hmr[0])], 'dm', 'saddlebrown')
+            plot_rand_scatter(subhalo.data['%s' %str(trim_rad[0])], 'dm', 'saddlebrown')
             if plot_spin_vectors:
                 plot_spin_vector(subhalo.spins, 'dm', aperture_rad, 'maroon') 
             if centre_of_mass:
                 plot_coms(subhalo.coms, 'dm', spin_vector_rad, 'maroon')
         if black_holes:
-            plot_rand_scatter(subhalo.data['%s' %str(trim_hmr[0])], 'bh', 'blueviolet')
-
-        # Plot centre of potential (0,0,0) and mass
-        if centre_of_pot == True:
-            ax.scatter(0, 0, 0, c='pink', s=3, zorder=10)
+            plot_rand_scatter(subhalo.data['%s' %str(trim_rad[0])], 'bh', 'blueviolet')
             
         # Plot axis
         if axis == True:

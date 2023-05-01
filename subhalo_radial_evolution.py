@@ -544,7 +544,7 @@ def _radial_evolution_analysis(csv_sample = False,              # Whether to rea
         """           
                                
                                                     
-def _radial_evolution_plot(csv_output = 'L12_evolution_ID37445_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load 
+def _radial_evolution_plot(csv_output = 'L12_evolution_ID30494_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load 
                            #--------------------------
                            # Galaxy plotting
                            print_summary = True,
@@ -558,8 +558,8 @@ def _radial_evolution_plot(csv_output = 'L12_evolution_ID37445_RadProj_Err__star
                            highlight_criteria = True,       # whether to indicate when criteria not met (but still plot)
                            rad_type_plot      = 'hmr',      # 'rad' whether to use absolute distance or hmr 
                            #--------------------------
-                           showfig        = False,
-                           savefig        = True,
+                           showfig        = True,
+                           savefig        = False,
                              file_format  = 'pdf',
                              savefig_txt  = '',
                            #--------------------------

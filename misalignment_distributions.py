@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from matplotlib.ticker import PercentFormatter
 from matplotlib.lines import Line2D
+import astropy.units as u
+from astropy.cosmology import z_at_value, FlatLambdaCDM
 import csv
 import json
 import time
@@ -505,22 +507,22 @@ def _misalignment_distribution(csv_sample = 'L12_19_all_sample_misalignment_9.0'
         
     
 # Plots singular graphs by reading in existing csv file
-def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
-                       csv_output = '_RadProj_noErr__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
+def _misalignment_plot(csv_sample = 'L100_19_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+                       csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                        #--------------------------
                        # Galaxy plotting
                        print_summary = True,
-                         use_angle          = 'gas_sf_gas_nsf',         # Which angles to plot
+                         use_angle          = 'stars_gas_sf',         # Which angles to plot
                          use_hmr            = 2.0,                    # Which HMR to use
                          use_proj_angle     = True,                   # Whether to use projected or absolute angle 10**9
                          lower_mass_limit   = 10**9,            # Whether to plot only certain masses 10**15
                          upper_mass_limit   = 10**15,         
-                         ETG_or_LTG         = 'LTG',           # Whether to plot only ETG/LTG
+                         ETG_or_LTG         = 'ETG',           # Whether to plot only ETG/LTG
                          group_or_field     = 'both',           # Whether to plot only field/group
                          use_satellites     = False,             # Whether to include SubGroupNum =/ 0
                        #--------------------------
-                       showfig       = False,
-                       savefig       = True,
+                       showfig       = True,
+                       savefig       = False,
                          file_format = 'pdf',
                          savefig_txt = '',
                        #--------------------------
@@ -989,11 +991,521 @@ def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
     #---------------------------------
     
 
+# Manually plots a graph tracking share of aligned, misaligned, and counter-rotating systems with z
+def _misalignment_z_plot(csv_sample1 = 'L100_',                                 # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+                         csv_sample_range = [19, 20, 21, 22, 23, 26, 27, 28],   # snapnums
+                         csv_sample2 = '_all_sample_misalignment_9.0',
+                         csv_output_in = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
+                         #--------------------------
+                         # Galaxy plotting
+                         print_summary = True,
+                           use_angle          = 'stars_gas_sf',         # Which angles to plot
+                           use_hmr            = 2.0,                    # Which HMR to use
+                           use_proj_angle     = True,                   # Whether to use projected or absolute angle 10**9
+                           lower_mass_limit   = 10**9,            # Whether to plot only certain masses 10**15
+                           upper_mass_limit   = 10**15,         
+                           ETG_or_LTG         = 'ETG',           # Whether to plot only ETG/LTG
+                           group_or_field     = 'both',           # Whether to plot only field/group
+                           use_satellites     = False,             # Whether to include SubGroupNum =/ 0
+                         #--------------------------
+                         showfig       = True,
+                         savefig       = True,
+                           file_format = 'pdf',
+                           savefig_txt = '',
+                         #--------------------------
+                         print_progress = False,
+                         debug = False):
+                         
+    
+    #================================================  
+    # Load sample csv
+    if print_progress:
+        print('Cycling through CSV files')
+        time_start = time.time()
+    
+    print('===================')
+    print('PLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %s M*\n  Upper mass limit: %s M*\n  ETG or LTG: %s\n  Group or field: %s\n  Use satellites:  %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field, use_satellites))
+    print('===================\n')
+    
+    #--------------------------------
+    # Create arrays to collect data
+    plot_dict = {'SnapNum': [],
+                 'Redshift': [],
+                 'LookbackTime': [],
+                 'aligned': [],
+                 'aligned_err': [],
+                 'misaligned': [],
+                 'misaligned_err': [],
+                 'counter': [],
+                 'counter_err': []}
+    
+    
+    #================================================ 
+    # Cycling over all the csv samples we want
+    for csv_sample_range_i in tqdm(csv_sample_range):
+        
+        # Ensuring the sample and output originated together
+        csv_sample = csv_sample1 + str(csv_sample_range_i) + csv_sample2
+        csv_output = csv_sample + csv_output_in
+        
+        
+        #================================================  
+        # Load sample csv
+        if print_progress:
+            print('Loading initial sample')
+            time_start = time.time()
+    
+        #--------------------------------
+        # Loading sample
+        dict_sample = json.load(open('%s/%s.csv' %(sample_dir, csv_sample), 'r'))
+        GroupNum_List       = np.array(dict_sample['GroupNum'])
+        SubGroupNum_List    = np.array(dict_sample['SubGroupNum'])
+        GalaxyID_List       = np.array(dict_sample['GalaxyID'])
+        SnapNum_List        = np.array(dict_sample['SnapNum'])
+        
+        # Loading output
+        dict_output = json.load(open('%s/%s.csv' %(output_dir, csv_output), 'r'))
+        all_general         = dict_output['all_general']
+        all_counts          = dict_output['all_counts']
+        all_masses          = dict_output['all_masses']
+        all_misangles       = dict_output['all_misangles']
+        all_misanglesproj   = dict_output['all_misanglesproj']
+        all_flags           = dict_output['all_flags']
+    
+        # Loading sample criteria
+        sample_input        = dict_sample['sample_input']
+        output_input        = dict_output['output_input']
+    
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+        if debug:
+            print(sample_input)
+            print(GroupNum_List)
+            print(SubGroupNum_List)
+            print(GalaxyID_List)
+            print(SnapNum_List)
+   
+        if debug:
+            print('\n===================')
+            print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E M*\n  Satellites: %s' %(output_input['mySims'][0][0], output_input['snapNum'], output_input['Redshift'], output_input['galaxy_mass_limit'], use_satellites))
+            print('  SAMPLE LENGTH: ', len(GroupNum_List))
+            print('\nOUTPUT LOADED:\n  Viewing axis: %s\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s\n  COM min distance: %s\n  Min. particles: %s\n  Min. inclination: %s' %(output_input['viewing_axis'], output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected'], output_input['com_min_distance'], output_input['min_particles'], output_input['min_inclination']))
+            print('===================')
+        print('===================')
+        print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %.2f\n' %(output_input['mySims'][0][0], output_input['snapNum'], output_input['Redshift']))
+        
+        #------------------------------
+        # Check if requested plot is possible with loaded data
+        assert use_angle in output_input['angle_selection'], 'Requested angle %s not in output_input' %use_angle
+        assert use_hmr in output_input['spin_hmr'], 'Requested HMR %s not in output_input' %use_hmr
+        if use_satellites:
+            assert use_satellites == sample_input['use_satellites'], 'Sample does not contain satellites'
+
+        # Create particle list of interested values (used later for flag), and plot labels:
+        use_particles = []
+        if use_angle == 'stars_gas':
+            if 'stars' not in use_particles:
+                use_particles.append('stars')
+            if 'gas' not in use_particles:
+                use_particles.append('gas')
+            plot_label = 'Stars-gas'
+        if use_angle == 'stars_gas_sf':
+            if 'stars' not in use_particles:
+                use_particles.append('stars')
+            if 'gas_sf' not in use_particles:
+                use_particles.append('gas_sf')
+            plot_label = 'Stars-gas$_{\mathrm{sf}}$'
+        if use_angle == 'stars_gas_nsf':
+            if 'stars' not in use_particles:
+                use_particles.append('stars')
+            if 'gas_nsf' not in use_particles:
+                use_particles.append('gas_nsf')
+            plot_label = 'Stars-gas$_{\mathrm{nsf}}$'
+        if use_angle == 'gas_sf_gas_nsf':
+            if 'gas_sf' not in use_particles:
+                use_particles.append('gas_sf')
+            if 'gas_nsf' not in use_particles:
+                use_particles.append('gas_nsf')
+            plot_label = 'gas$_{\mathrm{sf}}$-gas$_{\mathrm{nsf}}$'
+        if use_angle == 'stars_dm':
+            if 'stars' not in use_particles:
+                use_particles.append('stars')
+            if 'dm' not in use_particles:
+                use_particles.append('dm')
+            plot_label = 'Stars-DM'
+        if use_angle == 'gas_dm':
+            if 'gas' not in use_particles:
+                use_particles.append('gas')
+            if 'dm' not in use_particles:
+                use_particles.append('dm')
+            plot_label = 'Gas-DM'
+        if use_angle == 'gas_sf_dm':
+            if 'gas_sf' not in use_particles:
+                use_particles.append('gas_sf')
+            if 'dm' not in use_particles:
+                use_particles.append('dm')
+            plot_label = 'Gas$_{\mathrm{sf}}$-DM'
+        if use_angle == 'gas_nsf_dm':
+            if 'gas_nsf' not in use_particles:
+                use_particles.append('gas_nsf')
+            if 'dm' not in use_particles:
+                use_particles.append('dm')
+            plot_label = 'Gas$_{\mathrm{nsf}}$-DM'
+    
+    
+        #-----------------------------
+        # Set definitions
+        group_threshold     = 10**14
+        LTG_threshold       = 0.4
+    
+        # Setting morphology lower and upper boundaries based on inputs
+        if ETG_or_LTG == 'both':
+            lower_morph = 0
+            upper_morph = 1
+        elif ETG_or_LTG == 'ETG':
+            lower_morph = 0
+            upper_morph = LTG_threshold
+        elif ETG_or_LTG == 'LTG':
+            lower_morph = LTG_threshold
+            upper_morph = 1
+        
+        # Setting group lower and upper boundaries based on inputs
+        if group_or_field == 'both':
+            lower_halo = 0
+            upper_halo = 10**16
+        elif group_or_field == 'group':
+            lower_halo = group_threshold
+            upper_halo = 10**16
+        elif group_or_field == 'field':
+            lower_halo = 0
+            upper_halo = group_threshold
+    
+        # Setting satellite criteria
+        if use_satellites:
+            satellite_criteria = 99999999
+        if not use_satellites:
+            satellite_criteria = 0
+        
+        
+        #------------------------------
+        def _collect_misalignment_distributions_z(debug=False):
+            #=================================
+            # Collect values to plot
+            plot_angles     = []
+            plot_angles_err = []
+        
+            # Collect other useful values
+            catalogue = {'total': {},          # Total galaxies in mass range
+                         'sample': {},         # Sample of galaxies
+                         'plot': {}}           # Sub-sample that is plotted
+            for key in catalogue.keys():
+                catalogue[key] = {'all': 0,        # Size of group
+                                  'group': 0,      # number of group galaxies
+                                  'field': 0,      # number of field galaxies
+                                  'ETG': 0,        # number of ETGs
+                                  'LTG': 0}        # number of LTGs
+        
+            # Add all galaxies loaded to catalogue
+            catalogue['total']['all'] = len(GroupNum_List)        # Total galaxies initially
+        
+            if debug:
+                print(catalogue['total'])
+                print(catalogue['sample'])
+                print(catalogue['plot'])
+            if print_progress:
+                print('Analysing extracted sample and collecting angles')
+                time_start = time.time()
+        
+        
+            #--------------------------
+            # Loop over all galaxies we have available, and analyse output of flags
+            for GalaxyID in GalaxyID_List:
+            
+                #-----------------------------
+                # Determine if group or field
+                if all_general['%s' %GalaxyID]['halo_mass'] > group_threshold:
+                    catalogue['total']['group'] += 1
+                
+                    # Determine if criteria met. If it is, it is part of the final sample
+                    if (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['com_min_distance'][use_angle]) and (all_general['%s' %GalaxyID]['SubGroupNum'] <= satellite_criteria) and (use_hmr in all_misangles['%s' %GalaxyID]['hmr']):
+                        catalogue['sample']['group'] += 1
+                        catalogue['sample']['all'] += 1
+                    
+                        # Determine if this is a galaxy we want to plot
+                        if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph):
+                            catalogue['plot']['group'] += 1
+                            catalogue['plot']['all'] += 1
+                        
+                            # Mask correct integer (formatting weird but works)
+                            mask_rad = int(np.where(np.array(all_misangles['%s' %GalaxyID]['hmr']) == use_hmr)[0])
+                        
+                            # Collect misangle or misangleproj
+                            if use_proj_angle:
+                                plot_angles.append(all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle' %use_angle][mask_rad])
+                            else:
+                                plot_angles.append(all_misangles['%s' %GalaxyID]['%s_angle' %use_angle][mask_rad])
+                    else:
+                        if debug:
+                            print('not included group: ', GalaxyID)
+                         
+                elif all_general['%s' %GalaxyID]['halo_mass'] <= group_threshold: 
+                    catalogue['total']['field'] += 1
+                
+                    # Determine if criteria met. If it is, it is part of the final sample
+                    if (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['com_min_distance'][use_angle])and (all_general['%s' %GalaxyID]['SubGroupNum'] <= satellite_criteria) and (use_hmr in all_misangles['%s' %GalaxyID]['hmr']):
+                        catalogue['sample']['field'] += 1
+                        catalogue['sample']['all'] += 1
+                    
+                        # Determine if this is a galaxy we want to plot
+                        if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph):
+                            catalogue['plot']['field'] += 1
+                            catalogue['plot']['all'] += 1
+                        
+                            # Mask correct integer (formatting weird but works)
+                            mask_rad = int(np.where(np.array(all_misangles['%s' %GalaxyID]['hmr']) == use_hmr)[0])
+                        
+                            # Collect misangle or misangleproj
+                            if use_proj_angle:
+                                plot_angles.append(all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle' %use_angle][mask_rad])
+                            else:
+                                plot_angles.append(all_misangles['%s' %GalaxyID]['%s_angle' %use_angle][mask_rad])
+                    else:
+                        if debug:
+                            print('not included group: ', GalaxyID)
+                
+                #-----------------------------
+                # Determine if ETG or field
+                if all_general['%s' %GalaxyID]['kappa_stars'] > LTG_threshold:
+                    catalogue['total']['LTG'] += 1
+                
+                    # Determine if criteria met. If it is, it is part of the final sample
+                    if (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['com_min_distance'][use_angle]) and (all_general['%s' %GalaxyID]['SubGroupNum'] <= satellite_criteria) and (use_hmr in all_misangles['%s' %GalaxyID]['hmr']):
+                        catalogue['sample']['LTG'] += 1
+                    
+                        # Determine if this is a galaxy we want to plot
+                        if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph):
+                            catalogue['plot']['LTG'] += 1
+                    else:
+                        if debug:
+                            print('not included group: ', GalaxyID)
+                
+                elif all_general['%s' %GalaxyID]['kappa_stars'] <= LTG_threshold:
+                    catalogue['total']['ETG'] += 1
+                
+                    # Determine if criteria met. If it is, it is part of the final sample
+                    if (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['com_min_distance'][use_angle]) and (all_general['%s' %GalaxyID]['SubGroupNum'] <= satellite_criteria) and (use_hmr in all_misangles['%s' %GalaxyID]['hmr']):
+                        catalogue['sample']['ETG'] += 1
+                    
+                        # Determine if this is a galaxy we want to plot
+                        if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph):
+                            catalogue['plot']['ETG'] += 1
+                    else:
+                        if debug:
+                            print('not included group: ', GalaxyID)
+        
+        
+            assert catalogue['plot']['all'] == len(plot_angles), 'Number of angles collected does not equal number in catalogue... for some reason'
+            if debug:
+                print(catalogue['total'])
+                print(catalogue['sample'])
+                print(catalogue['plot'])
+        
+        
+            #=====================================
+            # Extracting histogram values
+            hist_n, _ = np.histogram(plot_angles, bins=np.arange(0, 181, 10), range=(0, 180))
+            
+            #-------------
+            # Print summary
+            aligned_tally           = 0
+            aligned_err_tally       = 0
+            misaligned_tally        = 0 
+            misaligned_err_tally    = 0 
+            counter_tally           = 0
+            counter_err_tally       = 0
+            for i, bin_count_i in enumerate(hist_n):
+                if i < 3:
+                    aligned_tally += bin_count_i
+                    aligned_err_tally += bin_count_i**0.5
+                if i >= 3:
+                    misaligned_tally += bin_count_i
+                    misaligned_err_tally += bin_count_i**0.5
+                if i >= 15:
+                    counter_tally += bin_count_i
+                    counter_err_tally += bin_count_i**0.5
+            
+            if debug:    
+                print('\n')     # total population includes galaxies that failed sample, so can add to less than 100% (ei. remaining % is galaxies that make up non-sample)
+                print('OF TOTAL POPULATION: \t(all galaxies in mass range)\n  Aligned:          %.1f ± %.1f %%\n  Misaligned:       %.1f ± %.1f %%\n  Counter-rotating: %.1f ± %.1f %%' %(aligned_tally*100/catalogue['total']['all'], aligned_err_tally*100/catalogue['total']['all'], misaligned_tally*100/catalogue['total']['all'], misaligned_err_tally*100/catalogue['total']['all'], counter_tally*100/catalogue['total']['all'], counter_err_tally*100/catalogue['total']['all']))
+                print('OF TOTAL SAMPLE: \t(no flags, hmr exists, +/- subhalo):\n  Aligned:          %.1f ± %.1f %%\n  Misaligned:       %.1f ± %.1f %%\n  Counter-rotating: %.1f ± %.1f %%' %(aligned_tally*100/catalogue['sample']['all'], aligned_err_tally*100/catalogue['sample']['all'], misaligned_tally*100/catalogue['sample']['all'], misaligned_err_tally*100/catalogue['sample']['all'], counter_tally*100/catalogue['sample']['all'], counter_err_tally*100/catalogue['sample']['all']))
+                print('OF PLOT SAMPLE: \t(specific plot criteria)\n  Aligned:          %.1f ± %.1f %%\n  Misaligned:       %.1f ± %.1f %%\n  Counter-rotating: %.1f ± %.1f %%' %(aligned_tally*100/catalogue['plot']['all'], aligned_err_tally*100/catalogue['plot']['all'], misaligned_tally*100/catalogue['plot']['all'], misaligned_err_tally*100/catalogue['plot']['all'], counter_tally*100/catalogue['plot']['all'], counter_err_tally*100/catalogue['plot']['all']))       
+            
+
+            #-------------
+            # Append these values to the plot dict
+            plot_dict['SnapNum'].append(output_input['snapNum'])
+            plot_dict['Redshift'].append(output_input['Redshift'])
+            plot_dict['aligned'].append(aligned_tally*100/catalogue['plot']['all'])
+            plot_dict['aligned_err'].append(aligned_err_tally*100/catalogue['plot']['all'])
+            plot_dict['misaligned'].append(misaligned_tally*100/catalogue['plot']['all'])
+            plot_dict['misaligned_err'].append(misaligned_err_tally*100/catalogue['plot']['all'])
+            plot_dict['counter'].append(counter_tally*100/catalogue['plot']['all'])
+            plot_dict['counter_err'].append(counter_err_tally*100/catalogue['plot']['all'] )
+            
+         
+        #--------------------------------------
+        _collect_misalignment_distributions_z()
+        #--------------------------------------
+            
+            
+    #================================================ 
+    # End of snap loop
+    
+    # Finding lookbacktimes
+    plot_dict['LookbackTime'] = ((13.8205298 * u.Gyr) - FlatLambdaCDM(H0=67.77, Om0=0.307, Ob0 = 0.04825).age(plot_dict['Redshift'])).value
+        
+    if print_progress:
+        print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+        print('Plotting')
+        time_start = time.time()
+    if debug:
+        print(plot_dict['Redshift'])
+        print(plot_dict['LookbackTime'])
+        print(plot_dict['SnapNum'])
+        print(plot_dict['aligned'])
+        print(plot_dict['aligned_err'])
+        print(plot_dict['misaligned'])
+        print(plot_dict['misaligned_err'])
+        print(plot_dict['counter_err'])
+        print(plot_dict['counter_err'])
+        
+    
+    #-----------------------------------------------
+    def _plot_misalignment_z(debug=False):
+        # Graph initialising and base formatting
+        fig, axs = plt.subplots(1, 1, figsize=[6, 6], sharex=True, sharey=False)
+        plt.subplots_adjust(wspace=0.4, hspace=0.4)
+        
+        #-----------
+        ### Creating graphs
+        axs.errorbar(plot_dict['LookbackTime'], plot_dict['aligned'], yerr=plot_dict['aligned_err'], capsize=3, elinewidth=0.7, markeredgewidth=1, color='b')
+        axs.errorbar(plot_dict['LookbackTime'], plot_dict['misaligned'], yerr=plot_dict['misaligned_err'], capsize=3, elinewidth=0.7, markeredgewidth=1, color='r')
+        axs.errorbar(plot_dict['LookbackTime'], plot_dict['counter'], yerr=plot_dict['counter_err'], capsize=3, elinewidth=0.7, markeredgewidth=1, color='indigo')
+        
+
+        #------------------------
+        ### General formatting
+        # Setting regular axis
+        axs.set_xlim(0, 13.5)
+        axs.set_xlabel('Lookback time (Gyr)')
+        axs.invert_xaxis()
+        axs.set_ylim(0, 100)
+        axs.set_yticks(np.arange(0, 101, 20))
+        axs.set_ylabel('Percentage of galaxies')
+        axs.minorticks_on()
+        
+        
+        #-----------
+        # Create redshift axis:
+        redshiftticks = [0, 0.2, 0.5, 1, 1.5, 2, 5, 10, 20]
+        ageticks = ((13.8205298 * u.Gyr) - FlatLambdaCDM(H0=67.77, Om0=0.307, Ob0 = 0.04825).age(redshiftticks)).value
+        
+        ax_top = axs.twiny()
+        ax_top.set_xticks(ageticks)
+        ax_top.set_xlim(0, 13.5)
+        ax_top.set_xticklabels(['{:g}'.format(z) for z in redshiftticks])
+        ax_top.set_xlabel('Redshift')
+        ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major')
+        ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='minor')
+        ax_top.invert_xaxis()
+        
+        
+        #-----------
+        ### Legend
+        
+        legend_elements = []
+        legend_labels = []
+        legend_colors = []
+        for line_name, line_color in zip(['Aligned', 'Misaligned', 'Counter-rotating'], ['b', 'r', 'indigo']):
+            legend_elements.append(Line2D([-10], [-10], marker=' ', color='w'))
+            legend_labels.append(line_name)
+            legend_colors.append(line_color)
+        
+        # Add mass range
+        if (lower_mass_limit != 10**9) and (upper_mass_limit != 10**15):
+            legend_labels.append('$10 ^{%.1f} - 10 ^{%.1f}$ M$_{\odot}$' %(np.log10(lower_mass_limit), np.log10(upper_mass_limit)))    
+            legend_elements.append(Line2D([-10], [-10], marker=' ', color='w'))
+            legend_colors.append('grey')
+        elif (lower_mass_limit != 10**9):
+            legend_labels.append('$> 10 ^{%.1f}$ M$_{\odot}$' %(np.log10(lower_mass_limit)))    
+            legend_elements.append(Line2D([-10], [-10], marker=' ', color='w'))
+            legend_colors.append('grey')
+        elif (upper_mass_limit != 10**15):
+            legend_labels.append('$< 10 ^{%.1f}$ M$_{\odot}$' %(np.log10(upper_mass_limit)))    
+            legend_elements.append(Line2D([-10], [-10], marker=' ', color='w'))
+            legend_colors.append('grey')
+        
+        # Add LTG/ETG if specified
+        if ETG_or_LTG != 'both':
+            legend_labels.append('%s' %ETG_or_LTG)
+            legend_elements.append(Line2D([-10], [-10], marker=' ', color='w'))
+            legend_colors.append('grey')
+        if group_or_field != 'both':
+            legend_labels.append('%s-galaxies' %group_or_field)
+            legend_elements.append(Line2D([-10], [-10], marker=' ', color='w'))
+            legend_colors.append('grey')
+        
+        axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
+        
+        
+        #-----------
+        # other
+        plt.tight_layout()
+        
+        
+        if print_summary:    
+            print('===================')
+            print('SUMMARY DATA:')
+            print('  | Redshift | time | Aligned     | Misaligned | Counter-rot |')
+            for snap_p, red_p, time_p, ali_p, alierr_p, mis_p, miserr_p, coun_p, counerr_p in zip(plot_dict['SnapNum'], plot_dict['Redshift'], plot_dict['LookbackTime'], plot_dict['aligned'], plot_dict['aligned_err'], plot_dict['misaligned'], plot_dict['misaligned_err'], plot_dict['counter'], plot_dict['counter_err']):
+                print('  |   %.2f   | %.2f | %.1f ± %.1f%% | %.1f ± %.1f%% | %.1f ± %.1f%%  |' %(red_p, time_p, ali_p, alierr_p, mis_p, miserr_p, coun_p, counerr_p))
+            print('===================')
+            
+        #-----------
+        # Savefig
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+            print('Finished')
+        
+        metadata_rows = '| Redshift | time | Aligned     | Misaligned | Counter-rot |\n'
+        for snap_p, red_p, time_p, ali_p, alierr_p, mis_p, miserr_p, coun_p, counerr_p in zip(plot_dict['SnapNum'], plot_dict['Redshift'], plot_dict['LookbackTime'], plot_dict['aligned'], plot_dict['aligned_err'], plot_dict['misaligned'], plot_dict['misaligned_err'], plot_dict['counter'], plot_dict['counter_err']):
+            metadata_rows += ('|   %.2f   | %.2f | %.1f ± %.1f%% | %.1f ± %.1f%% | %.1f ± %.1f%%  |\n' %(red_p, time_p, ali_p, alierr_p, mis_p, miserr_p, coun_p, counerr_p))
+        metadata_plot = {'Title': metadata_rows}
+       
+        if use_satellites:
+            sat_str = 'all'
+        if not use_satellites:
+            sat_str = 'cent'
+       
+        if savefig:
+            plt.savefig("%s/L%s_ALL_%s_misalignment_summary_%s_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], sat_str, np.log10(float(output_input['galaxy_mass_limit'])), use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/L%s_ALL_%s_misalignment_summary_%s_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], sat_str, np.log10(float(output_input['galaxy_mass_limit'])), use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format))
+        if showfig:
+            plt.show()
+        plt.close()
+        
+            
+    
+    #---------------------
+    _plot_misalignment_z()
+    #---------------------
+    
     
 #===========================    
 #_misalignment_sample()
 #_misalignment_distribution()
-_misalignment_plot()
+#_misalignment_plot()
+#_misalignment_z_plot()
 #===========================
     
 

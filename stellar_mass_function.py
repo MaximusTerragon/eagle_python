@@ -66,8 +66,8 @@ dataDir_dict['28'] = dataDir_main + 'snapshot_028_z000p000/snap_028_z000p000.0.h
 #scp -r /Users/c22048063/Documents/EAGLE/code  c22048063@physxlogin.astro.cf.ac.uk:/home/user/c22048063/Documents/EAGLE/
 
 
-def _plot_stellar_mass_function(csv_sample = 'L100_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
-                                csv_output = '_RadProj_noErr__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
+def _plot_stellar_mass_function(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+                                csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                                  #--------------------------
                                  # What determines our final sample
                                  print_summary = True,
@@ -108,6 +108,8 @@ def _plot_stellar_mass_function(csv_sample = 'L100_28_all_sample_misalignment_9.
     # Loading output
     dict_output = json.load(open('%s/%s.csv' %(output_dir, csv_output), 'r'))
     all_general         = dict_output['all_general']
+    all_spins           = dict_output['all_spins']
+    all_coms            = dict_output['all_coms']
     all_counts          = dict_output['all_counts']
     all_masses          = dict_output['all_masses']
     all_misangles       = dict_output['all_misangles']

@@ -204,7 +204,7 @@ def _misalignment_distribution(csv_sample = 'L12_19_all_sample_misalignment_9.0'
                                 viewing_axis        = 'z',                  # Which axis to view galaxy from.  DEFAULT 'z'
                                 aperture_rad        = 30,                   # trim all data to this maximum value before calculations [pkpc]
                                 kappa_rad           = 30,                   # calculate kappa for this radius [pkpc]
-                                trim_hmr = np.array([100]),                 # keep as 100... will be capped by aperture anyway. Doesn't matter
+                                trim_rad = np.array([30]),                 # keep as 100... will be capped by aperture anyway. Doesn't matter
                                 align_rad = False,                          # keep on False
                                 orientate_to_axis='z',                      # Keep as z
                                 viewing_angle = 0,                          # Keep as 0
@@ -224,7 +224,7 @@ def _misalignment_distribution(csv_sample = 'L12_19_all_sample_misalignment_9.0'
                                 min_particles       = 20,          # Minimum particles to find spin.  DEFAULT 20
                                 min_inclination     = 0,           # Minimum inclination toward viewing axis [deg] DEFAULT 0
                                 #--------------------------   
-                                csv_file       = True,             # Will write sample to csv file in sapmle_dir
+                                csv_file       = True,             # Will write sample to csv file in sample_dir
                                   csv_name     = '',               # extra stuff at end
                                 #--------------------------
                                 print_progress = False,
@@ -294,7 +294,7 @@ def _misalignment_distribution(csv_sample = 'L12_19_all_sample_misalignment_9.0'
     all_flags         = {}          # has reason why galaxy failed sample
     all_general       = {}          # has total masses, kappa, halfmassrad, etc.
     all_coms          = {}          # has all C.o.Ms
-    #all_spins         = {}          # has all spins
+    all_spins         = {}          # has all spins
     all_counts        = {}          # has all the particle count within rad
     all_masses        = {}          # has all the particle mass within rad
     all_misangles     = {}          # has all 3D angles
@@ -338,39 +338,38 @@ def _misalignment_distribution(csv_sample = 'L12_19_all_sample_misalignment_9.0'
         if rad_projected == True:
             spin_rad = np.array(spin_hmr) * galaxy.halfmass_rad_proj
             spin_hmr_tmp = spin_hmr
-            
+        
             # Reduce spin_rad array if value exceeds aperture_rad_in... means not all dictionaries will have same number of array spin values
-            spin_rad_in = [x for x in spin_rad if x <= aperture_rad]
-            spin_hmr_in = [x for x in spin_hmr if x*galaxy.halfmass_rad_proj <= aperture_rad]
+            spin_rad_in_tmp = [x for x in spin_rad if x <= aperture_rad]
+            spin_hmr_in_tmp = [x for x in spin_hmr if x*galaxy.halfmass_rad_proj <= aperture_rad]
             
             # Ensure min. rad is >1 pkpc
-            spin_rad_in = [x for x in spin_rad_in if x >= 1.0]
-            spin_hmr_in = [x for x in spin_hmr_in if x*galaxy.halfmass_rad_proj >= 1.0]
+            spin_rad_in = [x for x in spin_rad_in_tmp if x >= 1.0]
+            spin_hmr_in = [x for x in spin_hmr_in_tmp if x*galaxy.halfmass_rad_proj >= 1.0]
         
-            if len(spin_hmr) != len(spin_hmr_tmp):
-                print('Capped spin_rad: %.2f - %.2f - %.2f HMR | Min/Max %.2f / %.2f pkpc' %(min(spin_hmr_in), (max(spin_hmr_in) - max(spin_hmr_in))/len(spin_hmr_in), max(spin_hmr_in), min(spin_rad_in), max(spin_rad_in)))
+            if len(spin_hmr_in) != len(spin_hmr_tmp):
+                print('Capped spin_rad: %.2f - %.2f - %.2f HMR | Min/Max %.2f / %.2f pkpc' %(min(spin_hmr_in), (max(spin_hmr_in) - min(spin_hmr_in))/(len(spin_hmr_in) - 1), max(spin_hmr_in), min(spin_rad_in), max(spin_rad_in)))
         elif rad_projected == False:
             spin_rad = np.array(spin_hmr) * galaxy.halfmass_rad
             spin_hmr_tmp = spin_hmr
-            
+        
             # Reduce spin_rad array if value exceeds aperture_rad_in... means not all dictionaries will have same number of array spin values
-            spin_rad_in = [x for x in spin_rad if x <= aperture_rad]
-            spin_hmr_in = [x for x in spin_hmr if x*galaxy.halfmass_rad <= aperture_rad]
+            spin_rad_in_tmp = [x for x in spin_rad if x <= aperture_rad]
+            spin_hmr_in_tmp = [x for x in spin_hmr if x*galaxy.halfmass_rad <= aperture_rad]
             
             # Ensure min. rad is >1 pkpc
-            spin_rad_in = [x for x in spin_rad_in if x >= 1.0]
-            spin_hmr_in = [x for x in spin_hmr_in if x*galaxy.halfmass_rad_proj >= 1.0]
+            spin_rad_in = [x for x in spin_rad_in_tmp if x >= 1.0]
+            spin_hmr_in = [x for x in spin_hmr_in_tmp if x*galaxy.halfmass_rad >= 1.0]
         
-            if len(spin_hmr) != len(spin_hmr_tmp):
-                print('Capped spin_rad: %.2f - %.2f - %.2f HMR | Min/Max %.2f / %.2f pkpc' %(min(spin_hmr_in), (max(spin_hmr_in) - max(spin_hmr_in))/len(spin_hmr_in), max(spin_hmr_in), min(spin_rad_in), max(spin_rad_in)))
-        
+            if len(spin_hmr_in) != len(spin_hmr_tmp):
+                print('Capped spin_rad: %.2f - %.2f - %.2f HMR | Min/Max %.2f / %.2f pkpc' %(min(spin_hmr_in), (max(spin_hmr_in) - min(spin_hmr_in))/(len(spin_hmr_in) - 1), max(spin_hmr_in), min(spin_rad_in), max(spin_rad_in)))
         
         # If we want the original values, enter 0 for viewing angle
-        subhalo = Subhalo_Analysis(sample_input['mySims'], GroupNum, SubGroupNum, GalaxyID, SnapNum, MorphoKinem, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, 
+        subhalo = Subhalo_Analysis(sample_input['mySims'], GroupNum, SubGroupNum, GalaxyID, SnapNum, MorphoKinem, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.data_nil,
                                             viewing_axis,
                                             aperture_rad,
                                             kappa_rad, 
-                                            trim_hmr, 
+                                            trim_rad, 
                                             align_rad,              #align_rad = False
                                             orientate_to_axis,
                                             viewing_angle,
@@ -398,6 +397,7 @@ def _misalignment_distribution(csv_sample = 'L12_19_all_sample_misalignment_9.0'
         # Collecting all relevant particle info for galaxy
         all_flags['%s' %str(subhalo.GalaxyID)]          = subhalo.flags
         all_general['%s' %str(subhalo.GalaxyID)]        = subhalo.general
+        all_spins['%s' %str(subhalo.GalaxyID)]          = subhalo.spins
         all_coms['%s' %str(subhalo.GalaxyID)]           = subhalo.coms
         all_counts['%s' %str(subhalo.GalaxyID)]         = subhalo.counts
         all_masses['%s' %str(subhalo.GalaxyID)]         = subhalo.masses
@@ -432,6 +432,7 @@ def _misalignment_distribution(csv_sample = 'L12_19_all_sample_misalignment_9.0'
         
         # Combining all dictionaries
         csv_dict = {'all_general': all_general,
+                    'all_spins': all_spins,
                     'all_coms': all_coms,
                     'all_counts': all_counts,
                     'all_masses': all_masses,
@@ -478,6 +479,8 @@ def _misalignment_distribution(csv_sample = 'L12_19_all_sample_misalignment_9.0'
         # Loading output
         dict_output = json.load(open('%s/%s.csv' %(output_dir, csv_output), 'r'))
         all_general         = dict_output['all_general']
+        all_spins           = dict_output['all_spins']
+        all_coms            = dict_output['all_coms']
         all_counts          = dict_output['all_counts']
         all_masses          = dict_output['all_masses']
         all_misangles       = dict_output['all_misangles']
@@ -507,7 +510,7 @@ def _misalignment_distribution(csv_sample = 'L12_19_all_sample_misalignment_9.0'
         
     
 # Plots singular graphs by reading in existing csv file
-def _misalignment_plot(csv_sample = 'L100_19_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+def _misalignment_plot(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                        csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                        #--------------------------
                        # Galaxy plotting
@@ -517,12 +520,12 @@ def _misalignment_plot(csv_sample = 'L100_19_all_sample_misalignment_9.0',     #
                          use_proj_angle     = True,                   # Whether to use projected or absolute angle 10**9
                          lower_mass_limit   = 10**9,            # Whether to plot only certain masses 10**15
                          upper_mass_limit   = 10**15,         
-                         ETG_or_LTG         = 'ETG',           # Whether to plot only ETG/LTG
+                         ETG_or_LTG         = 'LTG',           # Whether to plot only ETG/LTG
                          group_or_field     = 'both',           # Whether to plot only field/group
                          use_satellites     = False,             # Whether to include SubGroupNum =/ 0
                        #--------------------------
                        showfig       = True,
-                       savefig       = False,
+                       savefig       = True,
                          file_format = 'pdf',
                          savefig_txt = '',
                        #--------------------------
@@ -551,6 +554,8 @@ def _misalignment_plot(csv_sample = 'L100_19_all_sample_misalignment_9.0',     #
     # Loading output
     dict_output = json.load(open('%s/%s.csv' %(output_dir, csv_output), 'r'))
     all_general         = dict_output['all_general']
+    all_spins           = dict_output['all_spins']
+    all_coms            = dict_output['all_coms']
     all_counts          = dict_output['all_counts']
     all_masses          = dict_output['all_masses']
     all_misangles       = dict_output['all_misangles']
@@ -993,7 +998,7 @@ def _misalignment_plot(csv_sample = 'L100_19_all_sample_misalignment_9.0',     #
 
 # Manually plots a graph tracking share of aligned, misaligned, and counter-rotating systems with z
 def _misalignment_z_plot(csv_sample1 = 'L100_',                                 # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
-                         csv_sample_range = [19, 20, 21, 22, 23, 26, 27, 28],   # snapnums
+                         csv_sample_range = [19, 20, 21, 22, 23, 24, 25, 26, 27, 28],   # snapnums
                          csv_sample2 = '_all_sample_misalignment_9.0',
                          csv_output_in = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                          #--------------------------
@@ -1004,7 +1009,7 @@ def _misalignment_z_plot(csv_sample1 = 'L100_',                                 
                            use_proj_angle     = True,                   # Whether to use projected or absolute angle 10**9
                            lower_mass_limit   = 10**9,            # Whether to plot only certain masses 10**15
                            upper_mass_limit   = 10**15,         
-                           ETG_or_LTG         = 'ETG',           # Whether to plot only ETG/LTG
+                           ETG_or_LTG         = 'LTG',           # Whether to plot only ETG/LTG
                            group_or_field     = 'both',           # Whether to plot only field/group
                            use_satellites     = False,             # Whether to include SubGroupNum =/ 0
                          #--------------------------
@@ -1066,6 +1071,8 @@ def _misalignment_z_plot(csv_sample1 = 'L100_',                                 
         # Loading output
         dict_output = json.load(open('%s/%s.csv' %(output_dir, csv_output), 'r'))
         all_general         = dict_output['all_general']
+        all_spins           = dict_output['all_spins']
+        all_coms            = dict_output['all_coms']
         all_counts          = dict_output['all_counts']
         all_masses          = dict_output['all_masses']
         all_misangles       = dict_output['all_misangles']
@@ -1503,7 +1510,7 @@ def _misalignment_z_plot(csv_sample1 = 'L100_',                                 
     
 #===========================    
 #_misalignment_sample()
-#_misalignment_distribution()
+_misalignment_distribution()
 #_misalignment_plot()
 #_misalignment_z_plot()
 #===========================

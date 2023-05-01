@@ -19,7 +19,7 @@ import json
 import time
 from datetime import datetime
 from tqdm import tqdm
-from subhalo_main_COP import Initial_Sample, Subhalo_Extract, Subhalo_Analysis, ConvertID
+from subhalo_main import Initial_Sample, Subhalo_Extract, Subhalo_Analysis, ConvertID
 import eagleSqlTools as sql
 from graphformat import set_rc_params
 
@@ -112,7 +112,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                                            'stars_gas_nsf',                 # gas_sf_gas_nsf
                                            'gas_sf_gas_nsf',
                                            'stars_dm'],           
-                    spin_hmr            = np.array([1.0, 2.0, 6.0]),                  # multiples of hmr for which to find spin. Will plot lowest value
+                    spin_hmr            = np.array([2.0]),                  # multiples of hmr for which to find spin. Will plot lowest value
                     rad_projected       = True,                             # whether to use rad in projection or 3D
                     #--------------------------
                     # Plot options
@@ -255,32 +255,31 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         if rad_projected == True:
             spin_rad = np.array(spin_hmr) * galaxy.halfmass_rad_proj
             spin_hmr_tmp = spin_hmr
-            
+        
             # Reduce spin_rad array if value exceeds aperture_rad_in... means not all dictionaries will have same number of array spin values
-            spin_rad_in = [x for x in spin_rad if x <= aperture_rad]
-            spin_hmr_in = [x for x in spin_hmr if x*galaxy.halfmass_rad_proj <= aperture_rad]
+            spin_rad_in_tmp = [x for x in spin_rad if x <= aperture_rad]
+            spin_hmr_in_tmp = [x for x in spin_hmr if x*galaxy.halfmass_rad_proj <= aperture_rad]
             
             # Ensure min. rad is >1 pkpc
-            spin_rad_in = [x for x in spin_rad_in if x >= 1.0]
-            spin_hmr_in = [x for x in spin_hmr_in if x*galaxy.halfmass_rad_proj >= 1.0]
+            spin_rad_in = [x for x in spin_rad_in_tmp if x >= 1.0]
+            spin_hmr_in = [x for x in spin_hmr_in_tmp if x*galaxy.halfmass_rad_proj >= 1.0]
         
-            if len(spin_hmr) != len(spin_hmr_tmp):
-                print('Capped spin_rad: %.2f - %.2f - %.2f HMR | Min/Max %.2f / %.2f pkpc' %(min(spin_hmr_in), (max(spin_hmr_in) - max(spin_hmr_in))/len(spin_hmr_in), max(spin_hmr_in), min(spin_rad_in), max(spin_rad_in)))
+            if len(spin_hmr_in) != len(spin_hmr_tmp):
+                print('Capped spin_rad: %.2f - %.2f - %.2f HMR | Min/Max %.2f / %.2f pkpc' %(min(spin_hmr_in), (max(spin_hmr_in) - min(spin_hmr_in))/(len(spin_hmr_in) - 1), max(spin_hmr_in), min(spin_rad_in), max(spin_rad_in)))
         elif rad_projected == False:
             spin_rad = np.array(spin_hmr) * galaxy.halfmass_rad
             spin_hmr_tmp = spin_hmr
-            
+        
             # Reduce spin_rad array if value exceeds aperture_rad_in... means not all dictionaries will have same number of array spin values
-            spin_rad_in = [x for x in spin_rad if x <= aperture_rad]
-            spin_hmr_in = [x for x in spin_hmr if x*galaxy.halfmass_rad <= aperture_rad]
+            spin_rad_in_tmp = [x for x in spin_rad if x <= aperture_rad]
+            spin_hmr_in_tmp = [x for x in spin_hmr if x*galaxy.halfmass_rad <= aperture_rad]
             
             # Ensure min. rad is >1 pkpc
-            spin_rad_in = [x for x in spin_rad_in if x >= 1.0]
-            spin_hmr_in = [x for x in spin_hmr_in if x*galaxy.halfmass_rad_proj >= 1.0]
+            spin_rad_in = [x for x in spin_rad_in_tmp if x >= 1.0]
+            spin_hmr_in = [x for x in spin_hmr_in_tmp if x*galaxy.halfmass_rad >= 1.0]
         
-            if len(spin_hmr) != len(spin_hmr_tmp):
-                print('Capped spin_rad: %.2f - %.2f - %.2f HMR | Min/Max %.2f / %.2f pkpc' %(min(spin_hmr_in), (max(spin_hmr_in) - max(spin_hmr_in))/len(spin_hmr_in), max(spin_hmr_in), min(spin_rad_in), max(spin_rad_in)))
-          
+            if len(spin_hmr_in) != len(spin_hmr_tmp):
+                print('Capped spin_rad: %.2f - %.2f - %.2f HMR | Min/Max %.2f / %.2f pkpc' %(min(spin_hmr_in), (max(spin_hmr_in) - min(spin_hmr_in))/(len(spin_hmr_in) - 1), max(spin_hmr_in), min(spin_rad_in), max(spin_rad_in)))  
             
         # If we want the original values, enter 0 for viewing angle
         subhalo = Subhalo_Analysis(mySims, GroupNum, SubGroupNum, GalaxyID, SnapNum, MorphoKinem, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.data_nil, 

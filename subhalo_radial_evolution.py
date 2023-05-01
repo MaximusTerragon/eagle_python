@@ -96,14 +96,14 @@ SAMPLE:
 def _radial_evolution_analysis(csv_sample = False,              # Whether to read in existing list of galaxies  
                                #--------------------------
                                mySims = [('RefL0012N0188', 12)],
-                               GalaxyID_List_target = [3748],               # Will create a csv file for each galaxy
+                               GalaxyID_List_target = [30494],               # Will create a csv file for each galaxy
                                snapNumMax           = 10,                    # Highest snapNum to go to
                                #--------------------------
                                # Galaxy extraction properties
                                viewing_axis        = 'z',                  # Which axis to view galaxy from.  DEFAULT 'z'
                                aperture_rad        = 30,                   # trim all data to this maximum value before calculations [pkpc]
                                kappa_rad           = 30,                   # calculate kappa for this radius [pkpc]
-                               trim_hmr = np.array([100]),                 # keep as 100... will be capped by aperture anyway. Doesn't matter
+                               trim_rad = np.array([30]),                 # keep as 100... will be capped by aperture anyway. Doesn't matter
                                align_rad = False,                          # keep on False
                                orientate_to_axis='z',                      # Keep as z
                                viewing_angle = 0,                          # Keep as 0
@@ -225,7 +225,7 @@ def _radial_evolution_analysis(csv_sample = False,              # Whether to rea
     total_flags         = {}        # has reason why galaxy failed sample
     total_general       = {}        # has total masses, kappa, halfmassrad, etc.
     total_coms          = {}        # has all C.o.Ms
-    #total_spins         = {}        # has all spins
+    total_spins         = {}        # has all spins
     total_counts        = {}        # has all the particle count within rad
     total_masses        = {}        # has all the particle mass within rad
     total_misangles     = {}        # has all 3D angles
@@ -311,6 +311,7 @@ def _radial_evolution_analysis(csv_sample = False,              # Whether to rea
         total_flags.update({'%s' %target_GalaxyID: {}})
         total_general.update({'%s' %target_GalaxyID: {}})
         total_coms.update({'%s' %target_GalaxyID: {}})
+        total_spins.update({'%s' %target_GalaxyID: {}})
         total_counts.update({'%s' %target_GalaxyID: {}})
         total_masses.update({'%s' %target_GalaxyID: {}})
         total_misangles.update({'%s' %target_GalaxyID: {}})
@@ -351,37 +352,37 @@ def _radial_evolution_analysis(csv_sample = False,              # Whether to rea
                 spin_hmr_tmp = spin_hmr
             
                 # Reduce spin_rad array if value exceeds aperture_rad_in... means not all dictionaries will have same number of array spin values
-                spin_rad_in = [x for x in spin_rad if x <= aperture_rad]
-                spin_hmr_in = [x for x in spin_hmr if x*galaxy.halfmass_rad_proj <= aperture_rad]
+                spin_rad_in_tmp = [x for x in spin_rad if x <= aperture_rad]
+                spin_hmr_in_tmp = [x for x in spin_hmr if x*galaxy.halfmass_rad_proj <= aperture_rad]
                 
                 # Ensure min. rad is >1 pkpc
-                spin_rad_in = [x for x in spin_rad_in if x >= 1.0]
-                spin_hmr_in = [x for x in spin_hmr_in if x*galaxy.halfmass_rad_proj >= 1.0]
-                
+                spin_rad_in = [x for x in spin_rad_in_tmp if x >= 1.0]
+                spin_hmr_in = [x for x in spin_hmr_in_tmp if x*galaxy.halfmass_rad_proj >= 1.0]
+            
                 if len(spin_hmr_in) != len(spin_hmr_tmp):
-                    print('Capped spin_rad: %.2f - %.2f - %.2f HMR | Min/Max %.2f / %.2f pkpc' %(min(spin_hmr_in), (max(spin_hmr_in) - max(spin_hmr_in))/len(spin_hmr_in), max(spin_hmr_in), min(spin_rad_in), max(spin_rad_in)))
+                    print('Capped spin_rad: %.2f - %.2f - %.2f HMR | Min/Max %.2f / %.2f pkpc' %(min(spin_hmr_in), (max(spin_hmr_in) - min(spin_hmr_in))/(len(spin_hmr_in) - 1), max(spin_hmr_in), min(spin_rad_in), max(spin_rad_in)))
             elif rad_projected == False:
                 spin_rad = np.array(spin_hmr) * galaxy.halfmass_rad
                 spin_hmr_tmp = spin_hmr
             
                 # Reduce spin_rad array if value exceeds aperture_rad_in... means not all dictionaries will have same number of array spin values
-                spin_rad_in = [x for x in spin_rad if x <= aperture_rad]
-                spin_hmr_in = [x for x in spin_hmr if x*galaxy.halfmass_rad <= aperture_rad]
+                spin_rad_in_tmp = [x for x in spin_rad if x <= aperture_rad]
+                spin_hmr_in_tmp = [x for x in spin_hmr if x*galaxy.halfmass_rad <= aperture_rad]
                 
                 # Ensure min. rad is >1 pkpc
-                spin_rad_in = [x for x in spin_rad_in if x >= 1.0]
-                spin_hmr_in = [x for x in spin_hmr_in if x*galaxy.halfmass_rad_proj >= 1.0]
+                spin_rad_in = [x for x in spin_rad_in_tmp if x >= 1.0]
+                spin_hmr_in = [x for x in spin_hmr_in_tmp if x*galaxy.halfmass_rad >= 1.0]
             
-                if len(spin_hmr) != len(spin_hmr_tmp):
-                    print('Capped spin_rad: %.2f - %.2f - %.2f HMR | Min/Max %.2f / %.2f pkpc' %(min(spin_hmr_in), (max(spin_hmr_in) - max(spin_hmr_in))/len(spin_hmr_in), max(spin_hmr_in), min(spin_rad_in), max(spin_rad_in)))
+                if len(spin_hmr_in) != len(spin_hmr_tmp):
+                    print('Capped spin_rad: %.2f - %.2f - %.2f HMR | Min/Max %.2f / %.2f pkpc' %(min(spin_hmr_in), (max(spin_hmr_in) - min(spin_hmr_in))/(len(spin_hmr_in) - 1), max(spin_hmr_in), min(spin_rad_in), max(spin_rad_in)))
         
         
             # If we want the original values, enter 0 for viewing angle
-            subhalo = Subhalo_Analysis(mySims, GroupNum, SubGroupNum, GalaxyID, SnapNum, MorphoKinem, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, 
+            subhalo = Subhalo_Analysis(mySims, GroupNum, SubGroupNum, GalaxyID, SnapNum, MorphoKinem, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.data_nil,  
                                                 viewing_axis,
                                                 aperture_rad,
                                                 kappa_rad, 
-                                                trim_hmr, 
+                                                trim_rad, 
                                                 align_rad,              #align_rad = False
                                                 orientate_to_axis,
                                                 viewing_angle,
@@ -409,11 +410,13 @@ def _radial_evolution_analysis(csv_sample = False,              # Whether to rea
             
             #--------------------------------
             # Collecting all relevant particle info for galaxy
-            total_general['%s' %target_GalaxyID]['%s' %str(subhalo.GalaxyID)]       = subhalo.general
+
             total_flags['%s' %target_GalaxyID]['%s' %str(subhalo.GalaxyID)]         = subhalo.flags
+            total_general['%s' %target_GalaxyID]['%s' %str(subhalo.GalaxyID)]       = subhalo.general
+            total_coms['%s' %target_GalaxyID]['%s' %str(subhalo.GalaxyID)]          = subhalo.coms
+            total_spins['%s' %target_GalaxyID]['%s' %str(subhalo.GalaxyID)]         = subhalo.spins
             total_counts['%s' %target_GalaxyID]['%s' %str(subhalo.GalaxyID)]        = subhalo.counts
             total_masses['%s' %target_GalaxyID]['%s' %str(subhalo.GalaxyID)]        = subhalo.masses
-            total_coms['%s' %target_GalaxyID]['%s' %str(subhalo.GalaxyID)]          = subhalo.coms
             total_misangles['%s' %target_GalaxyID]['%s' %str(subhalo.GalaxyID)]     = subhalo.mis_angles
             total_misanglesproj['%s' %target_GalaxyID]['%s' %str(subhalo.GalaxyID)] = subhalo.mis_angles_proj
             #---------------------------------
@@ -441,9 +444,10 @@ def _radial_evolution_analysis(csv_sample = False,              # Whether to rea
             # Combining all dictionaries
             csv_dict = {'total_flags': total_flags, 
                         'total_general': total_general, 
+                        'total_coms': total_coms,
+                        'total_spins': total_spins,
                         'total_counts': total_counts,
                         'total_masses': total_masses,
-                        'total_coms': total_coms,
                         'total_misangles': total_misangles, 
                         'total_misanglesproj': total_misanglesproj, 
                         'total_allbranches': total_allbranches, 
@@ -475,34 +479,29 @@ def _radial_evolution_analysis(csv_sample = False,              # Whether to rea
     
     
             # Reading JSON file
-    
-    
-            
-            
-            
-            
             """ 
             # Loading output
             dict_output = json.load(open('%s/%s.csv' %(output_dir, csv_output), 'r'))
-            all_general         = dict_output['all_general']
-            all_counts          = dict_output['all_counts']
-            all_masses          = dict_output['all_masses']
-            all_misangles       = dict_output['all_misangles']
-            all_misanglesproj   = dict_output['all_misanglesproj']
-            all_flags           = dict_output['all_flags']
-
+    
+            total_flags           = dict_output['total_flags']
+            total_general         = dict_output['total_general']
+            total_spins           = dict_output['total_spins']
+            total_counts          = dict_output['total_counts']
+            total_masses          = dict_output['total_masses']
+            total_coms            = dict_output['total_coms']
+            total_misangles       = dict_output['total_misangles']
+            total_misanglesproj   = dict_output['total_misanglesproj']
+    
+            total_allbranches     = dict_output['total_allbranches']
+            total_mainbranch      = dict_output['total_mainbranch']
+            total_mergers         = dict_output['total_mergers']
+    
             # Loading sample criteria
-            sample_input        = dict_sample['sample_input']
             output_input        = dict_output['output_input']
-
-            if print_progress:
-                print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-            if debug:
-                print(sample_input)
-                print(GroupNum_List)
-                print(SubGroupNum_List)
-                print(GalaxyID_List)
-                print(SnapNum_List)
+    
+            #---------------------------------
+            # Extract GroupNum, SubGroupNum, and Snap for each ID
+            GalaxyID_List_target = list(total_general.keys())
 
             print('\n===================')
             print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E M*\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_limit'], sample_input['use_satellites']))
@@ -511,40 +510,8 @@ def _radial_evolution_analysis(csv_sample = False,              # Whether to rea
             print('\nPLOT:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %s\n  Upper mass limit: %s\n  ETG or LTG: %s\n  Group or field: %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field))
             print('===================')
             """
-                
-
-
-        """ Structure of dicts:
-        total_flags
-            [target_GalaxyID]
-                [subhalo.GalaxyID]
-                    [array of flags if there are any. Len=0 if none]
-    
-        total_general
-            [target_GalaxyID]
-                [subhalo.GalaxyID]
-                    ['GalaxyID']
-                    ['stelmass']
-                    ['kappa_stars']
-                    etc
-        total_coms
-        total_particles
-        total_misangles
-        total_misanglesproj
-    
-        total_allbranches
-            [target_GalaxyID]
-                ['redshift']
-                ['snapnum']
-                ['stelmass']
-                etc.
-        total_mainbranch
-        total_mergers
-            
-        """           
-                               
-                                                    
-def _radial_evolution_plot(csv_output = 'L12_evolution_ID30494_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load 
+                                                                                  
+def _radial_evolution_plot(csv_output = 'L12_evolution_ID3748_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load 
                            #--------------------------
                            # Galaxy plotting
                            print_summary = True,
@@ -580,6 +547,7 @@ def _radial_evolution_plot(csv_output = 'L12_evolution_ID30494_RadProj_Err__star
     
     total_flags           = dict_output['total_flags']
     total_general         = dict_output['total_general']
+    total_spins           = dict_output['total_spins']
     total_counts          = dict_output['total_counts']
     total_masses          = dict_output['total_masses']
     total_coms            = dict_output['total_coms']

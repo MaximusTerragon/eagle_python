@@ -101,7 +101,7 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
                        viewing_axis        = 'z',                  # Which axis to view galaxy from.  DEFAULT 'z'
                        aperture_rad        = 30,                   # trim all data to this maximum value before calculations [pkpc]
                        kappa_rad           = 30,                   # calculate kappa for this radius [pkpc]
-                       trim_hmr = np.array([100]),                 # keep as 100... will be capped by aperture anyway. Doesn't matter
+                       trim_rad = np.array([30]),                 # keep as 100... will be capped by aperture anyway. Doesn't matter
                        align_rad = False,                          # keep on False
                        orientate_to_axis='z',                      # Keep as z
                        viewing_angle = 0,                          # Keep as 0
@@ -121,7 +121,7 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
                        min_particles       = 20,                # Minimum particles to find spin.  DEFAULT 20
                        min_inclination     = 0,                 # Minimum inclination toward viewing axis [deg] DEFAULT 0
                        #--------------------------   
-                       csv_file       = False,                   # Will write sample to csv file in sapmle_dir
+                       csv_file       = True,                   # Will write sample to csv file in sapmle_dir
                          csv_name     = '',                     # extra stuff at end
                        #--------------------------
                        print_progress = False,
@@ -217,8 +217,8 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
     # Empty dictionaries to collect relevant data
     all_flags         = {}          # has reason why galaxy failed sample
     all_general       = {}          # has total masses, kappa, halfmassrad, etc.
-    #all_coms          = {}          # has all C.o.Ms
-    #all_spins         = {}          # has all spins
+    all_coms          = {}          # has all C.o.Ms
+    all_spins         = {}          # has all spins
     all_counts        = {}          # has all the particle count within rad
     all_masses        = {}          # has all the particle mass within rad
     all_misangles     = {}          # has all 3D angles
@@ -266,37 +266,36 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
             spin_hmr_tmp = spin_hmr
             
             # Reduce spin_rad array if value exceeds aperture_rad_in... means not all dictionaries will have same number of array spin values
-            spin_rad_in = [x for x in spin_rad if x <= aperture_rad]
-            spin_hmr_in = [x for x in spin_hmr if x*galaxy.halfmass_rad_proj <= aperture_rad]
+            spin_rad_in_tmp = [x for x in spin_rad if x <= aperture_rad]
+            spin_hmr_in_tmp = [x for x in spin_hmr if x*galaxy.halfmass_rad_proj <= aperture_rad]
             
             # Ensure min. rad is >1 pkpc
-            spin_rad_in = [x for x in spin_rad_in if x >= 1.0]
-            spin_hmr_in = [x for x in spin_hmr_in if x*galaxy.halfmass_rad_proj >= 1.0]
+            spin_rad_in = [x for x in spin_rad_in_tmp if x >= 1.0]
+            spin_hmr_in = [x for x in spin_hmr_in_tmp if x*galaxy.halfmass_rad_proj >= 1.0]
         
-            if len(spin_hmr) != len(spin_hmr_tmp):
-                print('Capped spin_rad: %.2f - %.2f - %.2f HMR | Min/Max %.2f / %.2f pkpc' %(min(spin_hmr_in), (max(spin_hmr_in) - max(spin_hmr_in))/len(spin_hmr_in), max(spin_hmr_in), min(spin_rad_in), max(spin_rad_in)))
+            if len(spin_hmr_in) != len(spin_hmr_tmp):
+                print('Capped spin_rad: %.2f - %.2f - %.2f HMR | Min/Max %.2f / %.2f pkpc' %(min(spin_hmr_in), (max(spin_hmr_in) - min(spin_hmr_in))/(len(spin_hmr_in) - 1), max(spin_hmr_in), min(spin_rad_in), max(spin_rad_in)))
         elif rad_projected == False:
             spin_rad = np.array(spin_hmr) * galaxy.halfmass_rad
             spin_hmr_tmp = spin_hmr
-            
+        
             # Reduce spin_rad array if value exceeds aperture_rad_in... means not all dictionaries will have same number of array spin values
-            spin_rad_in = [x for x in spin_rad if x <= aperture_rad]
-            spin_hmr_in = [x for x in spin_hmr if x*galaxy.halfmass_rad <= aperture_rad]
+            spin_rad_in_tmp = [x for x in spin_rad if x <= aperture_rad]
+            spin_hmr_in_tmp = [x for x in spin_hmr if x*galaxy.halfmass_rad <= aperture_rad]
             
             # Ensure min. rad is >1 pkpc
-            spin_rad_in = [x for x in spin_rad_in if x >= 1.0]
-            spin_hmr_in = [x for x in spin_hmr_in if x*galaxy.halfmass_rad_proj >= 1.0]
+            spin_rad_in = [x for x in spin_rad_in_tmp if x >= 1.0]
+            spin_hmr_in = [x for x in spin_hmr_in_tmp if x*galaxy.halfmass_rad >= 1.0]
         
-            if len(spin_hmr) != len(spin_hmr_tmp):
-                print('Capped spin_rad: %.2f - %.2f - %.2f HMR | Min/Max %.2f / %.2f pkpc' %(min(spin_hmr_in), (max(spin_hmr_in) - max(spin_hmr_in))/len(spin_hmr_in), max(spin_hmr_in), min(spin_rad_in), max(spin_rad_in)))
-            
+            if len(spin_hmr_in) != len(spin_hmr_tmp):
+                print('Capped spin_rad: %.2f - %.2f - %.2f HMR | Min/Max %.2f / %.2f pkpc' %(min(spin_hmr_in), (max(spin_hmr_in) - min(spin_hmr_in))/(len(spin_hmr_in) - 1), max(spin_hmr_in), min(spin_rad_in), max(spin_rad_in)))
         
         # If we want the original values, enter 0 for viewing angle
-        subhalo = Subhalo_Analysis(mySims, GroupNum, SubGroupNum, GalaxyID, SnapNum, MorphoKinem, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh, 
+        subhalo = Subhalo_Analysis(mySims, GroupNum, SubGroupNum, GalaxyID, SnapNum, MorphoKinem, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.data_nil, 
                                             viewing_axis,
                                             aperture_rad,
                                             kappa_rad, 
-                                            trim_hmr, 
+                                            trim_rad, 
                                             align_rad,              #align_rad = False
                                             orientate_to_axis,
                                             viewing_angle,
@@ -311,7 +310,6 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
                                             min_inclination)
     
 
-        print(subhalo.flags.items())
         """ FLAGS
         ------------
         #print(subhalo.flags['total_particles'])            # will flag if there are missing particles within aperture_rad
@@ -328,6 +326,8 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
         # Collecting all relevant particle info for galaxy
         all_flags['%s' %str(subhalo.GalaxyID)]          = subhalo.flags
         all_general['%s' %str(subhalo.GalaxyID)]        = subhalo.general
+        all_coms['%s' %str(subhalo.GalaxyID)]           = subhalo.coms
+        all_spins['%s' %str(subhalo.GalaxyID)]          = subhalo.spins
         all_counts['%s' %str(subhalo.GalaxyID)]         = subhalo.counts
         all_masses['%s' %str(subhalo.GalaxyID)]         = subhalo.masses
         all_misangles['%s' %str(subhalo.GalaxyID)]      = subhalo.mis_angles
@@ -356,6 +356,8 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
         
             # Combining all dictionaries
             csv_dict = {'all_general': all_general,
+                        'all_coms': all_coms,
+                        'all_spins': all_spins,
                         'all_counts': all_counts,
                         'all_masses': all_masses,
                         'all_misangles': all_misangles,
@@ -401,6 +403,8 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
             # Loading output
             dict_output = json.load(open('%s/%s.csv' %(output_dir, csv_output), 'r'))
             all_general         = dict_output['all_general']
+            all_spins           = dict_output['all_spins']
+            all_coms            = dict_output['all_coms']
             all_counts          = dict_output['all_counts']
             all_masses          = dict_output['all_masses']
             all_misangles       = dict_output['all_misangles']
@@ -431,7 +435,7 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
     
 # Plot galaxies fed into from a CSV file
 # Can also take misalignment sample files (will check if criteria met)
-def _radial_plot(csv_output = 'L12_radial_ID3748_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum):
+def _radial_plot(csv_output = 'L12_radial_ID37445_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum):
                  #--------------------------
                  # Galaxy plotting
                  print_summary = True,
@@ -671,7 +675,6 @@ def _radial_plot(csv_output = 'L12_radial_ID3748_RadProj_Err__stars_gas_stars_ga
                 print('Angles:', plot_angles)
                 print('Errors Lo:', plot_angles_lo)
                 print('Errors Hi:', plot_angles_hi)
-            
         
             #-----------------------
             # Plot scatter and errorbars            
@@ -769,7 +772,7 @@ def _radial_plot(csv_output = 'L12_radial_ID3748_RadProj_Err__stars_gas_stars_ga
         
 
 #=========================== 
-#_radial_analysis()
+_radial_analysis()
 _radial_plot()   
 #===========================
 

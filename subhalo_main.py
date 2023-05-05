@@ -40,13 +40,14 @@ class Initial_Sample:
             myData = self.samplesize_basic(satellite)
             
         
-        self.GroupNum    = myData['GroupNumber']
-        self.SubGroupNum = myData['SubGroupNumber']
-        self.GalaxyID    = myData['GalaxyID']
-        self.SnapNum     = myData['SnapNum']
-        self.Redshift    = myData['Redshift']
-        self.halo_mass   = myData['halo_mass']
-        self.centre      = np.transpose(np.array([myData['x'], myData['y'], myData['z']]))
+        self.GroupNum     = myData['GroupNumber']
+        self.SubGroupNum  = myData['SubGroupNumber']
+        self.GalaxyID     = myData['GalaxyID']
+        self.DescendantID = myData['DescendantID']
+        self.SnapNum      = myData['SnapNum']
+        self.Redshift     = myData['Redshift']
+        self.halo_mass    = myData['halo_mass']
+        self.centre       = np.transpose(np.array([myData['x'], myData['y'], myData['z']]))
         
         if mstarLimit > 5E+8:
             self.MorphoKinem = np.transpose(np.array([myData['ellip'], myData['triax'], myData['kappa_stars'], myData['disp_ani'], myData['disc_to_total'], myData['rot_to_disp_ratio']]))            
@@ -65,6 +66,7 @@ class Initial_Sample:
                              SH.GroupNumber, \
                              SH.SubGroupNumber, \
                              SH.GalaxyID, \
+                             SH.DescendantID, \
                              SH.SnapNum, \
                              SH.Redshift, \
                              SH.CentreOfPotential_x as x, \
@@ -104,6 +106,7 @@ class Initial_Sample:
                              SH.GroupNumber, \
                              SH.SubGroupNumber, \
                              SH.GalaxyID, \
+                             SH.DescendantID, \
                              SH.SnapNum, \
                              SH.Redshift, \
                              SH.CentreOfPotential_x as x, \
@@ -154,6 +157,7 @@ class Initial_Sample:
                              SH.GroupNumber, \
                              SH.SubGroupNumber, \
                              SH.GalaxyID, \
+                             SH.DescendantID, \
                              SH.SnapNum, \
                              SH.Redshift, \
                              SH.CentreOfPotential_x as x, \
@@ -185,6 +189,7 @@ class Initial_Sample:
                              SH.GroupNumber, \
                              SH.SubGroupNumber, \
                              SH.GalaxyID, \
+                             SH.DescendantID, \
                              SH.SnapNum, \
                              SH.Redshift, \
                              SH.CentreOfPotential_x as x, \
@@ -2269,9 +2274,8 @@ class Subhalo_Extract_Basic:
             
         return newData
         
-
-
-
+   
+ 
 """ 
 DESCRIPTION
 -----------

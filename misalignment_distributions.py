@@ -46,12 +46,12 @@ dataDir_dict['15'] = dataDir_alt + 'snapshot_015_z002p012/snap_015_z002p012.0.hd
 dataDir_dict['16'] = dataDir_alt + 'snapshot_016_z001p737/snap_016_z001p737.0.hdf5'
 dataDir_dict['17'] = dataDir_alt + 'snapshot_017_z001p487/snap_017_z001p487.0.hdf5'
 dataDir_dict['18'] = dataDir_alt + 'snapshot_018_z001p259/snap_018_z001p259.0.hdf5'
-dataDir_dict['19'] = dataDir_main + 'snapshot_019_z001p004/snap_019_z001p004.0.hdf5'
-dataDir_dict['20'] = dataDir_main + 'snapshot_020_z000p865/snap_020_z000p865.0.hdf5'
-dataDir_dict['21'] = dataDir_main + 'snapshot_021_z000p736/snap_021_z000p736.0.hdf5'
-dataDir_dict['22'] = dataDir_main + 'snapshot_022_z000p615/snap_022_z000p615.0.hdf5'
-dataDir_dict['23'] = dataDir_main + 'snapshot_023_z000p503/snap_023_z000p503.0.hdf5'
-dataDir_dict['24'] = dataDir_main + 'snapshot_024_z000p366/snap_024_z000p366.0.hdf5'
+dataDir_dict['19'] = dataDir_alt + 'snapshot_019_z001p004/snap_019_z001p004.0.hdf5'
+dataDir_dict['20'] = dataDir_alt + 'snapshot_020_z000p865/snap_020_z000p865.0.hdf5'
+dataDir_dict['21'] = dataDir_alt + 'snapshot_021_z000p736/snap_021_z000p736.0.hdf5'
+dataDir_dict['22'] = dataDir_alt + 'snapshot_022_z000p615/snap_022_z000p615.0.hdf5'
+dataDir_dict['23'] = dataDir_alt + 'snapshot_023_z000p503/snap_023_z000p503.0.hdf5'
+dataDir_dict['24'] = dataDir_alt + 'snapshot_024_z000p366/snap_024_z000p366.0.hdf5'
 dataDir_dict['25'] = dataDir_main + 'snapshot_025_z000p271/snap_025_z000p271.0.hdf5'
 dataDir_dict['26'] = dataDir_main + 'snapshot_026_z000p183/snap_026_z000p183.0.hdf5'
 dataDir_dict['27'] = dataDir_main + 'snapshot_027_z000p101/snap_027_z000p101.0.hdf5'
@@ -72,7 +72,7 @@ dataDir_dict['28'] = dataDir_main + 'snapshot_028_z000p000/snap_028_z000p000.0.h
 def _misalignment_sample(mySims = [('RefL0012N0188', 12)],
                          #--------------------------
                          galaxy_mass_limit  = 10**9,            # Lower mass limit within 30pkpc
-                         snapNum            = 19,               # Target snapshot
+                         snapNum            = 28,               # Target snapshot
                          use_satellites     = True,             # Whether to include SubGroupNum =/ 0
                          print_sample       = False,             # Print list of IDs
                          #--------------------------   
@@ -143,6 +143,7 @@ def _misalignment_sample(mySims = [('RefL0012N0188', 12)],
         csv_dict = {'GroupNum': sample.GroupNum, 
                     'SubGroupNum': sample.SubGroupNum, 
                     'GalaxyID': sample.GalaxyID,
+                    'DescendantID': sample.DescendantID,
                     'SnapNum': sample.SnapNum,
                     'Redshift': sample.Redshift,
                     'halo_mass': sample.halo_mass,
@@ -172,6 +173,7 @@ def _misalignment_sample(mySims = [('RefL0012N0188', 12)],
         GroupNum_List       = np.array(dict_new['GroupNum'])
         SubGroupNum_List    = np.array(dict_new['SubGroupNum'])
         GalaxyID_List       = np.array(dict_new['GalaxyID'])
+        DescendantID_List   = np.array(dict_new['DescendantID'])
         SnapNum_List        = np.array(dict_new['SnapNum'])
         HaloMass_List       = np.array(dict_new['halo_mass'])
         Centre_List         = np.array(dict_new['centre'])
@@ -510,7 +512,7 @@ def _misalignment_distribution(csv_sample = 'L12_19_all_sample_misalignment_9.0'
         
     
 # Plots singular graphs by reading in existing csv file
-def _misalignment_plot(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                        csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                        #--------------------------
                        # Galaxy plotting
@@ -525,7 +527,7 @@ def _misalignment_plot(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # 
                          use_satellites     = False,             # Whether to include SubGroupNum =/ 0
                        #--------------------------
                        showfig       = True,
-                       savefig       = True,
+                       savefig       = False,
                          file_format = 'pdf',
                          savefig_txt = '',
                        #--------------------------
@@ -1510,8 +1512,8 @@ def _misalignment_z_plot(csv_sample1 = 'L100_',                                 
     
 #===========================    
 #_misalignment_sample()
-_misalignment_distribution()
-#_misalignment_plot()
+#_misalignment_distribution()
+_misalignment_plot()
 #_misalignment_z_plot()
 #===========================
     

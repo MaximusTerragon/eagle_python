@@ -79,12 +79,11 @@ def _find_misalignment_occurance(csv_sample1 = 'L100_',                         
                                  print_summary = True,
                                    use_angle          = 'stars_gas_sf',         # Which angles to plot
                                    use_hmr            = 2.0,                    # Which HMR to use
-                                   use_proj_angle     = True,                   # Whether to use projected or absolute angle 10**9
+                                   use_proj_angle     = False,                   # Whether to use projected or absolute angle 10**9
                                    lower_mass_limit   = 10**9,             # Whether to plot only certain masses 10**15
                                    upper_mass_limit   = 10**15,         
                                    ETG_or_LTG         = 'LTG',             # Whether to plot only ETG/LTG
                                    group_or_field     = 'both',            # Whether to plot only field/group
-                                   use_satellites     = False,             # Whether to include SubGroupNum =/ 0
                                  #--------------------------
                                  showfig       = True,
                                  savefig       = True,
@@ -94,7 +93,6 @@ def _find_misalignment_occurance(csv_sample1 = 'L100_',                         
                                  print_progress = False,
                                  debug = False):
                                  
-    
     #================================================  
     # Load sample csv
     if print_progress:
@@ -102,10 +100,13 @@ def _find_misalignment_occurance(csv_sample1 = 'L100_',                         
         time_start = time.time()
     
     print('===================')
-    print('PLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %s M*\n  Upper mass limit: %s M*\n  ETG or LTG: %s\n  Group or field: %s\n  Use satellites:  %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field, use_satellites))
+    print('PLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %s M*\n  Upper mass limit: %s M*\n  ETG or LTG: %s\n  Group or field: %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field))
     print('===================\n')
     
     
+    #----------------------
+    # Creating dictionary to collect aligned and misaligned IDs
+    alignment_dict = {}
     
     
     #================================================ 
@@ -170,8 +171,6 @@ def _find_misalignment_occurance(csv_sample1 = 'L100_',                         
         # Check if requested plot is possible with loaded data
         assert use_angle in output_input['angle_selection'], 'Requested angle %s not in output_input' %use_angle
         assert use_hmr in output_input['spin_hmr'], 'Requested HMR %s not in output_input' %use_hmr
-        if use_satellites:
-            assert use_satellites == sample_input['use_satellites'], 'Sample does not contain satellites'
     
         # Create particle list of interested values (used later for flag), and plot labels:
         use_particles = []
@@ -253,81 +252,168 @@ def _find_misalignment_occurance(csv_sample1 = 'L100_',                         
             upper_halo = group_threshold
     
         # Setting satellite criteria
-        if use_satellites:
-            satellite_criteria = 99999999
-        if not use_satellites:
-            satellite_criteria = 0
+        satellite_criteria = 99999999
         
-        
-        #------------------------------
+        #----------------------------
+        # Creation dictionary
+        alignment_dict['%s' %output_input['snapNum']] = {'aligned': {'GalaxyID': [], 'DescendantID': []},
+                                                         'misaligned': {'GalaxyID': [], 'DescendantID': []}}
+                          
+                          
+        #=================================
         def _collect_misalignment_distributions_z(debug=False):
-            #=================================
             
-            print('aaaaa')
-            # For each galaxy (+descID) in the sample:
-            #
-            #   check if it meets critieria
-            #
-            #   if it is misaligned, append ID, and descID to misaligned['GalaxyID'] array and misaligned['DescendantID']
-            #   if it is aligned, append ID, and descID to aligned['GalaxyID'] array and aligned['DescendantID']
-            # Append to dictionary of aligned and misaligned for current snap dictionary[snap]
-            
-            
+            # Looping over all GalaxyIDs
+            for GalaxyID, DescendantID in zip(GalaxyID_List, DescendantID_List):
+                
+                #-----------------------------
+                # Determine if galaxy has flags:
+                if (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['com_min_distance'][use_angle]) and (all_general['%s' %GalaxyID]['SubGroupNum'] <= satellite_criteria) and (use_hmr in all_misangles['%s' %GalaxyID]['hmr']):
+                    
+                    # Determine if galaxy meets criteria:
+                    if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph):
+                        
+                        # Mask correct integer (formatting weird but works)
+                        mask_rad = int(np.where(np.array(all_misangles['%s' %GalaxyID]['hmr']) == use_hmr)[0])
+                        
+                        # Determine if it is aligned or misaligned at the radius of interest
+                        if use_proj_angle:
+                            if all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle' %use_angle][mask_rad] <= 30:
+                                alignment_dict['%s' %output_input['snapNum']]['aligned']['GalaxyID'].append(GalaxyID)
+                                alignment_dict['%s' %output_input['snapNum']]['aligned']['DescendantID'].append(DescendantID)
+                            else:
+                                alignment_dict['%s' %output_input['snapNum']]['misaligned']['GalaxyID'].append(GalaxyID)
+                                alignment_dict['%s' %output_input['snapNum']]['misaligned']['DescendantID'].append(DescendantID)
+                        else:
+                            if all_misangles['%s' %GalaxyID]['%s_angle' %use_angle][mask_rad] <= 30:
+                                alignment_dict['%s' %output_input['snapNum']]['aligned']['GalaxyID'].append(GalaxyID)
+                                alignment_dict['%s' %output_input['snapNum']]['aligned']['DescendantID'].append(DescendantID)
+                            else:
+                                alignment_dict['%s' %output_input['snapNum']]['misaligned']['GalaxyID'].append(GalaxyID)
+                                alignment_dict['%s' %output_input['snapNum']]['misaligned']['DescendantID'].append(DescendantID)
+                            
         #--------------------------------------
         _collect_misalignment_distributions_z()
         #--------------------------------------
-            
-            
-            
-            
-            
+        
     
-    #--------------------------------
-    # Create arrays to collect data
-    plot_dict = {'SnapNum': [],
-                 'Redshift': [],
-                 'LookbackTime': [],
-                 'became_aligned': [],
-                 'became_misaligned': [],
-                 'stayed_aligned': [],
-                 'stayed_misaligned': []}
-                         
-    # dict of stayed aligned etc...
-    # Create new loop: for snap in dictionary of aligned and misaligned:
-    # For snap in dictionary.keys():
-    #   if snap == csv_sample_range[-1]:
-    #       continue
-    #
-    #   # We assume only main-line galaxies (DescendantID = GalaxyID - 1)
-    #   for galaxyID, descID in zip(dictionary['%s' %snap]['aligned']['GalaxyID'], dictionary['%s' %snap]['aligned']['DescendantID']):
-    #       if (descID in dictionary['%s' %snap+1]['aligned']['DescendantID']) and (descID == galaxyID-1):
-    #           
-    #           append to stayed aligned 
-    #
-    #       elif (descID in dictionary['%s' %snap+1]['misaligned']['DescendantID']) and (descID == galaxyID-1):
-    #
-    #           append to became misaligned
-    #
-    #   for galaxyID, descID in zip(dictionary['%s' %snap]['aligned']['GalaxyID'], dictionary['%s' %snap]['misaligned']['DescendantID']):
-    #       if (descID in dictionary['%s' %snap+1]['aligned']['DescendantID']) and (descID == galaxyID-1):
-    #           
-    #           append to became aligned
-    #
-    #       elif (descID in dictionary['%s' %snap+1]['misaligned']['DescendantID']) and (descID == galaxyID-1):
-    #
-    #           append to stayed misaligned
-    #
-    #
-    # Plot: 
-    # plt.plot(csv_sample_range, stayed aligned)
-    # plt.plot(csv_sample_range, stayed misaligned)
-    # plt.plot(csv_sample_range, became aligned)
-    # plt.plot(csv_sample_range, became misaligned)
+    #======================================================================
+    # Analysis of collected misaligned and aligned galaxyIDs
+    def _plot_misalignment_snap(debug=False):
+        
+        #--------------------------------
+        # Create arrays to collect data
+        plot_dict = {}
+        for SnapNum in alignment_dict.keys():
+        
+            # Append known values
+            plot_dict['%s' %SnapNum] = {'became_aligned': [],
+                                        'became_misaligned': [],
+                                        'stayed_aligned': [],
+                                        'stayed_misaligned': []}
+        
+        
+        #--------------------------------
+        for SnapNum in alignment_dict.keys():
+        
+            # Ignore last snap (28)
+            if int(SnapNum) == csv_sample_range[-1]:
+                continue
+        
+            # We assume only main-line galaxies (DescendantID = GalaxyID - 1)
+            # Check for galaxies that stayed aligned or became misaligned:
+            for GalaxyID, DescendantID in zip(alignment_dict['%s' %SnapNum]['aligned']['GalaxyID'], alignment_dict['%s' %SnapNum]['aligned']['DescendantID']):
+                if (DescendantID in alignment_dict['%s' %(int(SnapNum)+1)]['aligned']['GalaxyID']) and (DescendantID == GalaxyID-1):
+                    plot_dict['%s' %(int(SnapNum)+1)]['stayed_aligned'].append(GalaxyID)
             
+                elif (DescendantID in alignment_dict['%s' %(int(SnapNum)+1)]['misaligned']['GalaxyID']) and (DescendantID == GalaxyID-1):
+                    plot_dict['%s' %(int(SnapNum)+1)]['became_misaligned'].append(GalaxyID)
+        
+            # Check for galaxies that stayed misaligned or became aligned:      
+            for GalaxyID, DescendantID in zip(alignment_dict['%s' %SnapNum]['misaligned']['GalaxyID'], alignment_dict['%s' %SnapNum]['misaligned']['DescendantID']):
+                if (DescendantID in alignment_dict['%s' %(int(SnapNum)+1)]['aligned']['GalaxyID']) and (DescendantID == GalaxyID-1):
+                    plot_dict['%s' %(int(SnapNum)+1)]['became_aligned'].append(GalaxyID)
             
+                elif (DescendantID in alignment_dict['%s' %(int(SnapNum)+1)]['misaligned']['GalaxyID']) and (DescendantID == GalaxyID-1):
+                    plot_dict['%s' %(int(SnapNum)+1)]['stayed_misaligned'].append(GalaxyID)
+        
+        
+        #--------------------------------
+        # analyse dictionary and extract plot values:
+        plot_snap = []
+        plot_stayed_aligned     = []
+        plot_stayed_misaligned  = []
+        plot_became_aligned     = []
+        plot_became_misaligned  = []
+        
+        for SnapNum in plot_dict.keys():
+            plot_snap.append(int(SnapNum))
+            plot_stayed_aligned.append(len(plot_dict['%s' %SnapNum]['stayed_aligned']))
+            plot_stayed_misaligned.append(len(plot_dict['%s' %SnapNum]['stayed_misaligned']))
+            plot_became_aligned.append(len(plot_dict['%s' %SnapNum]['became_aligned']))
+            plot_became_misaligned.append(len(plot_dict['%s' %SnapNum]['became_misaligned']))
+                
             
-            
-    
+        
+        #--------------------------------
+        # Graph initialising and base formatting
+        fig, axs = plt.subplots(1, 1, figsize=[6, 5.5], sharex=True, sharey=False)
+        plt.subplots_adjust(wspace=0.4, hspace=0.4)
+        
+        
+        #----------------------
+        # Plotting graphs
+        axs.plot(plot_snap[1:], plot_stayed_aligned[1:], label='Stayed aligned', c='b', ls='-')
+        axs.plot(plot_snap[1:], plot_stayed_misaligned[1:], label='Stayed misaligned', c='r', ls='-')
+        axs.plot(plot_snap[1:], plot_became_aligned[1:], label='Became aligned', c='cyan', ls='-')
+        axs.plot(plot_snap[1:], plot_became_misaligned[1:], label='Became misaligned', c='orange', ls='-')
+        
+        
+        #----------------------
+        ### General formatting
+        # Setting regular axis
+        axs.set_xlim(18.5, 28.5)
+        axs.set_xlabel('SnapNum')
+        axs.set_ylim(0, 8000)
+        axs.set_ylabel('Number of galaxies')
+        
+        #-----------
+        ### Legend
+        axs.legend(loc='upper right', frameon=False, labelspacing=0.1, handlelength=0, labelcolor='linecolor')
+        
+        #-----------
+        # other
+        plt.tight_layout()
+        
+        if print_summary:
+            print('===================')
+            print('SUMMARY DATA:')
+            print('  | Snap | Stayed aligned | Stayed misaligned | New aligned | New misaligned |')
+            for snap_p, s_ali, s_mis, b_ali, b_mis in zip(plot_snap, plot_stayed_aligned, plot_stayed_misaligned, plot_became_aligned, plot_became_misaligned):
+                print('  | %s |   %s   |   %s   |   %s   |   %s   |' %(snap_p, s_ali, s_mis, b_ali, b_mis))
+        
+        #-----------
+        # Savefig
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+            print('Finished')
+        
+        metadata_rows = '| Snap | Stayed ali | Stayed mis | New ali | New mis |\n'
+        for snap_p, s_ali, s_mis, b_ali, b_mis in zip(plot_snap, plot_stayed_aligned, plot_stayed_misaligned, plot_became_aligned, plot_became_misaligned):
+            metadata_rows += ('| %s | %s | %s | %s | %s |\n' %(snap_p, s_ali, s_mis, b_ali, b_mis))
+        metadata_plot = {'Title': metadata_rows}
+        
+        if savefig:
+            plt.savefig("%s/L%s_ALL_becameMisligned_%s_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], np.log10(float(output_input['galaxy_mass_limit'])), use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/L%s_ALL_becameMisaligned_%s_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], np.log10(float(output_input['galaxy_mass_limit'])), use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format))
+        if showfig:
+            plt.show()
+        plt.close()
+        
+        
+    #------------------------
+    _plot_misalignment_snap()
+    #------------------------
     
 #=============================
 _find_misalignment_occurance()

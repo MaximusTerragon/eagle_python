@@ -525,8 +525,8 @@ def _radial_evolution_plot(csv_output = 'L12_evolution_ID3748_RadProj_Err__stars
                            highlight_criteria = True,       # whether to indicate when criteria not met (but still plot)
                            rad_type_plot      = 'hmr',      # 'rad' whether to use absolute distance or hmr 
                            #--------------------------
-                           showfig        = True,
-                           savefig        = False,
+                           showfig        = False,
+                           savefig        = True,
                              file_format  = 'pdf',
                              savefig_txt  = '',
                            #--------------------------
@@ -595,19 +595,38 @@ def _radial_evolution_plot(csv_output = 'L12_evolution_ID3748_RadProj_Err__stars
         fig, axs = plt.subplots(nrows=4, ncols=1, gridspec_kw={'height_ratios': [3, 1.5, 1.5, 1.5]}, figsize=[7, 15], sharex=True, sharey=False)
         
     
-        #===========================
+        #----------------------------
         # Add mergers
         for ratio_i, lookbacktime_i, snap_i in zip(total_mergers['%s' %target_GalaxyID]['ratios'], total_mainbranch['%s' %target_GalaxyID]['lookbacktime'], total_mainbranch['%s' %target_GalaxyID]['snapnum']):
             if len(ratio_i) == 0:
-                next
+                continue
             else:
                 if max(ratio_i) >= 0.1:
                     for ax in axs:
-                        ax.axvline(lookbacktime_i, ls='-', color='grey', alpha=0.2, linewidth=max(ratio_i)*20)
-                        ax.axvline(lookbacktime_i, ls='-', color='grey', alpha=0.2, linewidth=max(ratio_i)*40)
+                        ax.axvline(lookbacktime_i, ls='--', color='grey', alpha=1, linewidth=2)
 
                     # Annotate
                     axs[0].text(lookbacktime_i-0.2, 170, '%.2f' %max(ratio_i), color='grey')
+        
+        #----------------------------
+        # Add time spent as satellite
+        time_start = 0
+        for SubGroupNum_i, lookbacktime_i, snap_i in zip(total_mainbranch['%s' %target_GalaxyID]['SubGroupNumber'], total_mainbranch['%s' %target_GalaxyID]['lookbacktime'], total_mainbranch['%s' %target_GalaxyID]['snapnum']):
+            if (SubGroupNum_i == 0) & (time_start == 0):
+                continue
+            elif (SubGroupNum_i != 0) & (time_start == 0):
+                time_start = lookbacktime_i
+                time_end = lookbacktime_i
+            elif (SubGroupNum_i != 0) & (time_start != 0):
+                time_end = lookbacktime_i
+                continue
+            elif (SubGroupNum_i == 0) & (time_start != 0):
+                time_end = lookbacktime_i
+                for ax in axs:
+                    ax.axvspan(time_start, time_end, facecolor='grey', alpha=0.2)
+                
+                time_start = 0
+                time_end = 0
         
         
         #===========================
@@ -916,7 +935,6 @@ def _radial_evolution_plot(csv_output = 'L12_evolution_ID3748_RadProj_Err__stars
         #------------------------
         # Create redshift axis:
         redshiftticks = [0, 0.2, 0.5, 1, 1.5, 2, 5, 10, 20]
-        ageticks = ((13.8205298 * u.Gyr) - FlatLambdaCDM(H0=67.77, Om0=0.307, Ob0 = 0.04825).age(redshiftticks)).value
         for i, ax in enumerate(axs):
             ax_top = ax.twiny()
             ax_top.set_xticks(ageticks)

@@ -512,7 +512,7 @@ def _misalignment_distribution(csv_sample = 'L12_19_all_sample_misalignment_9.0'
         
     
 # Plots singular graphs by reading in existing csv file
-def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+def _misalignment_plot(csv_sample = 'L100_24_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                        csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                        #--------------------------
                        # Galaxy plotting
@@ -522,7 +522,7 @@ def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
                          use_proj_angle     = True,                   # Whether to use projected or absolute angle 10**9
                          lower_mass_limit   = 10**9,            # Whether to plot only certain masses 10**15
                          upper_mass_limit   = 10**15,         
-                         ETG_or_LTG         = 'LTG',           # Whether to plot only ETG/LTG
+                         ETG_or_LTG         = 'ETG',           # Whether to plot only ETG/LTG
                          group_or_field     = 'both',           # Whether to plot only field/group
                          use_satellites     = False,             # Whether to include SubGroupNum =/ 0
                        #--------------------------
@@ -788,7 +788,7 @@ def _misalignment_plot(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
                     
                     # Determine if this is a galaxy we want to plot
                     if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph):
-                        catalogue['plot']['ETG'] += 1
+                        catalogue['plot']['ETG'] += 1                        
                 else:
                     if debug:
                         print('not included group: ', GalaxyID)
@@ -1016,7 +1016,7 @@ def _misalignment_z_plot(csv_sample1 = 'L100_',                                 
                            use_satellites     = False,             # Whether to include SubGroupNum =/ 0
                          #--------------------------
                          showfig       = True,
-                         savefig       = True,
+                         savefig       = False,
                            file_format = 'pdf',
                            savefig_txt = '',
                          #--------------------------
@@ -1392,7 +1392,7 @@ def _misalignment_z_plot(csv_sample1 = 'L100_',                                 
     #-----------------------------------------------
     def _plot_misalignment_z(debug=False):
         # Graph initialising and base formatting
-        fig, axs = plt.subplots(1, 1, figsize=[6, 6], sharex=True, sharey=False)
+        fig, axs = plt.subplots(1, 1, figsize=[6, 5.5], sharex=True, sharey=False)
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
         
         #-----------

@@ -597,7 +597,8 @@ def _find_misalignment_timescale(csv_sample1 = 'L100_',                         
         print('===================')
         """
         
-    
+
+# Plots for how long (time and snaps) misalignments perisit (from aligned -> stable) 
 def _plot_time_spent_misaligned(csv_timescales = 'L100_timescale_tree_stars_gas_sf_rad2.0_projFalse_',
                                 #--------------------------
                                 plot_type = 'time',            # 'time', 'snap'    
@@ -703,12 +704,13 @@ def _plot_time_spent_misaligned(csv_timescales = 'L100_timescale_tree_stars_gas_
     plt.close()
     
 
+# Goes through existing CSV files to find correlation between misalignment created and relaxation time
 def _plot_delta_misalignment(csv_timescales = 'L100_timescale_tree_stars_gas_sf_rad2.0_projFalse_',
                              #--------------------------
                              plot_type = 'time',            # 'time', 'snap'    
                              #--------------------------
-                             showfig       = False,
-                             savefig       = True,
+                             showfig       = True,
+                             savefig       = False,
                                file_format = 'pdf',
                                savefig_txt = '',
                              #--------------------------
@@ -733,48 +735,46 @@ def _plot_delta_misalignment(csv_timescales = 'L100_timescale_tree_stars_gas_sf_
     print('  NUMBER OF MISALIGNMENTS: %s' %len(timescale_dict.keys()))
     
     #================================
+    # Change in angle from misaligned state to settle, peak at 90
+    
     # Collect values for plot
     plot_timescale = []
+    plot_misangle = []
+    plot_result = []
     for GalaxyID in timescale_dict.keys():
         if np.isnan(np.array(timescale_dict['%s' %GalaxyID]['time_end'])) == False:
-            plot_timescale.append(timescale_dict['%s' %GalaxyID]['misangle_list'][-1])
+            if len(timescale_dict['%s' %GalaxyID]['misangle_list']) > 2:
+                plot_timescale.append(float(timescale_dict['%s' %GalaxyID]['time_start']) - float(timescale_dict['%s' %GalaxyID]['time_end']))
+                plot_misangle.append(float(timescale_dict['%s' %GalaxyID]['misangle_list'][1]))
+                
+                if float(timescale_dict['%s' %GalaxyID]['misangle_list'][-1]) < 30:
+                    plot_result.append('b')
+                elif float(timescale_dict['%s' %GalaxyID]['misangle_list'][-1]) > 150:
+                    plot_result.append('r')
     
-    # Graph initialising and base formatting
-    fig, axs = plt.subplots(1, 1, figsize=[7.0, 4.2], sharex=True, sharey=False)
-    plt.subplots_adjust(wspace=0.4, hspace=0.4)
-    
-
-    #================================
     # Plotting
     if print_progress:
         print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
         print('Plotting')
         time_start = time.time()
-    
+        
     # Graph initialising and base formatting
     fig, axs = plt.subplots(1, 1, figsize=[7.0, 4.2], sharex=True, sharey=False)
     plt.subplots_adjust(wspace=0.4, hspace=0.4)
     
     
     #-----------    
-    # Plot histogram
-    axs.hist(plot_timescale, weights=np.ones(len(plot_timescale))/len(plot_timescale), bins=np.arange(0, 181, 10), histtype='bar', edgecolor='none', facecolor='b', alpha=0.1)
-    bin_count, _, _ = axs.hist(plot_timescale, weights=np.ones(len(plot_timescale))/len(plot_timescale), bins=np.arange(0, 181, 10), histtype='bar', edgecolor='b', facecolor='none', alpha=1.0)
-    
-    # Add poisson errors to each bin (sqrt N)
-    hist_n, _ = np.histogram(plot_timescale, bins=np.arange(0, 181, 10), range=(0, 10))
-    axs.errorbar(np.arange(5, 181, 10), hist_n/len(plot_timescale), xerr=None, yerr=np.sqrt(hist_n)/len(plot_timescale), ecolor='b', ls='none', capsize=4, elinewidth=1, markeredgewidth=1)
-    
+    # Plot scatter
+    axs.scatter(plot_misangle, plot_timescale, s=0.3, color=plot_result, alpha=0.9)
     
     #-----------
     ### General formatting
     # Axis labels
-    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol=''))
+    axs.set_ylim(0, 10)
     axs.set_xlim(0, 180)
     axs.set_xticks(np.arange(0, 181, step=30))
-    axs.set_xlabel('Relaxation angle, $\psi_{\mathrm{3D}}$')
-    axs.set_ylabel('Percentage of galaxies')
-    
+    axs.set_ylabel('Relaxation time (Gyr)')
+    axs.set_xlabel('$\Delta \psi_{\mathrm{3D}}$')
     
     #-----------
     # Annotations
@@ -795,7 +795,7 @@ def _plot_delta_misalignment(csv_timescales = 'L100_timescale_tree_stars_gas_sf_
         print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
         print('Finished')
     
-    metadata_plot = {'Subject': str(hist_n)}
+    metadata_plot = {'Subject': 'none'}
     
     if savefig:
         plt.savefig("%s/%sdelta_misangle_%s_%s.%s" %(fig_dir, timescale_input['csv_sample1'], plot_type, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
@@ -805,46 +805,11 @@ def _plot_delta_misalignment(csv_timescales = 'L100_timescale_tree_stars_gas_sf_
     plt.close()
     
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    #================================
-    # Change in angle from misaligned state to settle, peak at 90
-    
-    # Collect values for plot
-    plot_timescale = []
-    plot_misangle = []
-    for GalaxyID in timescale_dict.keys():
-        if np.isnan(np.array(timescale_dict['%s' %GalaxyID]['time_end'])) == False:
-            if len(timescale_dict['%s' %GalaxyID]['misangle_list']) > 2:
-                plot_timescale.append(float(timescale_dict['%s' %GalaxyID]['time_start']) - float(timescale_dict['%s' %GalaxyID]['time_end']))
-                if float(timescale_dict['%s' %GalaxyID]['misangle_list'][1]) > 90:
-                    plot_misangle.append(abs((180 - float(timescale_dict['%s' %GalaxyID]['misangle_list'][0])) - float(timescale_dict['%s' %GalaxyID]['misangle_list'][1])))
-                else:
-                    plot_misangle.append(abs(float(timescale_dict['%s' %GalaxyID]['misangle_list'][0]) - float(timescale_dict['%s' %GalaxyID]['misangle_list'][1])))
-    
-    # Graph initialising and base formatting
-    fig, axs = plt.subplots(1, 1, figsize=[7.0, 4.2], sharex=True, sharey=False)
-    plt.subplots_adjust(wspace=0.4, hspace=0.4)
-    
-    
-    #-----------    
-    # Plot histogram
-    axs.scatter(plot_timescale, plot_misangle, s=0.5)
-    plt.show()
 
 #=============================
 #_find_misalignment_timescale()
-_plot_time_spent_misaligned()
-#_plot_delta_misalignment()
+#_plot_time_spent_misaligned()
+_plot_delta_misalignment()
 #=============================
 
 

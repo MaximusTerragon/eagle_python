@@ -28,13 +28,14 @@ Redshift
 # Creates a list of GN, SGN, GalaxyID, SnapNum, and Redshift and saves to csv file
 class Initial_Sample:
     
-    def __init__(self, sim, snapNum, mstarLimit, satellite):
+    def __init__(self, sim, snapNum, mstarMin, mstarMax, satellite):
         # Allowing these attributes to be called from the object
-        self.mstar_limit = mstarLimit
+        self.mstar_min   = mstarMin
+        self.mstar_max   = mstarMax
         self.sim         = sim
         self.snapNum     = snapNum
         
-        if mstarLimit > 5E+8:
+        if mstarMin >= 1E+9:
             myData = self.samplesize_morph(satellite)
         else:
             myData = self.samplesize_basic(satellite)
@@ -49,9 +50,9 @@ class Initial_Sample:
         self.halo_mass    = myData['halo_mass']
         self.centre       = np.transpose(np.array([myData['x'], myData['y'], myData['z']]))
         
-        if mstarLimit > 5E+8:
-            self.MorphoKinem = np.transpose(np.array([myData['ellip'], myData['triax'], myData['kappa_stars'], myData['disp_ani'], myData['disc_to_total'], myData['rot_to_disp_ratio']]))            
-        
+        if mstarMin >= 1E+9:
+            self.MorphoKinem = np.transpose(np.array([myData['ellip'], myData['triax'], myData['kappa_stars'], myData['disp_ani'], myData['disc_to_total'], myData['rot_to_disp_ratio']]))                  
+            
     def samplesize_morph(self, satellite = False):
         # This uses the eagleSqlTools module to connect to the database with your username and password.
         # If the password is not given, the module will prompt for it.
@@ -87,12 +88,13 @@ class Initial_Sample:
                            WHERE \
         			         SH.SnapNum = %i \
                              and AP.Mass_Star >= %f \
+                             and AP.Mass_Star <= %f \
                              and AP.ApertureSize = 30 \
                              and SH.GalaxyID = AP.GalaxyID \
                              and SH.GalaxyID = MK.GalaxyID \
                              and SH.GroupID = FOF.GroupID \
                            ORDER BY \
-        			         AP.Mass_Star desc'%(sim_name, sim_name, sim_name, sim_name, self.snapNum, self.mstar_limit)
+        			         AP.Mass_Star desc'%(sim_name, sim_name, sim_name, sim_name, self.snapNum, self.mstar_min, self.mstar_max)
             
             # Execute query.
             myData = sql.execute_query(con, myQuery)
@@ -127,13 +129,14 @@ class Initial_Sample:
                            WHERE \
         			         SH.SnapNum = %i \
                              and AP.Mass_star >= %f \
+                             and AP.Mass_Star <= %f \
                              and SH.SubGroupNumber = 0 \
                              and AP.ApertureSize = 30 \
                              and SH.GalaxyID = AP.GalaxyID \
                              and SH.GalaxyID = MK.GalaxyID \
                              and SH.GroupID = FOF.GroupID \
                            ORDER BY \
-        			         AP.Mass_Star desc'%(sim_name, sim_name, sim_name, sim_name, self.snapNum, self.mstar_limit)
+        			         AP.Mass_Star desc'%(sim_name, sim_name, sim_name, sim_name, self.snapNum, self.mstar_min, self.mstar_max)
     
             # Execute query.
             myData = sql.execute_query(con, myQuery)
@@ -171,11 +174,12 @@ class Initial_Sample:
                            WHERE \
         			         SH.SnapNum = %i \
                              and AP.Mass_Star >= %f \
+                             and AP.Mass_Star <= %f \
                              and AP.ApertureSize = 30 \
                              and SH.GalaxyID = AP.GalaxyID \
                              and SH.GroupID = FOF.GroupID \
                            ORDER BY \
-        			         AP.Mass_Star desc'%(sim_name, sim_name, sim_name, self.snapNum, self.mstar_limit)
+        			         AP.Mass_Star desc'%(sim_name, sim_name, sim_name, self.snapNum, self.mstar_min, self.mstar_max)
             
             # Execute query.
             myData = sql.execute_query(con, myQuery)
@@ -203,12 +207,13 @@ class Initial_Sample:
                            WHERE \
         			         SH.SnapNum = %i \
                              and AP.Mass_star >= %f \
+                             and AP.Mass_Star <= %f \
                              and SH.SubGroupNumber = 0 \
                              and AP.ApertureSize = 30 \
                              and SH.GalaxyID = AP.GalaxyID \
                              and SH.GroupID = FOF.GroupID \
                            ORDER BY \
-        			         AP.Mass_Star desc'%(sim_name, sim_name, sim_name, self.snapNum, self.mstar_limit)
+        			         AP.Mass_Star desc'%(sim_name, sim_name, sim_name, self.snapNum, self.mstar_min, self.mstar_max)
     
             # Execute query.
             myData = sql.execute_query(con, myQuery)
@@ -2082,7 +2087,7 @@ Output Parameters
 # Extracts the particle and SQL data
 class Subhalo_Extract_Basic:
     
-    def __init__(self, sim, data_dir, snapNum, gn, sgn, GalaxyID, centre_in, halo_mass_in, aperture_rad_in, viewing_axis,
+    def __init__(self, sim, data_dir, snapNum, gn, sgn, GalaxyID, centre_in, halo_mass_in, aperture_rad_in,
                             centre_galaxy=True, 
                             load_region_length=1.0,   # cMpc/h 
                             nfiles=16, 
@@ -2178,12 +2183,13 @@ class Subhalo_Extract_Basic:
         gas_sf = {}
         gas_nsf = {}
         for arr in gas.keys():
-            gas_sf[arr]  = data_nil['gas'][arr][mask_sf]
-            gas_nsf[arr] = data_nil['gas'][arr][mask_nsf]
+            gas_sf[arr]  = gas[arr][mask_sf]
+            gas_nsf[arr] = gas[arr][mask_nsf]
             
         #--------------------------------------
         GroupNum           = self.gn
         SubGroupNum        = self.sgn
+        self.GalaxyID      = GalaxyID
         self.SnapNum            = snapNum
         self.stelmass           = np.sum(stars['Mass'])     # [Msun] within 30 pkpc (aperture_rad_in)
         self.gasmass            = np.sum(gas['Mass'])       # [Msun] within 30 pkpc (aperture_rad_in)
@@ -2192,6 +2198,7 @@ class Subhalo_Extract_Basic:
             
         #----------------------------------------------------
         # Filling self.general
+        self.general = {}
         for general_name, general_item in zip(['GroupNum', 'SubGroupNum', 'GalaxyID', 'SnapNum', 'stelmass', 'gasmass', 'gasmass_sf', 'gasmass_nsf'], 
                                               [self.gn, self.sgn, GalaxyID, snapNum, np.sum(stars['Mass']) , np.sum(gas['Mass']), np.sum(gas_sf['Mass']), np.sum(gas_nsf['Mass'])]):
             self.general[general_name] = general_item

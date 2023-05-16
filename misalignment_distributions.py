@@ -15,7 +15,7 @@ import json
 import time
 from datetime import datetime
 from tqdm import tqdm
-from subhalo_main import Initial_Sample, Subhalo_Extract, Subhalo_Analysis
+from subhalo_main import Initial_Sample, Subhalo_Extract, Subhalo_Extract_Basic, Subhalo_Analysis
 import eagleSqlTools as sql
 from graphformat import set_rc_params
 
@@ -71,7 +71,8 @@ dataDir_dict['28'] = dataDir_main + 'snapshot_028_z000p000/snap_028_z000p000.0.h
 # Creates a sample of galaxies given the inputs. Returns GroupNum, SubGroupNum, SnapNum, and GalaxyID for each galaxy
 def _misalignment_sample(mySims = [('RefL0012N0188', 12)],
                          #--------------------------
-                         galaxy_mass_limit  = 10**9,            # Lower mass limit within 30pkpc
+                         galaxy_mass_min    = 10**9,            # Lower mass limit within 30pkpc
+                         galaxy_mass_max    = 10**15,           # Lower mass limit within 30pkpc
                          snapNum            = 28,               # Target snapshot
                          use_satellites     = True,             # Whether to include SubGroupNum =/ 0
                          print_sample       = False,             # Print list of IDs
@@ -91,7 +92,7 @@ def _misalignment_sample(mySims = [('RefL0012N0188', 12)],
         
     
     # Extracting all GroupNum, SubGroupNum, GalaxyID, and SnapNum
-    sample = Initial_Sample(mySims, snapNum, galaxy_mass_limit, use_satellites)
+    sample = Initial_Sample(mySims, snapNum, galaxy_mass_min, galaxy_mass_max, use_satellites)
     if debug:
         print(sample.GroupNum)
         print(sample.SubGroupNum)
@@ -105,14 +106,15 @@ def _misalignment_sample(mySims = [('RefL0012N0188', 12)],
         print("  ", sample.GroupNum)
     
     print('\n===================')
-    print('SAMPLE CREATED:\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E M*\n  Satellites: %s' %(snapNum, sample.Redshift[0], galaxy_mass_limit,  use_satellites))
+    print('SAMPLE CREATED:\n  SnapNum: %s\n  Redshift: %s\n  Min Mass: %.2E M*\n  Max mass: %.2E M*\n  Satellites: %s' %(snapNum, sample.Redshift[0], galaxy_mass_min, galaxy_mass_max, use_satellites))
     print("  SAMPLE LENGTH: ", len(sample.GalaxyID))
     print('===================')
     
     
     #===================================== 
     # Creating dictionaries to gather input data
-    sample_input = {'galaxy_mass_limit': galaxy_mass_limit,
+    sample_input = {'galaxy_mass_min': galaxy_mass_min,
+                    'galaxy_mass_max': galaxy_mass_max,
                     'snapNum': snapNum,
                     'Redshift': sample.Redshift[0],
                     'use_satellites': use_satellites,
@@ -155,11 +157,11 @@ def _misalignment_sample(mySims = [('RefL0012N0188', 12)],
    
         # Writing one massive JSON file
         if use_satellites:
-            json.dump(csv_dict, open('%s/L%s_%s_all_sample_misalignment_%s%s.csv' %(sample_dir, str(mySims[0][1]), str(snapNum), np.log10(galaxy_mass_limit), csv_name), 'w'), cls=NumpyEncoder)
-            print('\n  SAVED: %s/L%s_%s_all_sample_misalignment_%s%s.csv' %(sample_dir, str(mySims[0][1]), str(snapNum), np.log10(galaxy_mass_limit), csv_name))
+            json.dump(csv_dict, open('%s/L%s_%s_all_sample_misalignment_%s%s.csv' %(sample_dir, str(mySims[0][1]), str(snapNum), np.log10(galaxy_mass_min), csv_name), 'w'), cls=NumpyEncoder)
+            print('\n  SAVED: %s/L%s_%s_all_sample_misalignment_%s%s.csv' %(sample_dir, str(mySims[0][1]), str(snapNum), np.log10(galaxy_mass_min), csv_name))
         if not use_satellites:
-            json.dump(csv_dict, open('%s/L%s_%s_cent_sample_misalignment_%s%s.csv' %(sample_dir, str(mySims[0][1]), str(snapNum), np.log10(galaxy_mass_limit), csv_name), 'w'), cls=NumpyEncoder)
-            print('\n  SAVED: %s/L%s_%s_cent_sample_misalignment_%s%s.csv' %(sample_dir, str(mySims[0][1]), str(snapNum), np.log10(galaxy_mass_limit), csv_name))
+            json.dump(csv_dict, open('%s/L%s_%s_cent_sample_misalignment_%s%s.csv' %(sample_dir, str(mySims[0][1]), str(snapNum), np.log10(galaxy_mass_min), csv_name), 'w'), cls=NumpyEncoder)
+            print('\n  SAVED: %s/L%s_%s_cent_sample_misalignment_%s%s.csv' %(sample_dir, str(mySims[0][1]), str(snapNum), np.log10(galaxy_mass_min), csv_name))
         if print_progress:
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
    
@@ -198,7 +200,7 @@ def _misalignment_sample(mySims = [('RefL0012N0188', 12)],
         print('===================')
         """
     
-    
+  
 # Reads in a sample file, and does all relevant calculations, and exports as csv file
 def _misalignment_distribution(csv_sample = 'L12_19_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                                 #--------------------------
@@ -510,7 +512,307 @@ def _misalignment_distribution(csv_sample = 'L12_19_all_sample_misalignment_9.0'
         print('===================')
         """
         
+
+# Creates a sample of galaxies given the inputs. Returns GroupNum, SubGroupNum, SnapNum, and GalaxyID for each galaxy
+def _misalignment_minor_sample(mySims = [('RefL0012N0188', 12)],
+                              #--------------------------
+                              galaxy_mass_min    = 10**8,            # Lower mass limit within 30pkpc
+                              galaxy_mass_max    = 10**9,           # Lower mass limit within 30pkpc
+                              snapNum            = 28,               # Target snapshot
+                              use_satellites     = True,             # Whether to include SubGroupNum =/ 0
+                              print_sample       = False,             # Print list of IDs
+                              #--------------------------   
+                              csv_file = True,                       # Will write sample to csv file in sapmle_dir
+                                csv_name = '',
+                              #--------------------------     
+                              print_progress = False,
+                              debug = False):
+                        
+                        
+    #=====================================  
+    # Create sample
+    if print_progress:
+        print('Creating sample')
+        time_start = time.time()
+        
     
+    # Extracting all GroupNum, SubGroupNum, GalaxyID, and SnapNum
+    sample = Initial_Sample(mySims, snapNum, galaxy_mass_min, galaxy_mass_max, use_satellites)
+    if debug:
+        print(sample.GroupNum)
+        print(sample.SubGroupNum)
+        print(sample.GalaxyID)
+        print(sample.SnapNum)
+        print(sample.Redshift)
+    if print_progress:
+        print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+    
+    if print_sample:
+        print("  ", sample.GroupNum)
+    
+    print('\n===================')
+    print('SAMPLE CREATED:\n  SnapNum: %s\n  Redshift: %s\n  Min Mass: %.2E M*\n  Max mass: %.2E M*\n  Satellites: %s' %(snapNum, sample.Redshift[0], galaxy_mass_min, galaxy_mass_max, use_satellites))
+    print("  SAMPLE LENGTH: ", len(sample.GalaxyID))
+    print('===================')
+    
+    
+    #===================================== 
+    # Creating dictionaries to gather input data
+    sample_input = {'galaxy_mass_min': galaxy_mass_min,
+                    'galaxy_mass_max': galaxy_mass_max,
+                    'snapNum': snapNum,
+                    'Redshift': sample.Redshift[0],
+                    'use_satellites': use_satellites,
+                    'mySims': mySims}
+    if debug:
+        print(sample_input.items())
+    
+    
+    #=====================================
+    if csv_file: 
+        # Converting numpy arrays to lists. When reading, may need to simply convert list back to np.array() (easy)
+        class NumpyEncoder(json.JSONEncoder):
+            ''' Special json encoder for numpy types '''
+            def default(self, obj):
+                if isinstance(obj, np.integer):
+                    return int(obj)
+                elif isinstance(obj, np.floating):
+                    return float(obj)
+                elif isinstance(obj, np.ndarray):
+                    return obj.tolist()
+                return json.JSONEncoder.default(self, obj)
+                  
+        if print_progress:
+            print('Writing CSV sample')
+            time_start = time.time()
+        
+        # Combining all dictionaries
+        csv_dict = {'GroupNum': sample.GroupNum, 
+                    'SubGroupNum': sample.SubGroupNum, 
+                    'GalaxyID': sample.GalaxyID,
+                    'DescendantID': sample.DescendantID,
+                    'SnapNum': sample.SnapNum,
+                    'Redshift': sample.Redshift,
+                    'halo_mass': sample.halo_mass,
+                    'centre': sample.centre,
+                    'sample_input':  sample_input}
+                    
+        csv_dict.update({'function_input': str(inspect.signature(_misalignment_sample))})
+   
+        # Writing one massive JSON file
+        json.dump(csv_dict, open('%s/L%s_%s_minor_sample_misalignment_%s%s.csv' %(sample_dir, str(mySims[0][1]), str(snapNum), np.log10(galaxy_mass_min), csv_name), 'w'), cls=NumpyEncoder)
+        print('\n  SAVED: %s/L%s_%s_minor_sample_misalignment_%s%s.csv' %(sample_dir, str(mySims[0][1]), str(snapNum), np.log10(galaxy_mass_min), csv_name))
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+   
+        # Reading JSON file
+        """ 
+        # Loading sample
+        dict_new = json.load(open('%s/%s.csv' %(sample_dir, csv_sample), 'r'))
+    
+    
+        # Extract GroupNum etc.
+        GroupNum_List       = np.array(dict_new['GroupNum'])
+        SubGroupNum_List    = np.array(dict_new['SubGroupNum'])
+        GalaxyID_List       = np.array(dict_new['GalaxyID'])
+        DescendantID_List   = np.array(dict_new['DescendantID'])
+        SnapNum_List        = np.array(dict_new['SnapNum'])
+        HaloMass_List       = np.array(dict_new['halo_mass'])
+        Centre_List         = np.array(dict_new['centre'])
+        
+        
+        sample_input        = dict_new['sample_input']
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+        if debug:
+            print(sample_input)
+            print(GroupNum_List)
+            print(SubGroupNum_List)
+            print(GalaxyID_List)
+            print(SnapNum_List)
+       
+       
+        print('\n===================')
+        print('SAMPLE MINOR LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E M*\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_limit'], sample_input['use_satellites']))
+        print('  SAMPLE LENGTH: ', len(GroupNum_List))
+        print('\nEXTRACT:\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s' %(str(angle_selection), str(spin_hmr), str(find_uncertainties), str(rad_projected)))
+        print('===================')
+        """
+    
+
+# Reads in a sample file, and does all relevant calculations, and exports as csv file
+def _misalignment_minor_analysis(csv_sample = 'L12_28_minor_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+                                 #--------------------------
+                                 # Galaxy extraction properties
+                                 aperture_rad        = 30,                   # trim all data to this maximum value before calculations [pkpc]
+                                 #--------------------------   
+                                 csv_file       = False,             # Will write sample to csv file in sample_dir
+                                   csv_name     = '',               # extra stuff at end
+                                 #--------------------------
+                                 print_progress = False,
+                                 print_galaxy   = True,
+                                 debug = False):
+    
+    
+    #---------------------------------------------    
+    # Load sample csv
+    if print_progress:
+        print('Loading initial sample')
+        time_start = time.time()
+        
+    
+    # Loading sample
+    dict_new = json.load(open('%s/%s.csv' %(sample_dir, csv_sample), 'r'))
+    
+    
+    # Extract GroupNum etc.
+    GroupNum_List       = np.array(dict_new['GroupNum'])
+    SubGroupNum_List    = np.array(dict_new['SubGroupNum'])
+    GalaxyID_List       = np.array(dict_new['GalaxyID'])
+    SnapNum_List        = np.array(dict_new['SnapNum'])
+    Redshift_List       = np.array(dict_new['Redshift'])
+    HaloMass_List       = np.array(dict_new['halo_mass'])
+    Centre_List         = np.array(dict_new['centre'])
+    sample_input        = dict_new['sample_input']
+    
+    if print_progress:
+        print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+    if debug:
+        print(sample_input)
+        print(GroupNum_List)
+        print(SubGroupNum_List)
+        print(GalaxyID_List)
+        print(SnapNum_List)
+        print(HaloMass_List)
+        print(Centre_List)
+       
+       
+    print('\n===================')
+    print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E M*\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_min'], sample_input['use_satellites']))
+    print('  SAMPLE LENGTH: ', len(GroupNum_List))
+    print('\nEXTRACT:\n  Masses.') 
+    print('===================')
+    
+    
+    output_input = {'aperture_rad': aperture_rad}
+    output_input.update(sample_input)
+    
+
+    
+    #---------------------------------------------
+    # Empty dictionaries to collect relevant data
+    all_general       = {}          # has total masses, kappa, halfmassrad, etc.
+    
+    
+    #============================================
+    # Manual entry
+    #GroupNum_List = [3]
+    #SubGroupNum_List = [3]
+    #GalaxyID_List = [14916079]
+    #SnapNum_List = [28]
+    #====================
+    
+    
+    #=================================================================== 
+    # Run analysis for each individual galaxy in loaded sample
+    for GroupNum, SubGroupNum, GalaxyID, SnapNum, Redshift, HaloMass, Centre in tqdm(zip(GroupNum_List, SubGroupNum_List, GalaxyID_List, SnapNum_List, Redshift_List, HaloMass_List, Centre_List), total=len(GroupNum_List)):
+        
+        #-----------------------------
+        if print_progress:
+            print('Running basis analysis')
+            time_start = time.time()
+            
+        # Initial extraction of galaxy particle data
+        subhalo = Subhalo_Extract_Basic(sample_input['mySims'], dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, GalaxyID, Centre, HaloMass, aperture_rad)
+        # Gives: subhalo.general: GroupNum, SubGroupNum, GalaxyID, stelmass, gasmass, gasmass_sf, gasmass_nsf
+        
+        if debug:
+            print(subhalo.gn, subhalo.sgn)
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+       
+        
+        #--------------------------------
+        # Collecting all relevant particle info for galaxy
+        all_general['%s' %str(subhalo.GalaxyID)]        = subhalo.general
+        #---------------------------------
+          
+        if print_galaxy:
+            print('|%s| |ID:   %s\t|M*:  %.2e  |M_sf:  %.2f' %(SnapNum, str(subhalo.GalaxyID), subhalo.stelmass, subhalo.gasmass_sf)) 
+            
+    
+    print(all_general['30494']['stelmass'])
+    print(all_general['30494']['gasmass_sf'])
+    
+    #=====================================
+    # End of individual subhalo loop
+    
+    if csv_file: 
+        # Converting numpy arrays to lists. When reading, may need to simply convert list back to np.array() (easy)
+        class NumpyEncoder(json.JSONEncoder):
+            ''' Special json encoder for numpy types '''
+            def default(self, obj):
+                if isinstance(obj, np.integer):
+                    return int(obj)
+                elif isinstance(obj, np.floating):
+                    return float(obj)
+                elif isinstance(obj, np.ndarray):
+                    return obj.tolist()
+                return json.JSONEncoder.default(self, obj)
+                  
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+            print('Writing to csv...')
+            time_start = time.time() 
+        
+        # Combining all dictionaries
+        csv_dict = {'all_general': all_general,
+                    'output_input': output_input}
+        #csv_dict.update({'function_input': str(inspect.signature(_misalignment_distribution))})
+        
+        #-----------------------------        
+        # Writing one massive JSON file
+        json.dump(csv_dict, open('%s/%s_%s.csv' %(output_dir, csv_sample, csv_name), 'w'), cls=NumpyEncoder)
+        print('\n  SAVED: %s/%s_%s.csv' %(output_dir, csv_sample, csv_name))
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+        
+        # Reading JSON file
+        """ 
+        # Ensuring the sample and output originated together
+        csv_output = csv_sample + csv_output
+        
+        # Loading sample
+        dict_sample = json.load(open('%s/%s.csv' %(sample_dir, csv_sample), 'r'))
+        GroupNum_List       = np.array(dict_sample['GroupNum'])
+        SubGroupNum_List    = np.array(dict_sample['SubGroupNum'])
+        GalaxyID_List       = np.array(dict_sample['GalaxyID'])
+        SnapNum_List        = np.array(dict_sample['SnapNum'])
+        
+        # Loading output
+        dict_output = json.load(open('%s/%s.csv' %(output_dir, csv_output), 'r'))
+        all_general         = dict_output['all_general']
+    
+        # Loading sample criteria
+        sample_input        = dict_sample['sample_input']
+        output_input        = dict_output['output_input']
+    
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+        if debug:
+            print(sample_input)
+            print(GroupNum_List)
+            print(SubGroupNum_List)
+            print(GalaxyID_List)
+            print(SnapNum_List)
+   
+        print('\n===================')
+        print('MINOR SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E M*\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_limit'], sample_input['use_satellites']))
+        print('  MINOR SAMPLE LENGTH: ', len(GroupNum_List))
+        print('===================')
+        """
+        
+  
 # Plots singular graphs by reading in existing csv file
 def _misalignment_plot(csv_sample = 'L100_24_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                        csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
@@ -1513,7 +1815,11 @@ def _misalignment_z_plot(csv_sample1 = 'L100_',                                 
 #===========================    
 #_misalignment_sample()
 #_misalignment_distribution()
-_misalignment_plot()
+
+#_misalignment_minor_sample()
+#_misalignment_minor_analysis()
+
+#_misalignment_plot()
 #_misalignment_z_plot()
 #===========================
     

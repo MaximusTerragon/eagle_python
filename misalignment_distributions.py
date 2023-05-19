@@ -812,7 +812,198 @@ def _misalignment_minor_analysis(csv_sample = 'L12_28_minor_sample_misalignment_
         print('===================')
         """
         
-  
+
+# Goes through existing CSV files (minor and major) and creates merger tree
+def _create_merger_tree_csv(csv_start        = 'L100_',                                 # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+                            csv_sample       = '_all_sample_misalignment_9.0',
+                            csv_sample_minor = '_minor_sample_misalignment_8.0',
+                            csv_output_in    = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
+                            csv_sample_range = [25, 26, 27, 28],   # snapnums
+                            #--------------------------
+                            # Galaxy analysis
+                            print_summary = True,
+                            #--------------------------
+                            csv_file      = True,             # Will write sample to csv file in sample_dir
+                              csv_name    = '',               # extra stuff at end
+                            #--------------------------
+                            print_progress = False,
+                            debug = False):
+
+    #================================================  
+    # Load sample csv
+    if print_progress:
+        print('Cycling through CSV files and extracting galaxies')
+        time_start = time.time()
+    
+    print('===================')
+    print('CSV CRITERIA:\n  Tree range: %s' %(csv_sample_range))
+    print('===================\n')
+    
+    
+    #================================================ 
+    # Creating dictionary to create merger tree
+    tree_dict = {}
+    
+    #----------------------
+    # Cycling over all the csv samples we want
+    for csv_sample_range_i in tqdm(csv_sample_range):
+        
+        # Ensuring the sample and output originated together
+        csv_sample_load       = csv_start + str(csv_sample_range_i) + csv_sample
+        csv_sample_minor_load = csv_start + str(csv_sample_range_i) + csv_sample_minor
+        csv_output_load       = csv_sample_load + csv_output_in
+        csv_output_minor_load = csv_sample_minor_load + '_'
+        
+        
+        #================================================  
+        # Load sample csv
+        if print_progress:
+            print('Loading initial sample')
+            time_start = time.time()
+    
+        #--------------------------------
+        # Creating sample
+        dict_sample       = json.load(open('%s/%s.csv' %(sample_dir, csv_sample_load), 'r'))
+        dict_sample_minor = json.load(open('%s/%s.csv' %(sample_dir, csv_sample_minor_load), 'r'))
+        GroupNum_List     = np.concatenate((np.array(dict_sample['GroupNum']), np.array(dict_sample_minor['GroupNum'])))
+        SubGroupNum_List  = np.concatenate((np.array(dict_sample['SubGroupNum']), np.array(dict_sample_minor['SubGroupNum'])))
+        GalaxyID_List     = np.concatenate((np.array(dict_sample['GalaxyID']), np.array(dict_sample_minor['GalaxyID'])))
+        DescendantID_List = np.concatenate((np.array(dict_sample['DescendantID']), np.array(dict_sample_minor['DescendantID'])))
+        SnapNum_List      = np.concatenate((np.array(dict_sample['SnapNum']), np.array(dict_sample_minor['SnapNum'])))
+        
+        # Loading outputs
+        dict_output       = json.load(open('%s/%s.csv' %(output_dir, csv_output_load), 'r'))
+        dict_output_minor = json.load(open('%s/%s.csv' %(output_dir, csv_output_minor_load), 'r'))
+        all_general = dict_output['all_general']
+        all_general.update(dict_output_minor['all_general'])
+        
+        # Loading sample criteria
+        sample_input        = dict_sample['sample_input']
+        sample_minor_input  = dict_sample['sample_input']
+        output_input        = dict_output['output_input']
+        output_minor_input  = dict_output['output_input']
+    
+    
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+        if debug:
+            print(sample_input)
+            print(GroupNum_List)
+            print(SubGroupNum_List)
+            print(GalaxyID_List)
+            print(DescendantID_List)
+            print(SnapNum_List)
+   
+        if debug:
+            print('\n===================')
+            print('SAMPLE(s) LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E M*\n  Satellites: %s' %(output_input['mySims'][0][0], output_input['snapNum'], output_input['Redshift'], dict_sample_minor['galaxy_mass_limit']))
+            print('  SAMPLE LENGTH: ', len(GroupNum_List))
+            print('\nOUTPUT LOADED:\n  Viewing axis: %s\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s\n  COM min distance: %s\n  Min. particles: %s\n  Min. inclination: %s' %(output_input['viewing_axis'], output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected'], output_input['com_min_distance'], output_input['min_particles'], output_input['min_inclination']))
+            print('===================')
+        print('===================')
+        print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %.2f\n' %(output_input['mySims'][0][0], output_input['snapNum'], output_input['Redshift']))
+        print('SAMPLE MINOR LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %.2f\n' %(sample_minor_input['mySims'][0][0], sample_minor_input['snapNum'], sample_minor_input['Redshift']))
+        
+        
+        #----------------------------
+        # Looping over all GalaxyIDs
+        for GalaxyID, DescendantID in zip(GalaxyID_List, DescendantID_List):
+            
+            # find age
+            Lookbacktime = ((13.8205298 * u.Gyr) - FlatLambdaCDM(H0=67.77, Om0=0.307, Ob0 = 0.04825).age(output_input['Redshift'])).value
+            
+            #-----------------------------
+            # Create new/update entry for descendantID... this means we have unique entries for each descendant, and within a list of all galaxies taht will become that descendant
+            if str(DescendantID) in tree_dict.keys():
+                tree_dict['%s' %DescendantID].update({'%s' %GalaxyID: {}})
+            else:
+                tree_dict['%s' %DescendantID] = {'%s' %GalaxyID: {}}
+    
+            tree_dict['%s' %DescendantID]['%s' %GalaxyID].update({'GalaxyID': GalaxyID, 
+                                                                  'DescendantID': DescendantID, 
+                                                                  'GroupNum': all_general['%s' %GalaxyID]['GroupNum'],
+                                                                  'SubGroupNum': all_general['%s' %GalaxyID]['SubGroupNum'],
+                                                                  'SnapNum': output_input['snapNum'],
+                                                                  'Redshift': output_input['Redshift'],
+                                                                  'Lookbacktime': Lookbacktime,
+                                                                  'stelmass': all_general['%s' %GalaxyID]['stelmass'],
+                                                                  'gasmass': all_general['%s' %GalaxyID]['gasmass'],
+                                                                  'gasmass_sf': all_general['%s' %GalaxyID]['gasmass_sf']})
+    
+    if debug:
+        for DescendantID in tree_dict.keys():
+            if len(tree_dict['%s' %DescendantID].keys()) > 6:
+                print('DescendantID: ', DescendantID)
+                print(' ', tree_dict['%s' %DescendantID].keys())
+                
+                for GalaxyID in tree_dict['%s' %DescendantID].keys():
+                    print(tree_dict['%s' %DescendantID]['%s' %GalaxyID]['stelmass'])
+                    print(float(tree_dict['%s' %DescendantID]['%s' %GalaxyID]['stelmass'])/float(tree_dict['%s' %DescendantID]['%s' %(int(DescendantID)+1)]['stelmass']))
+        
+    
+    #===================================
+    if csv_file: 
+        # Converting numpy arrays to lists. When reading, may need to simply convert list back to np.array() (easy)
+        class NumpyEncoder(json.JSONEncoder):
+            ''' Special json encoder for numpy types '''
+            def default(self, obj):
+                if isinstance(obj, np.integer):
+                    return int(obj)
+                elif isinstance(obj, np.floating):
+                    return float(obj)
+                elif isinstance(obj, np.ndarray):
+                    return obj.tolist()
+                return json.JSONEncoder.default(self, obj)
+                  
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+            print('Writing to csv...')
+            time_start = time.time() 
+        
+        # Combining all dictionaries
+        csv_dict = {'tree_dict': tree_dict}
+        output_input = {'csv_start': csv_start,
+                        'csv_sample': csv_sample,
+                        'csv_sample_minor': csv_sample_minor,
+                        'csv_output_in': csv_output_in,
+                        'csv_sample_range': csv_sample_range,
+                        'mySims': sample_input['mySims']}
+                        
+        csv_dict.update({'output_input': output_input})
+        
+        #-----------------------------
+        # Writing one massive JSON file
+        json.dump(csv_dict, open('%s/%smerger_tree_%s.csv' %(output_dir, csv_start, csv_name), 'w'), cls=NumpyEncoder)
+        print('\n  SAVED: %s/%smerger_tree_%s.csv' %(output_dir, csv_start, csv_name))
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+        
+        # Reading JSON file
+        '''
+        # Ensuring the sample and output originated together
+        csv_mergertree = ...
+        
+        # Loading sample
+        merger_tree_dict = json.load(open('%s/%s.csv' %(sample_dir, csv_mergertree), 'r'))
+        merger_tree = merger_tree_dict['timescale_dict']
+        
+        # Loading sample criteria
+        merger_tree_input = merger_tree['output_input']
+    
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+        if debug:
+            print('NUMBER OF DESCENDANTID: %s' %len(merger_tree.keys()))
+   
+        print('\n===================')
+        print('MERGER TREE LOADED:\n %s\n  Snapshots: %s' %(merger_tree_input['mySims'][0][0], merger_tree_input['csv_sample_range']))
+        print('===================')
+        
+        
+        # .keys() gives list of DescendantIDs across all snapshots
+        '''
+               
+
 # Plots singular graphs by reading in existing csv file
 def _misalignment_plot(csv_sample = 'L100_24_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                        csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
@@ -1818,6 +2009,8 @@ def _misalignment_z_plot(csv_sample1 = 'L100_',                                 
 
 #_misalignment_minor_sample()
 #_misalignment_minor_analysis()
+
+_create_merger_tree_csv()
 
 #_misalignment_plot()
 #_misalignment_z_plot()

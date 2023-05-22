@@ -2514,7 +2514,7 @@ class MergerTree:
                 
                 # Ensure ratio is strictly less than 1
                 if merger_ratio > 1.0:
-                    merger_ratio = 2 - merger_ratio
+                    merger_ratio = 1 / merger_ratio
                 
                 #Grab ID of secondary
                 id_secondary = galaxyID

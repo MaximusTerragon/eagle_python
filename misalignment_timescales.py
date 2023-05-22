@@ -616,7 +616,7 @@ def _create_misalignment_merger_csv(csv_sample1 = 'L100_',                      
                                       group_or_field     = 'both',            # Whether to plot only field/group
                                     #--------------------------
                                     # Merger analysis
-                                    merger_type = 'minor',             # 'minor' or 'major', which to select
+                                    merger_type = 'minor',             # 'major/minor/accretion', which to select
                                     #--------------------------
                                     csv_file       = True,             # Will write sample to csv file in sample_dir
                                       csv_name     = '',               # extra stuff at end
@@ -891,21 +891,28 @@ def _create_misalignment_merger_csv(csv_sample1 = 'L100_',                      
                     if (float(galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['misangle']) < 30) and (float(galaxy_dict['%s' %(SnapNum+1)]['%s' %DescendantID]['misangle']) >= 30) and (float(galaxy_dict['%s' %(SnapNum+1)]['%s' %DescendantID]['misangle']) <= 150) and (len(merger_tree['%s' %DescendantID]) > 1):
                         
                         # Check for major or minor merger (there may be multiple)
-                        merger_check = 0
+                        merger_check = []
                         for component_GalaxyID in merger_tree['%s' %DescendantID].keys():
                             # If main line progenitor, ignore
                             if (int(DescendantID)-1) == int(component_GalaxyID):
                                 continue
                             
-                            elif (float(galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['stelmass'])/float(merger_tree['%s' %DescendantID]['%s' %component_GalaxyID]['stelmass'])) >= 0.1:
-                                merger_check = 'minor'
-                            elif (float(galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['stelmass'])/float(merger_tree['%s' %DescendantID]['%s' %component_GalaxyID]['stelmass'])) >= 0.3:
-                                merger_check = 'major'
+                            elif (float(merger_tree['%s' %DescendantID]['%s' %component_GalaxyID]['stelmass'])/float(galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['stelmass'])) < 0.1:
+                                merger_check.append('accretion')
+                            elif (float(merger_tree['%s' %DescendantID]['%s' %component_GalaxyID]['stelmass'])/float(galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['stelmass'])) >= 0.1:
+                                merger_check.append('minor')
+                            elif (float(merger_tree['%s' %DescendantID]['%s' %component_GalaxyID]['stelmass'])/float(galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['stelmass'])) >= 0.3:
+                                merger_check.append('major')
+                            
                         
                         
                         #------------------------------------
                         # If mergers correspond to the limits imposed
-                        if merger_check == merger_type:
+                        if merger_type in merger_check:
+                        
+                        
+                        
+                            merger_check == merger_type:
                             
                             if debug:
                                 print('BECAME MISALIGNED ', GalaxyID)

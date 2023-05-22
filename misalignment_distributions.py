@@ -818,7 +818,7 @@ def _create_merger_tree_csv(csv_start        = 'L100_',                         
                             csv_sample       = '_all_sample_misalignment_9.0',
                             csv_sample_minor = '_minor_sample_misalignment_8.0',
                             csv_output_in    = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
-                            csv_sample_range = [25, 26, 27, 28],   # snapnums
+                            csv_sample_range = [19, 20, 21, 22, 23, 24, 25, 26, 27, 28],   # snapnums
                             #--------------------------
                             # Galaxy analysis
                             print_summary = True,
@@ -2010,7 +2010,7 @@ def _misalignment_z_plot(csv_sample1 = 'L100_',                                 
 #_misalignment_minor_sample()
 #_misalignment_minor_analysis()
 
-_create_merger_tree_csv()
+#_create_merger_tree_csv()
 
 #_misalignment_plot()
 #_misalignment_z_plot()

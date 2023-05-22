@@ -96,7 +96,7 @@ SAMPLE:
 def _radial_evolution_analysis(csv_sample = False,              # Whether to read in existing list of galaxies  
                                #--------------------------
                                mySims = [('RefL0012N0188', 12)],
-                               GalaxyID_List_target = [30494],               # Will create a csv file for each galaxy
+                               GalaxyID_List_target = [3748],               # Will create a csv file for each galaxy
                                snapNumMax           = 10,                    # Highest snapNum to go to
                                #--------------------------
                                # Galaxy extraction properties
@@ -511,21 +511,21 @@ def _radial_evolution_analysis(csv_sample = False,              # Whether to rea
             print('===================')
             """
                                                                                   
-def _radial_evolution_plot(csv_output = 'L12_evolution_ID3748_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load 
+def _radial_evolution_plot(csv_output = 'L12_evolution_ID30494_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load 
                            #--------------------------
                            # Galaxy plotting
                            print_summary = True,
                              use_angles         = ['stars_gas_sf'],                 # Which angles to plot
                              use_hmr            = [1, 2, 3],         # Which misangle HMR to plot
                              use_hmr_frac       = [2],                # Which mass and fraction HMR to plot             
-                             use_proj_angle     = False,                   # Whether to use projected or absolute angle, 'both'
+                             use_proj_angle     = True,                   # Whether to use projected or absolute angle, 'both'
                              use_uncertainties  = True,                   # Whether to plot uncertainties or not
                            #-------------------------
                            # Plot settings
                            highlight_criteria = True,       # whether to indicate when criteria not met (but still plot)
                            rad_type_plot      = 'hmr',      # 'rad' whether to use absolute distance or hmr 
                            #--------------------------
-                           showfig        = False,
+                           showfig        = True,
                            savefig        = True,
                              file_format  = 'pdf',
                              savefig_txt  = '',
@@ -935,6 +935,7 @@ def _radial_evolution_plot(csv_output = 'L12_evolution_ID3748_RadProj_Err__stars
         #------------------------
         # Create redshift axis:
         redshiftticks = [0, 0.2, 0.5, 1, 1.5, 2, 5, 10, 20]
+        ageticks = ((13.8205298 * u.Gyr) - FlatLambdaCDM(H0=67.77, Om0=0.307, Ob0 = 0.04825).age(redshiftticks)).value
         for i, ax in enumerate(axs):
             ax_top = ax.twiny()
             ax_top.set_xticks(ageticks)

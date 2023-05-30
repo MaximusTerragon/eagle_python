@@ -92,6 +92,11 @@ SAMPLE:
 
 
 """
+#ID_list = [16300531, 16049479, 17341514, 15165512, 14531471, 18108607, 13809906, 9678375, 16647245, 9628491, 8257780, 8806615, 13851368, 9822659, 9998415, 10883094, 8625363, 10525701, 1784463, 10784741]
+#ID_list = [14216102, 18447769, 18363467, 17718284, 9110372, 9542932, 9008303, 9216030, 12187581, 9746293, 8707373, 8494196, 10145405]
+#ID_list = [13866051, 9777730, 10009377, 8345213, 10443502, 10670173]
+#ID_list = [17374402, 8077031, 17480553, 15851557]
+#ID_list = [10438463, 8763330]
 # Run analysis on individual galaxies and output individual CSV files
 def _radial_evolution_analysis(csv_sample = False,              # Whether to read in existing list of galaxies  
                                #--------------------------
@@ -221,20 +226,7 @@ def _radial_evolution_analysis(csv_sample = False,              # Whether to rea
     assert SnapNum_List_target[-1] == 28, 'Merger tree not configured to work with non z=0 targets just yet'
     assert snapNumMax >= 10, 'Limit of snapshots reached'
     
-    # Empty dictionaries to collect relevant data
-    total_flags         = {}        # has reason why galaxy failed sample
-    total_general       = {}        # has total masses, kappa, halfmassrad, etc.
-    total_coms          = {}        # has all C.o.Ms
-    total_spins         = {}        # has all spins
-    total_counts        = {}        # has all the particle count within rad
-    total_masses        = {}        # has all the particle mass within rad
-    total_misangles     = {}        # has all 3D angles
-    total_misanglesproj = {}        # has all 2D projected angles from 3d when given a viewing axis and viewing_angle = 0
     
-    # Merger tree stuff
-    total_allbranches = {}
-    total_mainbranch  = {}
-    total_mergers     = {}
     
     
     output_input = {'angle_selection': angle_selection,
@@ -307,6 +299,22 @@ def _radial_evolution_analysis(csv_sample = False,              # Whether to rea
             
         #----------------------------------
         # Update totals with current target_GalaxyID. This will be the single identifier for each galaxy
+        
+        # Empty dictionaries to collect relevant data
+        total_flags         = {}        # has reason why galaxy failed sample
+        total_general       = {}        # has total masses, kappa, halfmassrad, etc.
+        total_coms          = {}        # has all C.o.Ms
+        total_spins         = {}        # has all spins
+        total_counts        = {}        # has all the particle count within rad
+        total_masses        = {}        # has all the particle mass within rad
+        total_misangles     = {}        # has all 3D angles
+        total_misanglesproj = {}        # has all 2D projected angles from 3d when given a viewing axis and viewing_angle = 0
+    
+        # Merger tree stuff
+        total_allbranches = {}
+        total_mainbranch  = {}
+        total_mergers     = {}
+        
         # Empty dictionaries are created
         total_flags.update({'%s' %target_GalaxyID: {}})
         total_general.update({'%s' %target_GalaxyID: {}})

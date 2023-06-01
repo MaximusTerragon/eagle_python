@@ -2473,7 +2473,7 @@ class MergerTree:
             
         return newData
  
-    def _analyze_tree(self, target_GalaxyID, TopLeafID, arr, debug=True):
+    def _analyze_tree(self, target_GalaxyID, TopLeafID, arr, debug=False):
         # arr is sorted per redshift in descending order (starting at 0)
         redshift_tmp  = []
         snapnum_tmp   = []
@@ -2481,17 +2481,31 @@ class MergerTree:
         gasratios_tmp = []
         IDs_tmp       = []
         
-        z_old = 9999
-        ratios_collect    = []
-        gasratios_collect = []
-        IDs_collect       = []
         
         if debug:
             for z, snapnum, topID, galaxyID, stelmass, gasmass in zip(arr['redshift'], arr['snapnum'], arr['TopLeafID'], arr['GalaxyID'], arr['stelmass'], arr['gasmass']):
                 print('%.2f    %s    %s    %s     %.2e     %.2e' %(z, snapnum, topID, galaxyID, stelmass, gasmass))
         
+        # Create dictionary for primary components
+        primary_dict = {}
         for z, snapnum, topID, galaxyID, stelmass, gasmass in zip(arr['redshift'], arr['snapnum'], arr['TopLeafID'], arr['GalaxyID'], arr['stelmass'], arr['gasmass']):
-            if z != z_old:
+            if int(topID) == int(TopLeafID):
+                primary_dict['%s' %snapnum] = {'GalaxyID': galaxyID,
+                                              'Redshift': z,
+                                              'SnapNum': snapnum,
+                                              'stelmass': stelmass,
+                                              'gasmass': gasmass}
+                                              
+        # Loop over all to find ratios of each
+        z_old = 999999
+        
+        ratios_collect    = []
+        gasratios_collect = []
+        IDs_collect       = []
+        
+        for z, snapnum, topID, galaxyID, stelmass, gasmass in zip(arr['redshift'], arr['snapnum'], arr['TopLeafID'], arr['GalaxyID'], arr['stelmass'], arr['gasmass']):
+            
+            if float(z) != float(z_old):
                 # If current z not yet added to list, do so
                 redshift_tmp.append(z)
                 snapnum_tmp.append(snapnum)
@@ -2504,33 +2518,41 @@ class MergerTree:
                 gasratios_collect = []
                 IDs_collect       = []
                 
-                
-            if topID == TopLeafID:
-                # Establish the main stelmass (which will be repeated in loop)
-                stelmass_primary = stelmass
-                gasmass_primary  = gasmass
-                id_primary       = galaxyID
-                
-                
-            else:
-                # find mergers and gas ratio
-                merger_ratio = stelmass / stelmass_primary
-                gas_ratios   = (gasmass_primary + gasmass) / (stelmass_primary + stelmass)
-                
-                # Ensure ratio is strictly less than 1
-                if merger_ratio > 1.0:
-                    merger_ratio = 1 / merger_ratio
-                    gas ratios = 1 / gas_ratios
-                
-                #Grab ID of secondary
-                id_secondary = galaxyID
-                
-                ratios_collect.append(merger_ratio)
-                gasratios_collect.append(gas_ratios)
-                IDs_collect.append([id_primary, id_secondary])
-                
+            # If mainline, continue
+            if int(topID) == int(TopLeafID):
+                z_old = z
+                continue
+            
+            # If final snap, continue
+            if int(snapnum) == 28:
+                z_old = z
+                continue
+            
+            # Assign masses    
+            primary_stelmass = float(primary_dict['%s' %snapnum]['stelmass'])
+            primary_gasmass = float(primary_dict['%s' %snapnum]['gasmass'])
+            secondary_stelmass = float(stelmass)
+            secondary_gasmass = float(gasmass)
+            
+            # find mergers and gas ratio
+            merger_ratio = secondary_stelmass / primary_stelmass
+            gas_ratio    = (primary_gasmass + secondary_gasmass) / (primary_stelmass + secondary_stelmass)
+            
+            # Ensure ratio is strictly less than 1
+            if merger_ratio > 1.0:
+                merger_ratio = 1 / merger_ratio
+                gas_ratio    = 1 / gas_ratio
+        
             z_old = z
-                
+        
+            #Grab ID of secondary
+            id_secondary = galaxyID
+            id_primary = primary_dict['%s' %snapnum]['GalaxyID']
+            
+            ratios_collect.append(merger_ratio)
+            gasratios_collect.append(gas_ratio)
+            IDs_collect.append([id_primary, id_secondary])
+        
             
         # Create dictionary
         merger_dict = {}
@@ -2539,6 +2561,11 @@ class MergerTree:
         merger_dict['ratios']    = ratios_tmp
         merger_dict['gasratios'] = gasratios_tmp
         merger_dict['GalaxyIDs'] = IDs_tmp
+        
+        if debug:
+            print(snapnum_tmp)
+            print(ratios_tmp)
+            print(IDs_tmp)
         
         return merger_dict
 

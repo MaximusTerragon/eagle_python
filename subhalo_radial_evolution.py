@@ -101,7 +101,7 @@ SAMPLE:
 def _radial_evolution_analysis(csv_sample = False,              # Whether to read in existing list of galaxies  
                                #--------------------------
                                mySims = [('RefL0012N0188', 12)],
-                               GalaxyID_List_target = [3748],               # Will create a csv file for each galaxy
+                               GalaxyID_List_target = [30494],               # Will create a csv file for each galaxy
                                snapNumMax           = 10,                    # Highest snapNum to go to
                                #--------------------------
                                # Galaxy extraction properties
@@ -519,7 +519,7 @@ def _radial_evolution_analysis(csv_sample = False,              # Whether to rea
             print('===================')
             """
                                                                                   
-def _radial_evolution_plot(csv_output = 'L100_evolution_ID16761384_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load 
+def _radial_evolution_plot(csv_output = 'L12_evolution_ID3748_Rad_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load 
                            #--------------------------
                            # Galaxy plotting
                            print_summary = True,
@@ -528,13 +528,14 @@ def _radial_evolution_plot(csv_output = 'L100_evolution_ID16761384_RadProj_Err__
                              use_hmr_frac       = [2],                # Which mass and fraction HMR to plot             
                              use_proj_angle     = False,                   # Whether to use projected or absolute angle, 'both'
                              use_uncertainties  = True,                   # Whether to plot uncertainties or not
+                             min_merger_ratio   = 0.01,
                            #-------------------------
                            # Plot settings
                            highlight_criteria = True,       # whether to indicate when criteria not met (but still plot)
                            rad_type_plot      = 'hmr',      # 'rad' whether to use absolute distance or hmr 
                            #--------------------------
                            showfig        = True,
-                           savefig        = True,
+                           savefig        = False,
                              file_format  = 'pdf',
                              savefig_txt  = '',
                            #--------------------------
@@ -609,7 +610,7 @@ def _radial_evolution_plot(csv_output = 'L100_evolution_ID16761384_RadProj_Err__
             if len(ratio_i) == 0:
                 continue
             else:
-                if max(ratio_i) >= 0.1:
+                if max(ratio_i) >= min_merger_ratio:
                     for ax in axs:
                         ax.axvline(lookbacktime_i, ls='--', color='grey', alpha=1, linewidth=2)
 
@@ -1033,6 +1034,6 @@ def _radial_evolution_plot(csv_output = 'L100_evolution_ID16761384_RadProj_Err__
     
                           
 #=========================== 
-#_radial_evolution_analysis()
-_radial_evolution_plot()   
+_radial_evolution_analysis()
+#_radial_evolution_plot()   
 #===========================

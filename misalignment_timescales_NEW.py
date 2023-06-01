@@ -1576,73 +1576,6 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L100_galaxy_dict_both_s
 
 
 
-def _plot_merger_timescales(csv_timescales = 'L100_merger_timescale_tree_both_r0.1r1.0_stars_gas_sf_rad2.0_projFalse_'):
-    
-    
-    # Loading sample
-    dict_timetree = json.load(open('%s/%s.csv' %(output_dir, csv_timescales), 'r'))
-    timescale_dict  = dict_timetree['timescale_dict']
-    
-    # Loading sample criteria
-    timescale_input = dict_timetree['output_input']
-    
-    
-    
-    #print(timescale_dict.keys())
-    
-    
-    
-    
-    
-    
-    #stelmass_array = []
-    #for galaxyid in timescale_dict.keys():
-    #    stelmass_array.append(np.log10(float(timescale_dict['%s' %galaxyid]['stelmass_list'][0])))
-    #    
-    #plt.hist(stelmass_array, bins=50, range=(8.0, 13))
-    #plt.show()    
-
-    for galaxyid in tqdm(timescale_dict.keys()):
-        
-        #if int(timescale_dict['%s' %galaxyid]['DescendantID_list'][-1]) != 12523088:
-        #    continue
-        
-        plt.plot(np.arange(1, len(timescale_dict['%s' %galaxyid]['misangle_list'])+1, 1), timescale_dict['%s' %galaxyid]['misangle_list'])
-        print(np.arange(1, len(timescale_dict['%s' %galaxyid]['misangle_list'])+1, 1))
-        print(timescale_dict['%s' %galaxyid]['misangle_list'])
-        
-        
-        #plt.text(np.arange(1, len(timescale_dict['%s' %galaxyid]['misangle_list'])+1, 1)[-1], timescale_dict['%s' %galaxyid]['misangle_list'][-1], '%s' %(timescale_dict['%s' %galaxyid]['DescendantID_list'][-1]))
-        
-        for snap, angle, i in zip(timescale_dict['%s' %galaxyid]['SnapNum_list'], timescale_dict['%s' %galaxyid]['misangle_list'], np.arange(1, len(timescale_dict['%s' %galaxyid]['misangle_list'])+1, 1)):
-            
-            if snap in timescale_dict['%s' %galaxyid]['merger_snap_list']:
-                plt.scatter(i, angle)
-            
-    plt.show()
-    
-    """for galaxyid in tqdm(timescale_dict.keys()):
-        
-        #if int(timescale_dict['%s' %galaxyid]['DescendantID_list'][-1]) != 12523088:
-            #continue
-
-        print(timescale_dict['%s' %galaxyid]['misangle_list'])
-        print(timescale_dict['%s' %galaxyid]['SnapNum_list'])
-        print(timescale_dict['%s' %galaxyid]['GalaxyID_list'])
-    
-    
-        plt.plot(timescale_dict['%s' %galaxyid]['Lookbacktime_list'], timescale_dict['%s' %galaxyid]['misangle_list'])
-        
-        for snap, angle, age in zip(timescale_dict['%s' %galaxyid]['SnapNum_list'], timescale_dict['%s' %galaxyid]['misangle_list'], timescale_dict['%s' %galaxyid]['Lookbacktime_list']):
-            
-            if snap in timescale_dict['%s' %galaxyid]['merger_snap_list']:
-                plt.scatter(age, angle)
-            
-    plt.xlim(9, 0)
-    plt.show()"""
-    
-
-
 
 
 
@@ -1779,6 +1712,73 @@ def _plot_time_spent_misaligned(csv_timescales = 'L100_timescale_tree_both_stars
     plt.close()
 
 
+
+
+def _plot_merger_timescales(csv_timescales = 'L100_merger_timescale_tree_both_r0.1r1.0_stars_gas_sf_rad2.0_projFalse_'):
+    
+    
+    # Loading sample
+    dict_timetree = json.load(open('%s/%s.csv' %(output_dir, csv_timescales), 'r'))
+    timescale_dict  = dict_timetree['timescale_dict']
+    
+    # Loading sample criteria
+    timescale_input = dict_timetree['output_input']
+    
+    
+    
+    #print(timescale_dict.keys())
+    
+    
+    
+    
+    
+    
+    #stelmass_array = []
+    #for galaxyid in timescale_dict.keys():
+    #    stelmass_array.append(np.log10(float(timescale_dict['%s' %galaxyid]['stelmass_list'][0])))
+    #    
+    #plt.hist(stelmass_array, bins=50, range=(8.0, 13))
+    #plt.show()    
+
+    for galaxyid in tqdm(timescale_dict.keys()):
+        
+        #if int(timescale_dict['%s' %galaxyid]['DescendantID_list'][-1]) != 12523088:
+        #    continue
+        
+        plt.plot(np.arange(1, len(timescale_dict['%s' %galaxyid]['misangle_list'])+1, 1), timescale_dict['%s' %galaxyid]['misangle_list'])
+        print(np.arange(1, len(timescale_dict['%s' %galaxyid]['misangle_list'])+1, 1))
+        print(timescale_dict['%s' %galaxyid]['misangle_list'])
+        
+        
+        #plt.text(np.arange(1, len(timescale_dict['%s' %galaxyid]['misangle_list'])+1, 1)[-1], timescale_dict['%s' %galaxyid]['misangle_list'][-1], '%s' %(timescale_dict['%s' %galaxyid]['DescendantID_list'][-1]))
+        
+        for snap, angle, i in zip(timescale_dict['%s' %galaxyid]['SnapNum_list'], timescale_dict['%s' %galaxyid]['misangle_list'], np.arange(1, len(timescale_dict['%s' %galaxyid]['misangle_list'])+1, 1)):
+            
+            if snap in timescale_dict['%s' %galaxyid]['merger_snap_list']:
+                plt.scatter(i, angle)
+            
+    plt.show()
+    
+    """for galaxyid in tqdm(timescale_dict.keys()):
+        
+        #if int(timescale_dict['%s' %galaxyid]['DescendantID_list'][-1]) != 12523088:
+            #continue
+
+        print(timescale_dict['%s' %galaxyid]['misangle_list'])
+        print(timescale_dict['%s' %galaxyid]['SnapNum_list'])
+        print(timescale_dict['%s' %galaxyid]['GalaxyID_list'])
+    
+    
+        plt.plot(timescale_dict['%s' %galaxyid]['Lookbacktime_list'], timescale_dict['%s' %galaxyid]['misangle_list'])
+        
+        for snap, angle, age in zip(timescale_dict['%s' %galaxyid]['SnapNum_list'], timescale_dict['%s' %galaxyid]['misangle_list'], timescale_dict['%s' %galaxyid]['Lookbacktime_list']):
+            
+            if snap in timescale_dict['%s' %galaxyid]['merger_snap_list']:
+                plt.scatter(age, angle)
+            
+    plt.xlim(9, 0)
+    plt.show()"""
+    
 
 
 

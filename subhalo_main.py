@@ -2473,7 +2473,7 @@ class MergerTree:
             
         return newData
  
-    def _analyze_tree(self, target_GalaxyID, TopLeafID, arr):
+    def _analyze_tree(self, target_GalaxyID, TopLeafID, arr, debug=True):
         # arr is sorted per redshift in descending order (starting at 0)
         redshift_tmp  = []
         snapnum_tmp   = []
@@ -2485,6 +2485,11 @@ class MergerTree:
         ratios_collect    = []
         gasratios_collect = []
         IDs_collect       = []
+        
+        if debug:
+            for z, snapnum, topID, galaxyID, stelmass, gasmass in zip(arr['redshift'], arr['snapnum'], arr['TopLeafID'], arr['GalaxyID'], arr['stelmass'], arr['gasmass']):
+                print('%.2f    %s    %s    %s     %.2e     %.2e' %(z, snapnum, topID, galaxyID, stelmass, gasmass))
+        
         for z, snapnum, topID, galaxyID, stelmass, gasmass in zip(arr['redshift'], arr['snapnum'], arr['TopLeafID'], arr['GalaxyID'], arr['stelmass'], arr['gasmass']):
             if z != z_old:
                 # If current z not yet added to list, do so
@@ -2515,6 +2520,7 @@ class MergerTree:
                 # Ensure ratio is strictly less than 1
                 if merger_ratio > 1.0:
                     merger_ratio = 1 / merger_ratio
+                    gas ratios = 1 / gas_ratios
                 
                 #Grab ID of secondary
                 id_secondary = galaxyID

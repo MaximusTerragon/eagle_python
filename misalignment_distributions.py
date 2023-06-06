@@ -70,7 +70,7 @@ dataDir_dict['28'] = dataDir_main + 'snapshot_028_z000p000/snap_028_z000p000.0.h
 
 #--------------------------------
 # Creates a sample of galaxies given the inputs. Returns GroupNum, SubGroupNum, SnapNum, and GalaxyID for each galaxy
-def _misalignment_sample(mySims = [('RefL0012N0188', 12)],
+def _sample_misalignment(mySims = [('RefL0012N0188', 12)],
                          #--------------------------
                          galaxy_mass_min    = 10**9,            # Lower mass limit within 30pkpc
                          galaxy_mass_max    = 10**15,           # Lower mass limit within 30pkpc
@@ -203,7 +203,7 @@ def _misalignment_sample(mySims = [('RefL0012N0188', 12)],
     
   
 # Creates a sample of galaxies given the inputs. Returns GroupNum, SubGroupNum, SnapNum, and GalaxyID for each galaxy
-def _misalignment_minor_sample(mySims = [('RefL0012N0188', 12)],
+def _sample_misalignment_minor(mySims = [('RefL0012N0188', 12)],
                               #--------------------------
                               galaxy_mass_min    = 10**8,            # Lower mass limit within 30pkpc
                               galaxy_mass_max    = 10**9,           # Lower mass limit within 30pkpc
@@ -331,7 +331,7 @@ def _misalignment_minor_sample(mySims = [('RefL0012N0188', 12)],
 
 #--------------------------------
 # Reads in a sample file, and does all relevant calculations, and exports as csv file
-def _misalignment_minor_analysis(csv_sample = 'L12_28_minor_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+def _analysis_misalignment_minor(csv_sample = 'L12_28_minor_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                                  #--------------------------
                                  # Galaxy extraction properties
                                  aperture_rad        = 30,                   # trim all data to this maximum value before calculations [pkpc]
@@ -501,38 +501,38 @@ def _misalignment_minor_analysis(csv_sample = 'L12_28_minor_sample_misalignment_
         
 
 # Reads in a sample file, and does all relevant calculations, and exports as csv file
-def _misalignment_distribution(csv_sample = 'L12_19_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
-                                #--------------------------
-                                # Galaxy extraction properties
-                                viewing_axis        = 'z',                  # Which axis to view galaxy from.  DEFAULT 'z'
-                                aperture_rad        = 30,                   # trim all data to this maximum value before calculations [pkpc]
-                                kappa_rad           = 30,                   # calculate kappa for this radius [pkpc]
-                                trim_rad = np.array([30]),                 # keep as 100... will be capped by aperture anyway. Doesn't matter
-                                align_rad = False,                          # keep on False
-                                orientate_to_axis='z',                      # Keep as z
-                                viewing_angle = 0,                          # Keep as 0
-                                #-----------------------------------------------------
-                                # Misalignments we want extracted and at which radii
-                                angle_selection     = ['stars_gas',            # stars_gas     stars_gas_sf    stars_gas_nsf
-                                                       'stars_gas_sf',         # gas_dm        gas_sf_dm       gas_nsf_dm
-                                                       'stars_gas_nsf',        # gas_sf_gas_nsf
-                                                       'gas_sf_gas_nsf',
-                                                       'stars_dm'],           
-                                spin_hmr            = np.array([1.0, 2.0]),          # multiples of hmr for which to find spin
-                                find_uncertainties  = True,                    # whether to find 2D and 3D uncertainties
-                                rad_projected       = True,                     # whether to use rad in projection or 3D
-                                #--------------------------
-                                # Selection criteria
-                                com_min_distance    = 2.0,         # [pkpc] min distance between sfgas and stars.  DEFAULT 2.0 
-                                min_particles       = 20,          # Minimum particles to find spin.  DEFAULT 20
-                                min_inclination     = 0,           # Minimum inclination toward viewing axis [deg] DEFAULT 0
-                                #--------------------------   
-                                csv_file       = True,             # Will write sample to csv file in sample_dir
-                                  csv_name     = '',               # extra stuff at end
-                                #--------------------------
-                                print_progress = False,
-                                print_galaxy   = False,
-                                debug = False):
+def _analysis_misalignment_distribution(csv_sample = 'L12_19_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+                                        #--------------------------
+                                        # Galaxy extraction properties
+                                        viewing_axis        = 'z',                  # Which axis to view galaxy from.  DEFAULT 'z'
+                                        aperture_rad        = 30,                   # trim all data to this maximum value before calculations [pkpc]
+                                        kappa_rad           = 30,                   # calculate kappa for this radius [pkpc]
+                                        trim_rad = np.array([30]),                 # keep as 100... will be capped by aperture anyway. Doesn't matter
+                                        align_rad = False,                          # keep on False
+                                        orientate_to_axis='z',                      # Keep as z
+                                        viewing_angle = 0,                          # Keep as 0
+                                        #-----------------------------------------------------
+                                        # Misalignments we want extracted and at which radii
+                                        angle_selection     = ['stars_gas',            # stars_gas     stars_gas_sf    stars_gas_nsf
+                                                               'stars_gas_sf',         # gas_dm        gas_sf_dm       gas_nsf_dm
+                                                               'stars_gas_nsf',        # gas_sf_gas_nsf
+                                                               'gas_sf_gas_nsf',
+                                                               'stars_dm'],           
+                                        spin_hmr            = np.array([1.0, 2.0]),          # multiples of hmr for which to find spin
+                                        find_uncertainties  = True,                    # whether to find 2D and 3D uncertainties
+                                        rad_projected       = True,                     # whether to use rad in projection or 3D
+                                        #--------------------------
+                                        # Selection criteria
+                                        com_min_distance    = 2.0,         # [pkpc] min distance between sfgas and stars.  DEFAULT 2.0 
+                                        min_particles       = 20,          # Minimum particles to find spin.  DEFAULT 20
+                                        min_inclination     = 0,           # Minimum inclination toward viewing axis [deg] DEFAULT 0
+                                        #--------------------------   
+                                        csv_file       = True,             # Will write sample to csv file in sample_dir
+                                          csv_name     = '',               # extra stuff at end
+                                        #--------------------------
+                                        print_progress = False,
+                                        print_galaxy   = False,
+                                        debug = False):
     
     
     #---------------------------------------------    
@@ -814,7 +814,7 @@ def _misalignment_distribution(csv_sample = 'L12_19_all_sample_misalignment_9.0'
 
 #--------------------------------
 # Plots singular graphs by reading in existing csv file
-def _misalignment_plot(csv_sample = 'L100_24_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+def _plot_misalignmentt(csv_sample = 'L100_24_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                        csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                        #--------------------------
                        # Galaxy plotting
@@ -1302,7 +1302,7 @@ def _misalignment_plot(csv_sample = 'L100_24_all_sample_misalignment_9.0',     #
 
 #--------------------------------
 # Manually plots a graph tracking share of aligned, misaligned, and counter-rotating systems with z
-def _misalignment_z_plot(csv_sample1 = 'L100_',                                 # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+def _plot_misalignment_z(csv_sample1 = 'L100_',                                 # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                          csv_sample_range = [19, 20, 21, 22, 23, 24, 25, 26, 27, 28],   # snapnums
                          csv_sample2 = '_all_sample_misalignment_9.0',
                          csv_output_in = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
@@ -1814,14 +1814,14 @@ def _misalignment_z_plot(csv_sample1 = 'L100_',                                 
     
     
 #===========================    
-#_misalignment_sample()
-#_misalignment_distribution()
+#_sample_misalignment()
+#_sample_misalignment()
 
-#_misalignment_minor_sample()
-#_misalignment_minor_analysis()
+#_analysis_misalignment_minor()
+#_analysis_misalignment_distribution()
 
-#_misalignment_plot()
-#_misalignment_z_plot()
+#_plot_misalignment()
+#_plot_misalignment_z()
 #===========================
     
 

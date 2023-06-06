@@ -2537,11 +2537,6 @@ class MergerTree:
             # find mergers and gas ratio
             merger_ratio = secondary_stelmass / primary_stelmass
             gas_ratio    = (primary_gasmass + secondary_gasmass) / (primary_stelmass + secondary_stelmass)
-            
-            # Ensure ratio is strictly less than 1
-            if merger_ratio > 1.0:
-                merger_ratio = 1 / merger_ratio
-                gas_ratio    = 1 / gas_ratio
         
             z_old = z
         

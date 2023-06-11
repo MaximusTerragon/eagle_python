@@ -98,7 +98,7 @@ SAMPLE:
 #ID_list = [17374402, 8077031, 17480553, 15851557]
 #ID_list = [10438463, 8763330]
 # Run analysis on individual galaxies and output individual CSV files
-def _annalysis_radial_evolution(csv_sample = False,              # Whether to read in existing list of galaxies  
+def _analysis_radial_evolution(csv_sample = False,              # Whether to read in existing list of galaxies  
                                #--------------------------
                                mySims = [('RefL0012N0188', 12)],
                                GalaxyID_List_target = [30494],               # Will create a csv file for each galaxy
@@ -119,7 +119,7 @@ def _annalysis_radial_evolution(csv_sample = False,              # Whether to re
                                                       'stars_gas_nsf',        # gas_sf_gas_nsf
                                                       'gas_sf_gas_nsf',
                                                       'stars_dm'],           
-                               spin_hmr            = np.arange(0.5, 10.1, 0.5),          # multiples of hmr for which to find spin
+                               spin_hmr            = np.arange(0.5, 3.1, 0.5),          # multiples of hmr for which to find spin
                                find_uncertainties  = True,                    # whether to find 2D and 3D uncertainties
                                rad_projected       = True,                     # whether to use rad in projection or 3D
                                #--------------------------
@@ -519,7 +519,7 @@ def _annalysis_radial_evolution(csv_sample = False,              # Whether to re
             print('===================')
             """
                                                                                   
-def _plot_radial_evolution(csv_output = 'L100_evolution_ID3327115_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load 
+def _plot_radial_evolution(csv_output = 'L100_evolution_ID15851557_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load 
                            #--------------------------
                            # Galaxy plotting
                            print_summary = True,

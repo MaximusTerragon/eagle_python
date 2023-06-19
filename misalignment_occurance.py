@@ -79,10 +79,10 @@ def _find_misalignment_occurance(csv_sample1 = 'L100_',                         
                                  print_summary = True,
                                    use_angle          = 'stars_gas_sf',         # Which angles to plot
                                    use_hmr            = 2.0,                    # Which HMR to use
-                                   use_proj_angle     = False,                   # Whether to use projected or absolute angle 10**9
+                                   use_proj_angle     = True,                   # Whether to use projected or absolute angle 10**9
                                    lower_mass_limit   = 10**9,             # Whether to plot only certain masses 10**15
                                    upper_mass_limit   = 10**15,         
-                                   ETG_or_LTG         = 'LTG',             # Whether to plot only ETG/LTG
+                                   ETG_or_LTG         = 'ETG',             # Whether to plot only ETG/LTG
                                    group_or_field     = 'both',            # Whether to plot only field/group
                                  #--------------------------
                                  showfig       = True,
@@ -100,7 +100,7 @@ def _find_misalignment_occurance(csv_sample1 = 'L100_',                         
         time_start = time.time()
     
     print('===================')
-    print('PLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %s M*\n  Upper mass limit: %s M*\n  ETG or LTG: %s\n  Group or field: %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field))
+    print('PLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %.2f M*\n  Upper mass limit: %.2f M*\n  ETG or LTG: %s\n  Group or field: %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field))
     print('===================\n')
     
     

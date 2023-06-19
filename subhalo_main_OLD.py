@@ -470,7 +470,7 @@ class Subhalo_Extract:
         f = h5py.File(data_dir, 'r')
         # If gas, load StarFormationRate
         if itype == 0:
-            for att in ['GroupNumber', 'SubGroupNumber', 'Mass', 'Coordinates', 'StarFormationRate', 'Velocity', 'ParticleIDs']:
+            for att in ['GroupNumber', 'SubGroupNumber', 'Mass', 'Coordinates', 'StarFormationRate', 'Velocity']:
                 tmp  = eagle_data.read_dataset(itype, att)
                 cgs  = f['PartType%i/%s'%(itype, att)].attrs.get('CGSConversionFactor')
                 aexp = f['PartType%i/%s'%(itype, att)].attrs.get('aexp-scale-exponent')
@@ -479,7 +479,7 @@ class Subhalo_Extract:
             f.close()
         # If dm
         elif itype == 1:
-            for att in ['GroupNumber', 'SubGroupNumber', 'Mass', 'Coordinates', 'Velocity', 'ParticleIDs']:
+            for att in ['GroupNumber', 'SubGroupNumber', 'Mass', 'Coordinates', 'Velocity']:
                 if att == 'Mass':
                     cgs  = f['PartType0/%s'%(att)].attrs.get('CGSConversionFactor')
                     aexp = f['PartType0/%s'%(att)].attrs.get('aexp-scale-exponent')
@@ -504,7 +504,7 @@ class Subhalo_Extract:
             f.close()
         # If stars, do not load StarFormationRate (as not contained in database)
         elif itype == 4:
-            for att in ['GroupNumber', 'SubGroupNumber', 'Mass', 'Coordinates', 'Velocity', 'ParticleIDs']:
+            for att in ['GroupNumber', 'SubGroupNumber', 'Mass', 'Coordinates', 'Velocity']:
                 tmp  = eagle_data.read_dataset(itype, att)
                 cgs  = f['PartType%i/%s'%(itype, att)].attrs.get('CGSConversionFactor')
                 aexp = f['PartType%i/%s'%(itype, att)].attrs.get('aexp-scale-exponent')
@@ -514,22 +514,12 @@ class Subhalo_Extract:
             f.close()
         # If bhs
         elif itype == 5:
-            for att in ['GroupNumber', 'SubGroupNumber', 'BH_Mass', 'BH_Mdot', 'Coordinates', 'Velocity', 'ParticleIDs']:
-                # Ensure we use 'Mass' as name
-                if att == 'BH_Mass':
-                    tmp  = eagle_data.read_dataset(itype, att)
-                    cgs  = f['PartType%i/%s'%(itype, att)].attrs.get('CGSConversionFactor')
-                    aexp = f['PartType%i/%s'%(itype, att)].attrs.get('aexp-scale-exponent')
-                    hexp = f['PartType%i/%s'%(itype, att)].attrs.get('h-scale-exponent')
-                    data['Mass'] = np.multiply(tmp, cgs * self.a**aexp * self.h**hexp, dtype='f8')
-                
-                else:
-                    tmp  = eagle_data.read_dataset(itype, att)
-                    cgs  = f['PartType%i/%s'%(itype, att)].attrs.get('CGSConversionFactor')
-                    aexp = f['PartType%i/%s'%(itype, att)].attrs.get('aexp-scale-exponent')
-                    hexp = f['PartType%i/%s'%(itype, att)].attrs.get('h-scale-exponent')
-                    data[att] = np.multiply(tmp, cgs * self.a**aexp * self.h**hexp, dtype='f8')
-                    
+            for att in ['GroupNumber', 'SubGroupNumber', 'Mass', 'Coordinates', 'Velocity']:
+                tmp  = eagle_data.read_dataset(itype, att)
+                cgs  = f['PartType%i/%s'%(itype, att)].attrs.get('CGSConversionFactor')
+                aexp = f['PartType%i/%s'%(itype, att)].attrs.get('aexp-scale-exponent')
+                hexp = f['PartType%i/%s'%(itype, att)].attrs.get('h-scale-exponent')
+                data[att] = np.multiply(tmp, cgs * self.a**aexp * self.h**hexp, dtype='f8')
             f.close()
         
         
@@ -544,8 +534,6 @@ class Subhalo_Extract:
         data['Velocity'] = data['Velocity'] * u.cm.to(u.Mpc)           # [pMpc/s]
         if itype == 0:
             data['StarFormationRate'] = data['StarFormationRate'] * u.g.to(u.Msun)  # [Msun/s]
-        if itype == 5:
-            data['BH_Mdot'] = data['BH_Mdot'] * u.g.to(u.Msun)  # [Msun/s]
         
         # Periodic wrap coordinates around centre (in proper units). 
         # boxsize converted from cMpc/h -> pMpc
@@ -863,7 +851,7 @@ Output Parameters
             ['gas_nsf_dm_angle_err']        - [lo, hi] [deg]       ^
         
 """
-# Finds the values we are after and trims particle data
+# Finds the values we are after
 class Subhalo_Analysis:
     
     def __init__(self, sim, GroupNum, SubGroupNum, GalaxyID, SnapNum, MorphoKinem_in, halfmass_rad, halfmass_rad_proj, halo_mass_in, data_nil,
@@ -879,13 +867,10 @@ class Subhalo_Analysis:
                             spin_rad, 
                             spin_hmr,
                             find_uncertainties,
-                            rad_projected,
                             
                             com_min_distance,
                             min_particles,
                             min_inclination,
-                            
-                            gas_data_old=False,
                             
                             debug=False,
                             print_progress=False):
@@ -937,6 +922,12 @@ class Subhalo_Analysis:
         for parttype, parttype_name in zip([gas_sf, gas_nsf], ['gas_sf', 'gas_nsf']):
             data_nil['%s'%parttype_name] = parttype
             
+        #-----------------------------------------------------
+        # Creating dictionary of trimmed data to aperture from which we work
+        self.data = self._trim_data(data_nil, aperture_rad)
+        if debug:
+            print(max(np.linalg.norm(data_nil['gas']['Coordinates'], axis=1)))
+            print(max(np.linalg.norm(self.data['gas']['Coordinates'], axis=1)))
         
         #=====================================================
         # Extracting MorphoKinem query data 
@@ -960,8 +951,6 @@ class Subhalo_Analysis:
         self.spins              = {}
         self.mis_angles         = {}
         self.mis_angles_proj    = {}
-        self.gas_data           = {}
-        self.mass_flow          = {}
         
         # Array to note if galaxy fails any extraction based on filters. Appends math.nan in dictionary, and radius at which it fails in .flags
         self.flags = {'total_particles':  {'stars': [], 'gas': [], 'gas_sf': [], 'gas_nsf': [], 'dm': [], 'bh':[]},      # For finding total particle counts       
@@ -972,16 +961,6 @@ class Subhalo_Analysis:
             flag_com_min_distance.update({'%s' %(angle_selection_i): []})
         self.flags.update({'com_min_distance': flag_com_min_distance})               # For flagging min. com distance
       
-        #----------------------------------------------------
-        # Creating dictionary of trimmed data to aperture from which we work
-        # data_nil has untrimmed data
-        # self.data has trimmed to aperture
-        self.data = self._trim_data(data_nil, aperture_rad)
-        if debug:
-            print(max(np.linalg.norm(data_nil['gas']['Coordinates'], axis=1)))
-            print(max(np.linalg.norm(self.data['gas']['Coordinates'], axis=1)))
-        
-        
         #----------------------------------------------------
         # Assigning bulk galaxy values
         self.GroupNum           = GroupNum
@@ -994,21 +973,21 @@ class Subhalo_Analysis:
         self.gasmass_sf         = np.sum(self.data['gas_sf']['Mass'])    # [Msun] within 30 pkpc (aperture_rad_in)
         self.gasmass_nsf        = np.sum(self.data['gas_nsf']['Mass'])   # [Msun] within 30 pkpc (aperture_rad_in)
         self.dmmass             = np.sum(self.data['dm']['Mass'])        # [Msun] within 30 pkpc (aperture_rad_in)
-        self.bh_mdot            = self._bh_accretion(self.data['bh'], halfmass_rad)     # [Msun]/s of largest BH within 0.5 HMR
         self.halfmass_rad       = halfmass_rad                          # [pkpc]
         self.halfmass_rad_proj  = halfmass_rad_proj                     # [pkpc]
         self.viewing_axis       = viewing_axis                          # 'x', 'y', 'z'
+        
         self.viewing_angle      = viewing_angle                         # [deg]
+        
         
         
         #----------------------------------------------------
         # Filling self.general
-        for general_name, general_item in zip(['GroupNum', 'SubGroupNum', 'GalaxyID', 'SnapNum', 'halo_mass', 'stelmass', 'gasmass', 'gasmass_sf', 'gasmass_nsf', 'dmmass', 'bh_mdot', 'halfmass_rad', 'halfmass_rad_proj', 'viewing_axis'], 
-                                              [self.GroupNum, self.SubGroupNum, self.GalaxyID, self.SnapNum, self.halo_mass, self.stelmass, self.gasmass, self.gasmass_sf, self.gasmass_nsf, self.dmmass, self.bh_mdot, self.halfmass_rad, self.halfmass_rad_proj, self.viewing_axis]):
+        for general_name, general_item in zip(['GroupNum', 'SubGroupNum', 'GalaxyID', 'SnapNum', 'halo_mass', 'stelmass', 'gasmass', 'gasmass_sf', 'gasmass_nsf', 'dmmass', 'halfmass_rad', 'halfmass_rad_proj', 'viewing_axis'], 
+                                              [self.GroupNum, self.SubGroupNum, self.GalaxyID, self.SnapNum, self.halo_mass, self.stelmass, self.gasmass, self.gasmass_sf, self.gasmass_nsf, self.dmmass, self.halfmass_rad, self.halfmass_rad_proj, self.viewing_axis]):
             self.general[general_name] = general_item
         self.general.update(MorphoKinem)
             
-        
         
         #====================================================
         # From here we only calculate particle properties that are linked to misalignment angles requested
@@ -1095,8 +1074,6 @@ class Subhalo_Analysis:
             spins_rand['2.0']['stars'] .. from then [[ x, y, z], [x, y, z], ... ]
             '''
         
-        #-----------------------------
-        # Also extract gas data
         def find_particle_properties(debug=False):
             
             if print_progress:
@@ -1148,14 +1125,8 @@ class Subhalo_Analysis:
                     print(len(trimmed_data['gas_sf']['Mass']))
                 
                 
-                #===========================
-                # Create gas_data
-                self.gas_data.update({'%s_hmr' %hmr_i: {'gas': {}, 'gas_sf': {}, 'gas_nsf': {}}}) 
-                
-                
                 #------------------------------
                 for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf', 'dm']:
-                    
                     #----------------------------------------------
                     # Find particle counts, masses
                     particle_count  = len(trimmed_data[parttype_name]['Mass'])
@@ -1167,16 +1138,6 @@ class Subhalo_Analysis:
                     else:
                         self.counts[parttype_name].append(particle_count)
                         self.masses[parttype_name].append(particle_mass)
-                    
-                    
-                    #===========================
-                    # Create dictionary of bare minimum gas_data for inflow/outflow
-                    if (parttype_name == 'gas' ) or (parttype_name == 'gas_sf' ) or (parttype_name == 'gas_nsf' ):
-                        self.gas_data['%s_hmr' %hmr_i][parttype_name]['Mass']        = trimmed_data[parttype_name]['Mass']
-                        self.gas_data['%s_hmr' %hmr_i][parttype_name]['ParticleIDs'] = trimmed_data[parttype_name]['ParticleIDs']
-                        self.gas_data['%s_hmr' %hmr_i][parttype_name]['Total_mass']  = particle_mass
-                        self.gas_data['%s_hmr' %hmr_i][parttype_name]['Total_count'] = particle_count
-                    
                 
                     #----------------------------------------------
                     # Find COMs (append math.nan for no particles)
@@ -1260,60 +1221,6 @@ class Subhalo_Analysis:
                         spins_rand['%s' %str(hmr_i)][parttype_name] = np.stack(tmp_spins)          
         find_particle_properties()
 
-        #-----------------------------
-        def find_inflow_outflow(gas_data_old, debug=False):
-            # gas_data has current galaxy's gas data, gas_data_old has predecessor's gas data
-            
-            if print_progress:
-                print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                print('Finding inflow/outflow')
-                time_start = time.time()
-            
-            for hmr_name_i in self.gas_data.keys():
-                self.mass_flow.update({'%s' %hmr_name_i: {}})
-                
-                for parttype_name in self.gas_data[hmr_name_i].keys():
-                                        
-                    # Cycle through current IDs, to check if they were in _old
-                    previous_mass = gas_data_old[hmr_name_i][parttype_name]['Total_mass']       # M1
-                    current_mass  = gas_data[hmr_name_i][parttype_name]['Total_mass']           # M2
-                    inflow_mass   = 0
-                    outflow_mass  = 0
-                    
-                    #------------------
-                    # Check for inflow (use current, run check on previous)
-                    for ID_i, mass_i in zip(gas_data[hmr_name_i][parttype_name]['ParticleIDs'], gas_data[hmr_name_i][parttype_name]['Mass']):
-                        
-                        # If ID was within 2hmr of _old, gas particle stayed
-                        if ID_i in gas_data_old[hmr_name_i][parttype_name]['ParticleIDs']:
-                            continue
-                        # If ID was NOT within 2hmr of _old, gas particle was accreted
-                        else:
-                            inflow_mass = inflow_mass + mass_i
-                            
-                    #------------------
-                    # Check for outflow (use old, run check on current)
-                    for ID_i, mass_i in zip(gas_data_old[hmr_name_i][parttype_name]['ParticleIDs'], gas_data_old[hmr_name_i][parttype_name]['Mass']):
-                        
-                        # If ID will be within 2hmr of current, gas particle stayed
-                        if ID_i in gas_data[hmr_name_i][parttype_name]['ParticleIDs']:
-                            continue
-                        # If ID will NOT be within 2hmr of current, gas particle was outflowed
-                        else:
-                            outflow_mass = outflow_mass + mass_i
-                
-                    
-                    #------------------
-                    # Left with current_mass = previous_mass + inflow_mass - outflow_mass + stellarmassloss
-                    stellarmassloss = current_mass - previous_mass - inflow_mass + outflow_mass
-                    
-                    # Update mass_flow
-                    self.mass_flow[hmr_name_i][parttype_name] = {'inflow': inflow_mass,
-                                                                 'outflow': outflow_mass,
-                                                                 'massloss': stellarmassloss}   
-        if gas_data_old:
-            find_inflow_outflow(gas_data_old)
-        
         #-----------------------------
         # Finding COM distances and flagging if one is > com_min_distance
         def flag_coms(debug=False):
@@ -1819,47 +1726,17 @@ class Subhalo_Analysis:
             for rad_i in trim_rad:
                 tmp_data.update({'%s' %str(rad_i): {}})
             
-            # trim_rad = ['1HMR', '2HMR', '1HMR_proj', '2HMR_proj', '30']
             for rad_i in trim_rad:
                 
-                # if trim_rad is '1HMR_proj':
-                if (rad_i == '1.0_hmr') or (rad_i == '2.0_hmr'):
-                    # Radius to trim to
-                    if (rad_i == '1.0_hmr') and (rad_projected == True):
-                        trim_to_rad = 1*halfmass_rad_proj
-                    elif (rad_i == '1.0_hmr') and (rad_projected == False):
-                        trim_to_rad = 1*halfmass_rad
-                    elif (rad_i == '2.0_hmr') and (rad_projected == True):
-                        trim_to_rad = 2*halfmass_rad_proj
-                    elif (rad_i == '2.0_hmr') and (rad_projected == False):
-                        trim_to_rad = 2*halfmass_rad
-                    
-                    
-                    # Trim data to particular radius
-                    trimmed_data = self._trim_data(data_nil, trim_to_rad)
-                    
-                    # Find peculiar velocity of trimmed data
-                    pec_vel_rad = self._peculiar_velocity(trimmed_data)
-                
-                    # Adjust velocity of trimmed_data to account for peculiar velocity
-                    for parttype_name in trimmed_data.keys():
-                        if len(trimmed_data[parttype_name]['Mass']) == 0:
-                            continue
-                        else:
-                            trimmed_data[parttype_name]['Velocity'] = trimmed_data[parttype_name]['Velocity'] - pec_vel_rad
-                    if debug:
-                        print('Peculiar velocity in rad', rad_i)
-                        print(pec_vel_rad)
-                        print('Gas_sf in rad: ', rad_i)
-                        print(len(trimmed_data['gas_sf']['Mass']))
-                    
-                    for parttype_name in trimmed_data.keys():
-                        tmp_data['%s' %str(rad_i)][parttype_name] = trimmed_data[parttype_name]
+                # If trim_rad larger than already cropped data, simply assign existing data to output data
+                if rad_i == aperture_rad:
+                    for parttype_name in self.data.keys():
+                        tmp_data['%s' %str(rad_i)][parttype_name] = self.data[parttype_name]
                 
                 else:
                     # Trim data to particular radius
-                    trimmed_data = self._trim_data(data_nil, float(rad_i))
-                    
+                    trimmed_data = self._trim_data(data_nil, rad_i)
+                
                     # Find peculiar velocity of trimmed data
                     pec_vel_rad = self._peculiar_velocity(trimmed_data)
                 
@@ -1879,7 +1756,7 @@ class Subhalo_Analysis:
                         tmp_data['%s' %str(rad_i)][parttype_name] = trimmed_data[parttype_name]   
             self.data = tmp_data
         trim_output_data()
-
+        
         #-----------------------------
         # Print statements
         if print_progress:
@@ -1968,8 +1845,6 @@ class Subhalo_Analysis:
         for parttype_name in data_dict.keys():
             # Compute distance to centre and mask all within 3D radius in pkpc
             r  = np.linalg.norm(data_dict[parttype_name]['Coordinates'], axis=1)
-            if debug:
-                print('r, radius', r, radius)
             mask = np.where(r <= radius)
             
             newData = {}
@@ -2141,36 +2016,7 @@ class Subhalo_Analysis:
             matrix = self._rotation_matrix(axis_of_rotation, angle)
             
         return angle, matrix
-    
-    def _bh_accretion(self, data_dict, hmr, hmr_from_centre=0.5, debug=False):
-        # Check if galaxy has BH within 0.5 HMR (abs):
-        r = np.linalg.norm(data_dict['Coordinates'], axis=1)
-        mask = np.where(r <= hmr*hmr_from_centre)
-        
-        if len(mask) > 0:
-            # Consider the accretion rate of the closest to the centre to be the BH of this galaxy
-            r    = np.linalg.norm(data_dict['Coordinates'], axis=1).min()
-            mask = np.linalg.norm(data_dict['Coordinates'], axis=1).argmin()
-        
-            if debug:
-                print('distance', r)
-                print('bh list', data_dict['Mass'])
-                print('bh mdot', data_dict['BH_Mdot'])
-        
-        
-            # Consider the accretion rate of the closest to the centre to be the BH of this galaxy
-            accretion_rate = data_dict['BH_Mdot'][mask]
-            if debug:
-                print('accretion rate', accretion_rate)
             
-            return accretion_rate
-        
-        else:
-            return math.nan
-        
-        
-        
-                
 
 """ 
 Purpose

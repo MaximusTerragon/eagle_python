@@ -83,7 +83,7 @@ def _extract_criteria_galaxies(csv_sample1 = 'L100_',                           
                                  use_proj_angle     = True,                   # Whether to use projected or absolute angle 10**9
                                  lower_mass_limit   = 10**9,             # Whether to plot only certain masses 10**15
                                  upper_mass_limit   = 10**15,         
-                                 ETG_or_LTG         = 'both',             # Whether to plot only ETG/LTG
+                                 ETG_or_LTG         = 'LTG',             # Whether to plot only ETG/LTG
                                  group_or_field     = 'both',            # Whether to plot only field/group
                                #--------------------------
                                csv_file       = True,             # Will write sample to csv file in sample_dir
@@ -578,7 +578,7 @@ def _create_merger_tree_csv(csv_start        = 'L100_',                         
 
 #--------------------------------
 # Goes through galaxies that meet criteria, analyses the time spend in misaligned state
-def _analyse_misalignment_timescales(csv_galaxy_dict = 'L100_galaxy_dict_both_stars_gas_sf_rad2.0_projTrue_',
+def _analyse_misalignment_timescales(csv_galaxy_dict = 'L100_galaxy_dict_LTG_stars_gas_sf_rad2.0_projTrue_',
                                      #--------------------------
                                      # Galaxy analysis
                                      print_summary = True,
@@ -914,9 +914,9 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L100_galaxy_dict_both_s
                                       # Galaxy analysis
                                       print_summary = True,
                                         merger_misaligned_time_pre  = 0.1,             # Gyr, Time before last aligned state, and merger between which the galaxy is misaligned
-                                        merger_misaligned_time_post = 100.0,             # Gyr, Time between last aligned state, and merger between which the galaxy is misaligned
-                                        merger_threshold_min   = 0.05,             # >= to include
-                                        merger_threshold_max   = 20,             # <= to include
+                                        merger_misaligned_time_post = 2.0,             # Gyr, Time between last aligned state, and merger between which the galaxy is misaligned
+                                        merger_threshold_min   = 0.1,             # >= to include
+                                        merger_threshold_max   = 10,             # <= to include
                                       #--------------------------
                                       csv_file       = True,             # Will write sample to csv file in sample_dir
                                         csv_name     = '',               # extra stuff at end
@@ -1564,14 +1564,16 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L100_galaxy_dict_both_s
 
 #--------------------------------
 # Plots for how long (time and snaps) misalignments perisit (from aligned -> stable) 
-def _plot_time_spent_misaligned(csv_timescales = 'L100_timescale_tree_both_stars_gas_sf_rad2.0_projFalse_',
+def _plot_time_spent_misaligned(csv_timescales = 'L100_timescale_tree_both_stars_gas_sf_rad2.0_projTrue_',
                                 #--------------------------
                                 plot_type = 'time',            # 'time', 'snap'    
                                 #--------------------------
                                 showfig       = True,
-                                savefig       = False,
+                                savefig       = True,
                                   file_format = 'pdf',
-                                  savefig_txt = '',
+                                  savefig_txt = '_POSTER',
+                                #--------------------------
+                                use_alternative_format = True,          # Poster formatting
                                 #--------------------------
                                 print_progress = False,
                                 debug = False):
@@ -1618,7 +1620,10 @@ def _plot_time_spent_misaligned(csv_timescales = 'L100_timescale_tree_both_stars
         time_start = time.time()
     
     # Graph initialising and base formatting
-    fig, axs = plt.subplots(1, 1, figsize=[7.0, 4.2], sharex=True, sharey=False)
+    if use_alternative_format:
+        fig, axs = plt.subplots(1, 1, figsize=[5.0, 4.2], sharex=True, sharey=False)
+    else:
+        fig, axs = plt.subplots(1, 1, figsize=[7.0, 4.2], sharex=True, sharey=False)
     plt.subplots_adjust(wspace=0.4, hspace=0.4)
     
     
@@ -1662,11 +1667,15 @@ def _plot_time_spent_misaligned(csv_timescales = 'L100_timescale_tree_both_stars
     if timescale_input['ETG_or_LTG'] == 'both':
         legend_labels.append('Sample')
         legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-        legend_colors.append('grey')
+        legend_colors.append('b')
     else:
         legend_labels.append('%s' %timescale_input['ETG_or_LTG'])
         legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-        legend_colors.append('grey')
+        legend_colors.append('b')
+    
+    legend_labels.append('${0<z<1}$')
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append('k')
     
     axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
     
@@ -1815,14 +1824,12 @@ def _plot_delta_misalignment_timescale(csv_timescales = 'L100_timescale_tree_ETG
     
 
 
-#--------------------------------
 # Will overlay galaxies from the point of becoming misaligned, if they have a merger
-def _plot_time_spent_misaligned_merger(csv_merger_origin = 'L100_merger_origin_r0.05r20_t0.1t2.0_both_stars_gas_sf_rad2.0_projFalse_',
+def _plot_time_spent_misaligned_merger(csv_merger_origin = 'L100_merger_origin_r0.05r20_t0.1t2.0_both_stars_gas_sf_rad2.0_projTrue_',
                                        #--------------------------
                                        # Galaxy plotting
                                        print_summary  = True,
-                                         plot_type               = 'time',            # 'time', 'snap', 'raw_time', 'raw_snap'
-                                         plot_merger_limit       = 0.05,               # smallest merger ratio to plot
+                                         plot_type               = 'raw_time',            # 'time', 'snap', 'raw_time', 'raw_snap'
                                          plot_GalaxyIDs          = False,             # Whether to add galaxyIDs 
                                          plot_number_of_galaxies_start = 0,                # galaxy number to start on (default 0)
                                          plot_number_of_galaxies_end   = 999,               # How many galaxies to plot (largely for testing), set to 1000000
@@ -1846,6 +1853,7 @@ def _plot_time_spent_misaligned_merger(csv_merger_origin = 'L100_merger_origin_r
     
     # Loading sample criteria
     timescale_input = timescale_dict_load['output_input']
+    plot_merger_limit = float(timescale_input['merger_threshold_min'])
     
     if print_progress:
         print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
@@ -2057,12 +2065,11 @@ def _plot_time_spent_misaligned_merger(csv_merger_origin = 'L100_merger_origin_r
 
 
 # Will overlay galaxies from the last merger they had that was attributed to a merger   
-def _plot_relaxation_time_merger(csv_merger_origin = 'L100_merger_origin_r0.1r10_t0.1t2.0_both_stars_gas_sf_rad2.0_projFalse_',
+def _plot_relaxation_time_merger(csv_merger_origin = 'L100_merger_origin_r0.1r10_t0.1t2.0_both_stars_gas_sf_rad2.0_projTrue_',
                                        #--------------------------
                                        # Galaxy plotting
                                        print_summary  = True,
                                          plot_type               = 'time',            # 'time', 'snap'
-                                         plot_merger_limit       = 0.1,               # smallest merger ratio to plot
                                          plot_GalaxyIDs          = False,             # Whether to add galaxyIDs 
                                          plot_number_of_galaxies_start = 0,                # galaxy number to start on (default 0)
                                          plot_number_of_galaxies_end   = 9999,               # How many galaxies to plot (largely for testing), set to 1000000
@@ -2084,6 +2091,7 @@ def _plot_relaxation_time_merger(csv_merger_origin = 'L100_merger_origin_r0.1r10
     
     # Loading sample criteria
     timescale_input = timescale_dict_load['output_input']
+    plot_merger_limit = float(timescale_input['merger_threshold_min'])
     
     if print_progress:
         print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
@@ -2299,12 +2307,11 @@ def _plot_relaxation_time_merger(csv_merger_origin = 'L100_merger_origin_r0.1r10
 #_extract_criteria_galaxies()
 #_create_merger_tree_csv()
 
-_analyse_misalignment_timescales()
-_analyse_merger_origin_timescales()
+#_analyse_misalignment_timescales()
+#_analyse_merger_origin_timescales()
 
-#_plot_time_spent_misaligned()
+_plot_time_spent_misaligned()
 #_plot_delta_misalignment_timescale()
-
 #_plot_time_spent_misaligned_merger()
 #_plot_relaxation_time_merger()
 #=============================

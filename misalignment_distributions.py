@@ -814,7 +814,7 @@ def _analysis_misalignment_distribution(csv_sample = 'L12_19_all_sample_misalign
 
 #--------------------------------
 # Plots singular graphs by reading in existing csv file
-def _plot_misalignmentt(csv_sample = 'L100_24_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+def _plot_misalignment(csv_sample = 'L100_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                        csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                        #--------------------------
                        # Galaxy plotting
@@ -827,11 +827,14 @@ def _plot_misalignmentt(csv_sample = 'L100_24_all_sample_misalignment_9.0',     
                          ETG_or_LTG         = 'ETG',           # Whether to plot only ETG/LTG
                          group_or_field     = 'both',           # Whether to plot only field/group
                          use_satellites     = False,             # Whether to include SubGroupNum =/ 0
+                         add_observational  = True,
+                       #--------------------------
+                       use_alternative_format = True,          # Poster formatting
                        #--------------------------
                        showfig       = True,
-                       savefig       = False,
+                       savefig       = True,
                          file_format = 'pdf',
-                         savefig_txt = '',
+                         savefig_txt = '_POSTER',
                        #--------------------------
                        print_progress = False,
                        debug = False):
@@ -883,7 +886,7 @@ def _plot_misalignmentt(csv_sample = 'L100_24_all_sample_misalignment_9.0',     
     print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E M*\n  Satellites: %s' %(output_input['mySims'][0][0], output_input['snapNum'], output_input['Redshift'], output_input['galaxy_mass_limit'], use_satellites))
     print('  SAMPLE LENGTH: ', len(GroupNum_List))
     print('\nOUTPUT LOADED:\n  Viewing axis: %s\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s\n  COM min distance: %s\n  Min. particles: %s\n  Min. inclination: %s' %(output_input['viewing_axis'], output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected'], output_input['com_min_distance'], output_input['min_particles'], output_input['min_inclination']))
-    print('\nPLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %s M*\n  Upper mass limit: %s M*\n  ETG or LTG: %s\n  Group or field: %s\n  Use satellites:  %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field, use_satellites))
+    print('\nPLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %.2E M*\n  Upper mass limit: %.2E M*\n  ETG or LTG: %s\n  Group or field: %s\n  Use satellites:  %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field, use_satellites))
     print('===================')
     
     #------------------------------
@@ -1112,7 +1115,10 @@ def _plot_misalignmentt(csv_sample = 'L100_24_all_sample_misalignment_9.0',     
             time_start = time.time()
         
         # Graph initialising and base formatting
-        fig, axs = plt.subplots(1, 1, figsize=[7.0, 4.2], sharex=True, sharey=False)
+        if use_alternative_format:
+            fig, axs = plt.subplots(1, 1, figsize=[5.0, 4.2], sharex=True, sharey=False)
+        else:
+            fig, axs = plt.subplots(1, 1, figsize=[7.0, 4.2], sharex=True, sharey=False) 
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
         
         
@@ -1133,6 +1139,30 @@ def _plot_misalignmentt(csv_sample = 'L100_24_all_sample_misalignment_9.0',     
         
         #-----------
         ### Creating graphs
+        
+        # Add raimundo observational data
+        if add_observational:
+            # Define percentages
+            obs_percent = {'ETG': [0.480, 0.180, 0.048, 0.016, 0.020, 0.016, 0.028, 0.016, 0.016, 0.028, 0.008, 0.005, 0.010, 0.004, 0.012, 0.018, 0.020, 0.065],
+                           'LTG': [0.660, 0.192, 0.072, 0.016, 0.010, 0.006, 0.010, 0.001, 0.001, 0.001, 0.001, 0.001, 0.002, 0.001, 0.003, 0.001, 0.003, 0.007]}
+            
+            obs_data = {'ETG': [],
+                        'LTG': []}
+            for obs_type_i in obs_percent.keys():
+                
+                obs_count = 1000*np.array(obs_percent[obs_type_i])
+                
+                # Append number of galaxies for each angle histogram
+                for obs_count_i, obs_angle_i in zip(obs_count, [5, 15, 25, 35, 45, 55, 65, 75, 85, 95, 105, 115, 125, 135, 145, 155, 165, 175]):
+                    i = 0
+                    while i < obs_count_i:
+                        obs_data[obs_type_i].append(obs_angle_i)
+                        i += 1 
+                        
+            # Plot
+            axs.hist(obs_data[ETG_or_LTG], weights=np.ones(len(obs_data[ETG_or_LTG]))/len(obs_data[ETG_or_LTG]), bins=np.arange(0, 181, 10), histtype='bar', edgecolor='k', facecolor=None, hatch='/', fill=False, linestyle='--', alpha=0.5)
+        
+        
         # Plot histogram
         axs.hist(plot_angles, weights=np.ones(catalogue['plot']['all'])/catalogue['plot']['all'], bins=np.arange(0, 181, 10), histtype='bar', edgecolor='none', facecolor=plot_color, alpha=0.1)
         bin_count, _, _ = axs.hist(plot_angles, weights=np.ones(catalogue['plot']['all'])/catalogue['plot']['all'], bins=np.arange(0, 181, 10), histtype='bar', edgecolor=plot_color, facecolor='none', alpha=1.0)
@@ -1140,6 +1170,7 @@ def _plot_misalignmentt(csv_sample = 'L100_24_all_sample_misalignment_9.0',     
         # Add poisson errors to each bin (sqrt N)
         hist_n, _ = np.histogram(plot_angles, bins=np.arange(0, 181, 10), range=(0, 180))
         axs.errorbar(np.arange(5, 181, 10), hist_n/catalogue['plot']['all'], xerr=None, yerr=np.sqrt(hist_n)/catalogue['plot']['all'], ecolor=plot_color, ls='none', capsize=4, elinewidth=1, markeredgewidth=1)
+        
         
         
         #-----------
@@ -1161,44 +1192,93 @@ def _plot_misalignmentt(csv_sample = 'L100_24_all_sample_misalignment_9.0',     
         
         
         #-----------
-        ### Legend
-        legend_elements = [Line2D([0], [0], marker=' ', color='w')]
-        legend_labels = [plot_label]
-        legend_colors = [plot_color]
+        ### Legend 1
+        # NEW LEGEND
+        if use_alternative_format:
+            legend_elements = [Line2D([0], [0], marker=' ', color='w')]
+            legend_labels = [ETG_or_LTG + ' sample']
+            legend_colors = [plot_color]
         
-        # Add mass range
-        if (lower_mass_limit != 10**9) and (upper_mass_limit != 10**15):
-            legend_labels.append('$10 ^{%.1f} - 10 ^{%.1f}$ M$_{\odot}$' %(np.log10(lower_mass_limit), np.log10(upper_mass_limit)))    
+            if add_observational:
+                legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+                legend_labels.append('Raimundo et al. (2023)')
+                legend_colors.append('grey')
+        
+            legend1 = axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
+            axs.add_artist(legend1)
+        
+        
+            ### Legend 2
+            legend_elements = []
+            legend_labels = []
+            legend_colors = []
+        
+            # Add mass range
+            if (lower_mass_limit != 10**9) and (upper_mass_limit != 10**15):
+                legend_labels.append('$10 ^{%.1f} - 10 ^{%.1f}$ M$_{\odot}$' %(np.log10(lower_mass_limit), np.log10(upper_mass_limit)))    
+                legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+                legend_colors.append('grey')
+            elif (lower_mass_limit != 10**9):
+                legend_labels.append('$> 10 ^{%.1f}$ M$_{\odot}$' %(np.log10(lower_mass_limit)))    
+                legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+                legend_colors.append('grey')
+            elif (upper_mass_limit != 10**15):
+                legend_labels.append('$< 10 ^{%.1f}$ M$_{\odot}$' %(np.log10(upper_mass_limit)))    
+                legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+                legend_colors.append('grey')
+        
+            if group_or_field != 'both':
+                legend_labels.append('%s-galaxies' %group_or_field)
+                legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+                legend_colors.append('grey')
+        
+            # Add redshift
+            legend_labels.append('${z=%.2f}$' %sample_input['Redshift'])
             legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-            legend_colors.append('grey')
-        elif (lower_mass_limit != 10**9):
-            legend_labels.append('$> 10 ^{%.1f}$ M$_{\odot}$' %(np.log10(lower_mass_limit)))    
+            legend_colors.append('k')
+        
+            legend2 = axs.legend(handles=legend_elements, labels=legend_labels, loc='best', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
+            axs.add_artist(legend2)
+        
+        # OLD LEGEND
+        if not use_alternative_format:
+            legend_elements = [Line2D([0], [0], marker=' ', color='w')]
+            legend_labels = [plot_label]
+            legend_colors = [plot_color]
+        
+            # Add mass range
+            if (lower_mass_limit != 10**9) and (upper_mass_limit != 10**15):
+                legend_labels.append('$10 ^{%.1f} - 10 ^{%.1f}$ M$_{\odot}$' %(np.log10(lower_mass_limit), np.log10(upper_mass_limit)))    
+                legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+                legend_colors.append('grey')
+            elif (lower_mass_limit != 10**9):
+                legend_labels.append('$> 10 ^{%.1f}$ M$_{\odot}$' %(np.log10(lower_mass_limit)))    
+                legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+                legend_colors.append('grey')
+            elif (upper_mass_limit != 10**15):
+                legend_labels.append('$< 10 ^{%.1f}$ M$_{\odot}$' %(np.log10(upper_mass_limit)))    
+                legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+                legend_colors.append('grey')
+        
+            # Add LTG/ETG if specified
+            if ETG_or_LTG != 'both':
+                legend_labels.append('%s' %ETG_or_LTG)
+                legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+                legend_colors.append('grey')
+        
+            if group_or_field != 'both':
+                legend_labels.append('%s-galaxies' %group_or_field)
+                legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+                legend_colors.append('grey')
+        
+            # Add redshift
+            legend_labels.append('${z=%.2f}$' %sample_input['Redshift'])
             legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-            legend_colors.append('grey')
-        elif (upper_mass_limit != 10**15):
-            legend_labels.append('$< 10 ^{%.1f}$ M$_{\odot}$' %(np.log10(upper_mass_limit)))    
-            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-            legend_colors.append('grey')
+            legend_colors.append('k')
         
-        # Add LTG/ETG if specified
-        if ETG_or_LTG != 'both':
-            legend_labels.append('%s' %ETG_or_LTG)
-            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-            legend_colors.append('grey')
-        
-        if group_or_field != 'both':
-            legend_labels.append('%s-galaxies' %group_or_field)
-            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-            legend_colors.append('grey')
-        
-        # Add redshift
-        legend_labels.append('${z=%.2f}$' %sample_input['Redshift'])
-        legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-        legend_colors.append('k')
-        
-        axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
-        
-        
+            axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
+            
+            
         #-----------
         # other
         plt.tight_layout()
@@ -1319,7 +1399,7 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
                            use_satellites     = False,             # Whether to include SubGroupNum =/ 0
                          #--------------------------
                          showfig       = True,
-                         savefig       = False,
+                         savefig       = True,
                            file_format = 'pdf',
                            savefig_txt = '',
                          #--------------------------
@@ -1820,7 +1900,7 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
 #_analysis_misalignment_minor()
 #_analysis_misalignment_distribution()
 
-#_plot_misalignment()
+_plot_misalignment()
 #_plot_misalignment_z()
 #===========================
     

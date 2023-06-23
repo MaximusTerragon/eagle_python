@@ -101,8 +101,8 @@ SAMPLE:
 def _analysis_radial_evolution(csv_sample = False,              # Whether to read in existing list of galaxies  
                                #--------------------------
                                mySims = [('RefL0012N0188', 12)],
-                               GalaxyID_List_target = [30494],               # Will create a csv file for each galaxy
-                               snapNumMax           = 10,                    # Highest snapNum to go to
+                               GalaxyID_List_target = [37445],               # Will create a csv file for each galaxy
+                               snapNumMax           = 19,                    # Highest snapNum to go to
                                #--------------------------
                                # Galaxy extraction properties
                                viewing_axis        = 'z',                  # Which axis to view galaxy from.  DEFAULT 'z'
@@ -119,7 +119,7 @@ def _analysis_radial_evolution(csv_sample = False,              # Whether to rea
                                                       'stars_gas_nsf',        # gas_sf_gas_nsf
                                                       'gas_sf_gas_nsf',
                                                       'stars_dm'],           
-                               spin_hmr            = np.arange(0.5, 3.1, 0.5),          # multiples of hmr for which to find spin
+                               spin_hmr            = np.array([1.0, 2.0]),          # multiples of hmr for which to find spin
                                find_uncertainties  = True,                    # whether to find 2D and 3D uncertainties
                                rad_projected       = True,                     # whether to use rad in projection or 3D
                                #--------------------------
@@ -227,8 +227,6 @@ def _analysis_radial_evolution(csv_sample = False,              # Whether to rea
     assert snapNumMax >= 10, 'Limit of snapshots reached'
     
     
-    
-    
     output_input = {'angle_selection': angle_selection,
                     'spin_hmr': spin_hmr,
                     'find_uncertainties': find_uncertainties,
@@ -309,6 +307,8 @@ def _analysis_radial_evolution(csv_sample = False,              # Whether to rea
         total_masses        = {}        # has all the particle mass within rad
         total_misangles     = {}        # has all 3D angles
         total_misanglesproj = {}        # has all 2D projected angles from 3d when given a viewing axis and viewing_angle = 0
+        total_gasdata       = {}        # has all gas particle IDs
+        total_massflow      = {}        # has all mass flow from previous snap to current (=math.nan for first)
     
         # Merger tree stuff
         total_allbranches = {}
@@ -324,6 +324,8 @@ def _analysis_radial_evolution(csv_sample = False,              # Whether to rea
         total_masses.update({'%s' %target_GalaxyID: {}})
         total_misangles.update({'%s' %target_GalaxyID: {}})
         total_misanglesproj.update({'%s' %target_GalaxyID: {}})
+        total_gasdata.update({'%s' %target_GalaxyID: {}})
+        total_massflow.update({'%s' %target_GalaxyID: {}})
     
         total_allbranches.update({'%s' %target_GalaxyID: tree.all_branches})
         total_mainbranch.update({'%s' %target_GalaxyID: tree.main_branch})
@@ -333,7 +335,7 @@ def _analysis_radial_evolution(csv_sample = False,              # Whether to rea
         
         #=================================================================== 
         # Run analysis for each individual galaxy in loaded sample
-        for GroupNum, SubGroupNum, GalaxyID, SnapNum, Redshift, HaloMass, Centre_i, MorphoKinem in tqdm(zip(GroupNum_List, SubGroupNum_List, GalaxyID_List, SnapNum_List, Redshift_List, HaloMass_List, Centre_List, MorphoKinem_List), total=len(GroupNum_List)):
+        for GroupNum, SubGroupNum, GalaxyID, SnapNum, Redshift, HaloMass, Centre_i, MorphoKinem, snap_iteration in tqdm(zip(GroupNum_List, SubGroupNum_List, GalaxyID_List, SnapNum_List, Redshift_List, HaloMass_List, Centre_List, MorphoKinem_List, np.arange(len(GroupNum_List))), total=len(GroupNum_List)):
         
             if print_progress:
                  print('Extracting particle data Subhalo_Extract()')
@@ -384,9 +386,17 @@ def _analysis_radial_evolution(csv_sample = False,              # Whether to rea
                 if len(spin_hmr_in) != len(spin_hmr_tmp):
                     print('Capped spin_rad: %.2f - %.2f - %.2f HMR | Min/Max %.2f / %.2f pkpc' %(min(spin_hmr_in), (max(spin_hmr_in) - min(spin_hmr_in))/(len(spin_hmr_in) - 1), max(spin_hmr_in), min(spin_rad_in), max(spin_rad_in)))
         
-        
+            
+            # Skip inflow/outflow for first snap
+            if snap_iteration == 0:
+                gas_data_old = False
+            # If not first snap, use predecessor gasdata
+            else:
+                gas_data_old = total_gasdata['%s' %target_GalaxyID]['%s' %str(int(GalaxyID)+1)]
+            
+            
             # If we want the original values, enter 0 for viewing angle
-            subhalo = Subhalo_Analysis(mySims, GroupNum, SubGroupNum, GalaxyID, SnapNum, MorphoKinem, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.data_nil,  
+            subhalo = Subhalo_Analysis(mySims, GroupNum, SubGroupNum, GalaxyID, SnapNum, MorphoKinem, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.data_nil, 
                                                 viewing_axis,
                                                 aperture_rad,
                                                 kappa_rad, 
@@ -399,10 +409,13 @@ def _analysis_radial_evolution(csv_sample = False,              # Whether to rea
                                                 spin_rad_in,
                                                 spin_hmr_in,
                                                 find_uncertainties,
+                                                rad_projected,
                                             
                                                 com_min_distance,
                                                 min_particles,                                            
-                                                min_inclination)
+                                                min_inclination,
+                                                
+                                                gas_data_old)
     
             """ FLAGS 
             ------------
@@ -412,6 +425,15 @@ def _analysis_radial_evolution(csv_sample = False,              # Whether to rea
             #print(subhalo.flags['com_min_distance'])           # will flag if com distance not met within spin_rad... all spins and uncertainties still calculated
             ------------
             """
+            
+            """ INFLOW OUTFLOW 
+            print(subhalo.mass_flow['2.0_hmr']['gas']['inflow'])
+            print(subhalo.mass_flow['2.0_hmr']['gas']['outflow'])
+            print(subhalo.mass_flow['2.0_hmr']['gas']['massloss'])
+            """
+            #print(subhalo.bh_mdot)
+            #print(subhalo.bh_edd)
+            print(subhalo.bh_id)
             
             if print_galaxy:
                 print('|%s| |ID:   %s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f' %(SnapNum, str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'])) 
@@ -427,6 +449,8 @@ def _analysis_radial_evolution(csv_sample = False,              # Whether to rea
             total_masses['%s' %target_GalaxyID]['%s' %str(subhalo.GalaxyID)]        = subhalo.masses
             total_misangles['%s' %target_GalaxyID]['%s' %str(subhalo.GalaxyID)]     = subhalo.mis_angles
             total_misanglesproj['%s' %target_GalaxyID]['%s' %str(subhalo.GalaxyID)] = subhalo.mis_angles_proj
+            total_gasdata['%s' %target_GalaxyID]['%s' %str(subhalo.GalaxyID)]       = subhalo.gas_data
+            total_massflow['%s' %target_GalaxyID]['%s' %str(subhalo.GalaxyID)]      = subhalo.mass_flow
             #---------------------------------
                   
                   
@@ -458,6 +482,8 @@ def _analysis_radial_evolution(csv_sample = False,              # Whether to rea
                         'total_masses': total_masses,
                         'total_misangles': total_misangles, 
                         'total_misanglesproj': total_misanglesproj, 
+                        'total_gasdata': total_gasdata,
+                        'total_massflow': total_massflow,
                         'total_allbranches': total_allbranches, 
                         'total_mainbranch': total_mainbranch, 
                         'total_mergers': total_mergers,
@@ -520,25 +546,632 @@ def _analysis_radial_evolution(csv_sample = False,              # Whether to rea
             """
 
 
-#------------
+   
+#--------------------
+# Will plot evolution of single galaxy but with improved formatting for poster/presentation and with outflows/inflows
+def _plot_radial_evolution(csv_output = 'L12_evolution_ID37445_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load 
+                               csv_merger_tree = 'L12_merger_tree_',
+                               #--------------------------
+                               # Galaxy plotting
+                               print_summary = True,
+                                 use_angles         = ['stars_gas_sf'],                 # Which angles to plot
+                                 use_hmr            = [1, 2],         # Which misangle HMR to plot
+                                 use_hmr_frac       = [2],                # Which mass and fraction HMR to plot  
+                                 use_proj_angle     = False,                   # Whether to use projected or absolute angle, 'both'
+                                 use_uncertainties  = True,                   # Whether to plot uncertainties or not
+                                 min_merger_ratio   = 0.05,
+                              #-------------------------
+                              # Plot settings
+                              highlight_criteria = True,       # whether to indicate when criteria not met (but still plot)
+                              rad_type_plot      = 'hmr',      # 'rad' whether to use absolute distance or hmr 
+                              #--------------------------
+                              showfig        = True,
+                              savefig        = True,
+                                file_format  = 'pdf',
+                                savefig_txt  = '',
+                              #--------------------------
+                              print_progress = False,
+                              debug = False):
+    
+    
+    
+    #================================================  
+    # Load sample csv
+    if print_progress:
+        print('Loading output')
+        time_start = time.time()
+    
+    #--------------------------------
+    # Loading output
+    dict_output = json.load(open('%s/%s.csv' %(output_dir, csv_output), 'r'))
+    
+    # Loading merger tree
+    merger_tree_load  = json.load(open('%s/%s.csv' %(output_dir, csv_merger_tree), 'r'))
+    merger_tree       = merger_tree_load['tree_dict']     
+    merger_tree_input = merger_tree_load['output_input']
+    
+    
+    #--------------------------------
+    total_flags           = dict_output['total_flags']
+    total_general         = dict_output['total_general']
+    total_spins           = dict_output['total_spins']
+    total_counts          = dict_output['total_counts']
+    total_masses          = dict_output['total_masses']
+    total_coms            = dict_output['total_coms']
+    total_misangles       = dict_output['total_misangles']
+    total_misanglesproj   = dict_output['total_misanglesproj']
+    total_massflow        = dict_output['total_massflow']
+    
+    total_allbranches     = dict_output['total_allbranches']
+    total_mainbranch      = dict_output['total_mainbranch']
+    total_mergers         = dict_output['total_mergers']
+    
+    # Loading sample criteria
+    output_input        = dict_output['output_input']
+    
+    #---------------------------------
+    # Extract GroupNum, SubGroupNum, and Snap for each ID
+    GalaxyID_List_target = list(total_general.keys())
+        
+    if print_progress:
+        print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+        
+    print('\n===================')
+    print('SAMPLE LOADED:\n  %s\n  GalaxyIDs: %s' %(output_input['mySims'][0][0], GalaxyID_List_target))
+    print('  SAMPLE LENGTH: ', len(GalaxyID_List_target))
+    print('\nOUTPUT LOADED:\n  Max Snap: %s\n  Viewing axis: %s\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s\n  COM min distance: %s\n  Min. particles: %s\n  Min. inclination: %s' %(output_input['snapNumMax'], output_input['viewing_axis'], output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected'], output_input['com_min_distance'], output_input['min_particles'], output_input['min_inclination']))
+    print('\nPLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle:    %s\n  Uncertainties:      %s\n  Highlight Criteria: %s\n  Rad or HMR:         %s' %(use_angles, use_hmr, use_proj_angle, use_uncertainties, highlight_criteria, rad_type_plot))
+    print('===================')
+    
+
+    #------------------------------
+    # Check if requested plot is possible with loaded data
+    for use_angles_i in use_angles:
+        assert use_angles_i in output_input['angle_selection'], 'Requested angle %s not in output_input' %use_angles_i
+    for use_hmr_i in use_hmr:
+        assert use_hmr_i in output_input['spin_hmr'], 'Requested HMR %s not in output_input' %use_hmr_i
+    if use_uncertainties:
+        assert use_uncertainties == output_input['find_uncertainties'], 'Output file does not contain uncertainties to plot'
+    
+    #=======================================
+    # Iterate over all GalaxyIDList_targets
+    for target_GalaxyID in tqdm(np.array(GalaxyID_List_target)):
+        
+        #---------------------------------------------------
+        # Graph initialising and base formatting
+        fig, axs = plt.subplots(nrows=5, ncols=1, gridspec_kw={'height_ratios': [4, 4, 2, 2, 2]}, figsize=[5.5, 12.5], sharex=True, sharey=False)
+        
+    
+        #----------------------------
+        # Add mergers
+        for galaxyID_i, ratio_i, gas_ratio_i, lookbacktime_i, snap_i in zip(total_mergers['%s' %target_GalaxyID]['GalaxyIDs'], total_mergers['%s' %target_GalaxyID]['ratios'], total_mergers['%s' %target_GalaxyID]['gasratios'], total_mainbranch['%s' %target_GalaxyID]['lookbacktime'], total_mainbranch['%s' %target_GalaxyID]['snapnum']):
+            
+            if len(ratio_i) == 0:
+                continue
+            
+            else:
+                if max(ratio_i) >= min_merger_ratio:
+                    for ax in axs:
+                        ax.axvline(lookbacktime_i, ls='--', color='grey', alpha=0.8, linewidth=2)
+
+                    if snap_i > int(output_input['snapNumMax']):
+                        
+                        # Manually finding merger masses
+                        primary_stelmass  = float(merger_tree['%s' %(int(target_GalaxyID) +  28 - int(snap_i))]['%s' %(int(target_GalaxyID) +  28 - int(snap_i) + 1)]['stelmass'])
+                        primary_gasmass   = float(merger_tree['%s' %(int(target_GalaxyID) +  28 - int(snap_i))]['%s' %(int(target_GalaxyID) +  28 - int(snap_i) + 1)]['gasmass'])
+                        primary_gassfmass = float(merger_tree['%s' %(int(target_GalaxyID) +  28 - int(snap_i))]['%s' %(int(target_GalaxyID) +  28 - int(snap_i) + 1)]['gasmass_sf'])
+                        for mergerID_i in galaxyID_i[np.argmax(np.array(ratio_i))]:
+                            # if primary, skip
+                            if int(mergerID_i) == (int(target_GalaxyID) +  28 - int(snap_i) + 1):
+                                continue
+                            
+                            secondary_stelmass  = float(merger_tree['%s' %(int(target_GalaxyID) +  28 - int(snap_i))]['%s' %mergerID_i]['stelmass'])
+                            secondary_gasmass   = float(merger_tree['%s' %(int(target_GalaxyID) +  28 - int(snap_i))]['%s' %mergerID_i]['gasmass'])
+                            secondary_gassfmass = float(merger_tree['%s' %(int(target_GalaxyID) +  28 - int(snap_i))]['%s' %mergerID_i]['gasmass_sf'])
+                        
+                        # Find merger ratios
+                        manual_ratio = secondary_stelmass/primary_stelmass
+                        manual_gas_ratio = secondary_gasmass/primary_gasmass
+                        manual_gassf_ratio = secondary_gassfmass/primary_gassfmass
+
+                    # Annotate
+                    axs[0].text(lookbacktime_i-0.2, 165, '%.2f' %manual_ratio, color='grey')
+                    #axs[0].text(lookbacktime_i-0.2, 160, '%.2f' %manual_gas_ratio, color='green')
+                    axs[0].text(lookbacktime_i-0.2, 150, '%.2f' %manual_gassf_ratio, color='blue')
+        
+        #----------------------------
+        # Add time spent as satellite
+        time_start = 0
+        for SubGroupNum_i, lookbacktime_i, snap_i in zip(total_mainbranch['%s' %target_GalaxyID]['SubGroupNumber'], total_mainbranch['%s' %target_GalaxyID]['lookbacktime'], total_mainbranch['%s' %target_GalaxyID]['snapnum']):
+            if (SubGroupNum_i == 0) & (time_start == 0):
+                continue
+            elif (SubGroupNum_i != 0) & (time_start == 0):
+                time_start = lookbacktime_i
+                time_end = lookbacktime_i
+            elif (SubGroupNum_i != 0) & (time_start != 0):
+                time_end = lookbacktime_i
+                continue
+            elif (SubGroupNum_i == 0) & (time_start != 0):
+                time_end = lookbacktime_i
+                for ax in axs:
+                    ax.axvspan(time_start, time_end, facecolor='grey', alpha=0.2)
+                
+                time_start = 0
+                time_end = 0
+        
+        
+        #===========================
+        # Loop over each angle type
+        for plot_count, use_angle_i in enumerate(use_angles):
+            
+            #------------------------
+            # Setting colors and labels
+            if use_angle_i == 'stars_gas':
+                plot_color = 'green'
+                plot_cmap  = plt.get_cmap('Greens')(np.linspace(0.4, 0.9, len(use_hmr)))
+                plot_label = 'Stars-gas'
+                use_particles = ['stars', 'gas']
+            elif use_angle_i == 'stars_gas_sf':
+                plot_color = 'b'
+                plot_cmap  = plt.get_cmap('Blues')(np.linspace(0.4, 0.9, len(use_hmr)))
+                plot_label = 'Stars-gas$_{sf}$'
+                use_particles = ['stars', 'gas_sf']
+            elif use_angle_i == 'stars_gas_nsf':
+                plot_color = 'indigo'
+                plot_cmap  = plt.get_cmap('Purples')(np.linspace(0.4, 0.9, len(use_hmr)))
+                plot_label = 'Stars-gas$_{nsf}$'
+                use_particles = ['stars', 'gas_nsf']
+            elif use_angle_i == 'stars_dm':
+                plot_color = 'r'
+                plot_cmap  = plt.get_cmap('Reds')(np.linspace(0.4, 0.9, len(use_hmr)))
+                plot_label = 'Stars-DM'
+                use_particles = ['stars', 'nsf']
+            else:
+                plot_color = 'brown'
+                plot_cmap  = plt.get_cmap('Greys')(np.linspace(0.4, 0.9, len(use_hmr)))
+                plot_label = use_angle_i
+                raise Exception('Not configured other plot types yet')
+            
+            if output_input['rad_projected'] == True:
+                r50 = '$r_{1/2,z}$'
+            if output_input['rad_projected'] == False:
+                r50 = '$r_{1/2}$'
+            
+            # Create some colormaps of things we want
+            #colors_blues    = plt.get_cmap('Blues')(np.linspace(0.4, 0.9, len(use_hmr)))
+            #colors_reds     = plt.get_cmap('Reds')(np.linspace(0.4, 0.9, len(use_hmr)))
+            #colors_greens   = plt.get_cmap('Greens')(np.linspace(0.4, 0.9, len(use_hmr)))
+            #colors_spectral = plt.get_cmap('Spectral_r')(np.linspace(0.05, 0.95, len(use_hmr)))
+            plot_cmap = plt.get_cmap('tab10')(np.arange(0, len(use_hmr), 1))
+
+            #-----------------------
+            # Loop over each rad
+            for hmr_i, color_angle in zip(np.flip(use_hmr), plot_cmap):
+
+                # Create empty arrays to plot
+                plot_lookbacktime = []
+                plot_redshift     = []
+
+                plot_angles         = []
+                plot_angles_small   = []
+                plot_angles_lo      = []
+                plot_angles_hi      = []
+                plot_angles_proj        = []
+                plot_angles_proj_small  = []
+                plot_angles_proj_lo     = []
+                plot_angles_proj_hi     = []
+
+                plot_stelmass     = []
+                plot_gasmass      = []
+                plot_gassfmass    = []
+                
+                plot_gas_frac     = []
+                plot_gassf_frac   = []
+
+
+                #-------------------------------------
+                # Same as taking 'for redshift in XX'
+                for GalaxyID_i, lookbacktime_i, redshift_i in zip(np.array(total_mainbranch['%s' %target_GalaxyID]['GalaxyID']), np.array(total_mainbranch['%s' %target_GalaxyID]['lookbacktime']), np.array(total_mainbranch['%s' %target_GalaxyID]['redshift'])):
+                                    
+                    #----------
+                    # Extracting misalignment angles
+                    if use_proj_angle == True:
+                        if (hmr_i in total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['hmr']):
+                            # Mask correct integer (formatting weird but works)
+                            mask_rad = int(np.where(np.array(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['hmr']) == hmr_i)[0])
+                            
+                            if (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['min_inclination'][use_particles[0]]) and (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['min_inclination'][use_particles[1]]) and (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['min_particles'][use_particles[0]]) and (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['min_particles'][use_particles[1]]) and (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['com_min_distance'][use_angle_i]) and (total_general['%s' %target_GalaxyID]['%s' %GalaxyID_i]['stelmass'] > 1E9):
+                                plot_angles_proj.append(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['%s_angle' %use_angle_i][mask_rad])                      
+                                plot_angles_proj_small.append(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['%s_angle' %use_angle_i][mask_rad])                      
+                                plot_angles_proj_lo.append(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['%s_angle_err' %use_angle_i][mask_rad][0])
+                                plot_angles_proj_hi.append(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['%s_angle_err' %use_angle_i][mask_rad][1])
+                                
+                            else:
+                                plot_angles_proj.append(math.nan)
+                                plot_angles_proj_small.append(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['%s_angle' %use_angle_i][mask_rad])
+                                plot_angles_proj_lo.append(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['%s_angle_err' %use_angle_i][mask_rad][0])
+                                plot_angles_proj_hi.append(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['%s_angle_err' %use_angle_i][mask_rad][1])
+                                
+                        else:
+                            # append nans if hmr_i was trimmed
+                            plot_angles_proj_small.append(math.nan)
+                            plot_angles_proj.append(math.nan)
+                            plot_angles_proj_lo.append(math.nan)
+                            plot_angles_proj_hi.append(math.nan)   
+                    elif use_proj_angle == False:
+                        if (hmr_i in total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['hmr']):
+                            # Mask correct integer (formatting weird but works)
+                            mask_rad = int(np.where(np.array(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['hmr']) == hmr_i)[0])
+                            
+                            if (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['min_particles'][use_particles[0]]) and (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['min_particles'][use_particles[1]]) and (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['com_min_distance'][use_angle_i]) and (total_general['%s' %target_GalaxyID]['%s' %GalaxyID_i]['stelmass'] > 1E9):
+                                plot_angles.append(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['%s_angle' %use_angle_i][mask_rad])
+                                plot_angles_small.append(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['%s_angle' %use_angle_i][mask_rad])
+                                plot_angles_lo.append(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['%s_angle_err' %use_angle_i][mask_rad][0])
+                                plot_angles_hi.append(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['%s_angle_err' %use_angle_i][mask_rad][1])
+                            else:
+                                plot_angles.append(math.nan)
+                                plot_angles_small.append(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['%s_angle' %use_angle_i][mask_rad])
+                                plot_angles_lo.append(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['%s_angle_err' %use_angle_i][mask_rad][0])
+                                plot_angles_hi.append(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['%s_angle_err' %use_angle_i][mask_rad][1])
+                                
+                        else:
+                            # append nans if hmr_i was trimmed
+                            plot_angles.append(math.nan)
+                            plot_angles_small.append(math.nan)
+                            plot_angles_lo.append(math.nan)
+                            plot_angles_hi.append(math.nan)
+                    elif use_proj_angle == 'both':
+                        if (hmr_i in total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['hmr']):
+                            # Mask correct integer (formatting weird but works)
+                            mask_rad = int(np.where(np.array(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['hmr']) == hmr_i)[0])
+                            
+                            if (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['min_inclination'][use_particles[0]]) and (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['min_inclination'][use_particles[1]]) and (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['min_particles'][use_particles[0]]) and (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['min_particles'][use_particles[1]]) and (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['com_min_distance'][use_angle_i]) and (total_general['%s' %target_GalaxyID]['%s' %GalaxyID_i]['stelmass'] > 1E9):
+                                plot_angles_proj.append(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['%s_angle' %use_angle_i][mask_rad])                      
+                                plot_angles_proj_small.append(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['%s_angle' %use_angle_i][mask_rad])                      
+                                plot_angles_proj_lo.append(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['%s_angle_err' %use_angle_i][mask_rad][0])
+                                plot_angles_proj_hi.append(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['%s_angle_err' %use_angle_i][mask_rad][1])
+                                
+                            else:
+                                plot_angles_proj.append(math.nan)
+                                plot_angles_proj_small.append(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['%s_angle' %use_angle_i][mask_rad])
+                                plot_angles_proj_lo.append(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['%s_angle_err' %use_angle_i][mask_rad][0])
+                                plot_angles_proj_hi.append(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['%s_angle_err' %use_angle_i][mask_rad][1])
+                                
+                        else:
+                            # append nans if hmr_i was trimmed
+                            plot_angles_proj_small.append(math.nan)
+                            plot_angles_proj.append(math.nan)
+                            plot_angles_proj_lo.append(math.nan)
+                            plot_angles_proj_hi.append(math.nan)
+                        
+                        if (hmr_i in total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['hmr']):
+                            # Mask correct integer (formatting weird but works)
+                            mask_rad = int(np.where(np.array(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['hmr']) == hmr_i)[0])
+                            
+                            if (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['min_particles'][use_particles[0]]) and (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['min_particles'][use_particles[1]]) and (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['com_min_distance'][use_angle_i]) and (total_general['%s' %target_GalaxyID]['%s' %GalaxyID_i]['stelmass'] > 1E9):
+                                plot_angles.append(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['%s_angle' %use_angle_i][mask_rad])
+                                plot_angles_small.append(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['%s_angle' %use_angle_i][mask_rad])
+                                plot_angles_lo.append(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['%s_angle_err' %use_angle_i][mask_rad][0])
+                                plot_angles_hi.append(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['%s_angle_err' %use_angle_i][mask_rad][1])
+                            else:
+                                plot_angles.append(math.nan)
+                                plot_angles_small.append(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['%s_angle' %use_angle_i][mask_rad])
+                                plot_angles_lo.append(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['%s_angle_err' %use_angle_i][mask_rad][0])
+                                plot_angles_hi.append(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['%s_angle_err' %use_angle_i][mask_rad][1])
+                                
+                        else:
+                            # append nans if hmr_i was trimmed
+                            plot_angles.append(math.nan)
+                            plot_angles_small.append(math.nan)
+                            plot_angles_lo.append(math.nan)
+                            plot_angles_hi.append(math.nan)
+                        
+
+                    #----------
+                    # Gather gas masses and fractions
+                    if hmr_i in use_hmr_frac:
+                        if hmr_i in total_masses['%s' %target_GalaxyID]['%s' %GalaxyID_i]['hmr']:
+                            # Mask correct integer (formatting weird but works)
+                            mask_rad = int(np.where(np.array(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['hmr']) == hmr_i)[0])
+                            
+                            plot_stelmass.append(total_masses['%s' %target_GalaxyID]['%s' %GalaxyID_i]['stars'][mask_rad])
+                            plot_gasmass.append(total_masses['%s' %target_GalaxyID]['%s' %GalaxyID_i]['gas'][mask_rad])
+                            plot_gassfmass.append(total_masses['%s' %target_GalaxyID]['%s' %GalaxyID_i]['gas_sf'][mask_rad])
+                            
+                            plot_gas_frac.append(total_masses['%s' %target_GalaxyID]['%s' %GalaxyID_i]['gas'][mask_rad] / (total_masses['%s' %target_GalaxyID]['%s' %GalaxyID_i]['stars'][mask_rad] + total_masses['%s' %target_GalaxyID]['%s' %GalaxyID_i]['gas'][mask_rad]))
+                            plot_gassf_frac.append(total_masses['%s' %target_GalaxyID]['%s' %GalaxyID_i]['gas_sf'][mask_rad] / (total_masses['%s' %target_GalaxyID]['%s' %GalaxyID_i]['stars'][mask_rad] + total_masses['%s' %target_GalaxyID]['%s' %GalaxyID_i]['gas'][mask_rad]))
+                            
+                        else:
+                            plot_stelmass.append(math.nan)
+                            plot_gasmass.append(math.nan)
+                            plot_gassfmass.append(math.nan)
+                            plot_gas_frac.append(math.nan)
+                            plot_gassf_frac.append(math.nan)
+
+                    
+                    #----------
+                    # Gather times
+                    plot_redshift.append(redshift_i)
+                    plot_lookbacktime.append(lookbacktime_i)   
+                
+                
+                if debug:
+                    print('Target galaxy: %s' %target_GalaxyID)
+                    print('. plot_lookbacktime: ', lookbacktime_plot)
+                    print('\n  plot_angles: ', plot_angles)
+                    print('  plot_angles_lo: ', plot_angles_lo)
+                    print('  plot_angles_hi: ', plot_angles_hi)
+                    print('\n  plot_angles_proj: ', plot_angles_proj)
+                    print('  plot_angles_proj_lo: ', plot_angles_proj_lo)
+                    print('  plot_angles_proj_hi: ', plot_angles_proj_hi)
+                    print('\n  plot_stelmass: ', plot_stelmass)
+                    print('  plot_gasmass: ', plot_gasmass)
+                    print('  plot_gassfmass: ', plot_gassfmass)
+                    print('\n  plot_gas_frac: ', plot_gas_frac)
+                    print('  plot_gassf_frac: ', plot_gassf_frac)
+                    
+                #====================================
+                ### Plotting
+                # Plot 1: Misalignment angles, errors, with time/redshift
+                # Plot 2: Stellar mass, gas mass, gas sf mass, with time/redshift
+                # Plot 3: Gas fractions with time/redshift
+                
+                #------------------------
+                # PLOT 1
+                # Plot scatter and errorbars
+                
+                if use_proj_angle == True:
+                    axs[0].plot(plot_lookbacktime, plot_angles_proj_small, alpha=1, ms=2, ls=':', c='grey', zorder=8)
+                    axs[0].plot(plot_lookbacktime, plot_angles_proj, alpha=1, ms=2, ls='-', c=color_angle, zorder=10, label='%.0f%s' %(hmr_i, r50))
+                        
+                    if use_uncertainties:
+                        axs[0].fill_between(plot_lookbacktime, plot_angles_proj_lo, plot_angles_proj_hi, alpha=0.25, color=color_angle, lw=0, zorder=5)
+                elif use_proj_angle == False:
+                    axs[0].plot(plot_lookbacktime, plot_angles_small, alpha=1, ms=2, ls=':', c='grey', zorder=8)
+                    axs[0].plot(plot_lookbacktime, plot_angles, alpha=1, ms=2, ls='-', c=color_angle, zorder=10, label='%.0f%s' %(hmr_i, r50))
+                    
+                    if use_uncertainties:
+                        axs[0].fill_between(plot_lookbacktime, plot_angles_lo, plot_angles_hi, alpha=0.25, color=color_angle, lw=0, zorder=5)
+                elif use_proj_angle == 'both':
+                    axs[0].plot(plot_lookbacktime, plot_angles_proj_small, alpha=1, ms=2, ls=':', c='grey', zorder=10)
+                    axs[0].plot(plot_lookbacktime, plot_angles_proj, alpha=1, ms=2, ls='-', c=color_angle, zorder=10, label='%.0f%s' %(hmr_i, r50))
+
+                    axs[0].plot(plot_lookbacktime, plot_angles_small, alpha=1, ms=2, ls=':', c='grey', zorder=8)
+                    axs[0].plot(plot_lookbacktime, plot_angles, alpha=1, ms=2, ls='dashdot', c=color_angle, zorder=10)
+                    
+                    if use_uncertainties:
+                        axs[0].fill_between(plot_lookbacktime, plot_angles_proj_lo, plot_angles_proj_hi, alpha=0.25, color=color_angle, lw=0, zorder=5)
+                    
+                # Only plot the masses and fractions once, regardless of angle type
+                if plot_count == 0:
+                    if hmr_i in use_hmr_frac:
+                        #------------------------
+                        # PLOT 2
+                        # Plot masses
+                        axs[3].plot(plot_lookbacktime, np.log10(np.array(plot_stelmass)), alpha=1.0, lw=1.2, c='r', label='$M_*$')
+                        #axs[3].plot(plot_lookbacktime, np.log10(np.array(plot_gasmass)), alpha=1.0, lw=1.2, c='g', label='$M_{\mathrm{gas}}$')
+                        axs[3].plot(plot_lookbacktime, np.log10(np.array(plot_gassfmass)), alpha=1.0, lw=1.2, c='b', label='$M_{\mathrm{SF}}$', markerfacecolor='None')
+                    
+                
+                #----------
+                # Lists all angles at a given HMR_i over time
+                if debug:
+                    print('\nhmr: ', hmr_i )
+                    for time_i, angllle_i in zip(plot_lookbacktime, plot_angles):
+                        print('Time: %.2f   Angle: %.1f' %(time_i, angllle_i))
+        
+        #----------
+        # Lists all angles and hmr fr a given time        
+        if debug:
+            for GalaxyID_i, lookbacktime_i, redshift_i in zip(np.array(total_mainbranch['%s' %target_GalaxyID]['GalaxyID']), np.array(total_mainbranch['%s' %target_GalaxyID]['lookbacktime']), np.array(total_mainbranch['%s' %target_GalaxyID]['redshift'])):
+                print('Lookbacktime: %.2f' %lookbacktime_i)
+                for i, hmr_i in enumerate(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['hmr']):
+                    print('HMR: %.2f   Angle: %.1f' %(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['hmr'][i], total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['stars_gas_sf_angle'][i]))
+            
+        
+        #------------------------
+        # PLOT 2 & 3
+        # Find bh accretion rate, mass flow, edd
+        inflow_rate       = []
+        outflow_rate      = []
+        stelmassloss_rate = []
+        bh_mdot           = []
+        bh_edd            = []
+
+        # Plot inflow for all hmr we care about
+        for hmr_i in use_hmr_frac:
+            lookbacktime_old = math.nan
+            for GalaxyID_i, lookbacktime_i, i,  in zip(np.array(total_mainbranch['%s' %target_GalaxyID]['GalaxyID']), np.array(total_mainbranch['%s' %target_GalaxyID]['lookbacktime']), np.arange(len(total_mainbranch['%s' %target_GalaxyID]['lookbacktime']))):
+
+                # Append and convert bhmdot (as difference of masses rather than mdot)
+                if i == 0:
+                    bh_mdot.append(math.nan)
+                    bh_edd.append(math.nan)
+                else:
+                    bh_mdot.append(1000* (float(total_general['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['bh_mass']) - float(total_general['%s' %str(target_GalaxyID)]['%s' %str(int(GalaxyID_i)+1)]['bh_mass'])) / ((lookbacktime_old - lookbacktime_i) * 1e9))
+                    bh_edd.append(np.log10(float(total_general['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['bh_edd'])))
+                    
+                    if debug:
+                        print('bh masses')
+                        print(float(total_general['%s' %str(target_GalaxyID)]['%s' %str(int(GalaxyID_i)+1)]['bh_mass']))
+                        print(float(total_general['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['bh_mass']))
+                        print((float(total_general['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['bh_mass']) - float(total_general['%s' %str(target_GalaxyID)]['%s' %str(int(GalaxyID_i)+1)]['bh_mass'])) / ((lookbacktime_old - lookbacktime_i) * 1e9))
+                
+                # Append inflow/outflow/stelmassloss
+                inflow_rate.append(float(total_massflow['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['%s_hmr' %float(hmr_i)]['gas_sf']['inflow'])/((lookbacktime_old - lookbacktime_i) * 1e9))
+                outflow_rate.append(float(total_massflow['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['%s_hmr' %float(hmr_i)]['gas_sf']['outflow'])/((lookbacktime_old - lookbacktime_i) * 1e9))
+                stelmassloss_rate.append(float(total_massflow['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['%s_hmr' %float(hmr_i)]['gas_sf']['massloss'])/((lookbacktime_old - lookbacktime_i) * 1e9))
+                
+                if debug:
+                    print('delta time', lookbacktime_old - lookbacktime_i)
+                    print('RAW MASS LOSSES:')
+                    print(total_massflow['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['%s_hmr' %float(hmr_i)]['gas']['inflow'])
+                    print(total_massflow['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['%s_hmr' %float(hmr_i)]['gas']['outflow'])
+                    print(total_massflow['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['%s_hmr' %float(hmr_i)]['gas']['massloss'])
+                    print('MASS LOSS RATE:')
+                    print(float(total_massflow['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['%s_hmr' %float(hmr_i)]['gas']['inflow'])/((lookbacktime_old - lookbacktime_i) * 1e9))
+                    print(float(total_massflow['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['%s_hmr' %float(hmr_i)]['gas']['outflow'])/((lookbacktime_old - lookbacktime_i) * 1e9))
+                    print(float(total_massflow['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['%s_hmr' %float(hmr_i)]['gas']['massloss'])/((lookbacktime_old - lookbacktime_i) * 1e9))
+                
+                lookbacktime_old = lookbacktime_i
+                
+            # Plot kappas
+            axs[1].plot(plot_lookbacktime, inflow_rate, alpha=1.0, lw=1.2, c='g', label='Gas$_{\mathrm{SF}}$ inflow')
+            axs[1].plot(plot_lookbacktime, outflow_rate, alpha=1.0, lw=1.2, c='r', label='Gas$_{\mathrm{SF}}$ outflow')
+            #axs[1].plot(plot_lookbacktime, stelmassloss_rate, alpha=1.0, lw=1.5, ls='dashdot', label='Stellar mass loss')
+            axs[1].plot(plot_lookbacktime, bh_mdot, alpha=1.0, lw=1.2, c='purple', ls='dashdot', label='$1000×\dot{M}_{\mathrm{BH}}$')
+            axs[2].plot(plot_lookbacktime, bh_edd, alpha=1.0, lw=1.2, c='k', ls='-', label='$\lambda_{\mathrm{Edd}}$')
+        
+        
+        #------------------------
+        # PLOT 4
+        # Find kappas and other _general stats
+        kappa_stars       = []
+        kappa_gas_sf      = []
+
+        # Same as taking 'for redshift in XX'
+        for GalaxyID_i, lookbacktime_i in zip(np.array(total_mainbranch['%s' %target_GalaxyID]['GalaxyID']), np.array(total_mainbranch['%s' %target_GalaxyID]['lookbacktime'])):
+            kappa_stars.append(total_general['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['kappa_stars'])
+            kappa_gas_sf.append(total_general['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['kappa_gas_sf'])
+                
+        # Plot kappas
+        axs[4].axhline(0.4, lw=1, ls='--', c='grey', alpha=0.7)
+        axs[4].text(7.9, 0.44, ' LTG', color='grey')
+        axs[4].text(7.9, 0.26, ' ETG', color='grey')
+        axs[4].plot(plot_lookbacktime, kappa_stars, alpha=1.0, lw=1.2, c='r', label='$\kappa_{\mathrm{co}}^*$')
+        axs[4].plot(plot_lookbacktime, kappa_gas_sf, alpha=1.0, lw=1.2, c='b', label='$\kappa_{\mathrm{co}}^{\mathrm{SF}}$')
+                
+                
+        #=============================
+        ### General formatting 
+        
+        ### Customise legend labels
+        axs[0].legend(loc='upper left', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=0)
+        axs[1].legend(loc='best', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=0)
+        axs[2].legend(loc='best', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=0)
+        axs[3].legend(loc='best', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=0)
+        axs[4].legend(loc='center right', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=0)
+
+        #------------------------
+        # Create redshift axis:
+        redshiftticks = [0, 0.1, 0.2, 0.5, 1, 1.5, 2, 5, 10, 20]
+        ageticks = ((13.8205298 * u.Gyr) - FlatLambdaCDM(H0=67.77, Om0=0.307, Ob0 = 0.04825).age(redshiftticks)).value
+        for i, ax in enumerate(axs):
+            ax_top = ax.twiny()
+            ax_top.set_xticks(ageticks)
+
+            ax.set_xlim(0, 8)
+            ax_top.set_xlim(0, 8)
+
+            if i == 0:
+                ax.set_ylim(0, 180)
+
+                ax_top.set_xlabel('Redshift')
+                ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major')
+                ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='minor')
+
+                ax.set_yticks(np.arange(0, 181, 30))
+                ax_top.set_xticklabels(['{:g}'.format(z) for z in redshiftticks])
+                ax.set_ylabel('Misalignment angle, $\psi$') 
+
+                #ax.set_title('GalaxyID: %s' %str(target_GalaxyID))
+                ax.text(8, 205, 'GalaxyID: %s' %str(target_GalaxyID), fontsize=8)
+                ax.invert_xaxis()
+                ax_top.invert_xaxis()
+                
+            if i == 1:
+                ax.set_ylim(0, 20)
+                ax.set_ylabel('$\mathrm{log_{10}}(\mathrm{M}/\mathrm{M}_{\odot} \mathrm{yr}^{-1})$')
+
+                ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major', labelbottom=False, labeltop=False)
+                ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='minor')
+                ax.invert_xaxis()
+                ax_top.invert_xaxis()
+            
+            if i == 2:
+                ax.set_ylim(-4, 0)
+                ax.set_ylabel('$\mathrm{log_{10}}(\lambda_{\mathrm{Edd}})$')
+
+                ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major', labelbottom=False, labeltop=False)
+                ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='minor')
+                ax.invert_xaxis()
+                ax_top.invert_xaxis()
+                
+            if i == 3:
+                ax.set_ylim(7.9, 12.1)
+                ax.set_ylabel('$\mathrm{log_{10}}(\mathrm{M}/\mathrm{M}_{\odot})$')
+
+                ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major', labelbottom=False, labeltop=False)
+                ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='minor')
+                ax.invert_xaxis()
+                ax_top.invert_xaxis()
+            
+            if i == 4:
+                ax.set_ylim(0, 1)
+                ax.set_yticks(np.arange(0, 1.1, 0.25))
+
+                ax.set_xlabel('Lookback time (Gyr)')
+                ax.set_ylabel('$\kappa_{\mathrm{co}}$')
+
+                ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major', labelbottom=False, labeltop=False)
+                ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='minor')
+                ax.invert_xaxis()
+                ax_top.invert_xaxis()
+
+            ax.minorticks_on()
+            ax.tick_params(axis='both', direction='in', top=False, bottom=True, left=True, right=True, which='major')
+            ax.tick_params(axis='both', direction='in', top=False, bottom=True, left=True, right=True, which='minor')
+            
+        #------------------------
+        # Other
+        plt.tight_layout()
+        plt.subplots_adjust(hspace=0.12)
+            
+            
+        #=====================================
+        ### Print summary
+        
+        #-----------
+        # Savefig
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+            print('Finished')
+        
+        
+        metadata_plot = {'Title': 'GalaxyID: %s\nM*: %.2e\nHMR: %.2f\nKappa: %.2f\nTriax: %.2f' %(target_GalaxyID, total_general['%s' %target_GalaxyID]['%s' %target_GalaxyID]['stelmass'], total_general['%s' %target_GalaxyID]['%s' %target_GalaxyID]['halfmass_rad_proj'], total_general['%s' %target_GalaxyID]['%s' %target_GalaxyID]['kappa_stars'], total_general['%s' %target_GalaxyID]['%s' %target_GalaxyID]['triax'])}
+        
+        
+        angle_str = ''
+        for angle_name in list(use_angles):
+            angle_str = '%s_%s' %(str(angle_str), str(angle_name))
+        
+        
+        if savefig:
+            plt.savefig("%s/L%s_evolution_ID%s_proj%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], target_GalaxyID, use_proj_angle, angle_str, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/L%s_evolution_ID%s_proj%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], target_GalaxyID, use_proj_angle, angle_str, savefig_txt, file_format))
+        if showfig:
+            plt.show()
+        plt.close()
+ 
+
 # Will plot evolution of single galaxy                                                                                  
-def _plot_radial_evolution(csv_output = 'L100_evolution_ID15851557_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load 
+def _plot_radial_evolution_old(csv_output = 'L12_evolution_ID30494_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load 
                            #--------------------------
                            # Galaxy plotting
                            print_summary = True,
                              use_angles         = ['stars_gas_sf'],                 # Which angles to plot
-                             use_hmr            = [1, 2, 3],         # Which misangle HMR to plot
+                             use_hmr            = [1, 2],         # Which misangle HMR to plot
                              use_hmr_frac       = [2],                # Which mass and fraction HMR to plot             
                              use_proj_angle     = False,                   # Whether to use projected or absolute angle, 'both'
                              use_uncertainties  = True,                   # Whether to plot uncertainties or not
-                             min_merger_ratio   = 0.01,
+                             min_merger_ratio   = 0.05,
                            #-------------------------
                            # Plot settings
                            highlight_criteria = True,       # whether to indicate when criteria not met (but still plot)
                            rad_type_plot      = 'hmr',      # 'rad' whether to use absolute distance or hmr 
                            #--------------------------
-                           showfig        = False,
-                           savefig        = True,
+                           showfig        = True,
+                           savefig        = False,
                              file_format  = 'pdf',
                              savefig_txt  = '',
                            #--------------------------
@@ -920,19 +1553,19 @@ def _plot_radial_evolution(csv_output = 'L100_evolution_ID15851557_RadProj_Err__
         # PLOT 4
         # Find kappas and other _general stats
         kappa_stars       = []
-        kappa_gas         = []
+        kappa_gas_sf      = []
 
         # Same as taking 'for redshift in XX'
         for GalaxyID_i, lookbacktime_i in zip(np.array(total_mainbranch['%s' %target_GalaxyID]['GalaxyID']), np.array(total_mainbranch['%s' %target_GalaxyID]['lookbacktime'])):
             kappa_stars.append(total_general['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['kappa_stars'])
-            kappa_gas.append(total_general['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['kappa_gas_sf'])
+            kappa_gas_sf.append(total_general['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['kappa_gas_sf'])
                 
         # Plot kappas
         axs[3].axhline(0.4, lw=1, ls='--', c='grey', alpha=0.7)
         axs[3].text(13.4, 0.43, ' LTG', color='grey')
         axs[3].text(13.4, 0.29, ' ETG', color='grey')
         axs[3].plot(plot_lookbacktime, kappa_stars, alpha=1.0, lw=1.5, c='r', label='$\kappa_{\mathrm{co}}^*$')
-        axs[3].plot(plot_lookbacktime, kappa_gas, alpha=1.0, lw=1.5, c='g', label='$\kappa_{\mathrm{co}}^{\mathrm{gas}}$')
+        axs[3].plot(plot_lookbacktime, kappa_gas_sf, alpha=1.0, lw=1.5, c='b', label='$\kappa_{\mathrm{co}}^{\mathrm{SF}}$')
                 
                 
         #=============================
@@ -1020,535 +1653,7 @@ def _plot_radial_evolution(csv_output = 'L100_evolution_ID15851557_RadProj_Err__
             print('Finished')
         
         
-        metadata_plot = {'Title': 'GalaxyID: %s\nM*: %.2e\nHMR: %.2f\nKappa: %.2f\nTriax: %.2f' %(target_GalaxyID, total_general['%s' %target_GalaxyID]['%s' %target_GalaxyID]['stelmass'], total_general['%s' %target_GalaxyID]['%s' %target_GalaxyID]['halfmass_rad_proj'], total_general['%s' %target_GalaxyID]['%s' %target_GalaxyID]['kappa_stars'], total_general['%s' %target_GalaxyID]['%s' %target_GalaxyID]['triax'])}
-        
-        
-        angle_str = ''
-        for angle_name in list(use_angles):
-            angle_str = '%s_%s' %(str(angle_str), str(angle_name))
-        
-        
-        if savefig:
-            plt.savefig("%s/L%s_evolution_ID%s_proj%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], target_GalaxyID, use_proj_angle, angle_str, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print("\n  SAVED: %s/L%s_evolution_ID%s_proj%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], target_GalaxyID, use_proj_angle, angle_str, savefig_txt, file_format))
-        if showfig:
-            plt.show()
-        plt.close()
-    
-
-# Will plot evolution of single galaxy but with improved formatting for poster/presentation
-def _plot_radial_evolution_alt(csv_output = 'L100_evolution_ID17480553_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load 
-                               csv_merger_tree = 'L100_merger_tree_',
-                               #--------------------------
-                               # Galaxy plotting
-                               print_summary = True,
-                                 use_angles         = ['stars_gas_sf'],                 # Which angles to plot
-                                 use_hmr            = [1, 2, 3],         # Which misangle HMR to plot
-                                 use_hmr_frac       = [1],                # Which mass and fraction HMR to plot             
-                                 use_proj_angle     = True,                   # Whether to use projected or absolute angle, 'both'
-                                 use_uncertainties  = True,                   # Whether to plot uncertainties or not
-                                 min_merger_ratio   = 0.05,
-                              #-------------------------
-                              # Plot settings
-                              highlight_criteria = True,       # whether to indicate when criteria not met (but still plot)
-                              rad_type_plot      = 'hmr',      # 'rad' whether to use absolute distance or hmr 
-                              #--------------------------
-                              showfig        = True,
-                              savefig        = True,
-                                file_format  = 'pdf',
-                                savefig_txt  = '_POSTER',
-                              #--------------------------
-                              print_progress = False,
-                              debug = False):
-    
-    
-    
-    #================================================  
-    # Load sample csv
-    if print_progress:
-        print('Loading output')
-        time_start = time.time()
-    
-    #--------------------------------
-    # Loading output
-    dict_output = json.load(open('%s/%s.csv' %(output_dir, csv_output), 'r'))
-    
-    # Loading merger tree
-    merger_tree_load  = json.load(open('%s/%s.csv' %(output_dir, csv_merger_tree), 'r'))
-    merger_tree       = merger_tree_load['tree_dict']     
-    merger_tree_input = merger_tree_load['output_input']
-    
-    
-    #--------------------------------
-    total_flags           = dict_output['total_flags']
-    total_general         = dict_output['total_general']
-    total_spins           = dict_output['total_spins']
-    total_counts          = dict_output['total_counts']
-    total_masses          = dict_output['total_masses']
-    total_coms            = dict_output['total_coms']
-    total_misangles       = dict_output['total_misangles']
-    total_misanglesproj   = dict_output['total_misanglesproj']
-    
-    total_allbranches     = dict_output['total_allbranches']
-    total_mainbranch      = dict_output['total_mainbranch']
-    total_mergers         = dict_output['total_mergers']
-    
-    # Loading sample criteria
-    output_input        = dict_output['output_input']
-    
-    #---------------------------------
-    # Extract GroupNum, SubGroupNum, and Snap for each ID
-    GalaxyID_List_target = list(total_general.keys())
-        
-    if print_progress:
-        print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-        
-    print('\n===================')
-    print('SAMPLE LOADED:\n  %s\n  GalaxyIDs: %s' %(output_input['mySims'][0][0], GalaxyID_List_target))
-    print('  SAMPLE LENGTH: ', len(GalaxyID_List_target))
-    print('\nOUTPUT LOADED:\n  Max Snap: %s\n  Viewing axis: %s\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s\n  COM min distance: %s\n  Min. particles: %s\n  Min. inclination: %s' %(output_input['snapNumMax'], output_input['viewing_axis'], output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected'], output_input['com_min_distance'], output_input['min_particles'], output_input['min_inclination']))
-    print('\nPLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle:    %s\n  Uncertainties:      %s\n  Highlight Criteria: %s\n  Rad or HMR:         %s' %(use_angles, use_hmr, use_proj_angle, use_uncertainties, highlight_criteria, rad_type_plot))
-    print('===================')
-    
-
-    #------------------------------
-    # Check if requested plot is possible with loaded data
-    for use_angles_i in use_angles:
-        assert use_angles_i in output_input['angle_selection'], 'Requested angle %s not in output_input' %use_angles_i
-    for use_hmr_i in use_hmr:
-        assert use_hmr_i in output_input['spin_hmr'], 'Requested HMR %s not in output_input' %use_hmr_i
-    if use_uncertainties:
-        assert use_uncertainties == output_input['find_uncertainties'], 'Output file does not contain uncertainties to plot'
-    
-    #=======================================
-    # Iterate over all GalaxyIDList_targets
-    for target_GalaxyID in tqdm(np.array(GalaxyID_List_target)):
-        
-        #---------------------------------------------------
-        # Graph initialising and base formatting
-        fig, axs = plt.subplots(nrows=3, ncols=1, gridspec_kw={'height_ratios': [2.5, 1.5, 1.5]}, figsize=[5.5, 7.5], sharex=True, sharey=False)
-    
-        #----------------------------
-        # Add mergers
-        for galaxyID_i, ratio_i, gas_ratio_i, lookbacktime_i, snap_i in zip(total_mergers['%s' %target_GalaxyID]['GalaxyIDs'], total_mergers['%s' %target_GalaxyID]['ratios'], total_mergers['%s' %target_GalaxyID]['gasratios'], total_mainbranch['%s' %target_GalaxyID]['lookbacktime'], total_mainbranch['%s' %target_GalaxyID]['snapnum']):
-            
-            if len(ratio_i) == 0:
-                continue
-            
-            else:
-                if max(ratio_i) >= min_merger_ratio:
-                    for ax in axs:
-                        ax.axvline(lookbacktime_i, ls='--', color='grey', alpha=0.8, linewidth=2)
-
-                    if snap_i > int(output_input['snapNumMax']):
-                        
-                        # Manually finding merger masses
-                        primary_stelmass  = float(merger_tree['%s' %(int(target_GalaxyID) +  28 - int(snap_i))]['%s' %(int(target_GalaxyID) +  28 - int(snap_i) + 1)]['stelmass'])
-                        primary_gasmass   = float(merger_tree['%s' %(int(target_GalaxyID) +  28 - int(snap_i))]['%s' %(int(target_GalaxyID) +  28 - int(snap_i) + 1)]['gasmass'])
-                        primary_gassfmass = float(merger_tree['%s' %(int(target_GalaxyID) +  28 - int(snap_i))]['%s' %(int(target_GalaxyID) +  28 - int(snap_i) + 1)]['gasmass_sf'])
-                        for mergerID_i in galaxyID_i[np.argmax(np.array(ratio_i))]:
-                            # if primary, skip
-                            if int(mergerID_i) == (int(target_GalaxyID) +  28 - int(snap_i) + 1):
-                                continue
-                            
-                            secondary_stelmass  = float(merger_tree['%s' %(int(target_GalaxyID) +  28 - int(snap_i))]['%s' %mergerID_i]['stelmass'])
-                            secondary_gasmass   = float(merger_tree['%s' %(int(target_GalaxyID) +  28 - int(snap_i))]['%s' %mergerID_i]['gasmass'])
-                            secondary_gassfmass = float(merger_tree['%s' %(int(target_GalaxyID) +  28 - int(snap_i))]['%s' %mergerID_i]['gasmass_sf'])
-                        
-                        # Find merger ratios
-                        manual_ratio = secondary_stelmass/primary_stelmass
-                        manual_gas_ratio = secondary_gasmass/primary_gasmass
-                        manual_gassf_ratio = secondary_gassfmass/primary_gassfmass
-
-                    # Annotate
-                    axs[0].text(lookbacktime_i-0.2, 165, '%.2f' %manual_ratio, color='grey')
-                    #axs[0].text(lookbacktime_i-0.2, 160, '%.2f' %manual_gas_ratio, color='green')
-                    axs[0].text(lookbacktime_i-0.2, 150, '%.2f' %manual_gassf_ratio, color='blue')
-        
-        #----------------------------
-        # Add time spent as satellite
-        time_start = 0
-        for SubGroupNum_i, lookbacktime_i, snap_i in zip(total_mainbranch['%s' %target_GalaxyID]['SubGroupNumber'], total_mainbranch['%s' %target_GalaxyID]['lookbacktime'], total_mainbranch['%s' %target_GalaxyID]['snapnum']):
-            if (SubGroupNum_i == 0) & (time_start == 0):
-                continue
-            elif (SubGroupNum_i != 0) & (time_start == 0):
-                time_start = lookbacktime_i
-                time_end = lookbacktime_i
-            elif (SubGroupNum_i != 0) & (time_start != 0):
-                time_end = lookbacktime_i
-                continue
-            elif (SubGroupNum_i == 0) & (time_start != 0):
-                time_end = lookbacktime_i
-                for ax in axs:
-                    ax.axvspan(time_start, time_end, facecolor='grey', alpha=0.2)
-                
-                time_start = 0
-                time_end = 0
-        
-        
-        #===========================
-        # Loop over each angle type
-        for plot_count, use_angle_i in enumerate(use_angles):
-            
-            #------------------------
-            # Setting colors and labels
-            if use_angle_i == 'stars_gas':
-                plot_color = 'green'
-                plot_cmap  = plt.get_cmap('Greens')(np.linspace(0.4, 0.9, len(use_hmr)))
-                plot_label = 'Stars-gas'
-                use_particles = ['stars', 'gas']
-            elif use_angle_i == 'stars_gas_sf':
-                plot_color = 'b'
-                plot_cmap  = plt.get_cmap('Blues')(np.linspace(0.4, 0.9, len(use_hmr)))
-                plot_label = 'Stars-gas$_{sf}$'
-                use_particles = ['stars', 'gas_sf']
-            elif use_angle_i == 'stars_gas_nsf':
-                plot_color = 'indigo'
-                plot_cmap  = plt.get_cmap('Purples')(np.linspace(0.4, 0.9, len(use_hmr)))
-                plot_label = 'Stars-gas$_{nsf}$'
-                use_particles = ['stars', 'gas_nsf']
-            elif use_angle_i == 'stars_dm':
-                plot_color = 'r'
-                plot_cmap  = plt.get_cmap('Reds')(np.linspace(0.4, 0.9, len(use_hmr)))
-                plot_label = 'Stars-DM'
-                use_particles = ['stars', 'nsf']
-            else:
-                plot_color = 'brown'
-                plot_cmap  = plt.get_cmap('Greys')(np.linspace(0.4, 0.9, len(use_hmr)))
-                plot_label = use_angle_i
-                raise Exception('Not configured other plot types yet')
-            
-            if output_input['rad_projected'] == True:
-                r50 = '$r_{1/2,z}$'
-            if output_input['rad_projected'] == False:
-                r50 = '$r_{1/2}$'
-            
-            # Create some colormaps of things we want
-            #colors_blues    = plt.get_cmap('Blues')(np.linspace(0.4, 0.9, len(use_hmr)))
-            #colors_reds     = plt.get_cmap('Reds')(np.linspace(0.4, 0.9, len(use_hmr)))
-            #colors_greens   = plt.get_cmap('Greens')(np.linspace(0.4, 0.9, len(use_hmr)))
-            #colors_spectral = plt.get_cmap('Spectral_r')(np.linspace(0.05, 0.95, len(use_hmr)))
-            plot_cmap = plt.get_cmap('tab10')(np.arange(0, len(use_hmr), 1))
-
-            #-----------------------
-            # Loop over each rad
-            for hmr_i, color_angle in zip(np.flip(use_hmr), plot_cmap):
-
-                # Create empty arrays to plot
-                plot_lookbacktime = []
-                plot_redshift     = []
-
-                plot_angles         = []
-                plot_angles_small   = []
-                plot_angles_lo      = []
-                plot_angles_hi      = []
-                plot_angles_proj        = []
-                plot_angles_proj_small  = []
-                plot_angles_proj_lo     = []
-                plot_angles_proj_hi     = []
-
-                plot_stelmass     = []
-                plot_gasmass      = []
-                plot_gassfmass    = []
-                
-                plot_gas_frac     = []
-                plot_gassf_frac   = []
-
-
-                #-------------------------------------
-                # Same as taking 'for redshift in XX'
-                for GalaxyID_i, lookbacktime_i, redshift_i in zip(np.array(total_mainbranch['%s' %target_GalaxyID]['GalaxyID']), np.array(total_mainbranch['%s' %target_GalaxyID]['lookbacktime']), np.array(total_mainbranch['%s' %target_GalaxyID]['redshift'])):
-                                    
-                    #----------
-                    # Extracting misalignment angles
-                    if use_proj_angle == True:
-                        if (hmr_i in total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['hmr']):
-                            # Mask correct integer (formatting weird but works)
-                            mask_rad = int(np.where(np.array(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['hmr']) == hmr_i)[0])
-                            
-                            if (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['min_inclination'][use_particles[0]]) and (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['min_inclination'][use_particles[1]]) and (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['min_particles'][use_particles[0]]) and (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['min_particles'][use_particles[1]]) and (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['com_min_distance'][use_angle_i]) and (total_general['%s' %target_GalaxyID]['%s' %GalaxyID_i]['stelmass'] > 1E9):
-                                plot_angles_proj.append(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['%s_angle' %use_angle_i][mask_rad])                      
-                                plot_angles_proj_small.append(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['%s_angle' %use_angle_i][mask_rad])                      
-                                plot_angles_proj_lo.append(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['%s_angle_err' %use_angle_i][mask_rad][0])
-                                plot_angles_proj_hi.append(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['%s_angle_err' %use_angle_i][mask_rad][1])
-                                
-                            else:
-                                plot_angles_proj.append(math.nan)
-                                plot_angles_proj_small.append(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['%s_angle' %use_angle_i][mask_rad])
-                                plot_angles_proj_lo.append(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['%s_angle_err' %use_angle_i][mask_rad][0])
-                                plot_angles_proj_hi.append(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['%s_angle_err' %use_angle_i][mask_rad][1])
-                                
-                        else:
-                            # append nans if hmr_i was trimmed
-                            plot_angles_proj_small.append(math.nan)
-                            plot_angles_proj.append(math.nan)
-                            plot_angles_proj_lo.append(math.nan)
-                            plot_angles_proj_hi.append(math.nan)   
-                    elif use_proj_angle == False:
-                        if (hmr_i in total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['hmr']):
-                            # Mask correct integer (formatting weird but works)
-                            mask_rad = int(np.where(np.array(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['hmr']) == hmr_i)[0])
-                            
-                            if (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['min_particles'][use_particles[0]]) and (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['min_particles'][use_particles[1]]) and (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['com_min_distance'][use_angle_i]) and (total_general['%s' %target_GalaxyID]['%s' %GalaxyID_i]['stelmass'] > 1E9):
-                                plot_angles.append(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['%s_angle' %use_angle_i][mask_rad])
-                                plot_angles_small.append(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['%s_angle' %use_angle_i][mask_rad])
-                                plot_angles_lo.append(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['%s_angle_err' %use_angle_i][mask_rad][0])
-                                plot_angles_hi.append(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['%s_angle_err' %use_angle_i][mask_rad][1])
-                            else:
-                                plot_angles.append(math.nan)
-                                plot_angles_small.append(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['%s_angle' %use_angle_i][mask_rad])
-                                plot_angles_lo.append(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['%s_angle_err' %use_angle_i][mask_rad][0])
-                                plot_angles_hi.append(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['%s_angle_err' %use_angle_i][mask_rad][1])
-                                
-                        else:
-                            # append nans if hmr_i was trimmed
-                            plot_angles.append(math.nan)
-                            plot_angles_small.append(math.nan)
-                            plot_angles_lo.append(math.nan)
-                            plot_angles_hi.append(math.nan)
-                    elif use_proj_angle == 'both':
-                        if (hmr_i in total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['hmr']):
-                            # Mask correct integer (formatting weird but works)
-                            mask_rad = int(np.where(np.array(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['hmr']) == hmr_i)[0])
-                            
-                            if (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['min_inclination'][use_particles[0]]) and (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['min_inclination'][use_particles[1]]) and (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['min_particles'][use_particles[0]]) and (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['min_particles'][use_particles[1]]) and (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['com_min_distance'][use_angle_i]) and (total_general['%s' %target_GalaxyID]['%s' %GalaxyID_i]['stelmass'] > 1E9):
-                                plot_angles_proj.append(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['%s_angle' %use_angle_i][mask_rad])                      
-                                plot_angles_proj_small.append(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['%s_angle' %use_angle_i][mask_rad])                      
-                                plot_angles_proj_lo.append(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['%s_angle_err' %use_angle_i][mask_rad][0])
-                                plot_angles_proj_hi.append(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['%s_angle_err' %use_angle_i][mask_rad][1])
-                                
-                            else:
-                                plot_angles_proj.append(math.nan)
-                                plot_angles_proj_small.append(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['%s_angle' %use_angle_i][mask_rad])
-                                plot_angles_proj_lo.append(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['%s_angle_err' %use_angle_i][mask_rad][0])
-                                plot_angles_proj_hi.append(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['%s_angle_err' %use_angle_i][mask_rad][1])
-                                
-                        else:
-                            # append nans if hmr_i was trimmed
-                            plot_angles_proj_small.append(math.nan)
-                            plot_angles_proj.append(math.nan)
-                            plot_angles_proj_lo.append(math.nan)
-                            plot_angles_proj_hi.append(math.nan)
-                        
-                        if (hmr_i in total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['hmr']):
-                            # Mask correct integer (formatting weird but works)
-                            mask_rad = int(np.where(np.array(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['hmr']) == hmr_i)[0])
-                            
-                            if (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['min_particles'][use_particles[0]]) and (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['min_particles'][use_particles[1]]) and (hmr_i not in total_flags['%s' %target_GalaxyID]['%s' %GalaxyID_i]['com_min_distance'][use_angle_i]) and (total_general['%s' %target_GalaxyID]['%s' %GalaxyID_i]['stelmass'] > 1E9):
-                                plot_angles.append(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['%s_angle' %use_angle_i][mask_rad])
-                                plot_angles_small.append(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['%s_angle' %use_angle_i][mask_rad])
-                                plot_angles_lo.append(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['%s_angle_err' %use_angle_i][mask_rad][0])
-                                plot_angles_hi.append(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['%s_angle_err' %use_angle_i][mask_rad][1])
-                            else:
-                                plot_angles.append(math.nan)
-                                plot_angles_small.append(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['%s_angle' %use_angle_i][mask_rad])
-                                plot_angles_lo.append(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['%s_angle_err' %use_angle_i][mask_rad][0])
-                                plot_angles_hi.append(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['%s_angle_err' %use_angle_i][mask_rad][1])
-                                
-                        else:
-                            # append nans if hmr_i was trimmed
-                            plot_angles.append(math.nan)
-                            plot_angles_small.append(math.nan)
-                            plot_angles_lo.append(math.nan)
-                            plot_angles_hi.append(math.nan)
-                        
-
-                    #----------
-                    # Gather gas masses and fractions
-                    if hmr_i in use_hmr_frac:
-                        if hmr_i in total_masses['%s' %target_GalaxyID]['%s' %GalaxyID_i]['hmr']:
-                            # Mask correct integer (formatting weird but works)
-                            mask_rad = int(np.where(np.array(total_misanglesproj['%s' %target_GalaxyID]['%s' %GalaxyID_i][output_input['viewing_axis']]['hmr']) == hmr_i)[0])
-                            
-                            plot_stelmass.append(total_masses['%s' %target_GalaxyID]['%s' %GalaxyID_i]['stars'][mask_rad])
-                            plot_gasmass.append(total_masses['%s' %target_GalaxyID]['%s' %GalaxyID_i]['gas'][mask_rad])
-                            plot_gassfmass.append(total_masses['%s' %target_GalaxyID]['%s' %GalaxyID_i]['gas_sf'][mask_rad])
-                            
-                            plot_gas_frac.append(total_masses['%s' %target_GalaxyID]['%s' %GalaxyID_i]['gas'][mask_rad] / (total_masses['%s' %target_GalaxyID]['%s' %GalaxyID_i]['stars'][mask_rad] + total_masses['%s' %target_GalaxyID]['%s' %GalaxyID_i]['gas'][mask_rad]))
-                            plot_gassf_frac.append(total_masses['%s' %target_GalaxyID]['%s' %GalaxyID_i]['gas_sf'][mask_rad] / (total_masses['%s' %target_GalaxyID]['%s' %GalaxyID_i]['stars'][mask_rad] + total_masses['%s' %target_GalaxyID]['%s' %GalaxyID_i]['gas'][mask_rad]))
-                            
-                        else:
-                            plot_stelmass.append(math.nan)
-                            plot_gasmass.append(math.nan)
-                            plot_gassfmass.append(math.nan)
-                            plot_gas_frac.append(math.nan)
-                            plot_gassf_frac.append(math.nan)
-
-                    
-                    #----------
-                    # Gather times
-                    plot_redshift.append(redshift_i)
-                    plot_lookbacktime.append(lookbacktime_i)   
-                
-                
-                if debug:
-                    print('Target galaxy: %s' %target_GalaxyID)
-                    print('. plot_lookbacktime: ', lookbacktime_plot)
-                    print('\n  plot_angles: ', plot_angles)
-                    print('  plot_angles_lo: ', plot_angles_lo)
-                    print('  plot_angles_hi: ', plot_angles_hi)
-                    print('\n  plot_angles_proj: ', plot_angles_proj)
-                    print('  plot_angles_proj_lo: ', plot_angles_proj_lo)
-                    print('  plot_angles_proj_hi: ', plot_angles_proj_hi)
-                    print('\n  plot_stelmass: ', plot_stelmass)
-                    print('  plot_gasmass: ', plot_gasmass)
-                    print('  plot_gassfmass: ', plot_gassfmass)
-                    print('\n  plot_gas_frac: ', plot_gas_frac)
-                    print('  plot_gassf_frac: ', plot_gassf_frac)
-                    
-                #====================================
-                ### Plotting
-                # Plot 1: Misalignment angles, errors, with time/redshift
-                # Plot 2: Stellar mass, gas mass, gas sf mass, with time/redshift
-                # Plot 3: Gas fractions with time/redshift
-                
-                #------------------------
-                # PLOT 1
-                # Plot scatter and errorbars
-                
-                if use_proj_angle == True:
-                    axs[0].plot(plot_lookbacktime, plot_angles_proj_small, alpha=1, ms=2, ls=':', c='grey', zorder=8)
-                    axs[0].plot(plot_lookbacktime, plot_angles_proj, alpha=1, ms=2, ls='-', c=color_angle, zorder=10, label='%.0f%s' %(hmr_i, r50))
-                        
-                    if use_uncertainties:
-                        axs[0].fill_between(plot_lookbacktime, plot_angles_proj_lo, plot_angles_proj_hi, alpha=0.25, color=color_angle, lw=0, zorder=5)
-                elif use_proj_angle == False:
-                    axs[0].plot(plot_lookbacktime, plot_angles_small, alpha=1, ms=2, ls=':', c='grey', zorder=8)
-                    axs[0].plot(plot_lookbacktime, plot_angles, alpha=1, ms=2, ls='-', c=color_angle, zorder=10, label='%.0f%s' %(hmr_i, r50))
-                    
-                    if use_uncertainties:
-                        axs[0].fill_between(plot_lookbacktime, plot_angles_lo, plot_angles_hi, alpha=0.25, color=color_angle, lw=0, zorder=5)
-                elif use_proj_angle == 'both':
-                    axs[0].plot(plot_lookbacktime, plot_angles_proj_small, alpha=1, ms=2, ls=':', c='grey', zorder=10)
-                    axs[0].plot(plot_lookbacktime, plot_angles_proj, alpha=1, ms=2, ls='-', c=color_angle, zorder=10, label='%.0f%s' %(hmr_i, r50))
-
-                    axs[0].plot(plot_lookbacktime, plot_angles_small, alpha=1, ms=2, ls=':', c='grey', zorder=8)
-                    axs[0].plot(plot_lookbacktime, plot_angles, alpha=1, ms=2, ls='dashdot', c=color_angle, zorder=10)
-                    
-                    if use_uncertainties:
-                        axs[0].fill_between(plot_lookbacktime, plot_angles_proj_lo, plot_angles_proj_hi, alpha=0.25, color=color_angle, lw=0, zorder=5)
-                    
-                # Only plot the masses and fractions once, regardless of angle type
-                if plot_count == 0:
-                    if hmr_i in use_hmr_frac:
-                        #------------------------
-                        # PLOT 2
-                        # Plot masses
-                        axs[1].plot(plot_lookbacktime, np.log10(np.array(plot_stelmass)), alpha=1.0, lw=1.5, c='r', label='$M_*$')
-                        #axs[1].plot(plot_lookbacktime, np.log10(np.array(plot_gasmass)), alpha=1.0, lw=1.5, c='g', label='$M_{\mathrm{gas}}$')
-                        axs[1].plot(plot_lookbacktime, np.log10(np.array(plot_gassfmass)), alpha=1.0, lw=1.5, c='b', label='$M_{\mathrm{SF}}$', markerfacecolor='None')
-                    
-                
-                #----------
-                # Lists all angles at a given HMR_i over time
-                if debug:
-                    print('\nhmr: ', hmr_i )
-                    for time_i, angllle_i in zip(plot_lookbacktime, plot_angles):
-                        print('Time: %.2f   Angle: %.1f' %(time_i, angllle_i))
-        
-        #----------
-        # Lists all angles and hmr fr a given time        
-        if debug:
-            for GalaxyID_i, lookbacktime_i, redshift_i in zip(np.array(total_mainbranch['%s' %target_GalaxyID]['GalaxyID']), np.array(total_mainbranch['%s' %target_GalaxyID]['lookbacktime']), np.array(total_mainbranch['%s' %target_GalaxyID]['redshift'])):
-                print('Lookbacktime: %.2f' %lookbacktime_i)
-                for i, hmr_i in enumerate(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['hmr']):
-                    print('HMR: %.2f   Angle: %.1f' %(total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['hmr'][i], total_misangles['%s' %target_GalaxyID]['%s' %GalaxyID_i]['stars_gas_sf_angle'][i]))
-            
-        
-        #------------------------
-        # PLOT 4
-        # Find kappas and other _general stats
-        kappa_stars       = []
-        kappa_gas_sf      = []
-
-        # Same as taking 'for redshift in XX'
-        for GalaxyID_i, lookbacktime_i in zip(np.array(total_mainbranch['%s' %target_GalaxyID]['GalaxyID']), np.array(total_mainbranch['%s' %target_GalaxyID]['lookbacktime'])):
-            kappa_stars.append(total_general['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['kappa_stars'])
-            kappa_gas_sf.append(total_general['%s' %str(target_GalaxyID)]['%s' %str(GalaxyID_i)]['kappa_gas_sf'])
-                
-        # Plot kappas
-        axs[2].axhline(0.4, lw=1, ls='--', c='grey', alpha=0.7)
-        axs[2].text(7.9, 0.43, ' LTG', color='grey')
-        axs[2].text(7.9, 0.29, ' ETG', color='grey')
-        axs[2].plot(plot_lookbacktime, kappa_stars, alpha=1.0, lw=1.5, c='r', label='$\kappa_{\mathrm{co}}^*$')
-        axs[2].plot(plot_lookbacktime, kappa_gas_sf, alpha=1.0, lw=1.5, c='b', label='$\kappa_{\mathrm{co}}^{\mathrm{SF}}$')
-                
-                
-        #=============================
-        ### General formatting 
-
-        ### Customise legend labels
-        axs[0].legend(loc='upper left', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=0)
-        axs[1].legend(loc='best', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=0)
-        axs[2].legend(loc='center right', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=0)
-
-        #------------------------
-        # Create redshift axis:
-        redshiftticks = [0, 0.2, 0.5, 1, 1.5, 2, 5, 10, 20]
-        ageticks = ((13.8205298 * u.Gyr) - FlatLambdaCDM(H0=67.77, Om0=0.307, Ob0 = 0.04825).age(redshiftticks)).value
-        for i, ax in enumerate(axs):
-            ax_top = ax.twiny()
-            ax_top.set_xticks(ageticks)
-
-            ax.set_xlim(0, 8)
-            ax_top.set_xlim(0, 8)
-
-            if i == 0:
-                ax.set_ylim(0, 180)
-
-                ax_top.set_xlabel('Redshift')
-                ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major')
-                ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='minor')
-
-                ax.set_yticks(np.arange(0, 181, 30))
-                ax_top.set_xticklabels(['{:g}'.format(z) for z in redshiftticks])
-                ax.set_ylabel('Misalignment angle, $\psi$') 
-
-                #ax.set_title('GalaxyID: %s' %str(target_GalaxyID))
-                #ax.text(8, 200, 'GalaxyID: %s' %str(target_GalaxyID))
-                ax.invert_xaxis()
-                ax_top.invert_xaxis()
-            if i == 1:
-                ax.set_ylim(7, 13)
-                ax.set_ylabel('Mass $\mathrm{log_{10}}(\mathrm{M}/\mathrm{M}_{\odot})$')
-
-                ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major', labelbottom=False, labeltop=False)
-                ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='minor')
-                ax.invert_xaxis()
-                ax_top.invert_xaxis()
-
-            if i == 2:
-                ax.set_ylim(0, 1)
-                ax.set_yticks(np.arange(0, 1.1, 0.25))
-
-                ax.set_xlabel('Lookback time (Gyr)')
-                ax.set_ylabel('$\kappa_{\mathrm{co}}$')
-
-                ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major', labelbottom=False, labeltop=False)
-                ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='minor')
-                ax.invert_xaxis()
-                ax_top.invert_xaxis()
-
-            ax.minorticks_on()
-            ax.tick_params(axis='both', direction='in', top=False, bottom=True, left=True, right=True, which='major')
-            ax.tick_params(axis='both', direction='in', top=False, bottom=True, left=True, right=True, which='minor')
-            
-        #------------------------
-        # Other
-        plt.tight_layout()
-            
-            
-        #=====================================
-        ### Print summary
-        
-        #-----------
-        # Savefig
-        if print_progress:
-            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-            print('Finished')
-        
-        
-        metadata_plot = {'Title': 'GalaxyID: %s\nM*: %.2e\nHMR: %.2f\nKappa: %.2f\nTriax: %.2f' %(target_GalaxyID, total_general['%s' %target_GalaxyID]['%s' %target_GalaxyID]['stelmass'], total_general['%s' %target_GalaxyID]['%s' %target_GalaxyID]['halfmass_rad_proj'], total_general['%s' %target_GalaxyID]['%s' %target_GalaxyID]['kappa_stars'], total_general['%s' %target_GalaxyID]['%s' %target_GalaxyID]['triax'])}
+        metadata_plot = {'Title': 'GalaxyID: %s\nM*: %.2e\nHMR: %.2f\nKappa: %.2f' %(target_GalaxyID, total_general['%s' %target_GalaxyID]['%s' %target_GalaxyID]['stelmass'], total_general['%s' %target_GalaxyID]['%s' %target_GalaxyID]['halfmass_rad_proj'], total_general['%s' %target_GalaxyID]['%s' %target_GalaxyID]['kappa_stars'])}
         
         
         angle_str = ''
@@ -1563,11 +1668,12 @@ def _plot_radial_evolution_alt(csv_output = 'L100_evolution_ID17480553_RadProj_E
             plt.show()
         plt.close()
  
+         
                           
 #=========================== 
-#_analysis_radial_evolution()
+_analysis_radial_evolution()
 
-#_plot_radial_evolution() 
-_plot_radial_evolution_alt()   
+_plot_radial_evolution()   
+#_plot_radial_evolution_old() 
 
 #===========================

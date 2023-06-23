@@ -74,7 +74,7 @@ def _sample_misalignment(mySims = [('RefL0012N0188', 12)],
                          #--------------------------
                          galaxy_mass_min    = 10**9,            # Lower mass limit within 30pkpc
                          galaxy_mass_max    = 10**15,           # Lower mass limit within 30pkpc
-                         snapNum            = 28,               # Target snapshot
+                         snapNum            = 19,               # Target snapshot
                          use_satellites     = True,             # Whether to include SubGroupNum =/ 0
                          print_sample       = False,             # Print list of IDs
                          #--------------------------   
@@ -154,7 +154,7 @@ def _sample_misalignment(mySims = [('RefL0012N0188', 12)],
                     'MorphoKinem': sample.MorphoKinem, 
                     'sample_input':  sample_input}
                     
-        csv_dict.update({'function_input': str(inspect.signature(_misalignment_sample))})
+        #csv_dict.update({'function_input': str(inspect.signature(_misalignment_sample))})
    
         # Writing one massive JSON file
         if use_satellites:
@@ -207,7 +207,7 @@ def _sample_misalignment_minor(mySims = [('RefL0012N0188', 12)],
                               #--------------------------
                               galaxy_mass_min    = 10**8,            # Lower mass limit within 30pkpc
                               galaxy_mass_max    = 10**9,           # Lower mass limit within 30pkpc
-                              snapNum            = 28,               # Target snapshot
+                              snapNum            = 19,               # Target snapshot
                               use_satellites     = True,             # Whether to include SubGroupNum =/ 0
                               print_sample       = False,             # Print list of IDs
                               #--------------------------   
@@ -331,16 +331,16 @@ def _sample_misalignment_minor(mySims = [('RefL0012N0188', 12)],
 
 #--------------------------------
 # Reads in a sample file, and does all relevant calculations, and exports as csv file
-def _analysis_misalignment_minor(csv_sample = 'L12_28_minor_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+def _analysis_misalignment_minor(csv_sample = 'L12_19_minor_sample_misalignment_8.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                                  #--------------------------
                                  # Galaxy extraction properties
                                  aperture_rad        = 30,                   # trim all data to this maximum value before calculations [pkpc]
                                  #--------------------------   
-                                 csv_file       = False,             # Will write sample to csv file in sample_dir
+                                 csv_file       = True,             # Will write sample to csv file in sample_dir
                                    csv_name     = '',               # extra stuff at end
                                  #--------------------------
                                  print_progress = False,
-                                 print_galaxy   = True,
+                                 print_galaxy   = False,
                                  debug = False):
     
     
@@ -501,7 +501,7 @@ def _analysis_misalignment_minor(csv_sample = 'L12_28_minor_sample_misalignment_
         
 
 # Reads in a sample file, and does all relevant calculations, and exports as csv file
-def _analysis_misalignment_distribution(csv_sample = 'L12_19_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+def _analysis_misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                                         #--------------------------
                                         # Galaxy extraction properties
                                         viewing_axis        = 'z',                  # Which axis to view galaxy from.  DEFAULT 'z'
@@ -571,7 +571,7 @@ def _analysis_misalignment_distribution(csv_sample = 'L12_19_all_sample_misalign
        
        
     print('\n===================')
-    print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E M*\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_limit'], sample_input['use_satellites']))
+    print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Lower mass limit: %2E\n  Upper mass limit: %2E\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_min'], sample_input['galaxy_mass_max'], sample_input['use_satellites']))
     print('  SAMPLE LENGTH: ', len(GroupNum_List))
     print('\nEXTRACT:\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s' %(str(angle_selection), str(spin_hmr), str(find_uncertainties), str(rad_projected)))
     print('===================')
@@ -681,6 +681,7 @@ def _analysis_misalignment_distribution(csv_sample = 'L12_19_all_sample_misalign
                                             spin_rad_in,
                                             spin_hmr_in,
                                             find_uncertainties,
+                                            rad_projected,
                                             
                                             com_min_distance,
                                             min_particles,                                            
@@ -1895,12 +1896,12 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
     
 #===========================    
 #_sample_misalignment()
-#_sample_misalignment()
+#_sample_misalignment_minor()
 
 #_analysis_misalignment_minor()
-#_analysis_misalignment_distribution()
+_analysis_misalignment_distribution()
 
-_plot_misalignment()
+#_plot_misalignment()
 #_plot_misalignment_z()
 #===========================
     

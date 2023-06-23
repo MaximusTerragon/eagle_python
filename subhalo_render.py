@@ -92,7 +92,7 @@ PURPOSE
 def galaxy_render(csv_sample = False,              # False, Whether to read in existing list of galaxies  
                     #--------------------------
                     mySims = [('RefL0012N0188', 12)],
-                    GalaxyID_List = [30494],
+                    GalaxyID_List = [20455],
                     #--------------------------
                     # Galaxy extraction properties
                     kappa_rad            = 30,          # calculate kappa for this radius [pkpc]
@@ -103,7 +103,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                     particles           = 5000,
                     viewing_axis        = 'z',                  # Which axis to view galaxy from.  DEFAULT 'z'
                     aperture_rad        = 30,                   # trim all data to this maximum value before calculations [pkpc]
-                    trim_rad            = np.array(['2.0_hmr', 50]),           # pkpc WILL PLOT HIGHEST VALUE. trim particles, 2.0_hmr_proj
+                    trim_rad            = np.array([50]),           # pkpc WILL PLOT HIGHEST VALUE. trim particles, 2.0_hmr_proj
                     align_rad           = False,                          # False/Value
                     #=====================================================
                     # Misalignments we want extracted and at which radii  
@@ -112,7 +112,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                                            'stars_gas_nsf',                 # gas_sf_gas_nsf
                                            'gas_sf_gas_nsf',
                                            'stars_dm'],           
-                    spin_hmr            = np.array([1.0, 2.0]),                  # multiples of hmr for which to find spin. Will plot lowest value
+                    spin_hmr            = np.array([2.0]),                  # multiples of hmr for which to find spin. Will plot lowest value
                     rad_projected       = True,                             # whether to use rad in projection or 3D
                     #--------------------------
                     # Plot options
@@ -305,23 +305,22 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
             print('|%s| |ID:   %s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f' %(SnapNum, str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'])) 
         
         
+        #print(subhalo.counts['hmr'])
+        #print(subhalo.counts['gas'])
+        #print(subhalo.counts['gas_sf'])
+        #print(' ')
+        #print(len(subhalo.gas_data['2.0_hmr']['gas']['ParticleIDs']))
+        #print(subhalo.gas_data['2.0_hmr']['gas']['Total_mass'])
+        #print(len(subhalo.gas_data['2.0_hmr']['gas_sf']['ParticleIDs']))
+        #print(subhalo.gas_data['2.0_hmr']['gas_sf']['Total_mass'])
+        #print(subhalo.gas_data['2.0_hmr']['gas_sf']['ParticleIDs'])
+        #print(subhalo.gas_data['2.0_hmr']['gas_sf'].keys())
         
         
         #print(subhalo.data['%s' %str(trim_rad[0])]['gas_sf']['ParticleIDs'][35])
         # 8035248386127
         #if 8035248386127.0 in subhalo.data['%s' %str(trim_rad[0])]['gas_sf']['ParticleIDs']:
             #print('True')
-        
-        
-        #print(subhalo.gas_data.keys())
-        #print(subhalo.gas_data['2.0_hmr'].keys())
-        #print(subhalo.gas_data['2.0_hmr']['gas'].keys())
-        #print(subhalo.gas_data['2.0_hmr']['gas']['Total_count'])
-        #print(subhalo.counts['hmr'])
-        #print(subhalo.counts['gas'])
-        
-        print(subhalo.data['%s' %str(trim_rad[-1])]['bh'].keys())
-        
         
         
         #===========================================

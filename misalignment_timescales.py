@@ -368,7 +368,7 @@ def _extract_criteria_galaxies(csv_sample1 = 'L100_',                           
 
 #--------------------------------
 # Goes through existing CSV files (minor and major) and creates merger tree
-def _create_merger_tree_csv(csv_start        = 'L100_',                                 # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+def _create_merger_tree_csv(csv_start        = 'L12_',                                 # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                             csv_sample       = '_all_sample_misalignment_9.0',
                             csv_sample_minor = '_minor_sample_misalignment_8.0',
                             csv_output_in    = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
@@ -377,11 +377,11 @@ def _create_merger_tree_csv(csv_start        = 'L100_',                         
                             # Galaxy analysis
                             print_summary = True,
                             #--------------------------
-                            csv_file      = False,             # Will write sample to csv file in sample_dir
+                            csv_file      = True,             # Will write sample to csv file in sample_dir
                               csv_name    = '',               # extra stuff at end
                             #--------------------------
                             print_progress = False,
-                            debug = True):
+                            debug = False):
 
     #================================================  
     # Load sample csv
@@ -2293,24 +2293,14 @@ def _plot_relaxation_time_merger(csv_merger_origin = 'L100_merger_origin_r0.1r10
 
 
 
-
-
-
-
-
-
-
-
-
-
 #=============================
 #_extract_criteria_galaxies()
-#_create_merger_tree_csv()
+_create_merger_tree_csv()
 
 #_analyse_misalignment_timescales()
 #_analyse_merger_origin_timescales()
 
-_plot_time_spent_misaligned()
+#_plot_time_spent_misaligned()
 #_plot_delta_misalignment_timescale()
 #_plot_time_spent_misaligned_merger()
 #_plot_relaxation_time_merger()

@@ -522,7 +522,7 @@ class Subhalo_Extract:
                     aexp = f['PartType%i/%s'%(itype, att)].attrs.get('aexp-scale-exponent')
                     hexp = f['PartType%i/%s'%(itype, att)].attrs.get('h-scale-exponent')
                     data['Mass'] = np.multiply(tmp, cgs * self.a**aexp * self.h**hexp, dtype='f8')
-                
+                    
                 else:
                     tmp  = eagle_data.read_dataset(itype, att)
                     cgs  = f['PartType%i/%s'%(itype, att)].attrs.get('CGSConversionFactor')
@@ -994,17 +994,18 @@ class Subhalo_Analysis:
         self.gasmass_sf         = np.sum(self.data['gas_sf']['Mass'])    # [Msun] within 30 pkpc (aperture_rad_in)
         self.gasmass_nsf        = np.sum(self.data['gas_nsf']['Mass'])   # [Msun] within 30 pkpc (aperture_rad_in)
         self.dmmass             = np.sum(self.data['dm']['Mass'])        # [Msun] within 30 pkpc (aperture_rad_in)
-        self.bh_mdot            = self._bh_accretion(self.data['bh'], halfmass_rad)     # [Msun]/s of largest BH within 0.5 HMR
         self.halfmass_rad       = halfmass_rad                          # [pkpc]
         self.halfmass_rad_proj  = halfmass_rad_proj                     # [pkpc]
         self.viewing_axis       = viewing_axis                          # 'x', 'y', 'z'
         self.viewing_angle      = viewing_angle                         # [deg]
         
+        self.bh_id, self.bh_mass, self.bh_mdot, self.bh_edd = self._bh_accretion(self.data['bh'], halfmass_rad)     # [Msun]/s of largest BH within 0.5 HMR
+        
         
         #----------------------------------------------------
         # Filling self.general
-        for general_name, general_item in zip(['GroupNum', 'SubGroupNum', 'GalaxyID', 'SnapNum', 'halo_mass', 'stelmass', 'gasmass', 'gasmass_sf', 'gasmass_nsf', 'dmmass', 'bh_mdot', 'halfmass_rad', 'halfmass_rad_proj', 'viewing_axis'], 
-                                              [self.GroupNum, self.SubGroupNum, self.GalaxyID, self.SnapNum, self.halo_mass, self.stelmass, self.gasmass, self.gasmass_sf, self.gasmass_nsf, self.dmmass, self.bh_mdot, self.halfmass_rad, self.halfmass_rad_proj, self.viewing_axis]):
+        for general_name, general_item in zip(['GroupNum', 'SubGroupNum', 'GalaxyID', 'SnapNum', 'halo_mass', 'stelmass', 'gasmass', 'gasmass_sf', 'gasmass_nsf', 'dmmass', 'bh_id', 'bh_mass', 'bh_mdot', 'bh_edd', 'halfmass_rad', 'halfmass_rad_proj', 'viewing_axis'], 
+                                              [self.GroupNum, self.SubGroupNum, self.GalaxyID, self.SnapNum, self.halo_mass, self.stelmass, self.gasmass, self.gasmass_sf, self.gasmass_nsf, self.dmmass, self.bh_id, self.bh_mass, self.bh_mdot, self.bh_edd, self.halfmass_rad, self.halfmass_rad_proj, self.viewing_axis]):
             self.general[general_name] = general_item
         self.general.update(MorphoKinem)
             
@@ -1175,7 +1176,6 @@ class Subhalo_Analysis:
                         self.gas_data['%s_hmr' %hmr_i][parttype_name]['Mass']        = trimmed_data[parttype_name]['Mass']
                         self.gas_data['%s_hmr' %hmr_i][parttype_name]['ParticleIDs'] = trimmed_data[parttype_name]['ParticleIDs']
                         self.gas_data['%s_hmr' %hmr_i][parttype_name]['Total_mass']  = particle_mass
-                        self.gas_data['%s_hmr' %hmr_i][parttype_name]['Total_count'] = particle_count
                     
                 
                     #----------------------------------------------
@@ -1262,57 +1262,68 @@ class Subhalo_Analysis:
 
         #-----------------------------
         def find_inflow_outflow(gas_data_old, debug=False):
-            # gas_data has current galaxy's gas data, gas_data_old has predecessor's gas data
-            
-            if print_progress:
-                print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-                print('Finding inflow/outflow')
-                time_start = time.time()
-            
-            for hmr_name_i in self.gas_data.keys():
-                self.mass_flow.update({'%s' %hmr_name_i: {}})
+            # if gas data not given, set stuff to math.nan
+            if gas_data_old == False:
+                for hmr_name_i in self.gas_data.keys():
+                    self.mass_flow.update({'%s' %hmr_name_i: {}})
+                    
+                    for parttype_name in self.gas_data[hmr_name_i].keys():
+                        self.mass_flow[hmr_name_i][parttype_name] = {'inflow': math.nan,
+                                                                     'outflow': math.nan,
+                                                                     'massloss': math.nan}
                 
-                for parttype_name in self.gas_data[hmr_name_i].keys():
+                
+            else:
+                # gas_data has current galaxy's gas data, gas_data_old has predecessor's gas data
+                if print_progress:
+                    print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+                    print('Finding inflow/outflow')
+                    time_start = time.time()
+            
+                
+                for hmr_name_i in self.gas_data.keys():
+                    self.mass_flow.update({'%s' %hmr_name_i: {}})
+                
+                    for parttype_name in self.gas_data[hmr_name_i].keys():
                                         
-                    # Cycle through current IDs, to check if they were in _old
-                    previous_mass = gas_data_old[hmr_name_i][parttype_name]['Total_mass']       # M1
-                    current_mass  = gas_data[hmr_name_i][parttype_name]['Total_mass']           # M2
-                    inflow_mass   = 0
-                    outflow_mass  = 0
+                        # Cycle through current IDs, to check if they were in _old
+                        previous_mass = gas_data_old[hmr_name_i][parttype_name]['Total_mass']       # M1
+                        current_mass  = self.gas_data[hmr_name_i][parttype_name]['Total_mass']           # M2
+                        inflow_mass   = 0
+                        outflow_mass  = 0
                     
-                    #------------------
-                    # Check for inflow (use current, run check on previous)
-                    for ID_i, mass_i in zip(gas_data[hmr_name_i][parttype_name]['ParticleIDs'], gas_data[hmr_name_i][parttype_name]['Mass']):
+                        #------------------
+                        # Check for inflow (use current, run check on previous)
+                        for ID_i, mass_i in zip(self.gas_data[hmr_name_i][parttype_name]['ParticleIDs'], self.gas_data[hmr_name_i][parttype_name]['Mass']):
                         
-                        # If ID was within 2hmr of _old, gas particle stayed
-                        if ID_i in gas_data_old[hmr_name_i][parttype_name]['ParticleIDs']:
-                            continue
-                        # If ID was NOT within 2hmr of _old, gas particle was accreted
-                        else:
-                            inflow_mass = inflow_mass + mass_i
+                            # If ID was within 2hmr of _old, gas particle stayed
+                            if ID_i in gas_data_old[hmr_name_i][parttype_name]['ParticleIDs']:
+                                continue
+                            # If ID was NOT within 2hmr of _old, gas particle was accreted
+                            else:
+                                inflow_mass = inflow_mass + mass_i
                             
-                    #------------------
-                    # Check for outflow (use old, run check on current)
-                    for ID_i, mass_i in zip(gas_data_old[hmr_name_i][parttype_name]['ParticleIDs'], gas_data_old[hmr_name_i][parttype_name]['Mass']):
+                        #------------------
+                        # Check for outflow (use old, run check on current)
+                        for ID_i, mass_i in zip(gas_data_old[hmr_name_i][parttype_name]['ParticleIDs'], gas_data_old[hmr_name_i][parttype_name]['Mass']):
                         
-                        # If ID will be within 2hmr of current, gas particle stayed
-                        if ID_i in gas_data[hmr_name_i][parttype_name]['ParticleIDs']:
-                            continue
-                        # If ID will NOT be within 2hmr of current, gas particle was outflowed
-                        else:
-                            outflow_mass = outflow_mass + mass_i
+                            # If ID will be within 2hmr of current, gas particle stayed
+                            if ID_i in self.gas_data[hmr_name_i][parttype_name]['ParticleIDs']:
+                                continue
+                            # If ID will NOT be within 2hmr of current, gas particle was outflowed
+                            else:
+                                outflow_mass = outflow_mass + mass_i
                 
                     
-                    #------------------
-                    # Left with current_mass = previous_mass + inflow_mass - outflow_mass + stellarmassloss
-                    stellarmassloss = current_mass - previous_mass - inflow_mass + outflow_mass
+                        #------------------
+                        # Left with current_mass = previous_mass + inflow_mass - outflow_mass + stellarmassloss
+                        stellarmassloss = current_mass - previous_mass - inflow_mass + outflow_mass
                     
-                    # Update mass_flow
-                    self.mass_flow[hmr_name_i][parttype_name] = {'inflow': inflow_mass,
-                                                                 'outflow': outflow_mass,
-                                                                 'massloss': stellarmassloss}   
-        if gas_data_old:
-            find_inflow_outflow(gas_data_old)
+                        # Update mass_flow
+                        self.mass_flow[hmr_name_i][parttype_name] = {'inflow': inflow_mass,
+                                                                     'outflow': outflow_mass,
+                                                                     'massloss': stellarmassloss}  
+        find_inflow_outflow(gas_data_old)
         
         #-----------------------------
         # Finding COM distances and flagging if one is > com_min_distance
@@ -2144,29 +2155,42 @@ class Subhalo_Analysis:
     
     def _bh_accretion(self, data_dict, hmr, hmr_from_centre=0.5, debug=False):
         # Check if galaxy has BH within 0.5 HMR (abs):
-        r = np.linalg.norm(data_dict['Coordinates'], axis=1)
-        mask = np.where(r <= hmr*hmr_from_centre)
-        
-        if len(mask) > 0:
-            # Consider the accretion rate of the closest to the centre to be the BH of this galaxy
-            r    = np.linalg.norm(data_dict['Coordinates'], axis=1).min()
-            mask = np.linalg.norm(data_dict['Coordinates'], axis=1).argmin()
-        
-            if debug:
-                print('distance', r)
-                print('bh list', data_dict['Mass'])
-                print('bh mdot', data_dict['BH_Mdot'])
-        
-        
-            # Consider the accretion rate of the closest to the centre to be the BH of this galaxy
-            accretion_rate = data_dict['BH_Mdot'][mask]
-            if debug:
-                print('accretion rate', accretion_rate)
-            
-            return accretion_rate
+        if len(data_dict['Coordinates']) == 0:
+            return math.nan, math.nan, math.nan, math.nan
         
         else:
-            return math.nan
+            r = np.linalg.norm(data_dict['Coordinates'], axis=1)
+            mask = np.where(r <= hmr*hmr_from_centre)
+            
+            if len(mask) > 0:
+                # Consider the accretion rate of the most massive BH within 0.5 hmr
+                #r    = np.linalg.norm(data_dict['Coordinates'], axis=1).min()
+                #mask = np.linalg.norm(data_dict['Coordinates'], axis=1).argmin()
+                new_mask = data_dict['Mass'][mask].argmax()
+                
+        
+                if debug:
+                    print('distance', r)
+                    print('bh list', data_dict['Mass'])
+                    print('bh mdot', data_dict['BH_Mdot'])
+        
+        
+                # Consider the accretion rate of the closest to the centre to be the BH of this galaxy
+                bh_epsilon = 0.1        # efficiency
+                accretion_rate = data_dict['BH_Mdot'][mask][new_mask]
+                bh_mass        = data_dict['Mass'][mask][new_mask]             
+                bh_edd         = accretion_rate / (bh_mass * 7e-17 / bh_epsilon)
+                bh_id          = data_dict['ParticleIDs'][mask][new_mask]
+                
+                if debug:
+                    print('accretion rate', accretion_rate)
+            
+                return bh_id, bh_mass, accretion_rate, bh_edd
+        
+            else:
+                return math.nan, math.nan, math.nan, math.nan
+        
+        
         
         
         

@@ -304,6 +304,7 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
                                             spin_rad_in,
                                             spin_hmr_in,
                                             find_uncertainties,
+                                            rad_projected,
                                             
                                             com_min_distance,
                                             min_particles,                                            

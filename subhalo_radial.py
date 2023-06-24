@@ -223,6 +223,7 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
     all_masses        = {}          # has all the particle mass within rad
     all_misangles     = {}          # has all 3D angles
     all_misanglesproj = {}          # has all 2D projected angles from 3d when given a viewing axis and viewing_angle = 0
+    #all_gasdata       = {}          # has all particle IDs inside 2hmr
     
     output_input = {'angle_selection': angle_selection,
                     'spin_hmr': spin_hmr,

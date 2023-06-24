@@ -501,7 +501,7 @@ def _analysis_misalignment_minor(csv_sample = 'L12_19_minor_sample_misalignment_
         
 
 # Reads in a sample file, and does all relevant calculations, and exports as csv file
-def _analysis_misalignment_distribution(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+def _analysis_misalignment_distribution(csv_sample = 'L12_19_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                                         #--------------------------
                                         # Galaxy extraction properties
                                         viewing_axis        = 'z',                  # Which axis to view galaxy from.  DEFAULT 'z'
@@ -602,6 +602,7 @@ def _analysis_misalignment_distribution(csv_sample = 'L12_28_all_sample_misalign
     all_masses        = {}          # has all the particle mass within rad
     all_misangles     = {}          # has all 3D angles
     all_misanglesproj = {}          # has all 2D projected angles from 3d when given a viewing axis and viewing_angle = 0
+    all_gasdata       = {}
     
     
     #============================================
@@ -687,7 +688,9 @@ def _analysis_misalignment_distribution(csv_sample = 'L12_28_all_sample_misalign
                                             min_particles,                                            
                                             min_inclination)
           
-          
+        
+        print(GalaxyID)
+        
         """ FLAGS
         ------------
         #print(subhalo.flags['total_particles'])            # will flag if there are missing particles within aperture_rad
@@ -707,6 +710,8 @@ def _analysis_misalignment_distribution(csv_sample = 'L12_28_all_sample_misalign
         all_masses['%s' %str(subhalo.GalaxyID)]         = subhalo.masses
         all_misangles['%s' %str(subhalo.GalaxyID)]      = subhalo.mis_angles
         all_misanglesproj['%s' %str(subhalo.GalaxyID)]  = subhalo.mis_angles_proj
+        all_gasdata['%s' %str(subhalo.GalaxyID)]        = subhalo.gas_data
+        #all_massflow... not added as we can't evaluate it here
         #---------------------------------
           
         if print_galaxy:
@@ -742,6 +747,7 @@ def _analysis_misalignment_distribution(csv_sample = 'L12_28_all_sample_misalign
                     'all_masses': all_masses,
                     'all_misangles': all_misangles,
                     'all_misanglesproj': all_misanglesproj, 
+                    'all_gasdata': all_gasdata,
                     'all_flags': all_flags,
                     'output_input': output_input}
         #csv_dict.update({'function_input': str(inspect.signature(_misalignment_distribution))})

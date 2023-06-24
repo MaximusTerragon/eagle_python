@@ -2153,21 +2153,21 @@ class Subhalo_Analysis:
             
         return angle, matrix
     
-    def _bh_accretion(self, data_dict, hmr, hmr_from_centre=0.5, debug=False):
-        # Check if galaxy has BH within 0.5 HMR (abs):
+    def _bh_accretion(self, data_dict, hmr, hmr_from_centre=1.0, debug=False):
+        # Check if galaxy has BH:
         if len(data_dict['Coordinates']) == 0:
             return math.nan, math.nan, math.nan, math.nan
         
+        # Check if galaxy has BH within 0.5 HMR (abs):
         else:
             r = np.linalg.norm(data_dict['Coordinates'], axis=1)
-            mask = np.where(r <= hmr*hmr_from_centre)
+            mask = np.where(r <= hmr*hmr_from_centre)    
             
-            if len(mask) > 0:
+            if len(data_dict['Mass'][mask]) > 0:
                 # Consider the accretion rate of the most massive BH within 0.5 hmr
                 #r    = np.linalg.norm(data_dict['Coordinates'], axis=1).min()
                 #mask = np.linalg.norm(data_dict['Coordinates'], axis=1).argmin()
                 new_mask = data_dict['Mass'][mask].argmax()
-                
         
                 if debug:
                     print('distance', r)
@@ -2186,6 +2186,39 @@ class Subhalo_Analysis:
                     print('accretion rate', accretion_rate)
             
                 return bh_id, bh_mass, accretion_rate, bh_edd
+            
+            # if no BH within 0.5 HMR, pick next largest within 1 HMR
+            elif len(data_dict['Mass'][mask]) == 0:
+                r = np.linalg.norm(data_dict['Coordinates'], axis=1)
+                mask = np.where(r <= 2* hmr*hmr_from_centre)
+            
+                if len(data_dict['Mass'][mask]) > 0:
+                    # Consider the accretion rate of the most massive BH within 0.5 hmr
+                    #r    = np.linalg.norm(data_dict['Coordinates'], axis=1).min()
+                    #mask = np.linalg.norm(data_dict['Coordinates'], axis=1).argmin()
+                    new_mask = data_dict['Mass'][mask].argmax()
+                
+        
+                    if debug:
+                        print('distance', r)
+                        print('bh list', data_dict['Mass'])
+                        print('bh mdot', data_dict['BH_Mdot'])
+        
+        
+                    # Consider the accretion rate of the closest to the centre to be the BH of this galaxy
+                    bh_epsilon = 0.1        # efficiency
+                    accretion_rate = data_dict['BH_Mdot'][mask][new_mask]
+                    bh_mass        = data_dict['Mass'][mask][new_mask]             
+                    bh_edd         = accretion_rate / (bh_mass * 7e-17 / bh_epsilon)
+                    bh_id          = data_dict['ParticleIDs'][mask][new_mask]
+                
+                    if debug:
+                        print('accretion rate', accretion_rate)
+            
+                    return bh_id, bh_mass, accretion_rate, bh_edd
+                
+                else:
+                    return math.nan, math.nan, math.nan, math.nan
         
             else:
                 return math.nan, math.nan, math.nan, math.nan

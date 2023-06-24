@@ -92,7 +92,7 @@ PURPOSE
 def galaxy_render(csv_sample = False,              # False, Whether to read in existing list of galaxies  
                     #--------------------------
                     mySims = [('RefL0012N0188', 12)],
-                    GalaxyID_List = [20455],
+                    GalaxyID_List = [50969],
                     #--------------------------
                     # Galaxy extraction properties
                     kappa_rad            = 30,          # calculate kappa for this radius [pkpc]
@@ -304,11 +304,16 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         if print_galaxy:
             print('|%s| |ID:   %s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f' %(SnapNum, str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'])) 
         
+        """ INFLOW OUTFLOW 
+        print(subhalo.mass_flow['2.0_hmr']['gas']['inflow'])
+        print(subhalo.mass_flow['2.0_hmr']['gas']['outflow'])
+        print(subhalo.mass_flow['2.0_hmr']['gas']['massloss'])
+        """
+            
+        #print(subhalo.bh_mdot)
+        #print(subhalo.bh_edd)
+        #print(subhalo.bh_id)
         
-        #print(subhalo.counts['hmr'])
-        #print(subhalo.counts['gas'])
-        #print(subhalo.counts['gas_sf'])
-        #print(' ')
         #print(len(subhalo.gas_data['2.0_hmr']['gas']['ParticleIDs']))
         #print(subhalo.gas_data['2.0_hmr']['gas']['Total_mass'])
         #print(len(subhalo.gas_data['2.0_hmr']['gas_sf']['ParticleIDs']))

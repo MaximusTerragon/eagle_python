@@ -142,6 +142,8 @@ def _find_misalignment_occurance(csv_sample1 = 'L100_',                         
         all_masses          = dict_output['all_masses']
         all_misangles       = dict_output['all_misangles']
         all_misanglesproj   = dict_output['all_misanglesproj']
+        #all_gasdata        = dict_output['all_gasdata']            # not needed
+        #all_massflow is not defined
         all_flags           = dict_output['all_flags']
     
         # Loading sample criteria

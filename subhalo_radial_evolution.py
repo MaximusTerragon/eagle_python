@@ -92,11 +92,11 @@ SAMPLE:
 
 
 """
-#ID_list = [16300531, 16049479, 17341514, 15165512, 14531471, 18108607, 13809906, 9678375, 16647245, 9628491, 8257780, 8806615, 13851368, 9822659, 9998415, 10883094, 8625363, 10525701, 1784463, 10784741]
-#ID_list = [14216102, 18447769, 18363467, 17718284, 9110372, 9542932, 9008303, 9216030, 12187581, 9746293, 8707373, 8494196, 10145405]
+#ID_list = [16300531, 16049479, 17341514, 15165512, 14531471, 18108607, 13809906] #, 9678375, 16647245, 9628491, 8257780, 8806615, 13851368, 9822659, 9998415, 10883094, 8625363, 10525701, 1784463, 10784741]
+#ID_list = [14216102, 8707373, 18447769, 18363467, 17718284, 9110372, 9542932, 9008303, 9216030, 12187581, 9746293, 8707373, 8494196, 10145405]
 #ID_list = [13866051, 9777730, 10009377, 8345213, 10443502, 10670173]
 #ID_list = [17374402, 8077031, 17480553, 15851557]
-#ID_list = [10438463, 8763330]
+#ID_list = [10438463, 8763330, 3327115]
 # Run analysis on individual galaxies and output individual CSV files
 def _analysis_radial_evolution(csv_sample = False,              # Whether to read in existing list of galaxies  
                                #--------------------------
@@ -433,7 +433,7 @@ def _analysis_radial_evolution(csv_sample = False,              # Whether to rea
             """
             #print(subhalo.bh_mdot)
             #print(subhalo.bh_edd)
-            print(subhalo.bh_id)
+            #print(subhalo.bh_id)
             
             if print_galaxy:
                 print('|%s| |ID:   %s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f' %(SnapNum, str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'])) 
@@ -549,7 +549,7 @@ def _analysis_radial_evolution(csv_sample = False,              # Whether to rea
    
 #--------------------
 # Will plot evolution of single galaxy but with improved formatting for poster/presentation and with outflows/inflows
-def _plot_radial_evolution(csv_output = 'L12_evolution_ID37445_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load 
+def _plot_radial_evolution(csv_output = 'L12_evolution_ID30494_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load 
                                csv_merger_tree = 'L12_merger_tree_',
                                #--------------------------
                                # Galaxy plotting
@@ -566,7 +566,7 @@ def _plot_radial_evolution(csv_output = 'L12_evolution_ID37445_RadProj_Err__star
                               rad_type_plot      = 'hmr',      # 'rad' whether to use absolute distance or hmr 
                               #--------------------------
                               showfig        = True,
-                              savefig        = True,
+                              savefig        = False,
                                 file_format  = 'pdf',
                                 savefig_txt  = '',
                               #--------------------------
@@ -1021,6 +1021,7 @@ def _plot_radial_evolution(csv_output = 'L12_evolution_ID37445_RadProj_Err__star
             #axs[1].plot(plot_lookbacktime, stelmassloss_rate, alpha=1.0, lw=1.5, ls='dashdot', label='Stellar mass loss')
             axs[1].plot(plot_lookbacktime, bh_mdot, alpha=1.0, lw=1.2, c='purple', ls='dashdot', label='$1000×\dot{M}_{\mathrm{BH}}$')
             axs[2].plot(plot_lookbacktime, bh_edd, alpha=1.0, lw=1.2, c='k', ls='-', label='$\lambda_{\mathrm{Edd}}$')
+            
         
         
         #------------------------
@@ -1671,7 +1672,7 @@ def _plot_radial_evolution_old(csv_output = 'L12_evolution_ID30494_RadProj_Err__
          
                           
 #=========================== 
-_analysis_radial_evolution()
+#_analysis_radial_evolution()
 
 _plot_radial_evolution()   
 #_plot_radial_evolution_old() 

@@ -82,7 +82,7 @@ def _find_misalignment_occurance(csv_sample1 = 'L100_',                         
                                    use_proj_angle     = True,                   # Whether to use projected or absolute angle 10**9
                                    lower_mass_limit   = 10**9,             # Whether to plot only certain masses 10**15
                                    upper_mass_limit   = 10**15,         
-                                   ETG_or_LTG         = 'ETG',             # Whether to plot only ETG/LTG
+                                   ETG_or_LTG         = 'LTG',             # Whether to plot only ETG/LTG
                                    group_or_field     = 'both',            # Whether to plot only field/group
                                  #--------------------------
                                  showfig       = True,

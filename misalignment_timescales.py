@@ -25,15 +25,16 @@ from graphformat import set_rc_params
 EAGLE_dir       = '/Users/c22048063/Documents/EAGLE'
 dataDir_main    = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/'
 dataDir_alt     = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/'
+output_dir      = EAGLE_dir + '/outputs'
 # Directories serpens
 #EAGLE_dir       = '/home/user/c22048063/Documents/EAGLE'
 #dataDir_main   = '/home/universe/spxtd1-shared/RefL0100N1504/'
 #dataDir_alt    = '/home/cosmos/c22048063/EAGLE_snapshots/RefL0100N1504/'
+#output_dir      = '/home/cosmos/c22048063/outputs'
 
 
 # Other directories
 sample_dir      = EAGLE_dir + '/samples'
-output_dir      = EAGLE_dir + '/outputs'
 fig_dir         = EAGLE_dir + '/plots'
 
 # Directories of data hdf5 file(s)
@@ -1036,8 +1037,8 @@ def _analyse_misalignment_timescales(csv_galaxy_dict = 'L12_galaxy_dict_both_sta
 
 
 # Goes through galaxies that meet criteria, extracts galaxies that became misaligned coinciding within X Gyr of a merger
-def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L12_galaxy_dict_both_stars_gas_sf_rad2.0_projTrue_',
-                                      csv_merger_tree = 'L12_merger_tree_',
+def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L100_galaxy_dict_LTG_stars_gas_sf_rad2.0_projTrue_',
+                                      csv_merger_tree = 'L100_merger_tree_',
                                       #--------------------------
                                       # Galaxy analysis
                                       print_summary = True,

@@ -25,15 +25,16 @@ from graphformat import set_rc_params
 EAGLE_dir       = '/Users/c22048063/Documents/EAGLE'
 dataDir_main    = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/'
 dataDir_alt     = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/'
+output_dir      = EAGLE_dir + '/outputs'
 # Directories serpens
 #EAGLE_dir       = '/home/user/c22048063/Documents/EAGLE'
 #dataDir_main   = '/home/universe/spxtd1-shared/RefL0100N1504/'
 #dataDir_alt    = '/home/cosmos/c22048063/EAGLE_snapshots/RefL0100N1504/'
+#output_dir      = '/home/cosmos/c22048063/outputs'
 
 
 # Other directories
 sample_dir      = EAGLE_dir + '/samples'
-output_dir      = EAGLE_dir + '/outputs'
 fig_dir         = EAGLE_dir + '/plots'
 
 # Directories of data hdf5 file(s)
@@ -565,8 +566,8 @@ def _plot_radial_evolution(csv_output = 'L12_evolution_ID30494_RadProj_Err__star
                               highlight_criteria = True,       # whether to indicate when criteria not met (but still plot)
                               rad_type_plot      = 'hmr',      # 'rad' whether to use absolute distance or hmr 
                               #--------------------------
-                              showfig        = True,
-                              savefig        = False,
+                              showfig        = False,
+                              savefig        = True,
                                 file_format  = 'pdf',
                                 savefig_txt  = '',
                               #--------------------------
@@ -1019,7 +1020,7 @@ def _plot_radial_evolution(csv_output = 'L12_evolution_ID30494_RadProj_Err__star
             axs[1].plot(plot_lookbacktime, inflow_rate, alpha=1.0, lw=1.2, c='g', label='Gas$_{\mathrm{SF}}$ inflow')
             axs[1].plot(plot_lookbacktime, outflow_rate, alpha=1.0, lw=1.2, c='r', label='Gas$_{\mathrm{SF}}$ outflow')
             #axs[1].plot(plot_lookbacktime, stelmassloss_rate, alpha=1.0, lw=1.5, ls='dashdot', label='Stellar mass loss')
-            axs[1].plot(plot_lookbacktime, bh_mdot, alpha=1.0, lw=1.2, c='purple', ls='dashdot', label='$1000×\dot{M}_{\mathrm{BH}}$')
+            axs[1].plot(plot_lookbacktime, bh_mdot, alpha=1.0, lw=1.2, c='purple', ls='dashdot', label='$\dot{M}_{\mathrm{BH}}$(×$10^3$)')
             axs[2].plot(plot_lookbacktime, bh_edd, alpha=1.0, lw=1.2, c='k', ls='-', label='$\lambda_{\mathrm{Edd}}$')
             
         

@@ -24,15 +24,16 @@ from graphformat import set_rc_params
 EAGLE_dir       = '/Users/c22048063/Documents/EAGLE'
 dataDir_main    = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/'
 dataDir_alt     = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/'
+output_dir      = EAGLE_dir + '/outputs'
 # Directories serpens
 #EAGLE_dir       = '/home/user/c22048063/Documents/EAGLE'
 #dataDir_main   = '/home/universe/spxtd1-shared/RefL0100N1504/'
 #dataDir_alt    = '/home/cosmos/c22048063/EAGLE_snapshots/RefL0100N1504/'
+#output_dir      = '/home/cosmos/c22048063/outputs'
 
 
 # Other directories
 sample_dir      = EAGLE_dir + '/samples'
-output_dir      = EAGLE_dir + '/outputs'
 fig_dir         = EAGLE_dir + '/plots'
 
 # Directories of data hdf5 file(s)
@@ -1905,7 +1906,7 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
 #_sample_misalignment_minor()
 
 #_analysis_misalignment_minor()
-_analysis_misalignment_distribution()
+#_analysis_misalignment_distribution()
 
 #_plot_misalignment()
 #_plot_misalignment_z()

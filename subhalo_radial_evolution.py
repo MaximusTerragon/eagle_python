@@ -93,19 +93,32 @@ SAMPLE:
 
 
 """
+""" ID LISTS
+Counter-rotating (0 snip)
 #ID_list = [16300531, 16049479, 17341514, 15165512, 14531471, 18108607, 13809906] #, 9678375, 16647245, 9628491, 8257780, 8806615, 13851368, 9822659, 9998415, 10883094, 8625363, 10525701, 1784463, 10784741]
+
+1 snip:
 #ID_list = [14216102, 8707373, 18447769, 18363467, 17718284, 9110372, 9542932, 9008303, 9216030, 12187581, 9746293, 8707373, 8494196, 10145405]
+
+2 snip:
 #ID_list = [13866051, 9777730, 10009377, 8345213, 10443502, 10670173]
+
+3 snip:
 #ID_list = [17374402, 8077031, 17480553, 15851557]
+
+4+ snip:
 #ID_list = [10438463, 8763330, 3327115]
+"""
+
+ID_list = [15851557, 3327115, 10438463, 10670173, 13866051, 17480553, 8077031, 8494196, 8763330, 9777730, 10009377, 10145405, 14216102, 16049479, 17374402, 17718284, 18447769]
 
 #--------------------
 # Run analysis on individual galaxies and output individual CSV files
 # SAVED: /outputs/L%s_evolution_ID_
 def _analysis_radial_evolution(csv_sample = False,              # Whether to read in existing list of galaxies  
                                #--------------------------
-                               mySims = [('RefL0012N0188', 12)],
-                               GalaxyID_List_target = [37445],               # Will create a csv file for each galaxy
+                               mySims = [('RefL0100N1504', 100)],
+                               GalaxyID_List_target = ID_list,               # Will create a csv file for each galaxy
                                snapNumMax           = 19,                    # Highest snapNum to go to
                                #--------------------------
                                # Galaxy extraction properties
@@ -1678,9 +1691,9 @@ def _plot_radial_evolution_old(csv_output = 'L12_evolution_ID30494_RadProj_Err__
          
                           
 #=========================== 
-#_analysis_radial_evolution()
+_analysis_radial_evolution()
 
 #-----------
-_plot_radial_evolution()   
+#_plot_radial_evolution()   
 #_plot_radial_evolution_old() 
 #===========================

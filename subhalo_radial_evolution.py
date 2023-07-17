@@ -98,7 +98,10 @@ SAMPLE:
 #ID_list = [13866051, 9777730, 10009377, 8345213, 10443502, 10670173]
 #ID_list = [17374402, 8077031, 17480553, 15851557]
 #ID_list = [10438463, 8763330, 3327115]
+
+#--------------------
 # Run analysis on individual galaxies and output individual CSV files
+# SAVED: /outputs/L%s_evolution_ID_
 def _analysis_radial_evolution(csv_sample = False,              # Whether to read in existing list of galaxies  
                                #--------------------------
                                mySims = [('RefL0012N0188', 12)],
@@ -550,6 +553,7 @@ def _analysis_radial_evolution(csv_sample = False,              # Whether to rea
    
 #--------------------
 # Will plot evolution of single galaxy but with improved formatting for poster/presentation and with outflows/inflows
+# SAVED: /plots/individual_evolution/
 def _plot_radial_evolution(csv_output = 'L12_evolution_ID30494_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load 
                                csv_merger_tree = 'L12_merger_tree_',
                                #--------------------------
@@ -1149,14 +1153,15 @@ def _plot_radial_evolution(csv_output = 'L12_evolution_ID30494_RadProj_Err__star
         
         
         if savefig:
-            plt.savefig("%s/L%s_evolution_ID%s_proj%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], target_GalaxyID, use_proj_angle, angle_str, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print("\n  SAVED: %s/L%s_evolution_ID%s_proj%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], target_GalaxyID, use_proj_angle, angle_str, savefig_txt, file_format))
+            plt.savefig("%s/individual_evolution/L%s_evolution_ID%s_proj%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], target_GalaxyID, use_proj_angle, angle_str, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/individual_evolution/L%s_evolution_ID%s_proj%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], target_GalaxyID, use_proj_angle, angle_str, savefig_txt, file_format))
         if showfig:
             plt.show()
         plt.close()
  
 
-# Will plot evolution of single galaxy                                                                                  
+# Will plot evolution of single galaxy       
+# SAVED: /plots/individual_evolution/                                                                           
 def _plot_radial_evolution_old(csv_output = 'L12_evolution_ID30494_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load 
                            #--------------------------
                            # Galaxy plotting
@@ -1664,8 +1669,8 @@ def _plot_radial_evolution_old(csv_output = 'L12_evolution_ID30494_RadProj_Err__
         
         
         if savefig:
-            plt.savefig("%s/L%s_evolution_ID%s_proj%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], target_GalaxyID, use_proj_angle, angle_str, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print("\n  SAVED: %s/L%s_evolution_ID%s_proj%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], target_GalaxyID, use_proj_angle, angle_str, savefig_txt, file_format))
+            plt.savefig("%s/individual_evolution/L%s_evolution_ID%s_proj%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], target_GalaxyID, use_proj_angle, angle_str, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/individual_evolution/L%s_evolution_ID%s_proj%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], target_GalaxyID, use_proj_angle, angle_str, savefig_txt, file_format))
         if showfig:
             plt.show()
         plt.close()
@@ -1675,7 +1680,7 @@ def _plot_radial_evolution_old(csv_output = 'L12_evolution_ID30494_RadProj_Err__
 #=========================== 
 #_analysis_radial_evolution()
 
+#-----------
 _plot_radial_evolution()   
 #_plot_radial_evolution_old() 
-
 #===========================

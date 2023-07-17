@@ -72,7 +72,8 @@ dataDir_dict['28'] = dataDir_main + 'snapshot_028_z000p000/snap_028_z000p000.0.h
 
 #--------------------------------
 # Goes through all csv samples given and collects all galaxies with matching criteria
-def _extract_criteria_galaxies(csv_sample1 = 'L12_',                                 # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+# SAVED: /outputs/%sgalaxy_dict_
+def _extract_criteria_galaxies(csv_sample1 = 'L100_',                                 # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                                csv_sample2 = '_all_sample_misalignment_9.0',
                                csv_sample_range = [19, 20, 21, 22, 23, 24, 25, 26, 27, 28],   # snapnums
                                csv_output_in = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
@@ -84,7 +85,7 @@ def _extract_criteria_galaxies(csv_sample1 = 'L12_',                            
                                  use_proj_angle     = True,                   # Whether to use projected or absolute angle 10**9
                                  lower_mass_limit   = 10**9,             # Whether to plot only certain masses 10**15
                                  upper_mass_limit   = 10**15,         
-                                 ETG_or_LTG         = 'both',             # Whether to plot only ETG/LTG
+                                 ETG_or_LTG         = 'ETG',             # Whether to plot only ETG/LTG
                                  group_or_field     = 'both',            # Whether to plot only field/group
                                #--------------------------
                                csv_file       = True,             # Will write sample to csv file in sample_dir
@@ -101,7 +102,7 @@ def _extract_criteria_galaxies(csv_sample1 = 'L12_',                            
         time_start = time.time()
     
     print('===================')
-    print('CSV CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %2E M*\n  Upper mass limit: %2E M*\n  ETG or LTG: %s\n  Group or field: %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field))
+    print('CSV CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %.2E M*\n  Upper mass limit: %.2E M*\n  ETG or LTG: %s\n  Group or field: %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field))
     print('===================\n')
     
     
@@ -110,7 +111,7 @@ def _extract_criteria_galaxies(csv_sample1 = 'L12_',                            
     galaxy_dict = {}
     #----------------------
     # Cycling over all the csv samples we want
-    for csv_sample_range_i in tqdm(csv_sample_range):
+    for csv_sample_range_i in csv_sample_range:
         
         # Ensuring the sample and output originated together
         csv_sample = csv_sample1 + str(csv_sample_range_i) + csv_sample2
@@ -258,7 +259,7 @@ def _extract_criteria_galaxies(csv_sample1 = 'L12_',                            
         galaxy_dict['%s' %output_input['snapNum']] = {}      
                  
         # Looping over all GalaxyIDs
-        for GalaxyID, DescendantID in zip(GalaxyID_List, DescendantID_List):
+        for GalaxyID, DescendantID in tqdm(zip(GalaxyID_List, DescendantID_List), total=len(GalaxyID_List)):
             
             #-----------------------------
             # Determine if galaxy has flags:
@@ -377,6 +378,7 @@ def _extract_criteria_galaxies(csv_sample1 = 'L12_',                            
 
 #--------------------------------
 # Goes through existing CSV files (minor and major) and creates merger tree
+# SAVED: /outputs/%smerger_tree_
 def _create_merger_tree_csv(csv_start        = 'L12_',                                 # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                             csv_sample       = '_all_sample_misalignment_9.0',
                             csv_sample_minor = '_minor_sample_misalignment_8.0',
@@ -587,13 +589,15 @@ def _create_merger_tree_csv(csv_start        = 'L12_',                          
 
 #--------------------------------
 # Goes through galaxies that meet criteria, analyses the time spend in misaligned state
-def _analyse_misalignment_timescales(csv_galaxy_dict = 'L12_galaxy_dict_both_stars_gas_sf_rad2.0_projTrue_',
+# SAVED: /outputs/%stimescale_tree
+def _analyse_misalignment_timescales(csv_galaxy_dict = 'L100_galaxy_dict_both_stars_gas_sf_rad2.0_projTrue_',
                                      #--------------------------
                                      # Galaxy analysis
                                      print_summary = True,
+                                     print_galaxy  = False,
                                      #--------------------------
                                      csv_file       = True,             # Will write sample to csv file in sample_dir
-                                       csv_name     = '',               # extra stuff at end
+                                       csv_name     = '_NEW',               # extra stuff at end
                                      #--------------------------
                                      print_progress = False,
                                      debug = False):
@@ -619,7 +623,7 @@ def _analyse_misalignment_timescales(csv_galaxy_dict = 'L12_galaxy_dict_both_sta
     print('GALAXY CRITERIA LOADED:\n %s\n  Snapshots: %s\n  Angle type: %s\n  Angle HMR: %s\n  Projected angle: %s' %(galaxy_dict_input['mySims'][0][0], galaxy_dict_input['csv_sample_range'], galaxy_dict_input['use_angle'], galaxy_dict_input['use_hmr'], galaxy_dict_input['use_proj_angle']))
     print('  NUMBER OF GALAXIES MEETING CRITERIA: %s' %len(galaxy_dict.keys()))
     
-    print('\nCRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %2E\n  Upper mass limit: %2E\n  ETG or LTG: %s\n  Group or field: %s' %(galaxy_dict_input['use_angle'], galaxy_dict_input['use_hmr'], galaxy_dict_input['use_proj_angle'], galaxy_dict_input['lower_mass_limit'], galaxy_dict_input['upper_mass_limit'], galaxy_dict_input['ETG_or_LTG'], galaxy_dict_input['group_or_field']))
+    print('\nCRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %.2E\n  Upper mass limit: %.2E\n  ETG or LTG: %s\n  Group or field: %s' %(galaxy_dict_input['use_angle'], galaxy_dict_input['use_hmr'], galaxy_dict_input['use_proj_angle'], galaxy_dict_input['lower_mass_limit'], galaxy_dict_input['upper_mass_limit'], galaxy_dict_input['ETG_or_LTG'], galaxy_dict_input['group_or_field']))
     print('===================')
     
 
@@ -915,24 +919,25 @@ def _analyse_misalignment_timescales(csv_galaxy_dict = 'L12_galaxy_dict_both_sta
                             # Find BH accretion
                             bh_mdot_list.append((float(bh_mass_list[-1]) - float(bh_mass_list[-2])) / time_step)
                             
-                            
-                            if not debug:
-                                print(' ')
-                            print('IN SAMPLE:   >>> ', GalaxyID_list[-1], len(SnapNum_list), ' <<<')
-                            if len(SnapNum_list) == 2:
-                                print('  BECAME COUNTER-ROTATING')
-                            else:
-                                print('  TRANSITIONED')
-                            print('  TIME TAKEN TO RELAX: ', abs(time_start - time_end))
-                            print('  ', SnapNum_list)
-                            print('  ', GalaxyID_list)
-                            print('  ', DescendantID_list)
-                            print('  ', misangle_list)
-                            print('  ', Lookbacktime_list)
+                            if print_galaxy:
+                                if not debug:
+                                    print(' ')
+                                print('IN SAMPLE:   >>> ', GalaxyID_list[-1], len(SnapNum_list), ' <<<')
+                                if len(SnapNum_list) == 2:
+                                    print('  BECAME COUNTER-ROTATING')
+                                else:
+                                    print('  TRANSITIONED')
+                                print('  TIME TAKEN TO RELAX: ', abs(time_start - time_end))
+                                print('  ', SnapNum_list)
+                                print('  ', GalaxyID_list)
+                                print('  ', DescendantID_list)
+                                print('  ', misangle_list)
+                                print('  ', Lookbacktime_list)
                                 
-                            print('-- mass flow --', GalaxyID_list[-1])
-                            for time_i, mass_i, in_i, out_i, stel_i, bh_i in zip(Lookbacktime_list, stelmass_list, inflow_rate_list, outflow_rate_list, stelmassloss_rate_list, bh_mdot_list):
-                                print('%.2f |  %.2e  |  %.2f     %.2f     %.2f  |  %.2f' %(time_i, mass_i, in_i, out_i, stel_i, bh_i*1000))
+                                print('-- mass flow --', GalaxyID_list[-1])
+                                print('time |  stelmass  |  inflow   outflow  SML   |  Mdotx1000')
+                                for time_i, mass_i, in_i, out_i, stel_i, bh_i in zip(Lookbacktime_list, stelmass_list, inflow_rate_list, outflow_rate_list, stelmassloss_rate_list, bh_mdot_list):
+                                    print('%.2f |  %.2e  |  %.2f     %.2f     %.2f  |  %.2f' %(time_i, mass_i, in_i, out_i, stel_i, bh_i*1000))
                                 
                                 
                             #------------------------------------
@@ -1037,15 +1042,17 @@ def _analyse_misalignment_timescales(csv_galaxy_dict = 'L12_galaxy_dict_both_sta
 
 
 # Goes through galaxies that meet criteria, extracts galaxies that became misaligned coinciding within X Gyr of a merger
+# SAVED: /outputs/%smerger_origin
 def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L100_galaxy_dict_LTG_stars_gas_sf_rad2.0_projTrue_',
                                       csv_merger_tree = 'L100_merger_tree_',
                                       #--------------------------
                                       # Galaxy analysis
                                       print_summary = True,
+                                      print_galaxy  = False,
                                         merger_misaligned_time_pre  = 0.1,             # Gyr, Time before last aligned state, and merger between which the galaxy is misaligned
                                         merger_misaligned_time_post = 2.0,             # Gyr, Time between last aligned state, and merger between which the galaxy is misaligned
-                                        merger_threshold_min   = 0.1,             # >= to include
-                                        merger_threshold_max   = 10,             # <= to include
+                                        merger_threshold_min   = 0.05,             # >= to include
+                                        merger_threshold_max   = 1.95,             # <= to include
                                       #--------------------------
                                       csv_file       = True,             # Will write sample to csv file in sample_dir
                                         csv_name     = '',               # extra stuff at end
@@ -1079,7 +1086,7 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L100_galaxy_dict_LTG_st
     print('GALAXY CRITERIA LOADED:\n %s\n  Snapshots: %s\n  Angle type: %s\n  Angle HMR: %s\n  Projected angle: %s' %(galaxy_dict_input['mySims'][0][0], galaxy_dict_input['csv_sample_range'], galaxy_dict_input['use_angle'], galaxy_dict_input['use_hmr'], galaxy_dict_input['use_proj_angle']))
     print('  NUMBER OF GALAXIES MEETING CRITERIA: %s' %len(galaxy_dict.keys()))
     
-    print('\nGALAXY CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %2E\n  Upper mass limit: %2E\n  ETG or LTG: %s\n  Group or field: %s' %(galaxy_dict_input['use_angle'], galaxy_dict_input['use_hmr'], galaxy_dict_input['use_proj_angle'], galaxy_dict_input['lower_mass_limit'], galaxy_dict_input['upper_mass_limit'], galaxy_dict_input['ETG_or_LTG'], galaxy_dict_input['group_or_field']))
+    print('\nGALAXY CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %.2E\n  Upper mass limit: %.2E\n  ETG or LTG: %s\n  Group or field: %s' %(galaxy_dict_input['use_angle'], galaxy_dict_input['use_hmr'], galaxy_dict_input['use_proj_angle'], galaxy_dict_input['lower_mass_limit'], galaxy_dict_input['upper_mass_limit'], galaxy_dict_input['ETG_or_LTG'], galaxy_dict_input['group_or_field']))
     print('\nMISALIGNMENT CRITERIA: \n  Delta merger/misaligned: %s Gyr pre, %s Gyr post last aligned\n  Merger thresholds: %s - %s' %(merger_misaligned_time_pre, merger_misaligned_time_post, merger_threshold_min, merger_threshold_max))
     print('===================')
     
@@ -1676,25 +1683,26 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L100_galaxy_dict_LTG_st
                             # Find BH accretion
                             bh_mdot_list.append((float(bh_mass_list[-1]) - float(bh_mass_list[-2])) / time_step)
                             
-                            if not debug:
-                                print(' ')
-                            print('IN SAMPLE:   >>> ', GalaxyID_list[-1], len(SnapNum_list), ' <<<')
-                            if len(SnapNum_list) == 2:
-                                print('  BECAME COUNTER-ROTATING')
-                            else:
-                                print('  TRANSITIONED')
-                            print('  TIME TAKEN TO RELAX: ', abs(time_start - time_end))
-                            print('  ', SnapNum_list)
-                            print('  ', GalaxyID_list)
-                            print('  ', DescendantID_list)
-                            print('  ', misangle_list)
-                            print('  ', Lookbacktime_list)
-                            print('  MERGERS: ', merger_analysis.items())
+                            if print_galaxy:
+                                if not debug:
+                                    print(' ')
+                                print('IN SAMPLE:   >>> ', GalaxyID_list[-1], len(SnapNum_list), ' <<<')
+                                if len(SnapNum_list) == 2:
+                                    print('  BECAME COUNTER-ROTATING')
+                                else:
+                                    print('  TRANSITIONED')
+                                print('  TIME TAKEN TO RELAX: ', abs(time_start - time_end))
+                                print('  ', SnapNum_list)
+                                print('  ', GalaxyID_list)
+                                print('  ', DescendantID_list)
+                                print('  ', misangle_list)
+                                print('  ', Lookbacktime_list)
+                                print('  MERGERS: ', merger_analysis.items())
                                 
-                            print('-- mass flow --', GalaxyID_list[-1])
-                            for time_i, mass_i, in_i, out_i, stel_i, bh_i in zip(Lookbacktime_list, stelmass_list, inflow_rate_list, outflow_rate_list, stelmassloss_rate_list, bh_mdot_list):
-                                print('%.2f |  %.2e  |  %.2f     %.2f     %.2f  |  %.2f' %(time_i, mass_i, in_i, out_i, stel_i, bh_i*1000))
-                            
+                                print('-- mass flow --', GalaxyID_list[-1])
+                                for time_i, mass_i, in_i, out_i, stel_i, bh_i in zip(Lookbacktime_list, stelmass_list, inflow_rate_list, outflow_rate_list, stelmassloss_rate_list, bh_mdot_list):
+                                    print('%.2f |  %.2e  |  %.2f     %.2f     %.2f  |  %.2f' %(time_i, mass_i, in_i, out_i, stel_i, bh_i*1000))
+                                
                             #------------------------------------
                             # Update dictionary
                             timescale_dict['%s' %GalaxyID] = {'SnapNum_list': SnapNum_list,
@@ -1807,6 +1815,7 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L100_galaxy_dict_LTG_st
 
 #--------------------------------
 # Plots for how long (time and snaps) misalignments perisit (from aligned -> stable) 
+# SAVED: /plots/time_spent_misaligned/
 def _plot_time_spent_misaligned(csv_timescales = 'L100_timescale_tree_both_stars_gas_sf_rad2.0_projTrue_',
                                 #--------------------------
                                 plot_type = 'time',            # 'time', 'snap'    
@@ -1814,7 +1823,7 @@ def _plot_time_spent_misaligned(csv_timescales = 'L100_timescale_tree_both_stars
                                 showfig       = True,
                                 savefig       = True,
                                   file_format = 'pdf',
-                                  savefig_txt = '_POSTER',
+                                  savefig_txt = '',
                                 #--------------------------
                                 use_alternative_format = True,          # Poster formatting
                                 #--------------------------
@@ -1938,21 +1947,27 @@ def _plot_time_spent_misaligned(csv_timescales = 'L100_timescale_tree_both_stars
     metadata_plot = {'Title': 'NUMBER OF MISALIGNMENTS: %s' %len(timescale_dict.keys()),
                      'Subject': str(hist_n)}
     
+    print(timescale_input['mySims'][0][1])
+    
+    
     if savefig:
-        plt.savefig("%s/%srelaxation_timescales_%s_%s_HMR%s_proj%s_m%sm%s_%s_%s.%s" %(fig_dir, timescale_input['csv_sample1'], timescale_input['ETG_or_LTG'], timescale_input['use_angle'], timescale_input['use_hmr'], timescale_input['use_proj_angle'], np.log10(float(timescale_input['lower_mass_limit'])), np.log10(float(timescale_input['upper_mass_limit'])), plot_type, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-        print("\n  SAVED: %s/%srelaxation_timescales_%s_%s_HMR%s_proj%s_m%sm%s_%s_%s.%s" %(fig_dir, timescale_input['csv_sample1'], timescale_input['ETG_or_LTG'], timescale_input['use_angle'], timescale_input['use_hmr'], timescale_input['use_proj_angle'], np.log10(float(timescale_input['lower_mass_limit'])), np.log10(float(timescale_input['upper_mass_limit'])), plot_type, savefig_txt, file_format))
+        plt.savefig("%s/time_spent_misaligned/%stime_spent_misaligned_%s_%s_HMR%s_proj%s_m%sm%s_%s_%s.%s" %(fig_dir, timescale_input['csv_sample1'], timescale_input['ETG_or_LTG'], timescale_input['use_angle'], timescale_input['use_hmr'], timescale_input['use_proj_angle'], np.log10(float(timescale_input['lower_mass_limit'])), np.log10(float(timescale_input['upper_mass_limit'])), plot_type, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+        print("\n  SAVED: %s/time_spent_misaligned/%stime_spent_misaligned_%s_%s_HMR%s_proj%s_m%sm%s_%s_%s.%s" %(fig_dir, timescale_input['csv_sample1'], timescale_input['ETG_or_LTG'], timescale_input['use_angle'], timescale_input['use_hmr'], timescale_input['use_proj_angle'], np.log10(float(timescale_input['lower_mass_limit'])), np.log10(float(timescale_input['upper_mass_limit'])), plot_type, savefig_txt, file_format))
+        
+        
     if showfig:
         plt.show()
     plt.close()
 
 
 # Plots time spent misaligned as a function of misalignment angle
-def _plot_delta_misalignment_timescale(csv_timescales = 'L100_timescale_tree_ETG_stars_gas_sf_rad2.0_projFalse_',
+# SAVED: /plots/delta_misangle_t_relax/
+def _plot_delta_misalignment_timescale(csv_timescales = 'L100_timescale_tree_ETG_stars_gas_sf_rad2.0_projTrue_',
                                        #--------------------------
                                        plot_type = 'time',            # 'time', 'snap'    
                                        #--------------------------
                                        showfig       = True,
-                                       savefig       = False,
+                                       savefig       = True,
                                          file_format = 'pdf',
                                          savefig_txt = '',
                                        #--------------------------
@@ -2057,8 +2072,11 @@ def _plot_delta_misalignment_timescale(csv_timescales = 'L100_timescale_tree_ETG
         metadata_plot = {'Subject': 'none'}
     
         if savefig:
-            plt.savefig("%s/%sdelta_misangle_%s_%s.%s" %(fig_dir, timescale_input['csv_sample1'], plot_type, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print("\n  SAVED: %s/%sdelta_misangle_%s_%s.%s" %(fig_dir, timescale_input['csv_sample1'], plot_type, savefig_txt, file_format))
+            plt.savefig("%s/delta_misangle_t_relax/%sdelta_misangle_%s_%s_HMR%s_proj%s_m%sm%s_%s_%s.%s" %(fig_dir, timescale_input['csv_sample1'], timescale_input['ETG_or_LTG'], timescale_input['use_angle'], timescale_input['use_hmr'], timescale_input['use_proj_angle'], np.log10(float(timescale_input['lower_mass_limit'])), np.log10(float(timescale_input['upper_mass_limit'])), plot_type, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            
+            
+            
+            print("\n  SAVED: %s/delta_misangle_t_relax/%sdelta_misangle_%s_%s_HMR%s_proj%s_m%sm%s_%s_%s.%s" %(fig_dir, timescale_input['csv_sample1'], timescale_input['ETG_or_LTG'], timescale_input['use_angle'], timescale_input['use_hmr'], timescale_input['use_proj_angle'], np.log10(float(timescale_input['lower_mass_limit'])), np.log10(float(timescale_input['upper_mass_limit'])), plot_type, savefig_txt, file_format))
         if showfig:
             plt.show()
         plt.close()
@@ -2067,12 +2085,14 @@ def _plot_delta_misalignment_timescale(csv_timescales = 'L100_timescale_tree_ETG
     
 
 
+#--------------------------------
 # Will overlay galaxies from the point of becoming misaligned, if they have a merger
-def _plot_time_spent_misaligned_merger(csv_merger_origin = 'L100_merger_origin_r0.05r20_t0.1t2.0_both_stars_gas_sf_rad2.0_projTrue_',
+# SAVED: /plots/stacked_misalignments/
+def _plot_stack_misalignments(csv_merger_origin = 'L100_merger_origin_r0.05r1.95_t0.1t2.0_LTG_stars_gas_sf_rad2.0_projTrue_',
                                        #--------------------------
                                        # Galaxy plotting
                                        print_summary  = True,
-                                         plot_type               = 'raw_time',            # 'time', 'snap', 'raw_time', 'raw_snap'
+                                         plot_type               = 'time',            # 'time', 'snap', 'raw_time', 'raw_snap'
                                          plot_GalaxyIDs          = False,             # Whether to add galaxyIDs 
                                          plot_number_of_galaxies_start = 0,                # galaxy number to start on (default 0)
                                          plot_number_of_galaxies_end   = 999,               # How many galaxies to plot (largely for testing), set to 1000000
@@ -2107,7 +2127,7 @@ def _plot_time_spent_misaligned_merger(csv_merger_origin = 'L100_merger_origin_r
     print('\n===================')
     print('TIMESCALES LOADED:\n  %s\n  Snapshots: %s\n  Angle type: %s\n  Angle HMR: %s\n  Projected angle: %s\n  Merger timeframe: %s - %s Gyr\n  Merger ratio limits: %s - %s' %(timescale_input['mySims'][0][0], timescale_input['csv_sample_range'], timescale_input['use_angle'], timescale_input['use_hmr'], timescale_input['use_proj_angle'], timescale_input['merger_misaligned_time_pre'], timescale_input['merger_misaligned_time_post'], timescale_input['merger_threshold_min'], timescale_input['merger_threshold_max']))
     print('  NUMBER OF MISALIGNMENTS WITH MERGERS: %s' %len(timescale_dict.keys()))
-    print('\nPLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %.2e M*\n  Upper mass limit: %.2e M*\n  ETG or LTG: %s\n  Group or field: %s\n  Merger limit: %s' %(timescale_input['use_angle'], timescale_input['use_hmr'], timescale_input['use_proj_angle'], float(timescale_input['lower_mass_limit']), float(timescale_input['upper_mass_limit']), timescale_input['ETG_or_LTG'], timescale_input['group_or_field'], plot_merger_limit))
+    print('\nPLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %.2E M*\n  Upper mass limit: %.2E M*\n  ETG or LTG: %s\n  Group or field: %s\n  Merger limit: %s' %(timescale_input['use_angle'], timescale_input['use_hmr'], timescale_input['use_proj_angle'], float(timescale_input['lower_mass_limit']), float(timescale_input['upper_mass_limit']), timescale_input['ETG_or_LTG'], timescale_input['group_or_field'], plot_merger_limit))
     print('===================')
     
     
@@ -2272,8 +2292,8 @@ def _plot_time_spent_misaligned_merger(csv_merger_origin = 'L100_merger_origin_r
         metadata_plot = {'Title': 'NUMBER OF MISALIGNMENTS WITH MERGERS: \n%s' %len(timescale_dict.keys())}
             
         if savefig:
-            plt.savefig("%s/L%s_merger_origin_%s_r%sr%s_t%st%s_%s_%s_rad%s_proj%s_%s.%s" %(fig_dir, timescale_input['mySims'][0][1], plot_type, timescale_input['merger_threshold_min'], timescale_input['merger_threshold_max'], timescale_input['merger_misaligned_time_pre'], timescale_input['merger_misaligned_time_post'], timescale_input['ETG_or_LTG'], timescale_input['use_angle'], timescale_input['use_hmr'], timescale_input['use_proj_angle'], savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print('\n  SAVED: %s/L%s_merger_origin_%s_r%sr%s_t%st%s_%s_%s_rad%s_proj%s_%s.%s' %(fig_dir, timescale_input['mySims'][0][1], plot_type, timescale_input['merger_threshold_min'], timescale_input['merger_threshold_max'], timescale_input['merger_misaligned_time_pre'], timescale_input['merger_misaligned_time_post'], timescale_input['ETG_or_LTG'], timescale_input['use_angle'], timescale_input['use_hmr'], timescale_input['use_proj_angle'], savefig_txt, file_format))
+            plt.savefig("%s/stacked_misalignments/L%s_stacked_misalignments_%s_r%sr%s_t%st%s_%s_%s_rad%s_proj%s_%s.%s" %(fig_dir, timescale_input['mySims'][0][1], plot_type, timescale_input['merger_threshold_min'], timescale_input['merger_threshold_max'], timescale_input['merger_misaligned_time_pre'], timescale_input['merger_misaligned_time_post'], timescale_input['ETG_or_LTG'], timescale_input['use_angle'], timescale_input['use_hmr'], timescale_input['use_proj_angle'], savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print('\n  SAVED: %s/stacked_misalignments/L%s_stacked_misalignments_%s_r%sr%s_t%st%s_%s_%s_rad%s_proj%s_%s.%s' %(fig_dir, timescale_input['mySims'][0][1], plot_type, timescale_input['merger_threshold_min'], timescale_input['merger_threshold_max'], timescale_input['merger_misaligned_time_pre'], timescale_input['merger_misaligned_time_post'], timescale_input['ETG_or_LTG'], timescale_input['use_angle'], timescale_input['use_hmr'], timescale_input['use_proj_angle'], savefig_txt, file_format))
         if showfig:
             plt.show()
         plt.close()
@@ -2307,8 +2327,9 @@ def _plot_time_spent_misaligned_merger(csv_merger_origin = 'L100_merger_origin_r
     """
 
 
-# Will overlay galaxies from the last merger they had that was attributed to a merger   
-def _plot_relaxation_time_merger(csv_merger_origin = 'L100_merger_origin_r0.1r10_t0.1t2.0_both_stars_gas_sf_rad2.0_projTrue_',
+# Will overlay galaxies from the last merger they had that was attributed to a merger  
+# SAVED: /plots/stacked_mergers/ 
+def _plot_stack_mergers(csv_merger_origin = 'L100_merger_origin_r0.05r1.95_t0.1t2.0_LTG_stars_gas_sf_rad2.0_projTrue_',
                                        #--------------------------
                                        # Galaxy plotting
                                        print_summary  = True,
@@ -2344,7 +2365,7 @@ def _plot_relaxation_time_merger(csv_merger_origin = 'L100_merger_origin_r0.1r10
     print('\n===================')
     print('TIMESCALES LOADED:\n  %s\n  Snapshots: %s\n  Angle type: %s\n  Angle HMR: %s\n  Projected angle: %s\n  Merger timeframe: %s - %s Gyr\n  Merger ratio limits: %s - %s' %(timescale_input['mySims'][0][0], timescale_input['csv_sample_range'], timescale_input['use_angle'], timescale_input['use_hmr'], timescale_input['use_proj_angle'], timescale_input['merger_misaligned_time_pre'], timescale_input['merger_misaligned_time_post'], timescale_input['merger_threshold_min'], timescale_input['merger_threshold_max']))
     print('  NUMBER OF MISALIGNMENTS WITH MERGERS: %s' %len(timescale_dict.keys()))
-    print('\nPLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %.2e M*\n  Upper mass limit: %.2e M*\n  ETG or LTG: %s\n  Group or field: %s\n  Merger limit: %s' %(timescale_input['use_angle'], timescale_input['use_hmr'], timescale_input['use_proj_angle'], float(timescale_input['lower_mass_limit']), float(timescale_input['upper_mass_limit']), timescale_input['ETG_or_LTG'], timescale_input['group_or_field'], plot_merger_limit))
+    print('\nPLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %.2E M*\n  Upper mass limit: %.2E M*\n  ETG or LTG: %s\n  Group or field: %s\n  Merger limit: %s' %(timescale_input['use_angle'], timescale_input['use_hmr'], timescale_input['use_proj_angle'], float(timescale_input['lower_mass_limit']), float(timescale_input['upper_mass_limit']), timescale_input['ETG_or_LTG'], timescale_input['group_or_field'], plot_merger_limit))
     print('===================')
     
     
@@ -2498,8 +2519,8 @@ def _plot_relaxation_time_merger(csv_merger_origin = 'L100_merger_origin_r0.1r10
         metadata_plot = {'Title': 'NUMBER OF MISALIGNMENTS WITH MERGERS: \n%s' %len(timescale_dict.keys())}
             
         if savefig:
-            plt.savefig("%s/L%s_relaxation_time_mergers_%s_r%sr%s_t%st%s_%s_%s_rad%s_proj%s_%s.%s" %(fig_dir, timescale_input['mySims'][0][1], plot_type, timescale_input['merger_threshold_min'], timescale_input['merger_threshold_max'], timescale_input['merger_misaligned_time_pre'], timescale_input['merger_misaligned_time_post'], timescale_input['ETG_or_LTG'], timescale_input['use_angle'], timescale_input['use_hmr'], timescale_input['use_proj_angle'], savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print('\n  SAVED: %s/L%s_relaxation_time_mergers_%s_r%sr%s_t%st%s_%s_%s_rad%s_proj%s_%s.%s' %(fig_dir, timescale_input['mySims'][0][1], plot_type, timescale_input['merger_threshold_min'], timescale_input['merger_threshold_max'], timescale_input['merger_misaligned_time_pre'], timescale_input['merger_misaligned_time_post'], timescale_input['ETG_or_LTG'], timescale_input['use_angle'], timescale_input['use_hmr'], timescale_input['use_proj_angle'], savefig_txt, file_format))
+            plt.savefig("%s/stacked_mergers/L%s_stacked_mergers_%s_r%sr%s_t%st%s_%s_%s_rad%s_proj%s_%s.%s" %(fig_dir, timescale_input['mySims'][0][1], plot_type, timescale_input['merger_threshold_min'], timescale_input['merger_threshold_max'], timescale_input['merger_misaligned_time_pre'], timescale_input['merger_misaligned_time_post'], timescale_input['ETG_or_LTG'], timescale_input['use_angle'], timescale_input['use_hmr'], timescale_input['use_proj_angle'], savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print('\n  SAVED: %s/stacked_mergers/L%s_stacked_mergers_%s_r%sr%s_t%st%s_%s_%s_rad%s_proj%s_%s.%s' %(fig_dir, timescale_input['mySims'][0][1], plot_type, timescale_input['merger_threshold_min'], timescale_input['merger_threshold_max'], timescale_input['merger_misaligned_time_pre'], timescale_input['merger_misaligned_time_post'], timescale_input['ETG_or_LTG'], timescale_input['use_angle'], timescale_input['use_hmr'], timescale_input['use_proj_angle'], savefig_txt, file_format))
         if showfig:
             plt.show()
         plt.close()
@@ -2541,12 +2562,14 @@ def _plot_relaxation_time_merger(csv_merger_origin = 'L100_merger_origin_r0.1r10
 #_create_merger_tree_csv()
 
 #_analyse_misalignment_timescales()
-_analyse_merger_origin_timescales()
+#_analyse_merger_origin_timescales()
 
+#---------------
 #_plot_time_spent_misaligned()
 #_plot_delta_misalignment_timescale()
-#_plot_time_spent_misaligned_merger()
-#_plot_relaxation_time_merger()
+
+#_plot_stack_misalignments()
+#_plot_stack_mergers()
 #=============================
 
 

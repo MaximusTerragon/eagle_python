@@ -69,8 +69,10 @@ dataDir_dict['28'] = dataDir_main + 'snapshot_028_z000p000/snap_028_z000p000.0.h
 #scp -r /Users/c22048063/Documents/EAGLE/code  c22048063@physxlogin.astro.cf.ac.uk:/home/user/c22048063/Documents/EAGLE/
 
 
+
 #--------------------------------
 # Creates a sample of galaxies given the inputs. Returns GroupNum, SubGroupNum, SnapNum, and GalaxyID for each galaxy
+# SAVED: /samples/L%s_%s_cent_sample_misalignment
 def _sample_misalignment(mySims = [('RefL0012N0188', 12)],
                          #--------------------------
                          galaxy_mass_min    = 10**9,            # Lower mass limit within 30pkpc
@@ -204,6 +206,7 @@ def _sample_misalignment(mySims = [('RefL0012N0188', 12)],
     
   
 # Creates a sample of galaxies given the inputs. Returns GroupNum, SubGroupNum, SnapNum, and GalaxyID for each galaxy
+# SAVED: /samples/L%s_%s_minor_sample_misalignment
 def _sample_misalignment_minor(mySims = [('RefL0012N0188', 12)],
                               #--------------------------
                               galaxy_mass_min    = 10**8,            # Lower mass limit within 30pkpc
@@ -330,8 +333,10 @@ def _sample_misalignment_minor(mySims = [('RefL0012N0188', 12)],
         """
     
 
+
 #--------------------------------
 # Reads in a sample file, and does all relevant calculations, and exports as csv file
+# SAVED: /outputs/%s csv_sample
 def _analysis_misalignment_minor(csv_sample = 'L12_19_minor_sample_misalignment_8.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                                  #--------------------------
                                  # Galaxy extraction properties
@@ -379,7 +384,7 @@ def _analysis_misalignment_minor(csv_sample = 'L12_19_minor_sample_misalignment_
        
        
     print('\n===================')
-    print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E M*\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_min'], sample_input['use_satellites']))
+    print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Lower mass limit: %.2E M*\n  Upper mass limit: %.2E M*\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_min'], sample_input['galaxy_mass_max'], sample_input['use_satellites']))
     print('  SAMPLE LENGTH: ', len(GroupNum_List))
     print('\nEXTRACT:\n  Masses.') 
     print('===================')
@@ -502,6 +507,7 @@ def _analysis_misalignment_minor(csv_sample = 'L12_19_minor_sample_misalignment_
         
 
 # Reads in a sample file, and does all relevant calculations, and exports as csv file
+# SAVED: /outputs/%s_%s_%s_%s...
 def _analysis_misalignment_distribution(csv_sample = 'L12_19_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                                         #--------------------------
                                         # Galaxy extraction properties
@@ -820,8 +826,10 @@ def _analysis_misalignment_distribution(csv_sample = 'L12_19_all_sample_misalign
         """
         
 
+
 #--------------------------------
 # Plots singular graphs by reading in existing csv file
+# SAVED: /plots/misalignment_distributions/
 def _plot_misalignment(csv_sample = 'L100_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                        csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                        #--------------------------
@@ -835,14 +843,15 @@ def _plot_misalignment(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
                          ETG_or_LTG         = 'ETG',           # Whether to plot only ETG/LTG
                          group_or_field     = 'both',           # Whether to plot only field/group
                          use_satellites     = False,             # Whether to include SubGroupNum =/ 0
-                         add_observational  = True,
                        #--------------------------
-                       use_alternative_format = True,          # Poster formatting
+                       add_observational  = True,
+                       #--------------------------
+                       use_alternative_format = True,          # COMPACT/Poster formatting
                        #--------------------------
                        showfig       = True,
                        savefig       = True,
                          file_format = 'pdf',
-                         savefig_txt = '_POSTER',
+                         savefig_txt = '',
                        #--------------------------
                        print_progress = False,
                        debug = False):
@@ -891,7 +900,7 @@ def _plot_misalignment(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
         print(SnapNum_List)
    
     print('\n===================')
-    print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E M*\n  Satellites: %s' %(output_input['mySims'][0][0], output_input['snapNum'], output_input['Redshift'], output_input['galaxy_mass_limit'], use_satellites))
+    print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Lower mass limit: %.2E M*\n  Upper mass limit: %.2E M*\n  Satellites: %s' %(output_input['mySims'][0][0], output_input['snapNum'], output_input['Redshift'], output_input['galaxy_mass_min'], output_input['galaxy_mass_max'], use_satellites))
     print('  SAMPLE LENGTH: ', len(GroupNum_List))
     print('\nOUTPUT LOADED:\n  Viewing axis: %s\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s\n  COM min distance: %s\n  Min. particles: %s\n  Min. inclination: %s' %(output_input['viewing_axis'], output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected'], output_input['com_min_distance'], output_input['min_particles'], output_input['min_inclination']))
     print('\nPLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %.2E M*\n  Upper mass limit: %.2E M*\n  ETG or LTG: %s\n  Group or field: %s\n  Use satellites:  %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field, use_satellites))
@@ -1170,7 +1179,6 @@ def _plot_misalignment(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
             # Plot
             axs.hist(obs_data[ETG_or_LTG], weights=np.ones(len(obs_data[ETG_or_LTG]))/len(obs_data[ETG_or_LTG]), bins=np.arange(0, 181, 10), histtype='bar', edgecolor='k', facecolor=None, hatch='/', fill=False, linestyle='--', alpha=0.5)
         
-        
         # Plot histogram
         axs.hist(plot_angles, weights=np.ones(catalogue['plot']['all'])/catalogue['plot']['all'], bins=np.arange(0, 181, 10), histtype='bar', edgecolor='none', facecolor=plot_color, alpha=0.1)
         bin_count, _, _ = axs.hist(plot_angles, weights=np.ones(catalogue['plot']['all'])/catalogue['plot']['all'], bins=np.arange(0, 181, 10), histtype='bar', edgecolor=plot_color, facecolor='none', alpha=1.0)
@@ -1343,9 +1351,14 @@ def _plot_misalignment(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
         if not use_satellites:
             sat_str = 'cent'
        
+        if add_observational:
+            obs_txt = 'OBSERVATIONAL'
+        else:
+            obs_txt = ''
+       
         if savefig:
-            plt.savefig("%s/L%s_%s_%s_misalignment_%s_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], output_input['snapNum'], sat_str, np.log10(float(output_input['galaxy_mass_limit'])), use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print("\n  SAVED: %s/L%s_%s_%s_misalignment_%s_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], output_input['snapNum'], sat_str, np.log10(float(output_input['galaxy_mass_limit'])), use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format))
+            plt.savefig("%s/misalignment_distributions/L%s_%s_%s_misalignment_%s_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], output_input['snapNum'], sat_str, np.log10(float(output_input['galaxy_mass_min'])), use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, obs_txt, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/misalignment_distributions/L%s_%s_%s_misalignment_%s_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], output_input['snapNum'], sat_str, np.log10(float(output_input['galaxy_mass_min'])), use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, obs_txt, savefig_txt, file_format))
         if showfig:
             plt.show()
         plt.close()
@@ -1390,6 +1403,7 @@ def _plot_misalignment(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
 
 #--------------------------------
 # Manually plots a graph tracking share of aligned, misaligned, and counter-rotating systems with z
+# SAVED: /plots/misalignment_distributions_z/
 def _plot_misalignment_z(csv_sample1 = 'L100_',                                 # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                          csv_sample_range = [19, 20, 21, 22, 23, 24, 25, 26, 27, 28],   # snapnums
                          csv_sample2 = '_all_sample_misalignment_9.0',
@@ -1422,7 +1436,7 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
         time_start = time.time()
     
     print('===================')
-    print('PLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %s M*\n  Upper mass limit: %s M*\n  ETG or LTG: %s\n  Group or field: %s\n  Use satellites:  %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field, use_satellites))
+    print('PLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %.2E M*\n  Upper mass limit: %.2E M*\n  ETG or LTG: %s\n  Group or field: %s\n  Use satellites:  %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field, use_satellites))
     print('===================\n')
     
     #--------------------------------
@@ -1888,8 +1902,8 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
             sat_str = 'cent'
        
         if savefig:
-            plt.savefig("%s/L%s_ALL_%s_misalignment_summary_%s_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], sat_str, np.log10(float(output_input['galaxy_mass_limit'])), use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print("\n  SAVED: %s/L%s_ALL_%s_misalignment_summary_%s_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], sat_str, np.log10(float(output_input['galaxy_mass_limit'])), use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format))
+            plt.savefig("%s/misalignment_distributions_z/L%s_ALL_%s_misalignment_summary_%s_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], sat_str, np.log10(float(output_input['galaxy_mass_limit'])), use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/misalignment_distributions_z/L%s_ALL_%s_misalignment_summary_%s_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], sat_str, np.log10(float(output_input['galaxy_mass_limit'])), use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format))
         if showfig:
             plt.show()
         plt.close()
@@ -1908,7 +1922,10 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
 #_analysis_misalignment_minor()
 #_analysis_misalignment_distribution()
 
-#_plot_misalignment()
+#------------
+
+_plot_misalignment()
+
 #_plot_misalignment_z()
 #===========================
     

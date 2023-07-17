@@ -24,15 +24,16 @@ from graphformat import set_rc_params
 EAGLE_dir       = '/Users/c22048063/Documents/EAGLE'
 dataDir_main    = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/'
 dataDir_alt     = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/'
+output_dir      = EAGLE_dir + '/outputs'
 # Directories serpens
 #EAGLE_dir       = '/home/user/c22048063/Documents/EAGLE'
 #dataDir_main   = '/home/universe/spxtd1-shared/RefL0100N1504/'
 #dataDir_alt    = '/home/cosmos/c22048063/EAGLE_snapshots/RefL0100N1504/'
+#output_dir      = '/home/cosmos/c22048063/outputs'
 
 
 # Other directories
 sample_dir      = EAGLE_dir + '/samples'
-output_dir      = EAGLE_dir + '/outputs'
 fig_dir         = EAGLE_dir + '/plots'
 
 # Directories of data hdf5 file(s)
@@ -91,7 +92,9 @@ SAMPLE:
 
 
 """
+#==========================
 # Run analysis on individual galaxies and output individual CSV files
+# SAVED: /outputs/L%s_radial_ID
 def _radial_analysis(csv_sample = False,              # Whether to read in existing list of galaxies  
                        #--------------------------
                        mySims = [('RefL0012N0188', 12)],
@@ -434,9 +437,10 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
             print('===================')
             """
           
-    
-# Plot galaxies fed into from a CSV file
-# Can also take misalignment sample files (will check if criteria met)
+
+#=========================
+# Plot galaxies fed into from a CSV file | Can also take misalignment sample files (will check if criteria met)
+# SAVED: /plots/individual_radial/
 def _radial_plot(csv_output = 'L12_radial_ID37445_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum):
                  #--------------------------
                  # Galaxy plotting
@@ -444,7 +448,7 @@ def _radial_plot(csv_output = 'L12_radial_ID37445_RadProj_Err__stars_gas_stars_g
                     use_angles         = ['stars_gas',
                                           'stars_gas_sf',
                                           'stars_dm'],                 # Which angles to plot
-                    use_hmr            = np.arange(0.5, 10.1, 0.5),         # Which HMR to plot
+                    use_hmr            = np.array([1.0]),         # DOESNT WORK 
                     use_proj_angle     = 'both',                   # Whether to use projected or absolute angle
                     use_uncertainties  = True,                   # Whether to plot uncertainties or not
                  #-------------------------
@@ -452,10 +456,10 @@ def _radial_plot(csv_output = 'L12_radial_ID37445_RadProj_Err__stars_gas_stars_g
                  highlight_criteria = True,       # whether to indicate when criteria not met (but still plot)
                  rad_type_plot      = 'hmr',      # 'rad' whether to use absolute distance or hmr 
                  #--------------------------
-                 showfig        = False,
+                 showfig        = True,
                  savefig        = True,
                    file_format  = 'pdf',
-                   savefig_txt  = '',
+                   savefig_txt  = '_bbb',
                  #--------------------------
                  print_progress = False,
                  debug = False):
@@ -576,10 +580,6 @@ def _radial_plot(csv_output = 'L12_radial_ID37445_RadProj_Err__stars_gas_stars_g
     # Run analysis for each individual galaxy in loaded sample
     for GroupNum, SubGroupNum, GalaxyID, SnapNum, Redshift, HaloMass, Centre, MorphoKinem in tqdm(zip(GroupNum_List, SubGroupNum_List, GalaxyID_List, SnapNum_List, Redshift_List, HaloMass_List, Centre_List, MorphoKinem_List), total=len(GroupNum_List)):
         
-        # adjust use_rad to whatever current galaxy values are (use hmr in misangles)
-        use_rad = all_misangles['%s' %GalaxyID]['hmr']
-
-
         #---------------------------------------------------
         # Graph initialising and base formatting
         fig, axs = plt.subplots(nrows=2, ncols=1, gridspec_kw={'height_ratios': [3, 1]}, figsize=[7, 8], sharex=True, sharey=False)
@@ -765,8 +765,8 @@ def _radial_plot(csv_output = 'L12_radial_ID37445_RadProj_Err__stars_gas_stars_g
         
         
         if savefig:
-            plt.savefig("%s/L%s_radial_ID%s_proj%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], GalaxyID, use_proj_angle, angle_str, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print("\n  SAVED: %s/L%s_radial_ID%s_proj%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], GalaxyID, use_proj_angle, angle_str, savefig_txt, file_format))
+            plt.savefig("%s/individual_radial/L%s_radial_ID%s_proj%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], GalaxyID, use_proj_angle, angle_str, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/individual_radial/L%s_radial_ID%s_proj%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], GalaxyID, use_proj_angle, angle_str, savefig_txt, file_format))
         if showfig:
             plt.show()
         plt.close()
@@ -774,7 +774,9 @@ def _radial_plot(csv_output = 'L12_radial_ID37445_RadProj_Err__stars_gas_stars_g
         
 
 #=========================== 
-_radial_analysis()
+#_radial_analysis()
+
+#----------------
 _radial_plot()   
 #===========================
 

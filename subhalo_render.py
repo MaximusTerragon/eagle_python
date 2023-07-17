@@ -89,7 +89,9 @@ PURPOSE
 #37445, 37446, 37447
 #3748, 20455, 37445, 30494, 43163, 40124, 44545, 48383, 57647, 55343, 51640, 46366, 53904, 52782, 56522, 59467, 49986, 61119, 62355, 63199, 61831
 
-
+#====================================
+# Will visualise all particles belonging to a SINGLE galaxy/subhalo
+# SAVED:%s/individual_render/
 def galaxy_render(csv_sample = False,              # False, Whether to read in existing list of galaxies  
                     #--------------------------
                     mySims = [('RefL0012N0188', 12)],
@@ -130,9 +132,10 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                     dark_matter         = False,
                     black_holes         = True,
                     #=====================================================
-                    showfig      = True,
-                    savefig      = False,
-                      savefigtxt = '',                # added txt to append to end of savefile
+                    showfig       = True,
+                    savefig       = True,
+                      savefig_txt = '',                # added txt to append to end of savefile
+                      file_format = 'pdf',
                     #--------------------------
                     print_progress = False,
                     print_galaxy   = True,
@@ -727,8 +730,8 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
             particle_txt += '_bh'
         
         if savefig:
-            plt.savefig("%s/L%s_render_ID%s_%s_%s.%s" %(fig_dir, mySims[0][1], GalaxyID, particle_txt, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print('\n  SAVED:%s/L%s_render_ID%s_%s_%s.%s' %(fig_dir, mySims[0][1], GalaxyID, particle_txt, savefig_txt, file_format))
+            plt.savefig("%s/individual_render/L%s_render_ID%s_%s_%s.%s" %(fig_dir, mySims[0][1], GalaxyID, particle_txt, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print('\n  SAVED:%s/individual_render/L%s_render_ID%s_%s_%s.%s' %(fig_dir, mySims[0][1], GalaxyID, particle_txt, savefig_txt, file_format))
         if showfig:
             plt.show()
         plt.close()

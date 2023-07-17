@@ -22,15 +22,16 @@ from graphformat import set_rc_params
 EAGLE_dir       = '/Users/c22048063/Documents/EAGLE'
 dataDir_main    = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/'
 dataDir_alt     = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/'
+output_dir      = EAGLE_dir + '/outputs'
 # Directories serpens
 #EAGLE_dir       = '/home/user/c22048063/Documents/EAGLE'
 #dataDir_main   = '/home/universe/spxtd1-shared/RefL0100N1504/'
 #dataDir_alt    = '/home/cosmos/c22048063/EAGLE_snapshots/RefL0100N1504/'
+#output_dir      = '/home/cosmos/c22048063/outputs'
 
 
 # Other directories
 sample_dir      = EAGLE_dir + '/samples'
-output_dir      = EAGLE_dir + '/outputs'
 fig_dir         = EAGLE_dir + '/plots'
 
 # Directories of data hdf5 file(s)
@@ -66,6 +67,9 @@ dataDir_dict['28'] = dataDir_main + 'snapshot_028_z000p000/snap_028_z000p000.0.h
 #scp -r /Users/c22048063/Documents/EAGLE/code  c22048063@physxlogin.astro.cf.ac.uk:/home/user/c22048063/Documents/EAGLE/
 
 
+#================================
+# Will plot sample selection given criteria
+# SAVED: /outputs/sample_stellar_mass_function/
 def _plot_stellar_mass_function(csv_sample = 'L100_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                                 csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                                  #--------------------------
@@ -79,7 +83,7 @@ def _plot_stellar_mass_function(csv_sample = 'L100_28_all_sample_misalignment_9.
                                  #--------------------------
                                  hist_bin_width = 0.2,
                                  #--------------------------
-                                 showfig       = False,
+                                 showfig       = True,
                                  savefig       = True,
                                    file_format = 'pdf',
                                    savefig_txt = '',
@@ -129,8 +133,10 @@ def _plot_stellar_mass_function(csv_sample = 'L100_28_all_sample_misalignment_9.
         print(GalaxyID_List)
         print(SnapNum_List)
    
+    
+    
     print('\n===================')
-    print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_limit'], sample_input['use_satellites']))
+    print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Lower mass limit: %.2E M*\n  Upper mass limit: %.2E M*\nSatellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_min'], sample_input['galaxy_mass_max'], sample_input['use_satellites']))
     print('  SAMPLE LENGTH: ', len(GroupNum_List))
     print('\nOUTPUT LOADED:\n  Viewing axis: %s\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s\n  COM min distance: %s\n  Min. particles: %s\n  Min. inclination: %s' %(output_input['viewing_axis'], output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected'], output_input['com_min_distance'], output_input['min_particles'], output_input['min_inclination']))
     print('\nPLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Population mass limit: %.2E M*\n  Sample mass limit:     %.2E M*\n  Use satellites:  %s' %(use_angle, use_hmr, pop_mass_limit, sample_mass_limit, use_satellites))
@@ -331,8 +337,8 @@ def _plot_stellar_mass_function(csv_sample = 'L100_28_all_sample_misalignment_9.
             sat_str = 'cent'
          
         if savefig:
-            plt.savefig("%s/L%s_%s_%s_misalignment_%s_%s_HMR%s_stellar_mass_func_%s.%s" %(fig_dir, output_input['mySims'][0][1], output_input['snapNum'], sat_str, np.log10(float(output_input['galaxy_mass_limit'])), use_angle, str(use_hmr), savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print("\n  SAVED: %s/L%s_%s_%s_misalignment_%s_%s_HMR%s_stellar_mass_func_%s.%s" %(fig_dir, output_input['mySims'][0][1], output_input['snapNum'], sat_str, np.log10(float(output_input['galaxy_mass_limit'])), use_angle, str(use_hmr), savefig_txt, file_format))
+            plt.savefig("%s/sample_stellar_mass_function/L%s_%s_%s_misalignment_%s_m%sm%s_HMR%s_stellar_mass_func_%s.%s" %(fig_dir, output_input['mySims'][0][1], output_input['snapNum'], sat_str, np.log10(float(output_input['galaxy_mass_min'])), np.log10(float(output_input['galaxy_mass_max'])), use_angle, str(use_hmr), savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/sample_stellar_mass_function/L%s_%s_%s_misalignment_%s_m%sm%s_HMR%s_stellar_mass_func_%s.%s" %(fig_dir, output_input['mySims'][0][1], output_input['snapNum'], sat_str, np.log10(float(output_input['galaxy_mass_min'])), np.log10(float(output_input['galaxy_mass_max'])), use_angle, str(use_hmr), savefig_txt, file_format))
         if showfig:
             plt.show()
         plt.close()

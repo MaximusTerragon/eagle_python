@@ -25,15 +25,16 @@ from graphformat import set_rc_params
 EAGLE_dir       = '/Users/c22048063/Documents/EAGLE'
 dataDir_main    = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/'
 dataDir_alt     = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/'
+output_dir      = EAGLE_dir + '/outputs'
 # Directories serpens
 #EAGLE_dir       = '/home/user/c22048063/Documents/EAGLE'
 #dataDir_main   = '/home/universe/spxtd1-shared/RefL0100N1504/'
 #dataDir_alt    = '/home/cosmos/c22048063/EAGLE_snapshots/RefL0100N1504/'
+#output_dir      = '/home/cosmos/c22048063/outputs'
 
 
 # Other directories
 sample_dir      = EAGLE_dir + '/samples'
-output_dir      = EAGLE_dir + '/outputs'
 fig_dir         = EAGLE_dir + '/plots'
 
 # Directories of data hdf5 file(s)
@@ -68,8 +69,11 @@ dataDir_dict['28'] = dataDir_main + 'snapshot_028_z000p000/snap_028_z000p000.0.h
 # COPY CODE
 #scp -r /Users/c22048063/Documents/EAGLE/code  c22048063@physxlogin.astro.cf.ac.uk:/home/user/c22048063/Documents/EAGLE/
 
-     
+
+
+#================================
 # Goes through existing CSV files to locate the snapshots at which misalignments are most frequent
+# SAVED: /plots/misalignment_occurance/
 def _find_misalignment_occurance(csv_sample1 = 'L100_',                                 # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                                  csv_sample2 = '_all_sample_misalignment_9.0',
                                  csv_sample_range = [19, 20, 21, 22, 23, 24, 25, 26, 27, 28],   # snapnums
@@ -79,7 +83,7 @@ def _find_misalignment_occurance(csv_sample1 = 'L100_',                         
                                  print_summary = True,
                                    use_angle          = 'stars_gas_sf',         # Which angles to plot
                                    use_hmr            = 2.0,                    # Which HMR to use
-                                   use_proj_angle     = True,                   # Whether to use projected or absolute angle 10**9
+                                   use_proj_angle     = False,                   # Whether to use projected or absolute angle 10**9
                                    lower_mass_limit   = 10**9,             # Whether to plot only certain masses 10**15
                                    upper_mass_limit   = 10**15,         
                                    ETG_or_LTG         = 'LTG',             # Whether to plot only ETG/LTG
@@ -100,7 +104,7 @@ def _find_misalignment_occurance(csv_sample1 = 'L100_',                         
         time_start = time.time()
     
     print('===================')
-    print('PLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %.2f M*\n  Upper mass limit: %.2f M*\n  ETG or LTG: %s\n  Group or field: %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field))
+    print('PLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %.2E M*\n  Upper mass limit: %.2E M*\n  ETG or LTG: %s\n  Group or field: %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field))
     print('===================\n')
     
     
@@ -111,7 +115,7 @@ def _find_misalignment_occurance(csv_sample1 = 'L100_',                         
     
     #================================================ 
     # Cycling over all the csv samples we want
-    for csv_sample_range_i in tqdm(csv_sample_range):
+    for csv_sample_range_i in csv_sample_range:
         
         # Ensuring the sample and output originated together
         csv_sample = csv_sample1 + str(csv_sample_range_i) + csv_sample2
@@ -266,7 +270,7 @@ def _find_misalignment_occurance(csv_sample1 = 'L100_',                         
         def _collect_misalignment_distributions_z(debug=False):
             
             # Looping over all GalaxyIDs
-            for GalaxyID, DescendantID in zip(GalaxyID_List, DescendantID_List):
+            for GalaxyID, DescendantID in tqdm(zip(GalaxyID_List, DescendantID_List), total=len(GalaxyID_List)):
                 
                 #-----------------------------
                 # Determine if galaxy has flags:
@@ -406,8 +410,8 @@ def _find_misalignment_occurance(csv_sample1 = 'L100_',                         
         metadata_plot = {'Title': metadata_rows}
         
         if savefig:
-            plt.savefig("%s/L%s_ALL_becameMisligned_%s_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], np.log10(float(output_input['galaxy_mass_limit'])), use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print("\n  SAVED: %s/L%s_ALL_becameMisaligned_%s_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], np.log10(float(output_input['galaxy_mass_limit'])), use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format))
+            plt.savefig("%s/misalignment_occurance/L%s_ALL_becameMisligned_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/misalignment_occurance/L%s_ALL_becameMisaligned_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format))
         if showfig:
             plt.show()
         plt.close()

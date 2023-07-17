@@ -376,6 +376,7 @@ def _extract_criteria_galaxies(csv_sample1 = 'L100_',                           
         """
 
 
+
 #--------------------------------
 # Goes through existing CSV files (minor and major) and creates merger tree
 # SAVED: /outputs/%smerger_tree_
@@ -585,6 +586,7 @@ def _create_merger_tree_csv(csv_start        = 'L12_',                          
         # .keys() gives list of DescendantIDs across all snapshots
         '''
                
+
 
 
 #--------------------------------

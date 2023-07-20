@@ -102,10 +102,10 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                     viewing_angle        = 0,           # Keep as 0
                     #--------------------------
                     # Visualisation properties
-                    boxradius           = 30,                  # boxradius of render [kpc], 'rad', 'tworad'
+                    boxradius           = 50,                  # boxradius of render [kpc], 'rad', 'tworad'
                     particles           = 5000,
                     viewing_axis        = 'z',                  # Which axis to view galaxy from.  DEFAULT 'z'
-                    aperture_rad        = 30,                   # trim all data to this maximum value before calculations [pkpc]
+                    aperture_rad        = 30,                   # calculations radius limit [pkpc]
                     trim_rad            = np.array([50]),           # pkpc WILL PLOT HIGHEST VALUE. trim particles, 2.0_hmr_proj
                     align_rad           = False,                          # False/Value
                     #=====================================================
@@ -133,7 +133,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                     black_holes         = True,
                     #=====================================================
                     showfig       = True,
-                    savefig       = True,
+                    savefig       = False,
                       savefig_txt = '',                # added txt to append to end of savefile
                       file_format = 'pdf',
                     #--------------------------

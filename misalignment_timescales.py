@@ -279,6 +279,13 @@ def _extract_criteria_galaxies(csv_sample1 = 'L100_',                           
                     # find age
                     Lookbacktime = ((13.8205298 * u.Gyr) - FlatLambdaCDM(H0=67.77, Om0=0.307, Ob0 = 0.04825).age(output_input['Redshift'])).value
                     
+                    # find gasdata for this hmr (if it exists)
+                    if '%s_hmr' %str(float(use_hmr)) in all_gasdata['%s' %GalaxyID].keys():
+                        gasdata = all_gasdata['%s' %GalaxyID]['%s_hmr' %str(float(use_hmr))]['gas_sf']
+                    else:
+                        raise Exception('use_hmr not in all_gasdata')
+                    
+                    
                     galaxy_dict['%s' %output_input['snapNum']]['%s' %GalaxyID] = {'GalaxyID': GalaxyID, 
                                                                                   'DescendantID': DescendantID, 
                                                                                   'GroupNum': all_general['%s' %GalaxyID]['GroupNum'],
@@ -297,7 +304,7 @@ def _extract_criteria_galaxies(csv_sample1 = 'L100_',                           
                                                                                   'bh_mass': all_general['%s' %GalaxyID]['bh_mass'],
                                                                                   'bh_mdot': all_general['%s' %GalaxyID]['bh_mdot'],
                                                                                   'bh_edd': all_general['%s' %GalaxyID]['bh_edd'],
-                                                                                  'gasdata': all_gasdata['%s' %GalaxyID]['%s_hmr' %str(float(use_hmr))]['gas_sf']}
+                                                                                  'gasdata': gasdata}
                                                                                   
                     #print('gas data added: ', all_gasdata['%s' %GalaxyID]['%s_hmr' %str(float(use_hmr))]['gas_sf'])
                     

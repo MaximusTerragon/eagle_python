@@ -567,15 +567,15 @@ def _analysis_radial_evolution(csv_sample = False,              # Whether to rea
 #--------------------
 # Will plot evolution of single galaxy but with improved formatting for poster/presentation and with outflows/inflows
 # SAVED: /plots/individual_evolution/
-def _plot_radial_evolution(csv_output = 'L12_evolution_ID30494_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load 
-                               csv_merger_tree = 'L12_merger_tree_',
+def _plot_radial_evolution(csv_output = 'L100_evolution_ID15851557_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load 
+                               csv_merger_tree = 'L100_merger_tree_',
                                #--------------------------
                                # Galaxy plotting
                                print_summary = True,
                                  use_angles         = ['stars_gas_sf'],                 # Which angles to plot
                                  use_hmr            = [1, 2],         # Which misangle HMR to plot
                                  use_hmr_frac       = [2],                # Which mass and fraction HMR to plot  
-                                 use_proj_angle     = False,                   # Whether to use projected or absolute angle, 'both'
+                                 use_proj_angle     = 'both',                   # Whether to use projected or absolute angle, 'both'
                                  use_uncertainties  = True,                   # Whether to plot uncertainties or not
                                  min_merger_ratio   = 0.05,
                               #-------------------------
@@ -1099,7 +1099,7 @@ def _plot_radial_evolution(csv_output = 'L12_evolution_ID30494_RadProj_Err__star
                 ax_top.invert_xaxis()
                 
             if i == 1:
-                ax.set_ylim(0, 20)
+                #ax.set_ylim(0, 20)
                 ax.set_ylabel('$\mathrm{log_{10}}(\mathrm{M}/\mathrm{M}_{\odot} \mathrm{yr}^{-1})$')
 
                 ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major', labelbottom=False, labeltop=False)
@@ -1108,7 +1108,7 @@ def _plot_radial_evolution(csv_output = 'L12_evolution_ID30494_RadProj_Err__star
                 ax_top.invert_xaxis()
             
             if i == 2:
-                ax.set_ylim(-4, 0)
+                #ax.set_ylim(-4, 0)
                 ax.set_ylabel('$\mathrm{log_{10}}(\lambda_{\mathrm{Edd}})$')
 
                 ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major', labelbottom=False, labeltop=False)
@@ -1175,7 +1175,7 @@ def _plot_radial_evolution(csv_output = 'L12_evolution_ID30494_RadProj_Err__star
 
 # Will plot evolution of single galaxy       
 # SAVED: /plots/individual_evolution/                                                                           
-def _plot_radial_evolution_old(csv_output = 'L12_evolution_ID30494_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load 
+def _plot_radial_evolution_old(csv_output = 'L100_evolution_ID15851557_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load 
                            #--------------------------
                            # Galaxy plotting
                            print_summary = True,
@@ -1190,10 +1190,10 @@ def _plot_radial_evolution_old(csv_output = 'L12_evolution_ID30494_RadProj_Err__
                            highlight_criteria = True,       # whether to indicate when criteria not met (but still plot)
                            rad_type_plot      = 'hmr',      # 'rad' whether to use absolute distance or hmr 
                            #--------------------------
-                           showfig        = True,
-                           savefig        = False,
+                           showfig        = False,
+                           savefig        = True,
                              file_format  = 'pdf',
-                             savefig_txt  = '',
+                             savefig_txt  = '_NEW',
                            #--------------------------
                            print_progress = False,
                            debug = False):
@@ -1517,7 +1517,7 @@ def _plot_radial_evolution_old(csv_output = 'L12_evolution_ID30494_RadProj_Err__
                 if use_proj_angle == True:
                     axs[0].plot(plot_lookbacktime, plot_angles_proj, alpha=1, ms=2, lw=2, ls='-', c=color_angle, zorder=10, label='%.1f %s' %(hmr_i, r50))
                     axs[0].plot(plot_lookbacktime, plot_angles_proj_small, alpha=1, ms=2, lw=1.5, ls=':', c=color_angle, zorder=8)
-                        
+                    
                     if use_uncertainties:
                         axs[0].fill_between(plot_lookbacktime, plot_angles_proj_lo, plot_angles_proj_hi, alpha=0.25, color=color_angle, lw=0, zorder=5)
                 elif use_proj_angle == False:
@@ -1690,10 +1690,12 @@ def _plot_radial_evolution_old(csv_output = 'L12_evolution_ID30494_RadProj_Err__
  
          
                           
-#=========================== 
-_analysis_radial_evolution()
+#============================
+#_analysis_radial_evolution()
 
 #-----------
-#_plot_radial_evolution()   
+for ID_i in ID_list:
+    _plot_radial_evolution(csv_output = 'L100_evolution_ID' + str(ID_i) + '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_')
+#_plot_radial_evolution()
 #_plot_radial_evolution_old() 
-#===========================
+#============================

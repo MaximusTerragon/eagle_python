@@ -104,11 +104,14 @@ def _modify_misalignment_csv(csv_sample = '#L100_28_all_sample_misalignment_9.0'
     # Loading output
     dict_output = json.load(open('%s/%s.csv' %(output_dir, csv_output), 'r'))
     old_general         = dict_output['all_general']
+    old_spins           = dict_output['all_spins']
+    old_coms            = dict_output['all_coms']
     old_counts          = dict_output['all_counts']
     old_masses          = dict_output['all_masses']
     old_misangles       = dict_output['all_misangles']
     old_misanglesproj   = dict_output['all_misanglesproj']
-    old_flags           = dict_output['all_flags']
+    old_gasdata         = dict_output['all_gasdata']
+    
     
     # Loading sample criteria
     sample_input        = dict_sample['sample_input']
@@ -125,153 +128,171 @@ def _modify_misalignment_csv(csv_sample = '#L100_28_all_sample_misalignment_9.0'
         print(SnapNum_List)
    
     print('\n===================')
-    print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E M*\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_limit'], sample_input['use_satellites']))
+    print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Lower mass limit: %.2E M*\n  Upper mass limit: %.2E M*\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_min'], sample_input['galaxy_mass_max'], sample_input['use_satellites']))
     print('  SAMPLE LENGTH: ', len(GroupNum_List))
     print('\nOUTPUT LOADED:\n  Viewing axis: %s\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s\n  COM min distance: %s\n  Min. particles: %s\n  Min. inclination: %s' %(output_input['viewing_axis'], output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected'], output_input['com_min_distance'], output_input['min_particles'], output_input['min_inclination']))
     print('===================')
     
-    
     #===============================================
-    # MAKE MODIFICATIONS HERE
+    # prompt confirmation
+    answer = input("\nContinue?")
+    if answer.lower() in ["y","yes"]:
+         #===============================================
+         # MAKE MODIFICATIONS HERE
     
-    #------------------------
-    # Update sims
-    """output_input.update(sample_input)
-    """
+         #------------------------
+         # Update sims
+         """output_input.update(sample_input)
+         """
 
-    #------------------------
-    # Update lists
+         #------------------------
+         # Update lists
     
-    """for GalaxyID in old_general.keys():
-        old_general['%s' %GalaxyID]['SnapNum'] = 28"""
+         """for GalaxyID in old_general.keys():
+             old_general['%s' %GalaxyID]['SnapNum'] = 28"""
     
-    #------------------------
-    # SPLICE CSVS
-    """# Loading output
-    dict_output2 = json.load(open('%s/%s.csv' %(output_dir, csv_output2), 'r'))
-    old2_general         = dict_output2['all_general']
-    old2_counts          = dict_output2['all_counts']
-    old2_masses          = dict_output2['all_masses']
-    old2_misangles       = dict_output2['all_misangles']
-    old2_misanglesproj   = dict_output2['all_misanglesproj']
-    old2_flags           = dict_output2['all_flags']
+         #------------------------
+         # SPLICE CSVS
+         """# Loading output
+         dict_output2 = json.load(open('%s/%s.csv' %(output_dir, csv_output2), 'r'))
+         old2_general         = dict_output2['all_general']
+         old2_counts          = dict_output2['all_counts']
+         old2_masses          = dict_output2['all_masses']
+         old2_misangles       = dict_output2['all_misangles']
+         old2_misanglesproj   = dict_output2['all_misanglesproj']
+         old2_flags           = dict_output2['all_flags']
 
-    print('OLD:')
-    print(old_misangles['12431873']['hmr'])
-    print(old_misangles['8230966']['hmr'])
-    print(old_misangles['11861302']['hmr'])
+         print('OLD:')
+         print(old_misangles['12431873']['hmr'])
+         print(old_misangles['8230966']['hmr'])
+         print(old_misangles['11861302']['hmr'])
     
-    # old_ is my incomplete csv array
-    # old2_ is my shorter, updated csv array
-    for GalaxyID in old2_general.keys():
-        old_general['%s' %GalaxyID] = old2_general['%s' %GalaxyID]
-        old_counts['%s' %GalaxyID]  = old2_counts['%s' %GalaxyID]
-        old_masses['%s' %GalaxyID]  = old2_masses['%s' %GalaxyID]
-        old_misangles['%s' %GalaxyID] = old2_misangles['%s' %GalaxyID]
-        old_misanglesproj['%s' %GalaxyID] = old2_misanglesproj['%s' %GalaxyID]
-        old_flags['%s' %GalaxyID] = old2_flags['%s' %GalaxyID]
-
-    
-    print('NEW:')
-    print(old_misangles['12431873']['hmr'])
-    print(old_misangles['8230966']['hmr'])
-    print(old_misangles['11861302']['hmr'])
-    """
+         # old_ is my incomplete csv array
+         # old2_ is my shorter, updated csv array
+         for GalaxyID in old2_general.keys():
+             old_general['%s' %GalaxyID] = old2_general['%s' %GalaxyID]
+             old_counts['%s' %GalaxyID]  = old2_counts['%s' %GalaxyID]
+             old_masses['%s' %GalaxyID]  = old2_masses['%s' %GalaxyID]
+             old_misangles['%s' %GalaxyID] = old2_misangles['%s' %GalaxyID]
+             old_misanglesproj['%s' %GalaxyID] = old2_misanglesproj['%s' %GalaxyID]
+             old_flags['%s' %GalaxyID] = old2_flags['%s' %GalaxyID]
 
     
-    
-    
-    # Create _main to analyse smaller galaxies of mass 10^8, append them to sample anyway
-    # Check whether we get same results
+         print('NEW:')
+         print(old_misangles['12431873']['hmr'])
+         print(old_misangles['8230966']['hmr'])
+         print(old_misangles['11861302']['hmr'])
+         """
 
-    #================================================
-    # Finish modifications
-    all_general         = old_general
-    all_counts          = old_counts
-    all_masses          = old_masses
-    all_misangles       = old_misangles
-    all_misanglesproj   = old_misanglesproj
-    all_flags           = old_flags
     
-    #================================================
-    if csv_file: 
-        # Converting numpy arrays to lists. When reading, may need to simply convert list back to np.array() (easy)
-        class NumpyEncoder(json.JSONEncoder):
-            ''' Special json encoder for numpy types '''
-            def default(self, obj):
-                if isinstance(obj, np.integer):
-                    return int(obj)
-                elif isinstance(obj, np.floating):
-                    return float(obj)
-                elif isinstance(obj, np.ndarray):
-                    return obj.tolist()
-                return json.JSONEncoder.default(self, obj)
+    
+    
+         # Create _main to analyse smaller galaxies of mass 10^8, append them to sample anyway
+         # Check whether we get same results
+
+         #================================================
+         # Finish modifications
+         all_general         = old_general
+         all_spins           = old_spins
+         all_coms            = old_coms
+         all_counts          = old_counts
+         all_masses          = old_masses
+         all_misangles       = old_misangles
+         all_misanglesproj   = old_misanglesproj
+         all_gasdata         = old_gasdata
+         all_flags           = old_flags
+    
+         #================================================
+         if csv_file: 
+             # Converting numpy arrays to lists. When reading, may need to simply convert list back to np.array() (easy)
+             class NumpyEncoder(json.JSONEncoder):
+                 ''' Special json encoder for numpy types '''
+                 def default(self, obj):
+                     if isinstance(obj, np.integer):
+                         return int(obj)
+                     elif isinstance(obj, np.floating):
+                         return float(obj)
+                     elif isinstance(obj, np.ndarray):
+                         return obj.tolist()
+                     return json.JSONEncoder.default(self, obj)
               
-        if print_progress:
-            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-            print('Writing to csv...')
-            time_start = time.time() 
+             if print_progress:
+                 print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+                 print('Writing to csv...')
+                 time_start = time.time() 
     
-        # Combining all dictionaries
-        csv_dict = {'all_general': all_general,
-                    'all_counts': all_counts,
-                    'all_masses': all_masses,
-                    'all_misangles': all_misangles,
-                    'all_misanglesproj': all_misanglesproj, 
-                    'all_flags': all_flags,
-                    'output_input': output_input}
-        #csv_dict.update({'function_input': str(inspect.signature(_misalignment_distribution))})
+             # Combining all dictionaries
+             csv_dict = {'all_general': all_general,
+                         'all_spins': all_spins,
+                         'all_coms': all_coms,
+                         'all_counts': all_counts,
+                         'all_masses': all_masses,
+                         'all_misangles': all_misangles,
+                         'all_misanglesproj': all_misanglesproj, 
+                         'all_gasdata': all_gasdata,
+                         'all_flags': all_flags,
+                         'output_input': output_input}
+             #csv_dict.update({'function_input': str(inspect.signature(_misalignment_distribution))})
     
-        #-----------------------------
-        # Writing one massive JSON file
-        json.dump(csv_dict, open('%s/MOD_%s.csv' %(output_dir, csv_output), 'w'), cls=NumpyEncoder)
-        print('\n  SAVED: %s/MOD_%s.csv' %(output_dir, csv_output))
-        if print_progress:
-            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+             #-----------------------------
+             # Writing one massive JSON file
+             json.dump(csv_dict, open('%s/MOD_%s.csv' %(output_dir, csv_output), 'w'), cls=NumpyEncoder)
+             print('\n  SAVED: %s/MOD_%s.csv' %(output_dir, csv_output))
+             if print_progress:
+                 print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
     
-        # Reading JSON file
-        """ 
-        # Ensuring the sample and output originated together
-        csv_output = csv_sample + csv_output
+             # Reading JSON file
+             """ 
+             # Ensuring the sample and output originated together
+             csv_output = csv_sample + csv_output
     
-        # Loading sample
-        dict_sample = json.load(open('%s/%s.csv' %(sample_dir, csv_sample), 'r'))
-        GroupNum_List       = np.array(dict_sample['GroupNum'])
-        SubGroupNum_List    = np.array(dict_sample['SubGroupNum'])
-        GalaxyID_List       = np.array(dict_sample['GalaxyID'])
-        SnapNum_List        = np.array(dict_sample['SnapNum'])
+             # Loading sample
+             dict_sample = json.load(open('%s/%s.csv' %(sample_dir, csv_sample), 'r'))
+             GroupNum_List       = np.array(dict_sample['GroupNum'])
+             SubGroupNum_List    = np.array(dict_sample['SubGroupNum'])
+             GalaxyID_List       = np.array(dict_sample['GalaxyID'])
+             SnapNum_List        = np.array(dict_sample['SnapNum'])
     
-        # Loading output
-        dict_output = json.load(open('%s/%s.csv' %(output_dir, csv_output), 'r'))
-        all_general         = dict_output['all_general']
-        all_counts          = dict_output['all_counts']
-        all_masses          = dict_output['all_masses']
-        all_misangles       = dict_output['all_misangles']
-        all_misanglesproj   = dict_output['all_misanglesproj']
-        all_flags           = dict_output['all_flags']
+             # Loading output
+             dict_output = json.load(open('%s/%s.csv' %(output_dir, csv_output), 'r'))
+             all_general         = dict_output['all_general']
+             all_counts          = dict_output['all_counts']
+             all_masses          = dict_output['all_masses']
+             all_misangles       = dict_output['all_misangles']
+             all_misanglesproj   = dict_output['all_misanglesproj']
+             all_flags           = dict_output['all_flags']
 
-        # Loading sample criteria
-        sample_input        = dict_sample['sample_input']
-        output_input        = dict_output['output_input']
+             # Loading sample criteria
+             sample_input        = dict_sample['sample_input']
+             output_input        = dict_output['output_input']
 
-        if print_progress:
-            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
-        if debug:
-            print(sample_input)
-            print(GroupNum_List)
-            print(SubGroupNum_List)
-            print(GalaxyID_List)
-            print(SnapNum_List)
+             if print_progress:
+                 print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+             if debug:
+                 print(sample_input)
+                 print(GroupNum_List)
+                 print(SubGroupNum_List)
+                 print(GalaxyID_List)
+                 print(SnapNum_List)
 
-        print('\n===================')
-        print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E M*\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_limit'], sample_input['use_satellites']))
-        print('  SAMPLE LENGTH: ', len(GroupNum_List))
-        print('\nOUTPUT LOADED:\n  Viewing axis: %s\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s\n  COM min distance: %s\n  Min. particles: %s\n  Min. inclination: %s' %(output_input['viewing_axis'], output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected'], output_input['com_min_distance'], output_input['min_particles'], output_input['min_inclination']))
-        print('\nPLOT:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %s\n  Upper mass limit: %s\n  ETG or LTG: %s\n  Group or field: %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field))
-        print('===================')
-        """
-    #================================================  
+             print('\n===================')
+             print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E M*\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_limit'], sample_input['use_satellites']))
+             print('  SAMPLE LENGTH: ', len(GroupNum_List))
+             print('\nOUTPUT LOADED:\n  Viewing axis: %s\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s\n  COM min distance: %s\n  Min. particles: %s\n  Min. inclination: %s' %(output_input['viewing_axis'], output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected'], output_input['com_min_distance'], output_input['min_particles'], output_input['min_inclination']))
+             print('\nPLOT:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %s\n  Upper mass limit: %s\n  ETG or LTG: %s\n  Group or field: %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field))
+             print('===================')
+             """
+         #================================================  
 
+         
+    else if answer.lower() in ["n","no"]:
+         raise Exception('Terminated')
+    else:
+         raise Exception('Terminated')
+    
+    
+    
+    
     
     
 # Modifies existing csv output file by adding or removing relevant fields
@@ -428,7 +449,7 @@ def _modify_radial_csv(csv_output = 'L12_radial_ID37445_RadProj_Err__stars_gas_s
     
 
 #==========================
-_modify_misalignment_csv()
+#_modify_misalignment_csv()
 #_modify_radial_csv()
 #==========================
 

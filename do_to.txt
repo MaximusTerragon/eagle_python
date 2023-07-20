@@ -1,0 +1,43 @@
+# download reference snips
+
+# Colour stacked_ plots by gasinflow/outflow
+
+# Redo evolution graphs
+
+# account for flybys
+
+
+
+
+
+
+
+
+
+# Structure of snipshots:
+# 400 available, but subfind only used on 200 of them
+# mergerTree includes 'Snapnum_Ref' to link 200 Subfind snaps, to the 400 originals
+
+# Create sample:
+# For each mergerTree Snap, find snip
+# Find galaxies with stelmass that meets criteria
+# Extract:
+        self.GroupNum     = myData['GroupNumber']
+        self.SubGroupNum  = myData['SubGroupNumber']
+        self.GalaxyID     = myData['GalaxyID']
+        self.DescendantID = myData['DescendantID']
+        self.SnapNum      = myData['SnapNum']       (snipnum)
+        self.Redshift     = myData['Redshift']
+        self.halo_mass    = myData['halo_mass']
+        + SnapNum_Ref from input
+        
+        
+# Save to file
+
+# Run old analysis but convert to SF/NSF gas
+
+# Create mergertree file?
+# Create sample
+# Run same stacked example
+
+

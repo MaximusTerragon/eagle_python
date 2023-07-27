@@ -19,14 +19,14 @@ from tqdm import tqdm
 from subhalo_main import Initial_Sample, Subhalo_Extract, Subhalo_Analysis, ConvertID, ConvertID_noMK, MergerTree
 import eagleSqlTools as sql
 from graphformat import set_rc_params
+from read_dataset_directories import _assign_directories
 
 
 #====================================
 # finding directories
-answer = input("-----------------\nDirectories?:\n      local\n      serpens_snap\n      snip\n")
+answer = input("-----------------\nDirectories?:\n     1 local\n     2 serpens_snap\n     3 snip\n")
 EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_directories(answer)
 #====================================
-
 
 
 #================================
@@ -62,7 +62,7 @@ def _find_misalignment_occurance(csv_sample1 = 'L100_',                         
         time_start = time.time()
     
     print('===================')
-    print('PLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %.2E M*\n  Upper mass limit: %.2E M*\n  ETG or LTG: %s\n  Group or field: %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field))
+    print('PLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Min mass: %.2E M*\n  Max mass: %.2E M*\n  ETG or LTG: %s\n  Group or field: %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field))
     print('===================\n')
     
     
@@ -104,7 +104,9 @@ def _find_misalignment_occurance(csv_sample1 = 'L100_',                         
         all_masses          = dict_output['all_masses']
         all_misangles       = dict_output['all_misangles']
         all_misanglesproj   = dict_output['all_misanglesproj']
-        #all_gasdata        = dict_output['all_gasdata']            # not needed
+        #all_sfr             = dict_output['all_sfr']
+        #all_Z               = dict_output['all_Z']
+        #all_gasdata         = dict_output['all_gasdata']            # not needed
         #all_massflow is not defined
         all_flags           = dict_output['all_flags']
     

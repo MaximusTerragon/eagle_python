@@ -16,11 +16,12 @@ from tqdm import tqdm
 from subhalo_main import Initial_Sample, Subhalo_Extract, Subhalo_Analysis
 import eagleSqlTools as sql
 from graphformat import set_rc_params
+from read_dataset_directories import _assign_directories
 
 
 #====================================
 # finding directories
-answer = input("-----------------\nDirectories?:\n      local\n      serpens_snap\n      snip\n")
+answer = input("-----------------\nDirectories?:\n     1 local\n     2 serpens_snap\n     3 snip\n")
 EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_directories(answer)
 #====================================
 
@@ -74,6 +75,8 @@ def _plot_stellar_mass_function(csv_sample = 'L100_28_all_sample_misalignment_9.
     all_coms            = dict_output['all_coms']
     all_counts          = dict_output['all_counts']
     all_masses          = dict_output['all_masses']
+    all_sfr             = dict_output['all_sfr']
+    all_Z               = dict_output['all_Z']
     all_misangles       = dict_output['all_misangles']
     all_misanglesproj   = dict_output['all_misanglesproj']
     all_flags           = dict_output['all_flags']
@@ -94,7 +97,7 @@ def _plot_stellar_mass_function(csv_sample = 'L100_28_all_sample_misalignment_9.
     
     
     print('\n===================')
-    print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Lower mass limit: %.2E M*\n  Upper mass limit: %.2E M*\nSatellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_min'], sample_input['galaxy_mass_max'], sample_input['use_satellites']))
+    print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Min mass: %.2E M*\n  Max mass: %.2E M*\nSatellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_min'], sample_input['galaxy_mass_max'], sample_input['use_satellites']))
     print('  SAMPLE LENGTH: ', len(GroupNum_List))
     print('\nOUTPUT LOADED:\n  Viewing axis: %s\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s\n  COM min distance: %s\n  Min. particles: %s\n  Min. inclination: %s' %(output_input['viewing_axis'], output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected'], output_input['com_min_distance'], output_input['min_particles'], output_input['min_inclination']))
     print('\nPLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Population mass limit: %.2E M*\n  Sample mass limit:     %.2E M*\n  Use satellites:  %s' %(use_angle, use_hmr, pop_mass_limit, sample_mass_limit, use_satellites))

@@ -16,11 +16,12 @@ from tqdm import tqdm
 from subhalo_main import Initial_Sample, Subhalo_Extract, Subhalo_Analysis
 import eagleSqlTools as sql
 from graphformat import set_rc_params
+from read_dataset_directories import _assign_directories
 
 
 #====================================
 # finding directories
-answer = input("-----------------\nDirectories?:\n      local\n      serpens_snap\n      snip\n")
+answer = input("-----------------\nDirectories?:\n     l local\n     a serpens_snap\n     i snip\n")
 EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_directories(answer)
 #====================================
 

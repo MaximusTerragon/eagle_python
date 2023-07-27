@@ -19,20 +19,20 @@ from tqdm import tqdm
 from subhalo_main import Initial_Sample, Subhalo_Extract, Subhalo_Analysis, ConvertID, ConvertID_noMK, MergerTree
 import eagleSqlTools as sql
 from graphformat import set_rc_params
+from read_dataset_directories import _assign_directories
 
 
 #====================================
 # finding directories
-answer = input("-----------------\nDirectories?:\n      local\n      serpens_snap\n      snip\n")
+answer = input("-----------------\nDirectories?:\n     1 local\n     2 serpens_snap\n     3 snip\n")
 EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_directories(answer)
 #====================================
-
 
 
 #--------------------------------
 # Goes through all csv samples given and collects all galaxies with matching criteria
 # SAVED: /outputs/%sgalaxy_dict_
-def _extract_criteria_galaxies(csv_sample1 = 'L100_',                                 # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+def _extract_criteria_galaxies(csv_sample1 = 'L12_',                                 # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                                csv_sample2 = '_all_sample_misalignment_9.0',
                                csv_sample_range = [19, 20, 21, 22, 23, 24, 25, 26, 27, 28],   # snapnums
                                csv_output_in = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
@@ -44,7 +44,7 @@ def _extract_criteria_galaxies(csv_sample1 = 'L100_',                           
                                  use_proj_angle     = True,                   # Whether to use projected or absolute angle 10**9
                                  lower_mass_limit   = 10**9,             # Whether to plot only certain masses 10**15
                                  upper_mass_limit   = 10**15,         
-                                 ETG_or_LTG         = 'ETG',             # Whether to plot only ETG/LTG
+                                 ETG_or_LTG         = 'both',             # Whether to plot only ETG/LTG
                                  group_or_field     = 'both',            # Whether to plot only field/group
                                #--------------------------
                                csv_file       = True,             # Will write sample to csv file in sample_dir
@@ -61,7 +61,7 @@ def _extract_criteria_galaxies(csv_sample1 = 'L100_',                           
         time_start = time.time()
     
     print('===================')
-    print('CSV CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %.2E M*\n  Upper mass limit: %.2E M*\n  ETG or LTG: %s\n  Group or field: %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field))
+    print('CSV CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Min mass: %.2E M*\n  Max mass: %.2E M*\n  ETG or LTG: %s\n  Group or field: %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field))
     print('===================\n')
     
     
@@ -99,6 +99,8 @@ def _extract_criteria_galaxies(csv_sample1 = 'L100_',                           
         all_coms            = dict_output['all_coms']
         all_counts          = dict_output['all_counts']
         all_masses          = dict_output['all_masses']
+        all_sfr             = dict_output['all_sfr']
+        all_Z               = dict_output['all_Z']
         all_misangles       = dict_output['all_misangles']
         all_misanglesproj   = dict_output['all_misanglesproj']
         all_gasdata         = dict_output['all_gasdata']
@@ -119,7 +121,7 @@ def _extract_criteria_galaxies(csv_sample1 = 'L100_',                           
             print(SnapNum_List)
         if debug:
             print('\n===================')
-            print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E M*\n  Satellites: %s' %(output_input['mySims'][0][0], output_input['snapNum'], output_input['Redshift'], output_input['galaxy_mass_limit'], use_satellites))
+            print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Min mass: %.2E M*\n  Max mass: %.2E M*\n  Satellites: %s' %(output_input['mySims'][0][0], output_input['snapNum'], output_input['Redshift'], output_input['galaxy_mass_min'], output_input['galaxy_mass_max'], use_satellites))
             print('  SAMPLE LENGTH: ', len(GroupNum_List))
             print('\nOUTPUT LOADED:\n  Viewing axis: %s\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s\n  COM min distance: %s\n  Min. particles: %s\n  Min. inclination: %s' %(output_input['viewing_axis'], output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected'], output_input['com_min_distance'], output_input['min_particles'], output_input['min_inclination']))
             print('===================')
@@ -244,6 +246,21 @@ def _extract_criteria_galaxies(csv_sample1 = 'L100_',                           
                     else:
                         raise Exception('use_hmr not in all_gasdata')
                     
+                    # find metallicity and sfr if it exists
+                    sfr = math.nan
+                    Z_stars = math.nan
+                    Z_gas   = math.nan
+                    Z_sf    = math.nan
+                    Z_nsf   = math.nan
+                    for hmr_i, sfr_i, Z_stars_i, Z_gas_i, Z_sf_i, Z_nsf_i in zip(all_sfr['%s' %GalaxyID]['hmr'], all_sfr['%s' %GalaxyID]['gas_sf'], all_Z['%s' %GalaxyID]['stars'], all_Z['%s' %GalaxyID]['gas'], all_Z['%s' %GalaxyID]['gas_sf'], all_Z['%s' %GalaxyID]['gas_nsf']):
+                        if float(hmr_i) == float(use_hmr):
+                            sfr = sfr_i
+                            Z_stars = Z_stars_i
+                            Z_gas   = Z_gas_i
+                            Z_sf    = Z_sf_i
+                            Z_nsf   = Z_nsf_i
+                        
+                    
                     
                     galaxy_dict['%s' %output_input['snapNum']]['%s' %GalaxyID] = {'GalaxyID': GalaxyID, 
                                                                                   'DescendantID': DescendantID, 
@@ -258,6 +275,11 @@ def _extract_criteria_galaxies(csv_sample1 = 'L100_',                           
                                                                                   'gasmass_sf': all_general['%s' %GalaxyID]['gasmass_sf'],
                                                                                   'halfmass_rad': all_general['%s' %GalaxyID]['halfmass_rad'],
                                                                                   'halfmass_rad_proj': all_general['%s' %GalaxyID]['halfmass_rad_proj'],
+                                                                                  'sfr': sfr,
+                                                                                  'Z_stars': Z_stars,
+                                                                                  'Z_gas': Z_gas,
+                                                                                  'Z_sf': Z_sf,
+                                                                                  'Z_nsf': Z_nsf,
                                                                                   'kappa_stars': all_general['%s' %GalaxyID]['kappa_stars'],
                                                                                   'kappa_gas_sf': all_general['%s' %GalaxyID]['kappa_gas_sf'],
                                                                                   'bh_mass': all_general['%s' %GalaxyID]['bh_mass'],
@@ -558,14 +580,14 @@ def _create_merger_tree_csv(csv_start        = 'L12_',                          
 #--------------------------------
 # Goes through galaxies that meet criteria, analyses the time spend in misaligned state
 # SAVED: /outputs/%stimescale_tree
-def _analyse_misalignment_timescales(csv_galaxy_dict = 'L100_galaxy_dict_both_stars_gas_sf_rad2.0_projTrue_',
+def _analyse_misalignment_timescales(csv_galaxy_dict = 'L12_galaxy_dict_both_stars_gas_sf_rad2.0_projTrue_',
                                      #--------------------------
                                      # Galaxy analysis
                                      print_summary = True,
                                      print_galaxy  = False,
                                      #--------------------------
                                      csv_file       = True,             # Will write sample to csv file in sample_dir
-                                       csv_name     = '_NEW',               # extra stuff at end
+                                       csv_name     = '',               # extra stuff at end
                                      #--------------------------
                                      print_progress = False,
                                      debug = False):
@@ -646,28 +668,36 @@ def _analyse_misalignment_timescales(csv_galaxy_dict = 'L100_galaxy_dict_both_st
                             print('\nBECOMES MISALIGNED: %s    %s    %.2E ' %(GalaxyID, SnapNum, float(galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['stelmass'])))
                         
                         # Append initial galaxy conditions
-                        SnapNum_list           = [SnapNum]
-                        GalaxyID_list          = [GalaxyID]
-                        DescendantID_list      = [DescendantID]
-                        Lookbacktime_list      = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['Lookbacktime']]
-                        Redshift_list          = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['Redshift']]
-                        GroupNum_list          = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['GroupNum']]
-                        SubGroupNum_list       = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['SubGroupNum']]
-                        misangle_list          = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['misangle']]
-                        stelmass_list          = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['stelmass']]
-                        gasmass_list           = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['gasmass']]
-                        gasmass_sf_list        = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['gasmass_sf']]
-                        halfmass_rad_list      = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['halfmass_rad']]
-                        halfmass_rad_proj_list = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['halfmass_rad_proj']]
-                        kappa_stars_list       = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['kappa_stars']]
-                        kappa_gas_sf_list      = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['kappa_gas_sf']]
-                        bh_mass_list           = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['bh_mass']]
-                        bh_mdot_instant_list   = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['bh_mdot']]        # from particle data
-                        bh_mdot_list           = [math.nan]                                                     # value that we will find
-                        bh_edd_list            = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['bh_edd']]
-                        inflow_rate_list       = [math.nan]
-                        outflow_rate_list      = [math.nan]
-                        stelmassloss_rate_list = [math.nan]
+                        SnapNum_list             = [SnapNum]
+                        GalaxyID_list            = [GalaxyID]
+                        DescendantID_list        = [DescendantID]
+                        Lookbacktime_list        = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['Lookbacktime']]
+                        Redshift_list            = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['Redshift']]
+                        GroupNum_list            = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['GroupNum']]
+                        SubGroupNum_list         = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['SubGroupNum']]
+                        misangle_list            = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['misangle']]
+                        stelmass_list            = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['stelmass']]
+                        gasmass_list             = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['gasmass']]
+                        gasmass_sf_list          = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['gasmass_sf']]
+                        halfmass_rad_list        = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['halfmass_rad']]
+                        halfmass_rad_proj_list   = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['halfmass_rad_proj']]
+                        sfr_list                 = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['sfr']]
+                        Z_stars_list             = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['Z_stars']]
+                        Z_gas_list               = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['Z_gas']]
+                        Z_sf_list                = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['Z_sf']]
+                        Z_nsf_list               = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['Z_nsf']]
+                        kappa_stars_list         = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['kappa_stars']]
+                        kappa_gas_sf_list        = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['kappa_gas_sf']]
+                        bh_mass_list             = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['bh_mass']]
+                        bh_mdot_instant_list     = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['bh_mdot']]        # from particle data
+                        bh_mdot_list             = [math.nan]                                                     # value that we will find
+                        bh_edd_list              = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['bh_edd']]
+                        inflow_rate_list         = [math.nan]
+                        outflow_rate_list        = [math.nan]
+                        stelmassloss_rate_list   = [math.nan]
+                        inflow_Z_list            = [math.nan]
+                        outflow_Z_list           = [math.nan]
+                        insitu_Z_list            = [math.nan]
                         
                         
                         
@@ -740,6 +770,11 @@ def _analyse_misalignment_timescales(csv_galaxy_dict = 'L100_galaxy_dict_both_st
                             gasmass_sf_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['gasmass_sf'])
                             halfmass_rad_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['halfmass_rad'])
                             halfmass_rad_proj_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['halfmass_rad_proj'])
+                            sfr_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['sfr'])
+                            Z_stars_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Z_stars'])
+                            Z_gas_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Z_gas'])
+                            Z_sf_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Z_sf'])
+                            Z_nsf_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Z_nsf'])
                             kappa_stars_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['kappa_stars'])
                             kappa_gas_sf_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['kappa_gas_sf'])
                             bh_mass_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['bh_mass'])
@@ -747,29 +782,50 @@ def _analyse_misalignment_timescales(csv_galaxy_dict = 'L100_galaxy_dict_both_st
                             bh_edd_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['bh_edd'])
                             
                             
-                            #-----------------------------------
+                            #================================================
                             # Find inflow/outflow
                             time_step   = 1e9 * abs(Lookbacktime_list[-1] - Lookbacktime_list[-2])
                             gasdata     = galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['gasdata']
                             
-                            previous_mass = gasdata_old['Total_mass']       # M1
-                            current_mass  = gasdata['Total_mass']           # M2
+                            previous_mass = np.sum(gasdata_old['Mass'])       # M1
+                            current_mass  = np.sum(gasdata['Mass'])           # M2
                             inflow_mass   = 0
                             outflow_mass  = 0
+                            insitu_mass   = 0
                             
-
+                            #------------------
                             # Check for inflow (use current, run check on previous)
-                            for ID_i, mass_i in zip(gasdata['ParticleIDs'], gasdata['Mass']):
+                            inflow_mass_metal = 0
+                            insitu_mass_metal = 0
+                            for ID_i, mass_i, metal_i in zip(gasdata['ParticleIDs'], gasdata['Mass'], gasdata['Metallicity']):
                                 
                                 # If ID was within 2hmr of _old, gas particle stayed
                                 if ID_i in gasdata_old['ParticleIDs']:
+                                    insitu_mass       = insitu_mass + mass_i
+                                    insitu_mass_metal = insitu_mass_metal + (mass_i * metal_i)
                                     continue
                                 # If ID was NOT within 2hmr of _old, gas particle was accreted
                                 else:
                                     inflow_mass = inflow_mass + mass_i
-
+                                    inflow_mass_metal = inflow_mass_metal + (mass_i * metal_i)
+                            
+                            #------------------
+                            # Find metallicity of inflow
+                            if inflow_mass != 0:
+                                inflow_Z = inflow_mass_metal / inflow_mass
+                            else:
+                                inflow_Z = math.nan
+                            
+                            # Find metallicity of insitu
+                            if insitu_mass != 0:
+                                insitu_Z = insitu_mass_metal / insitu_mass
+                            else:
+                                insitu_Z = math.nan
+                            
+                            #------------------    
                             # Check for outflow (use old, run check on current)
-                            for ID_i, mass_i in zip(gasdata_old['ParticleIDs'], gasdata_old['Mass']):
+                            outflow_mass_metal = 0
+                            for ID_i, mass_i, metal_i in zip(gasdata_old['ParticleIDs'], gasdata_old['Mass'], gasdata_old['Metallicity']):
                 
                                 # If ID will be within 2hmr of current, gas particle stayed
                                 if ID_i in gasdata['ParticleIDs']:
@@ -777,7 +833,15 @@ def _analyse_misalignment_timescales(csv_galaxy_dict = 'L100_galaxy_dict_both_st
                                 # If ID will NOT be within 2hmr of current, gas particle was outflowed
                                 else:
                                     outflow_mass = outflow_mass + mass_i
+                                    outflow_mass_metal = outflow_mass_metal + (mass_i * metal_i)
 
+                            # Find metallicity of outflow
+                            if outflow_mass != 0:
+                                outflow_Z = outflow_mass_metal / outflow_mass
+                            else:
+                                outflow_Z = math.nan
+                            
+                            #------------------  
                             # Left with current_mass = previous_mass + inflow_mass - outflow_mass + stellarmassloss
                             stellarmassloss = current_mass - previous_mass - inflow_mass + outflow_mass
             
@@ -785,15 +849,19 @@ def _analyse_misalignment_timescales(csv_galaxy_dict = 'L100_galaxy_dict_both_st
                             inflow_rate_list.append(inflow_mass / time_step)
                             outflow_rate_list.append(outflow_mass / time_step)
                             stelmassloss_rate_list.append(stellarmassloss / time_step)
+                            inflow_Z_list.append(inflow_Z)
+                            outflow_Z_list.append(outflow_Z)
+                            insitu_Z_list.append(insitu_Z)
+
                                                         
                             
-                            #-----------------------------------
+                            #================================================
                             # Find BH accretion
                             bh_mdot_list.append((float(bh_mass_list[-1]) - float(bh_mass_list[-2])) / time_step)
                             
                             
                             
-                            #-----------------------------------
+                            #================================================
                             # Update Snap, GalaxyID, and DescendantID:                           
                             SnapNum_tmp      = int(galaxy_dict['%s' %(int(SnapNum_tmp)+1)]['%s' %DescendantID_tmp]['SnapNum'])
                             GalaxyID_tmp     = int(galaxy_dict['%s' %(int(SnapNum_tmp))]['%s' %DescendantID_tmp]['GalaxyID'])
@@ -816,13 +884,13 @@ def _analyse_misalignment_timescales(csv_galaxy_dict = 'L100_galaxy_dict_both_st
                         # Check for galaxies existing whlie loop that aligned descendant
                         if np.isnan(time_end) == False:
                             
-                            #-----------------------------------
+                            #============================================
                             # This will update for as long as galaxy remains misaligned
                             SnapNum_end  = galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['SnapNum']
                             Redshift_end = galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Redshift']
                             time_end     = galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Lookbacktime']
                             
-                            #-----------------------------------
+                            #===========================================
                             # Gather finishing stats
                             SnapNum_list.append(SnapNum_tmp)
                             GalaxyID_list.append(GalaxyID_tmp)
@@ -837,35 +905,62 @@ def _analyse_misalignment_timescales(csv_galaxy_dict = 'L100_galaxy_dict_both_st
                             gasmass_sf_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['gasmass_sf'])
                             halfmass_rad_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['halfmass_rad'])
                             halfmass_rad_proj_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['halfmass_rad_proj'])
+                            sfr_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['sfr'])
+                            Z_stars_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Z_stars'])
+                            Z_gas_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Z_gas'])
+                            Z_sf_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Z_sf'])
+                            Z_nsf_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Z_nsf'])
                             kappa_stars_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['kappa_stars'])
                             kappa_gas_sf_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['kappa_gas_sf'])
                             bh_mass_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['bh_mass'])
                             bh_mdot_instant_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['bh_mdot'])
                             bh_edd_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['bh_edd'])
                             
-                            #-----------------------------------
+                            
+                            #===========================================
                             # Find inflow/outflow
                             time_step   = 1e9 * abs(Lookbacktime_list[-1] - Lookbacktime_list[-2])
                             gasdata     = galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['gasdata']
                             
-                            previous_mass = gasdata_old['Total_mass']       # M1
-                            current_mass  = gasdata['Total_mass']           # M2
+                            previous_mass = np.sum(gasdata_old['Mass'])       # M1
+                            current_mass  = np.sum(gasdata['Mass'])           # M2
                             inflow_mass   = 0
                             outflow_mass  = 0
+                            insitu_mass   = 0
                             
-
+                            #------------------
                             # Check for inflow (use current, run check on previous)
-                            for ID_i, mass_i in zip(gasdata['ParticleIDs'], gasdata['Mass']):
+                            inflow_mass_metal = 0
+                            insitu_mass_metal = 0
+                            for ID_i, mass_i, metal_i in zip(gasdata['ParticleIDs'], gasdata['Mass'], gasdata['Metallicity']):
                                 
                                 # If ID was within 2hmr of _old, gas particle stayed
                                 if ID_i in gasdata_old['ParticleIDs']:
+                                    insitu_mass       = insitu_mass + mass_i
+                                    insitu_mass_metal = insitu_mass_metal + (mass_i * metal_i)
                                     continue
                                 # If ID was NOT within 2hmr of _old, gas particle was accreted
                                 else:
                                     inflow_mass = inflow_mass + mass_i
-
+                                    inflow_mass_metal = inflow_mass_metal + (mass_i * metal_i)
+                            
+                            #------------------
+                            # Find metallicity of inflow
+                            if inflow_mass != 0:
+                                inflow_Z = inflow_mass_metal / inflow_mass
+                            else:
+                                inflow_Z = math.nan
+                            
+                            # Find metallicity of insitu
+                            if insitu_mass != 0:
+                                insitu_Z = insitu_mass_metal / insitu_mass
+                            else:
+                                insitu_Z = math.nan
+                            
+                            #------------------    
                             # Check for outflow (use old, run check on current)
-                            for ID_i, mass_i in zip(gasdata_old['ParticleIDs'], gasdata_old['Mass']):
+                            outflow_mass_metal = 0
+                            for ID_i, mass_i, metal_i in zip(gasdata_old['ParticleIDs'], gasdata_old['Mass'], gasdata_old['Metallicity']):
                 
                                 # If ID will be within 2hmr of current, gas particle stayed
                                 if ID_i in gasdata['ParticleIDs']:
@@ -873,7 +968,15 @@ def _analyse_misalignment_timescales(csv_galaxy_dict = 'L100_galaxy_dict_both_st
                                 # If ID will NOT be within 2hmr of current, gas particle was outflowed
                                 else:
                                     outflow_mass = outflow_mass + mass_i
+                                    outflow_mass_metal = outflow_mass_metal + (mass_i * metal_i)
 
+                            # Find metallicity of outflow
+                            if outflow_mass != 0:
+                                outflow_Z = outflow_mass_metal / outflow_mass
+                            else:
+                                outflow_Z = math.nan
+                            
+                            #------------------  
                             # Left with current_mass = previous_mass + inflow_mass - outflow_mass + stellarmassloss
                             stellarmassloss = current_mass - previous_mass - inflow_mass + outflow_mass
             
@@ -881,9 +984,12 @@ def _analyse_misalignment_timescales(csv_galaxy_dict = 'L100_galaxy_dict_both_st
                             inflow_rate_list.append(inflow_mass / time_step)
                             outflow_rate_list.append(outflow_mass / time_step)
                             stelmassloss_rate_list.append(stellarmassloss / time_step)
-                                                        
+                            inflow_Z_list.append(inflow_Z)
+                            outflow_Z_list.append(outflow_Z)
+                            insitu_Z_list.append(insitu_Z)
                             
-                            #-----------------------------------
+                            
+                            #===================================================
                             # Find BH accretion
                             bh_mdot_list.append((float(bh_mass_list[-1]) - float(bh_mass_list[-2])) / time_step)
                             
@@ -908,7 +1014,7 @@ def _analyse_misalignment_timescales(csv_galaxy_dict = 'L100_galaxy_dict_both_st
                                     print('%.2f |  %.2e  |  %.2f     %.2f     %.2f  |  %.2f' %(time_i, mass_i, in_i, out_i, stel_i, bh_i*1000))
                                 
                                 
-                            #------------------------------------
+                            #===================================================
                             # Update dictionary
                             timescale_dict['%s' %GalaxyID] = {'SnapNum_list': SnapNum_list,
                                                               'GalaxyID_list': GalaxyID_list, 
@@ -928,6 +1034,11 @@ def _analyse_misalignment_timescales(csv_galaxy_dict = 'L100_galaxy_dict_both_st
                                                               'stelmass_list': stelmass_list,
                                                               'gasmass_list': gasmass_list,
                                                               'gasmass_sf_list': gasmass_sf_list,
+                                                              'sfr_list': sfr_list,
+                                                              'Z_stars_list': Z_stars_list,
+                                                              'Z_gas_list': Z_gas_list,
+                                                              'Z_sf_list': Z_sf_list,
+                                                              'Z_nsf_list': Z_nsf_list,
                                                               'kappa_stars_list': kappa_stars_list,
                                                               'kappa_gas_sf_list': kappa_gas_sf_list,
                                                               'bh_mass_list': bh_mass_list,
@@ -936,7 +1047,10 @@ def _analyse_misalignment_timescales(csv_galaxy_dict = 'L100_galaxy_dict_both_st
                                                               'bh_edd_list': bh_edd_list,
                                                               'inflow_rate_list': inflow_rate_list,
                                                               'outflow_rate_list': outflow_rate_list,
-                                                              'stelmassloss_rate_list':stelmassloss_rate_list}
+                                                              'stelmassloss_rate_list': stelmassloss_rate_list,
+                                                              'inflow_Z_list': inflow_Z_list,
+                                                              'outflow_Z_list': outflow_Z_list,
+                                                              'insitu_Z_list': insitu_Z_list}
                             #------------------------------------
                                 
     #-------------------
@@ -1011,8 +1125,8 @@ def _analyse_misalignment_timescales(csv_galaxy_dict = 'L100_galaxy_dict_both_st
 
 # Goes through galaxies that meet criteria, extracts galaxies that became misaligned coinciding within X Gyr of a merger
 # SAVED: /outputs/%smerger_origin
-def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L100_galaxy_dict_LTG_stars_gas_sf_rad2.0_projTrue_',
-                                      csv_merger_tree = 'L100_merger_tree_',
+def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L12_galaxy_dict_both_stars_gas_sf_rad2.0_projTrue_',
+                                      csv_merger_tree = 'L12_merger_tree_',
                                       #--------------------------
                                       # Galaxy analysis
                                       print_summary = True,
@@ -1112,28 +1226,36 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L100_galaxy_dict_LTG_st
                             print('\nBECOMES MISALIGNED: %s    %s    %.2E ' %(GalaxyID, SnapNum, float(galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['stelmass'])))
                         
                         # Append initial galaxy conditions
-                        SnapNum_list           = [SnapNum]
-                        GalaxyID_list          = [GalaxyID]
-                        DescendantID_list      = [DescendantID]
-                        Lookbacktime_list      = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['Lookbacktime']]
-                        Redshift_list          = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['Redshift']]
-                        GroupNum_list          = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['GroupNum']]
-                        SubGroupNum_list       = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['SubGroupNum']]
-                        misangle_list          = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['misangle']]
-                        stelmass_list          = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['stelmass']]
-                        gasmass_list           = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['gasmass']]
-                        gasmass_sf_list        = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['gasmass_sf']]
-                        halfmass_rad_list      = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['halfmass_rad']]
-                        halfmass_rad_proj_list = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['halfmass_rad_proj']]
-                        kappa_stars_list       = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['kappa_stars']]
-                        kappa_gas_sf_list      = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['kappa_gas_sf']]
-                        bh_mass_list           = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['bh_mass']]
-                        bh_mdot_instant_list   = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['bh_mdot']]        # from particle data
-                        bh_mdot_list           = [math.nan]                                                     # value that we will find
-                        bh_edd_list            = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['bh_edd']]
-                        inflow_rate_list       = [math.nan]
-                        outflow_rate_list      = [math.nan]
-                        stelmassloss_rate_list = [math.nan]
+                        SnapNum_list             = [SnapNum]
+                        GalaxyID_list            = [GalaxyID]
+                        DescendantID_list        = [DescendantID]
+                        Lookbacktime_list        = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['Lookbacktime']]
+                        Redshift_list            = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['Redshift']]
+                        GroupNum_list            = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['GroupNum']]
+                        SubGroupNum_list         = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['SubGroupNum']]
+                        misangle_list            = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['misangle']]
+                        stelmass_list            = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['stelmass']]
+                        gasmass_list             = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['gasmass']]
+                        gasmass_sf_list          = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['gasmass_sf']]
+                        halfmass_rad_list        = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['halfmass_rad']]
+                        halfmass_rad_proj_list   = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['halfmass_rad_proj']]
+                        sfr_list                 = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['sfr']]
+                        Z_stars_list             = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['Z_stars']]
+                        Z_gas_list               = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['Z_gas']]
+                        Z_sf_list                = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['Z_sf']]
+                        Z_nsf_list               = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['Z_nsf']]
+                        kappa_stars_list         = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['kappa_stars']]
+                        kappa_gas_sf_list        = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['kappa_gas_sf']]
+                        bh_mass_list             = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['bh_mass']]
+                        bh_mdot_instant_list     = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['bh_mdot']]        # from particle data
+                        bh_mdot_list             = [math.nan]                                                     # value that we will find
+                        bh_edd_list              = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['bh_edd']]
+                        inflow_rate_list         = [math.nan]
+                        outflow_rate_list        = [math.nan]
+                        stelmassloss_rate_list   = [math.nan]
+                        inflow_Z_list            = [math.nan]
+                        outflow_Z_list           = [math.nan]
+                        insitu_Z_list            = [math.nan]
                         
                         merger_analysis = {}
                         merger_time_criteria = False
@@ -1222,7 +1344,7 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L100_galaxy_dict_LTG_st
                             if debug:
                                 print('HAS MERGER (LAST ALIGNED): ', int(SnapNum))
                               
-                        #===================================
+                        #-----------------------------------
                         # TEST MERGER TIME CRITERIA If galaxy has at least one merger (from current aligned until next misaligned):
                         if len(merger_ratio_array) > 0:
                             # if there is a merger meeting min/max criteria within merger_misaligned_time of becoming misaligned:
@@ -1319,7 +1441,7 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L100_galaxy_dict_LTG_st
                             if debug:
                                 print('HAS MERGER: ', int(SnapNum)+1)
                             
-                        #===================================
+                        #-----------------------------------
                         # TEST MERGER TIME CRITERIA If galaxy has at least one merger (from current aligned until next misaligned):
                         if len(merger_ratio_array) > 0:
                             # if there is a merger meeting min/max criteria within merger_misaligned_time of becoming misaligned:
@@ -1402,6 +1524,11 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L100_galaxy_dict_LTG_st
                             gasmass_sf_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['gasmass_sf'])
                             halfmass_rad_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['halfmass_rad'])
                             halfmass_rad_proj_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['halfmass_rad_proj'])
+                            sfr_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['sfr'])
+                            Z_stars_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Z_stars'])
+                            Z_gas_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Z_gas'])
+                            Z_sf_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Z_sf'])
+                            Z_nsf_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Z_nsf'])
                             kappa_stars_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['kappa_stars'])
                             kappa_gas_sf_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['kappa_gas_sf'])
                             bh_mass_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['bh_mass'])
@@ -1409,29 +1536,50 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L100_galaxy_dict_LTG_st
                             bh_edd_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['bh_edd'])
                             
                             
-                            #-----------------------------------
+                            #================================================
                             # Find inflow/outflow
                             time_step   = 1e9 * abs(Lookbacktime_list[-1] - Lookbacktime_list[-2])
                             gasdata     = galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['gasdata']
                             
-                            previous_mass = gasdata_old['Total_mass']       # M1
-                            current_mass  = gasdata['Total_mass']           # M2
+                            previous_mass = np.sum(gasdata_old['Mass'])       # M1
+                            current_mass  = np.sum(gasdata['Mass'])           # M2
                             inflow_mass   = 0
                             outflow_mass  = 0
+                            insitu_mass   = 0
                             
-
+                            #------------------
                             # Check for inflow (use current, run check on previous)
-                            for ID_i, mass_i in zip(gasdata['ParticleIDs'], gasdata['Mass']):
+                            inflow_mass_metal = 0
+                            insitu_mass_metal = 0
+                            for ID_i, mass_i, metal_i in zip(gasdata['ParticleIDs'], gasdata['Mass'], gasdata['Metallicity']):
                                 
                                 # If ID was within 2hmr of _old, gas particle stayed
                                 if ID_i in gasdata_old['ParticleIDs']:
+                                    insitu_mass       = insitu_mass + mass_i
+                                    insitu_mass_metal = insitu_mass_metal + (mass_i * metal_i)
                                     continue
                                 # If ID was NOT within 2hmr of _old, gas particle was accreted
                                 else:
                                     inflow_mass = inflow_mass + mass_i
-
+                                    inflow_mass_metal = inflow_mass_metal + (mass_i * metal_i)
+                            
+                            #------------------
+                            # Find metallicity of inflow
+                            if inflow_mass != 0:
+                                inflow_Z = inflow_mass_metal / inflow_mass
+                            else:
+                                inflow_Z = math.nan
+                            
+                            # Find metallicity of insitu
+                            if insitu_mass != 0:
+                                insitu_Z = insitu_mass_metal / insitu_mass
+                            else:
+                                insitu_Z = math.nan
+                            
+                            #------------------    
                             # Check for outflow (use old, run check on current)
-                            for ID_i, mass_i in zip(gasdata_old['ParticleIDs'], gasdata_old['Mass']):
+                            outflow_mass_metal = 0
+                            for ID_i, mass_i, metal_i in zip(gasdata_old['ParticleIDs'], gasdata_old['Mass'], gasdata_old['Metallicity']):
                 
                                 # If ID will be within 2hmr of current, gas particle stayed
                                 if ID_i in gasdata['ParticleIDs']:
@@ -1439,7 +1587,15 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L100_galaxy_dict_LTG_st
                                 # If ID will NOT be within 2hmr of current, gas particle was outflowed
                                 else:
                                     outflow_mass = outflow_mass + mass_i
+                                    outflow_mass_metal = outflow_mass_metal + (mass_i * metal_i)
 
+                            # Find metallicity of outflow
+                            if outflow_mass != 0:
+                                outflow_Z = outflow_mass_metal / outflow_mass
+                            else:
+                                outflow_Z = math.nan
+                            
+                            #------------------  
                             # Left with current_mass = previous_mass + inflow_mass - outflow_mass + stellarmassloss
                             stellarmassloss = current_mass - previous_mass - inflow_mass + outflow_mass
             
@@ -1447,9 +1603,13 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L100_galaxy_dict_LTG_st
                             inflow_rate_list.append(inflow_mass / time_step)
                             outflow_rate_list.append(outflow_mass / time_step)
                             stelmassloss_rate_list.append(stellarmassloss / time_step)
+                            inflow_Z_list.append(inflow_Z)
+                            outflow_Z_list.append(outflow_Z)
+                            insitu_Z_list.append(insitu_Z)
                                                         
                             
-                            #-----------------------------------
+                            
+                            #===================================
                             # Find BH accretion
                             bh_mdot_list.append((float(bh_mass_list[-1]) - float(bh_mass_list[-2])) / time_step)
                             
@@ -1537,7 +1697,7 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L100_galaxy_dict_LTG_st
                                 if debug:
                                     print('HAS MERGER: ', int(SnapNum_tmp)+1)
                             
-                            #===================================
+        
                             # TEST MERGER TIME CRITERIA If galaxy has at least one merger (from current aligned until next misaligned):
                             if len(merger_ratio_array) > 0:
                                 # if there is a merger meeting min/max criteria within merger_misaligned_time of becoming misaligned:
@@ -1601,35 +1761,63 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L100_galaxy_dict_LTG_st
                             gasmass_sf_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['gasmass_sf'])
                             halfmass_rad_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['halfmass_rad'])
                             halfmass_rad_proj_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['halfmass_rad_proj'])
+                            sfr_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['sfr'])
+                            Z_stars_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Z_stars'])
+                            Z_gas_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Z_gas'])
+                            Z_sf_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Z_sf'])
+                            Z_nsf_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Z_nsf'])
                             kappa_stars_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['kappa_stars'])
                             kappa_gas_sf_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['kappa_gas_sf'])
                             bh_mass_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['bh_mass'])
                             bh_mdot_instant_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['bh_mdot'])
                             bh_edd_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['bh_edd'])
                             
-                            #-----------------------------------
+                            
+                            
+                            #================================================
                             # Find inflow/outflow
                             time_step   = 1e9 * abs(Lookbacktime_list[-1] - Lookbacktime_list[-2])
                             gasdata     = galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['gasdata']
                             
-                            previous_mass = gasdata_old['Total_mass']       # M1
-                            current_mass  = gasdata['Total_mass']           # M2
+                            previous_mass = np.sum(gasdata_old['Mass'])       # M1
+                            current_mass  = np.sum(gasdata['Mass'])           # M2
                             inflow_mass   = 0
                             outflow_mass  = 0
+                            insitu_mass   = 0
                             
-
+                            #------------------
                             # Check for inflow (use current, run check on previous)
-                            for ID_i, mass_i in zip(gasdata['ParticleIDs'], gasdata['Mass']):
+                            inflow_mass_metal = 0
+                            insitu_mass_metal = 0
+                            for ID_i, mass_i, metal_i in zip(gasdata['ParticleIDs'], gasdata['Mass'], gasdata['Metallicity']):
                                 
                                 # If ID was within 2hmr of _old, gas particle stayed
                                 if ID_i in gasdata_old['ParticleIDs']:
+                                    insitu_mass       = insitu_mass + mass_i
+                                    insitu_mass_metal = insitu_mass_metal + (mass_i * metal_i)
                                     continue
                                 # If ID was NOT within 2hmr of _old, gas particle was accreted
                                 else:
                                     inflow_mass = inflow_mass + mass_i
-
+                                    inflow_mass_metal = inflow_mass_metal + (mass_i * metal_i)
+                            
+                            #------------------
+                            # Find metallicity of inflow
+                            if inflow_mass != 0:
+                                inflow_Z = inflow_mass_metal / inflow_mass
+                            else:
+                                inflow_Z = math.nan
+                            
+                            # Find metallicity of insitu
+                            if insitu_mass != 0:
+                                insitu_Z = insitu_mass_metal / insitu_mass
+                            else:
+                                insitu_Z = math.nan
+                            
+                            #------------------    
                             # Check for outflow (use old, run check on current)
-                            for ID_i, mass_i in zip(gasdata_old['ParticleIDs'], gasdata_old['Mass']):
+                            outflow_mass_metal = 0
+                            for ID_i, mass_i, metal_i in zip(gasdata_old['ParticleIDs'], gasdata_old['Mass'], gasdata_old['Metallicity']):
                 
                                 # If ID will be within 2hmr of current, gas particle stayed
                                 if ID_i in gasdata['ParticleIDs']:
@@ -1637,7 +1825,15 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L100_galaxy_dict_LTG_st
                                 # If ID will NOT be within 2hmr of current, gas particle was outflowed
                                 else:
                                     outflow_mass = outflow_mass + mass_i
+                                    outflow_mass_metal = outflow_mass_metal + (mass_i * metal_i)
 
+                            # Find metallicity of outflow
+                            if outflow_mass != 0:
+                                outflow_Z = outflow_mass_metal / outflow_mass
+                            else:
+                                outflow_Z = math.nan
+                            
+                            #------------------  
                             # Left with current_mass = previous_mass + inflow_mass - outflow_mass + stellarmassloss
                             stellarmassloss = current_mass - previous_mass - inflow_mass + outflow_mass
             
@@ -1645,7 +1841,11 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L100_galaxy_dict_LTG_st
                             inflow_rate_list.append(inflow_mass / time_step)
                             outflow_rate_list.append(outflow_mass / time_step)
                             stelmassloss_rate_list.append(stellarmassloss / time_step)
+                            inflow_Z_list.append(inflow_Z)
+                            outflow_Z_list.append(outflow_Z)
+                            insitu_Z_list.append(insitu_Z)
                                                         
+                            
                             
                             #-----------------------------------
                             # Find BH accretion
@@ -1691,6 +1891,11 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L100_galaxy_dict_LTG_st
                                                               'stelmass_list': stelmass_list,
                                                               'gasmass_list': gasmass_list,
                                                               'gasmass_sf_list': gasmass_sf_list,
+                                                              'sfr_list': sfr_list,
+                                                              'Z_stars_list': Z_stars_list,
+                                                              'Z_gas_list': Z_gas_list,
+                                                              'Z_sf_list': Z_sf_list,
+                                                              'Z_nsf_list': Z_nsf_list,
                                                               'kappa_stars_list': kappa_stars_list,
                                                               'kappa_gas_sf_list': kappa_gas_sf_list,
                                                               'bh_mass_list': bh_mass_list,
@@ -1700,6 +1905,9 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L100_galaxy_dict_LTG_st
                                                               'inflow_rate_list': inflow_rate_list,
                                                               'outflow_rate_list': outflow_rate_list,
                                                               'stelmassloss_rate_list':stelmassloss_rate_list,
+                                                              'inflow_Z_list': inflow_Z_list,
+                                                              'outflow_Z_list': outflow_Z_list,
+                                                              'insitu_Z_list': insitu_Z_list,
                                                               'merger_analysis': merger_analysis}
                             #------------------------------------
                                 
@@ -2056,7 +2264,7 @@ def _plot_delta_misalignment_timescale(csv_timescales = 'L100_timescale_tree_ETG
 #--------------------------------
 # Will overlay galaxies from the point of becoming misaligned, if they have a merger
 # SAVED: /plots/stacked_misalignments/
-def _plot_stack_misalignments(csv_merger_origin = 'L100_merger_origin_r0.05r1.95_t0.1t2.0_LTG_stars_gas_sf_rad2.0_projTrue_',
+def _plot_stack_misalignments(csv_merger_origin = 'L12_merger_origin_r0.05r1.95_t0.1t2.0_both_stars_gas_sf_rad2.0_projTrue_',
                                        #--------------------------
                                        # Galaxy plotting
                                        print_summary  = True,
@@ -2095,7 +2303,7 @@ def _plot_stack_misalignments(csv_merger_origin = 'L100_merger_origin_r0.05r1.95
     print('\n===================')
     print('TIMESCALES LOADED:\n  %s\n  Snapshots: %s\n  Angle type: %s\n  Angle HMR: %s\n  Projected angle: %s\n  Merger timeframe: %s - %s Gyr\n  Merger ratio limits: %s - %s' %(timescale_input['mySims'][0][0], timescale_input['csv_sample_range'], timescale_input['use_angle'], timescale_input['use_hmr'], timescale_input['use_proj_angle'], timescale_input['merger_misaligned_time_pre'], timescale_input['merger_misaligned_time_post'], timescale_input['merger_threshold_min'], timescale_input['merger_threshold_max']))
     print('  NUMBER OF MISALIGNMENTS WITH MERGERS: %s' %len(timescale_dict.keys()))
-    print('\nPLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %.2E M*\n  Upper mass limit: %.2E M*\n  ETG or LTG: %s\n  Group or field: %s\n  Merger limit: %s' %(timescale_input['use_angle'], timescale_input['use_hmr'], timescale_input['use_proj_angle'], float(timescale_input['lower_mass_limit']), float(timescale_input['upper_mass_limit']), timescale_input['ETG_or_LTG'], timescale_input['group_or_field'], plot_merger_limit))
+    print('\nPLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Min Mass: %.2E M*\n  Max limit: %.2E M*\n  ETG or LTG: %s\n  Group or field: %s\n  Merger limit: %s' %(timescale_input['use_angle'], timescale_input['use_hmr'], timescale_input['use_proj_angle'], float(timescale_input['lower_mass_limit']), float(timescale_input['upper_mass_limit']), timescale_input['ETG_or_LTG'], timescale_input['group_or_field'], plot_merger_limit))
     print('===================')
     
     
@@ -2297,7 +2505,7 @@ def _plot_stack_misalignments(csv_merger_origin = 'L100_merger_origin_r0.05r1.95
 
 # Will overlay galaxies from the last merger they had that was attributed to a merger  
 # SAVED: /plots/stacked_mergers/ 
-def _plot_stack_mergers(csv_merger_origin = 'L100_merger_origin_r0.05r1.95_t0.1t2.0_LTG_stars_gas_sf_rad2.0_projTrue_',
+def _plot_stack_mergers(csv_merger_origin = 'L12_merger_origin_r0.05r1.95_t0.1t2.0_both_stars_gas_sf_rad2.0_projTrue_',
                                        #--------------------------
                                        # Galaxy plotting
                                        print_summary  = True,
@@ -2333,7 +2541,7 @@ def _plot_stack_mergers(csv_merger_origin = 'L100_merger_origin_r0.05r1.95_t0.1t
     print('\n===================')
     print('TIMESCALES LOADED:\n  %s\n  Snapshots: %s\n  Angle type: %s\n  Angle HMR: %s\n  Projected angle: %s\n  Merger timeframe: %s - %s Gyr\n  Merger ratio limits: %s - %s' %(timescale_input['mySims'][0][0], timescale_input['csv_sample_range'], timescale_input['use_angle'], timescale_input['use_hmr'], timescale_input['use_proj_angle'], timescale_input['merger_misaligned_time_pre'], timescale_input['merger_misaligned_time_post'], timescale_input['merger_threshold_min'], timescale_input['merger_threshold_max']))
     print('  NUMBER OF MISALIGNMENTS WITH MERGERS: %s' %len(timescale_dict.keys()))
-    print('\nPLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %.2E M*\n  Upper mass limit: %.2E M*\n  ETG or LTG: %s\n  Group or field: %s\n  Merger limit: %s' %(timescale_input['use_angle'], timescale_input['use_hmr'], timescale_input['use_proj_angle'], float(timescale_input['lower_mass_limit']), float(timescale_input['upper_mass_limit']), timescale_input['ETG_or_LTG'], timescale_input['group_or_field'], plot_merger_limit))
+    print('\nPLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Min Mass: %.2E M*\n  Max limit: %.2E M*\n  ETG or LTG: %s\n  Group or field: %s\n  Merger limit: %s' %(timescale_input['use_angle'], timescale_input['use_hmr'], timescale_input['use_proj_angle'], float(timescale_input['lower_mass_limit']), float(timescale_input['upper_mass_limit']), timescale_input['ETG_or_LTG'], timescale_input['group_or_field'], plot_merger_limit))
     print('===================')
     
     
@@ -2434,6 +2642,21 @@ def _plot_stack_mergers(csv_merger_origin = 'L100_merger_origin_r0.05r1.95_t0.1t
                             print(np.array(timescale_dict['%s' %GalaxyID]['merger_analysis']['%s' %SnapNum_i]['Ratio_gas_list']))
                             print(np.array(timescale_dict['%s' %GalaxyID]['merger_analysis']['%s' %SnapNum_i]['Ratio_gassf_list']))
                 
+            
+            
+            #print('trial sfsff')
+            #print(timescale_dict['%s' %GalaxyID]['GalaxyID_list'])
+            #print(timescale_dict['%s' %GalaxyID]['SnapNum_list'])
+            #print(timescale_dict['%s' %GalaxyID]['sfr_list'])
+            #print(timescale_dict['%s' %GalaxyID]['Z_stars_list'])
+            #print(timescale_dict['%s' %GalaxyID]['Z_gas_list'])
+            #print(timescale_dict['%s' %GalaxyID]['Z_sf_list'])
+            #print(timescale_dict['%s' %GalaxyID]['Z_nsf_list'])
+            #print(timescale_dict['%s' %GalaxyID]['inflow_Z_list'])
+            #print(timescale_dict['%s' %GalaxyID]['outflow_Z_list'])
+            #print(timescale_dict['%s' %GalaxyID]['insitu_Z_list'])
+            
+            
             # Add GalaxyIDs if specified
             if plot_GalaxyIDs:
                 plt.text(plot_time_axis[-1], timescale_dict['%s' %GalaxyID]['misangle_list'][-1], '%s' %(timescale_dict['%s' %GalaxyID]['DescendantID_list'][-1]), color='k', fontsize=8)

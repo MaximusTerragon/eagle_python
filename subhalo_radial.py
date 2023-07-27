@@ -18,14 +18,14 @@ from tqdm import tqdm
 from subhalo_main import Initial_Sample, Subhalo_Extract, Subhalo_Analysis, ConvertID
 import eagleSqlTools as sql
 from graphformat import set_rc_params
+from read_dataset_directories import _assign_directories
 
 
 #====================================
 # finding directories
-answer = input("-----------------\nDirectories?:\n      local\n      serpens_snap\n      snip\n")
+answer = input("-----------------\nDirectories?:\n     1 local\n     2 serpens_snap\n     3 snip\n")
 EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_directories(answer)
 #====================================
-
 
 
 """  
@@ -182,6 +182,8 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
     all_spins         = {}          # has all spins
     all_counts        = {}          # has all the particle count within rad
     all_masses        = {}          # has all the particle mass within rad
+    all_sfr           = {}          # has all bulk SFR
+    all_Z             = {}          # has all bulk metallicity
     all_misangles     = {}          # has all 3D angles
     all_misanglesproj = {}          # has all 2D projected angles from 3d when given a viewing axis and viewing_angle = 0
     #all_gasdata       = {}          # has all particle IDs inside 2hmr
@@ -293,6 +295,8 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
         all_spins['%s' %str(subhalo.GalaxyID)]          = subhalo.spins
         all_counts['%s' %str(subhalo.GalaxyID)]         = subhalo.counts
         all_masses['%s' %str(subhalo.GalaxyID)]         = subhalo.masses
+        all_sfr['%s' %str(subhalo.GalaxyID)]            = subhalo.sfr
+        all_Z['%s' %str(subhalo.GalaxyID)]              = subhalo.Z
         all_misangles['%s' %str(subhalo.GalaxyID)]      = subhalo.mis_angles
         all_misanglesproj['%s' %str(subhalo.GalaxyID)]  = subhalo.mis_angles_proj
         #---------------------------------
@@ -435,6 +439,8 @@ def _radial_plot(csv_output = 'L12_radial_ID37445_RadProj_Err__stars_gas_stars_g
     all_general         = dict_output['all_general']
     all_counts          = dict_output['all_counts']
     all_masses          = dict_output['all_masses']
+    all_sfr             = dict_output['all_sfr']
+    all_Z               = dict_output['all_Z']
     all_misangles       = dict_output['all_misangles']
     all_misanglesproj   = dict_output['all_misanglesproj']
     all_flags           = dict_output['all_flags']

@@ -19,14 +19,14 @@ from tqdm import tqdm
 from subhalo_main import Initial_Sample, Subhalo_Extract, Subhalo_Analysis, ConvertID, ConvertID_noMK, MergerTree
 import eagleSqlTools as sql
 from graphformat import set_rc_params
+from read_dataset_directories import _assign_directories
 
 
 #====================================
 # finding directories
-answer = input("-----------------\nDirectories?:\n      local\n      serpens_snap\n      snip\n")
+answer = input("-----------------\nDirectories?:\n     1 local\n     2 serpens_snap\n     3 snip\n")
 EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_directories(answer)
 #====================================
-
 
 
 """  
@@ -280,6 +280,8 @@ def _analysis_radial_evolution(csv_sample = False,              # Whether to rea
         total_spins         = {}        # has all spins
         total_counts        = {}        # has all the particle count within rad
         total_masses        = {}        # has all the particle mass within rad
+        total_sfr           = {}        # has all bulk SFR
+        total_metallicity   = {}        # has all bulk metallicity
         total_misangles     = {}        # has all 3D angles
         total_misanglesproj = {}        # has all 2D projected angles from 3d when given a viewing axis and viewing_angle = 0
         total_gasdata       = {}        # has all gas particle IDs
@@ -297,6 +299,8 @@ def _analysis_radial_evolution(csv_sample = False,              # Whether to rea
         total_spins.update({'%s' %target_GalaxyID: {}})
         total_counts.update({'%s' %target_GalaxyID: {}})
         total_masses.update({'%s' %target_GalaxyID: {}})
+        total_sfr.update({'%s' %target_GalaxyID: {}})
+        total_metallicity.update({'%s' %target_GalaxyID: {}})
         total_misangles.update({'%s' %target_GalaxyID: {}})
         total_misanglesproj.update({'%s' %target_GalaxyID: {}})
         total_gasdata.update({'%s' %target_GalaxyID: {}})
@@ -422,6 +426,8 @@ def _analysis_radial_evolution(csv_sample = False,              # Whether to rea
             total_spins['%s' %target_GalaxyID]['%s' %str(subhalo.GalaxyID)]         = subhalo.spins
             total_counts['%s' %target_GalaxyID]['%s' %str(subhalo.GalaxyID)]        = subhalo.counts
             total_masses['%s' %target_GalaxyID]['%s' %str(subhalo.GalaxyID)]        = subhalo.masses
+            total_sfr['%s' %target_GalaxyID]['%s' %str(subhalo.GalaxyID)]           = subhalo.sfr
+            total_metallicity['%s' %target_GalaxyID]['%s' %str(subhalo.GalaxyID)]   = subhalo.metallicity
             total_misangles['%s' %target_GalaxyID]['%s' %str(subhalo.GalaxyID)]     = subhalo.mis_angles
             total_misanglesproj['%s' %target_GalaxyID]['%s' %str(subhalo.GalaxyID)] = subhalo.mis_angles_proj
             total_gasdata['%s' %target_GalaxyID]['%s' %str(subhalo.GalaxyID)]       = subhalo.gas_data
@@ -455,6 +461,8 @@ def _analysis_radial_evolution(csv_sample = False,              # Whether to rea
                         'total_spins': total_spins,
                         'total_counts': total_counts,
                         'total_masses': total_masses,
+                        'total_sfr': total_sfr,
+                        'total_metallicity': total_metallicity,
                         'total_misangles': total_misangles, 
                         'total_misanglesproj': total_misanglesproj, 
                         'total_gasdata': total_gasdata,
@@ -573,6 +581,8 @@ def _plot_radial_evolution(csv_output = 'L100_evolution_ID15851557_RadProj_Err__
     total_spins           = dict_output['total_spins']
     total_counts          = dict_output['total_counts']
     total_masses          = dict_output['total_masses']
+    total_sfr             = dict_output['total_sfr']
+    total_metallicity     = dict_output['total_metallicity']
     total_coms            = dict_output['total_coms']
     total_misangles       = dict_output['total_misangles']
     total_misanglesproj   = dict_output['total_misanglesproj']

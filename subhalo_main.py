@@ -12,6 +12,7 @@ from read_dataset_tools import read_dataset, read_dataset_dm_mass, read_header
 from astropy.cosmology import FlatLambdaCDM
 
 
+#================================
 """ Create sample. 
 This returns a list of IDs, the snap and simulation
 
@@ -224,6 +225,99 @@ class Initial_Sample:
         return myData
     
 
+""" Create sample with snips. 
+This returns a list of IDs, the snap and simulation
+
+Returns:
+-------
+
+GroupNum
+SubGroupNum
+GalaxyID
+SnapNum
+Redshift
+
+"""
+# Creates a list of GN, SGN, GalaxyID, SnapNum, and Redshift and saves to csv file
+class Initial_Sample_Snip:
+    
+    def __init__(self, tree_dir, sim, snapNum, mstarMin, mstarMax, satellite, debug=False):
+        # Allowing these attributes to be called from the object
+        self.mstar_min   = mstarMin
+        self.mstar_max   = mstarMax
+        self.sim         = sim
+        self.snapNum     = snapNum
+        
+        
+        #--------------------------------------
+        # Open main progenitor trees
+        f = h5py.File(tree_dir + 'Snip100_MainProgenitorTrees.hdf5', 'r')
+        
+        # Find snipNum that the snapnum corresponds to 
+        self.snipNum     = np.array(f['Snapnum_Index']['Snapnum_Ref'])[snapNum]         # e.g. snapNum = 160 --> snipNum = 326
+        
+        
+        #--------------------------------------
+        # Extract data of snap we want
+        data_raw = {}
+        
+        #for header_name in f['Histories'].keys():
+        for header_name in ['GroupNumber', 'SubGroupNumber', 'GalaxyID', 'DescendantID', 'CentreOfPotential_x', 'CentreOfPotential_y', 'CentreOfPotential_z', 'StellarMass', 'HaloMass']:
+            data_raw[header_name] = np.array(f['Histories'][header_name][:,snapNum])
+        if debug:
+            print(data_raw['GalaxyID'])
+        
+        #--------------------------------------
+        # Find all galaxies that meet mstarMin + mstarMax + satellite criteria
+        
+        if satellite == True:
+            satellite_lim = 99999
+        elif satellite == False:
+            satellite_lim = 0
+        else:
+            raise Exception('Cannot understand satellite criteria')
+        
+        mask = np.where((data_raw['StellarMass'] >= mstarMin) & (data_raw['StellarMass'] <= mstarMax) & (data_raw['SubGroupNumber'] <= satellite_lim) & (data_raw['GalaxyID'] != -1))
+        
+        # Apply mask                               
+        myData = {}
+        for header_name in data_raw.keys():
+            myData[header_name] = data_raw[header_name][mask]
+            
+        # Fill with SnapNum, Redshift
+        myData['SnapNum']  = np.full(len(myData['GroupNumber']), snapNum)
+        myData['Redshift'] = np.full(len(myData['GroupNumber']), np.array(f['Snapnum_Index']['Redshift'])[snapNum])
+        myData['ellip']             = np.full(len(myData['GroupNumber']), math.nan)
+        myData['triax']             = np.full(len(myData['GroupNumber']), math.nan)
+        myData['kappa_stars']       = np.full(len(myData['GroupNumber']), math.nan)
+        myData['disp_ani']          = np.full(len(myData['GroupNumber']), math.nan)
+        myData['disc_to_total']     = np.full(len(myData['GroupNumber']), math.nan)
+        myData['rot_to_disp_ratio'] = np.full(len(myData['GroupNumber']), math.nan)
+        
+        if debug:
+            print(len(myData['StellarMass']))
+            print(myData['SubGroupNumber'])
+        
+        
+        #--------------------------------------
+        # Assign myData
+        self.GroupNum     = myData['GroupNumber']
+        self.SubGroupNum  = myData['SubGroupNumber']
+        self.GalaxyID     = myData['GalaxyID']
+        self.DescendantID = myData['DescendantID']
+        self.SnapNum      = myData['SnapNum']
+        self.Redshift     = myData['Redshift']
+        self.halo_mass    = myData['HaloMass']
+        self.centre       = np.transpose(np.array([myData['CentreOfPotential_x'], myData['CentreOfPotential_y'], myData['CentreOfPotential_z']]))
+        
+        self.stelmass     = myData['StellarMass']
+        
+        
+        if mstarMin >= 1E+9:
+            self.MorphoKinem = np.transpose(np.array([myData['ellip'], myData['triax'], myData['kappa_stars'], myData['disp_ani'], myData['disc_to_total'], myData['rot_to_disp_ratio']]))                  
+        
+
+#================================
 """ 
 Purpose
 -------
@@ -288,13 +382,15 @@ Output Parameters
     ['Mass']                - [Msun]
     ['GroupNumber']         - int array 
     ['SubGroupNumber']      - int array 
+    ['Metallicity']         - see particle paper
 .gas:     dictionary of particle data
     ['Coordinates']         - [pkpc]
     ['Velocity']            - [pkm/s]
     ['Mass']                - [Msun]
-    ['StarFormationRate']   - [Msun/s] (i think)
+    ['StarFormationRate']   - [Msun/s]
     ['GroupNumber']         - int array 
     ['SubGroupNumber']      - int array 
+    ['Metallicity']         - see particle paper
 .dm:     dictionary of particle data:
     ['Coordinates']         - [pkpc]
     ['Velocity']            - [pkm/s]
@@ -310,13 +406,13 @@ Output Parameters
 
 If centre_galaxy == True; 'Coordinates' - .centre, 'Velocity' - .perc_vel
 """
-# Extracts the particle and SQL data
+# Extracts the particle and SQL data from snips
 class Subhalo_Extract:
     
     def __init__(self, sim, data_dir, snapNum, gn, sgn, centre_in, halo_mass_in, aperture_rad_in, viewing_axis,
                             centre_galaxy=True, 
                             load_region_length=1.0,   # cMpc/h 
-                            nfiles=16, 
+                            nfiles=1, 
                             debug=False,
                             print_progress=False):       
                             
@@ -346,6 +442,13 @@ class Subhalo_Extract:
             # Get conversion factors.
             self.aexp    = f['PartType4/Coordinates'].attrs.get('aexp-scale-exponent')
             self.hexp    = f['PartType4/Coordinates'].attrs.get('h-scale-exponent')
+            
+            #print('available headers')
+            #print(f.keys())
+            #for name_i, header_i in zip(['Gas', 'DM', 'Stars', 'BH'], ['PartType0', 'PartType1', 'PartType4', 'PartType5']):
+            #    print('\n %s' %name_i)
+            #    for key_i in f[header_i].keys():
+            #        print('    %s' %key_i)
 
             f.close()
         
@@ -379,10 +482,10 @@ class Subhalo_Extract:
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
             print('Reading particle data _read_galaxy')
             time_start = time.time()
-        stars     = self._read_galaxy(data_dir, 4, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length) 
-        gas       = self._read_galaxy(data_dir, 0, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length)
-        dm        = self._read_galaxy(data_dir, 1, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length)
-        bh        = self._read_galaxy(data_dir, 5, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length)
+        stars     = self._read_galaxy(data_dir, 4, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length, snapNum) 
+        gas       = self._read_galaxy(data_dir, 0, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length, snapNum)
+        dm        = self._read_galaxy(data_dir, 1, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length, snapNum)
+        bh        = self._read_galaxy(data_dir, 5, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length, snapNum)
         
         # CENTER COORDS, VELOCITY NOT ADJUSTED
         if centre_galaxy == True:
@@ -444,7 +547,7 @@ class Subhalo_Extract:
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
             print('  EXTRACTION COMPLETE')
         
-    def _read_galaxy(self, data_dir, itype, gn, sgn, centre, load_region_length, debug=False):
+    def _read_galaxy(self, data_dir, itype, gn, sgn, centre, load_region_length, snapNum, debug=False):
         """ For a given galaxy (defined by its GroupNumber and SubGroupNumber)
         extract the coordinates, velocty, and mass of all particles of a selected type.
         Coordinates are then wrapped around the centre to account for periodicity."""
@@ -470,16 +573,81 @@ class Subhalo_Extract:
         f = h5py.File(data_dir, 'r')
         # If gas, load StarFormationRate
         if itype == 0:
-            for att in ['GroupNumber', 'SubGroupNumber', 'Mass', 'Coordinates', 'StarFormationRate', 'Velocity', 'ParticleIDs']:
-                tmp  = eagle_data.read_dataset(itype, att)
-                cgs  = f['PartType%i/%s'%(itype, att)].attrs.get('CGSConversionFactor')
-                aexp = f['PartType%i/%s'%(itype, att)].attrs.get('aexp-scale-exponent')
-                hexp = f['PartType%i/%s'%(itype, att)].attrs.get('h-scale-exponent')
-                data[att] = np.multiply(tmp, cgs * self.a**aexp * self.h**hexp, dtype='f8')
+            for att in ['GroupNumber', 'SubGroupNumber', 'Mass', 'Coordinates', 'StarFormationRate', 'Velocity', 'ParticleIDs', 'Metallicity']:
+                if (int(snapNum) > 28) and att == 'SubGroupNumber':
+                    continue
+                if att != 'StarFormationRate':
+                    tmp  = eagle_data.read_dataset(itype, att)
+                    cgs  = f['PartType%i/%s'%(itype, att)].attrs.get('CGSConversionFactor')
+                    aexp = f['PartType%i/%s'%(itype, att)].attrs.get('aexp-scale-exponent')
+                    hexp = f['PartType%i/%s'%(itype, att)].attrs.get('h-scale-exponent')
+                    data[att] = np.multiply(tmp, cgs * self.a**aexp * self.h**hexp, dtype='f8')
+                    
+                elif (int(snapNum) <= 28) & (att == 'StarFormationRate'):
+                    tmp  = eagle_data.read_dataset(itype, att)
+                    cgs  = f['PartType%i/%s'%(itype, att)].attrs.get('CGSConversionFactor')
+                    aexp = f['PartType%i/%s'%(itype, att)].attrs.get('aexp-scale-exponent')
+                    hexp = f['PartType%i/%s'%(itype, att)].attrs.get('h-scale-exponent')
+                    data[att] = np.multiply(tmp, cgs * self.a**aexp * self.h**hexp, dtype='f8')
+                    
+                elif (int(snapNum) > 28) & (att == 'StarFormationRate'):                    
+                    # Read constants (cgs)
+                    m_proton   = f['Constants'].attrs.get('PROTONMASS')
+                    cm_per_mpc = f['Constants'].attrs.get('CM_PER_MPC')
+                    gravity    = f['Constants'].attrs.get('GRAVITY')
+                    msun       = f['Constants'].attrs.get('SOLAR_MASS')
+                    
+                    
+                    # Extract attributes
+                    gaspmass   = eagle_data.read_dataset(itype, 'Mass') * f['PartType%i/%s'%(itype, 'Mass')].attrs.get('CGSConversionFactor') * self.a**f['PartType%i/%s'%(itype, 'Mass')].attrs.get('aexp-scale-exponent') * self.h**f['PartType%i/%s'%(itype, 'Mass')].attrs.get('h-scale-exponent')
+                    gasu       = eagle_data.read_dataset(itype, 'InternalEnergy') * f['PartType%i/%s'%(itype, 'InternalEnergy')].attrs.get('CGSConversionFactor') * self.a**f['PartType%i/%s'%(itype, 'InternalEnergy')].attrs.get('aexp-scale-exponent') * self.h**f['PartType%i/%s'%(itype, 'InternalEnergy')].attrs.get('h-scale-exponent')
+                    gasentropy = eagle_data.read_dataset(itype, 'Entropy') * f['PartType%i/%s'%(itype, 'Entropy')].attrs.get('CGSConversionFactor') * self.a**f['PartType%i/%s'%(itype, 'Entropy')].attrs.get('aexp-scale-exponent') * self.h**f['PartType%i/%s'%(itype, 'Entropy')].attrs.get('h-scale-exponent')
+                    gasmetal   = eagle_data.read_dataset(itype, 'Metallicity') * f['PartType%i/%s'%(itype, 'Metallicity')].attrs.get('CGSConversionFactor')  * self.a**f['PartType%i/%s'%(itype, 'Metallicity')].attrs.get('aexp-scale-exponent') * self.h**f['PartType%i/%s'%(itype, 'Metallicity')].attrs.get('h-scale-exponent')
+                    gastemp    = eagle_data.read_dataset(itype, 'Temperature') * f['PartType%i/%s'%(itype, 'Temperature')].attrs.get('CGSConversionFactor')  * self.a**f['PartType%i/%s'%(itype, 'Temperature')].attrs.get('aexp-scale-exponent') * self.h**f['PartType%i/%s'%(itype, 'Temperature')].attrs.get('h-scale-exponent')
+                    gasdens    = ((2/3)*gasu/gasentropy)**(3/2)
+                    gaspres    = (2/3) * gasdens * gasu
+                    
+                    #print('snip gas dens', gasdens)
+                    #gasdens = eagle_data.read_dataset(itype, 'Density') * f['PartType%i/%s'%(itype, 'Density')].attrs.get('CGSConversionFactor')  * self.a**f['PartType%i/%s'%(itype, 'Density')].attrs.get('aexp-scale-exponent') * self.h**f['PartType%i/%s'%(itype, 'Density')].attrs.get('h-scale-exponent')
+                    #print('stored gas dens', gasdens)
+                    
+                    
+                    #--------------
+                	# Find hydrogen threshold
+                    with np.errstate(divide='ignore'):
+                        nhthresh  = 0.1 * (gasmetal / 0.002)**(-0.64)           # Threshold for starforming gas
+                    
+                    # Mask hydrogen threshold
+                    mask_wherehigh = nhthresh > 10                          # upper limit from schaye 2015 equation (2)
+                    nhigh = np.count_nonzero(mask_wherehigh)                
+                    if nhigh > 0:
+                        nhthresh[mask_wherehigh] = 10.
+                        
+                    # Hydrogen density fraction threshold
+                    rhothresh = nhthresh * m_proton / 0.752         # X = 0.752
+                    nindex  = 1.4                                   
+                    nindex2 = 2.                                    # for nH > 1e3 cm^-3
+    
+                    mask_wheredense = (gasdens/(m_proton/0.752)) > 1e3
+                    ndense = np.count_nonzero(mask_wheredense)  
+                    sfr = gaspmass * 1.515e-4 * (msun / (3.154e+7 * (cm_per_mpc/1e3)**2)) * (msun / (cm_per_mpc/1e6)**2)**(-nindex) * ((5/3) * 1.0 * gaspres / gravity)**((nindex - 1)/2)
+                    
+                    if ndense > 0:
+                        sfr[mask_wheredense] = gaspmass[mask_wheredense] * 1.515e-4 * (msun / (3.154e+7 * (cm_per_mpc/1e3)**2)) * (msun / (cm_per_mpc/1e6)**2)**(-nindex2) * ((5/3) * 1.0 * gaspres[mask_wheredense] / gravity)**((nindex2 - 1)/2)
+                    
+                    #--------------
+                    # Mask out sfr where rhothres not met or gas too hot
+                    mask_wherezero = (gasdens < rhothresh) | (gastemp > 1e6)
+                    sfr[mask_wherezero] = 0
+                    
+                    data[att] = sfr
+                    
             f.close()
         # If dm
         elif itype == 1:
             for att in ['GroupNumber', 'SubGroupNumber', 'Mass', 'Coordinates', 'Velocity', 'ParticleIDs']:
+                if (int(snapNum) > 28) and att == 'SubGroupNumber':
+                    continue
                 if att == 'Mass':
                     cgs  = f['PartType0/%s'%(att)].attrs.get('CGSConversionFactor')
                     aexp = f['PartType0/%s'%(att)].attrs.get('aexp-scale-exponent')
@@ -504,7 +672,9 @@ class Subhalo_Extract:
             f.close()
         # If stars, do not load StarFormationRate (as not contained in database)
         elif itype == 4:
-            for att in ['GroupNumber', 'SubGroupNumber', 'Mass', 'Coordinates', 'Velocity', 'ParticleIDs']:
+            for att in ['GroupNumber', 'SubGroupNumber', 'Mass', 'Coordinates', 'Velocity', 'ParticleIDs', 'Metallicity']:
+                if (int(snapNum) > 28) and att == 'SubGroupNumber':
+                    continue
                 tmp  = eagle_data.read_dataset(itype, att)
                 cgs  = f['PartType%i/%s'%(itype, att)].attrs.get('CGSConversionFactor')
                 aexp = f['PartType%i/%s'%(itype, att)].attrs.get('aexp-scale-exponent')
@@ -515,6 +685,8 @@ class Subhalo_Extract:
         # If bhs
         elif itype == 5:
             for att in ['GroupNumber', 'SubGroupNumber', 'BH_Mass', 'BH_Mdot', 'Coordinates', 'Velocity', 'ParticleIDs']:
+                if (int(snapNum) > 28) and att == 'SubGroupNumber':
+                    continue
                 # Ensure we use 'Mass' as name
                 if att == 'BH_Mass':
                     tmp  = eagle_data.read_dataset(itype, att)
@@ -534,7 +706,10 @@ class Subhalo_Extract:
         
         
         # Mask to selected GroupNumber and SubGroupNumber.
-        mask = np.logical_and(data['GroupNumber'] == gn, data['SubGroupNumber'] == sgn)
+        if (int(snapNum) > 28):
+            mask = data['GroupNumber'] == gn
+        else:
+            mask = np.logical_and(data['GroupNumber'] == gn, data['SubGroupNumber'] == sgn)
         for att in data.keys():
             data[att] = data[att][mask]
                
@@ -788,7 +963,7 @@ Output Parameters
 .counts:   dictionary
     Has aligned/rotated particle count and mass within spin_rad_in's:
         ['rad']          - [pkpc]
-        ['hmr']     - multiples of halfmass_rad
+        ['hmr']          - multiples of halfmass_rad
         ['stars']        - [count]
         ['gas']          - [count]
         ['gas_sf']       - [count]
@@ -797,12 +972,23 @@ Output Parameters
 .masses:   dictionary
     Has aligned/rotated particle count and mass within spin_rad_in's:
         ['rad']          - [pkpc]
-        ['hmr']     - multiples of halfmass_rad
+        ['hmr']          - multiples of halfmass_rad
         ['stars']        - [Msun]
         ['gas']          - [Msun]
         ['gas_sf']       - [Msun]
         ['gas_nsf']      - [Msun]
         ['dm']           - Msun at 30pkpc
+.Z:   dictionary        
+        ['rad']          - [pkpc]
+        ['hmr']          - multiples of halfmass_rad
+        ['stars']        - mass-weighted metallicity
+        ['gas']          - mass-weighted metallicity
+        ['gas_sf']       - mass-weighted metallicity
+        ['gas_nsf']      - mass-weighted metallicity
+.sfr:       dictionary
+        ['rad']          - [pkpc]
+        ['hmr']          - multiples of halfmass_rad
+        ['gas_sf']       - total SFR
 .coms:     dictionary
     Has all centres of mass and distances within a spin_rad_in:
         ['rad']          - [pkpc]
@@ -813,8 +999,6 @@ Output Parameters
         ['gas_nsf']        - [x, y, z] [pkpc]
         ['dm']             - x, y, z [pkpc]  at 30pkpc
         ['adjust']         - [x, y, z] [pkpc] the value added on to each of the above from centering to stellar COM from 30pkpc COM
-        
-  
 .mis_angles:     dictionary
     Has aligned/rotated misalignment angles between stars 
     and X within spin_rad_in's. Errors given by iterations,
@@ -861,7 +1045,30 @@ Output Parameters
             ['gas_dm_angle_err']            - [lo, hi] [deg]       .
             ['gas_sf_dm_angle_err']         - [lo, hi] [deg]       .
             ['gas_nsf_dm_angle_err']        - [lo, hi] [deg]       ^
-        
+.gas_data:      dictionary
+    Has particle data of hmr requested
+        ['1.0_hmr']
+        ['2.0_hmr']
+            ['gas']
+            ['gas_sf']
+            ['gas_nsf']
+                ['ParticleIDs']     - Particle IDs
+                ['Mass']            - Particle masses
+                ['Metallicity']     - Particle metallicities
+.mass_flow:     dictionary
+    Has inflow/outflow data if gas_data_old provided. 
+    math.nan if not
+        ['1.0_hmr']
+        ['2.0_hmr']
+            ['gas']                     - Inflow/outflow of all gas
+            ['gas_sf']                  - Inflow/outflow of only SF gas
+            ['gas_nsf']                 - Inflow/outflow of only NSF gas
+                ['inflow']              - Accurate inflow
+                ['outflow']             - Accurate outflow
+                ['massloss']            - Whats left... does not take into account gas particles switching between modes
+                ['inflow_Z']            - Inflow metallicity
+                ['outflow_Z']           - Outflow metallicity
+                ['insitu_Z']            - Whats left... metallicity
 """
 # Finds the values we are after and trims particle data
 class Subhalo_Analysis:
@@ -954,6 +1161,8 @@ class Subhalo_Analysis:
         self.general            = {}
         self.counts             = {}
         self.masses             = {}
+        self.sfr                = {}
+        self.Z                  = {}
         self.coms               = {}
         self.coms_proj          = {}
         self.inc_angles         = {}
@@ -1114,8 +1323,21 @@ class Subhalo_Analysis:
                 # Create radial distributions of all components, assume dm = 30 pkpc only
                 for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf', 'dm']:
                     dict_list[parttype_name] = []
+                    
+            for dict_list in [self.sfr]:
+                dict_list['rad'] = spin_rad   
+                dict_list['hmr'] = spin_hmr
+                dict_list['gas_sf'] = []
             
+            for dict_list in [self.Z]:
+                dict_list['rad'] = spin_rad   
+                dict_list['hmr'] = spin_hmr
+                
+                # Create radial distributions of all components
+                for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf']:
+                    dict_list[parttype_name] = []     
             
+            #-----------------------------
             # Baryonic matter that is calculated over several radii
             for rad_i, hmr_i in zip(spin_rad, spin_hmr):
                 # Trim data to particular radius
@@ -1162,20 +1384,35 @@ class Subhalo_Analysis:
                     particle_count  = len(trimmed_data[parttype_name]['Mass'])
                     particle_mass   = np.sum(trimmed_data[parttype_name]['Mass'])
                     
+                    # For stars and gas, find metallicity
+                    if parttype_name != 'dm':
+                        if particle_count == 0:
+                            particle_Z = math.nan
+                        else:
+                            particle_Z = np.sum(trimmed_data[parttype_name]['Mass'] * trimmed_data[parttype_name]['Metallicity']) / np.sum(trimmed_data[parttype_name]['Mass'])
+                    
+                    # For gas, find star-formation rate (ssfr can be calculated with particle_sfr / particle_mass(stars))
+                    if parttype_name == 'gas_sf':
+                        particle_sfr = np.sum(trimmed_data[parttype_name]['StarFormationRate'])
+                    
+                    
                     if parttype_name == 'dm':
                         self.counts[parttype_name] = particle_count
                         self.masses[parttype_name] = particle_mass
                     else:
                         self.counts[parttype_name].append(particle_count)
                         self.masses[parttype_name].append(particle_mass)
+                        self.Z[parttype_name].append(particle_Z)
+                        if parttype_name == 'gas_sf':
+                            self.sfr[parttype_name].append(particle_sfr)
                     
                     
                     #===========================
                     # Create dictionary of bare minimum gas_data for inflow/outflow
                     if (parttype_name == 'gas' ) or (parttype_name == 'gas_sf' ) or (parttype_name == 'gas_nsf' ):
-                        self.gas_data['%s_hmr' %hmr_i][parttype_name]['Mass']        = trimmed_data[parttype_name]['Mass']
                         self.gas_data['%s_hmr' %hmr_i][parttype_name]['ParticleIDs'] = trimmed_data[parttype_name]['ParticleIDs']
-                        self.gas_data['%s_hmr' %hmr_i][parttype_name]['Total_mass']  = particle_mass
+                        self.gas_data['%s_hmr' %hmr_i][parttype_name]['Mass']        = trimmed_data[parttype_name]['Mass']
+                        self.gas_data['%s_hmr' %hmr_i][parttype_name]['Metallicity'] = trimmed_data[parttype_name]['Metallicity']
                     
                 
                     #----------------------------------------------
@@ -1270,8 +1507,10 @@ class Subhalo_Analysis:
                     for parttype_name in self.gas_data[hmr_name_i].keys():
                         self.mass_flow[hmr_name_i][parttype_name] = {'inflow': math.nan,
                                                                      'outflow': math.nan,
-                                                                     'massloss': math.nan}
-                
+                                                                     'massloss': math.nan,
+                                                                     'inflow_Z': math.nan,
+                                                                     'outflow_Z': math.nan,
+                                                                     'insitu_Z': math.nan}
                 
             else:
                 # gas_data has current galaxy's gas data, gas_data_old has predecessor's gas data
@@ -1288,37 +1527,62 @@ class Subhalo_Analysis:
                                         
                         # Cycle through current IDs, to check if they were in _old
                         if hmr_name_i in gas_data_old.keys():
-                            previous_mass = gas_data_old[hmr_name_i][parttype_name]['Total_mass']       # M1
+                            previous_mass = np.sum(gas_data_old[hmr_name_i][parttype_name]['Mass'])       # M1
                         else:
                             previous_mass = math.nan
                             continue
-                        previous_mass = gas_data_old[hmr_name_i][parttype_name]['Total_mass']       # M1
-                        current_mass  = self.gas_data[hmr_name_i][parttype_name]['Total_mass']           # M2
+                        current_mass  = np.sum(self.gas_data[hmr_name_i][parttype_name]['Mass'])           # M2
                         inflow_mass   = 0
                         outflow_mass  = 0
+                        insitu_mass   = 0
                     
                         #------------------
                         # Check for inflow (use current, run check on previous)
-                        for ID_i, mass_i in zip(self.gas_data[hmr_name_i][parttype_name]['ParticleIDs'], self.gas_data[hmr_name_i][parttype_name]['Mass']):
+                        inflow_mass_metal = 0
+                        insitu_mass_metal = 0
+                        for ID_i, mass_i, metal_i in zip(self.gas_data[hmr_name_i][parttype_name]['ParticleIDs'], self.gas_data[hmr_name_i][parttype_name]['Mass'], self.gas_data[hmr_name_i][parttype_name]['Metallicity']):
                         
                             # If ID was within 2hmr of _old, gas particle stayed
                             if ID_i in gas_data_old[hmr_name_i][parttype_name]['ParticleIDs']:
+                                insitu_mass       = insitu_mass + mass_i
+                                insitu_mass_metal = insitu_mass_metal + (mass_i * metal_i)
                                 continue
                             # If ID was NOT within 2hmr of _old, gas particle was accreted
                             else:
-                                inflow_mass = inflow_mass + mass_i
+                                inflow_mass       = inflow_mass + mass_i
+                                inflow_mass_metal = inflow_mass_metal + (mass_i * metal_i)
+                        
+                        #------------------
+                        # Find metallicity of inflow
+                        if inflow_mass != 0:
+                            inflow_Z = inflow_mass_metal / inflow_mass
+                        else:
+                            inflow_Z = math.nan
+                            
+                        # Find metallicity of insitu
+                        if insitu_mass != 0:
+                            insitu_Z = insitu_mass_metal / insitu_mass
+                        else:
+                            insitu_Z = math.nan
                             
                         #------------------
                         # Check for outflow (use old, run check on current)
-                        for ID_i, mass_i in zip(gas_data_old[hmr_name_i][parttype_name]['ParticleIDs'], gas_data_old[hmr_name_i][parttype_name]['Mass']):
+                        outflow_mass_metal = 0
+                        for ID_i, mass_i, metal_i in zip(gas_data_old[hmr_name_i][parttype_name]['ParticleIDs'], gas_data_old[hmr_name_i][parttype_name]['Mass'], gas_data_old[hmr_name_i][parttype_name]['Metallicity']):
                         
                             # If ID will be within 2hmr of current, gas particle stayed
                             if ID_i in self.gas_data[hmr_name_i][parttype_name]['ParticleIDs']:
                                 continue
                             # If ID will NOT be within 2hmr of current, gas particle was outflowed
                             else:
-                                outflow_mass = outflow_mass + mass_i
+                                outflow_mass       = outflow_mass + mass_i
+                                outflow_mass_metal = outflow_mass_metal + (mass_i * metal_i)
                 
+                        # Find metallicity of outflow
+                        if outflow_mass != 0:
+                            outflow_Z = outflow_mass_metal / outflow_mass
+                        else:
+                            outflow_Z = math.nan
                     
                         #------------------
                         # Left with current_mass = previous_mass + inflow_mass - outflow_mass + stellarmassloss
@@ -1327,7 +1591,10 @@ class Subhalo_Analysis:
                         # Update mass_flow
                         self.mass_flow[hmr_name_i][parttype_name] = {'inflow': inflow_mass,
                                                                      'outflow': outflow_mass,
-                                                                     'massloss': stellarmassloss}  
+                                                                     'massloss': stellarmassloss,
+                                                                     'inflow_Z': inflow_Z,
+                                                                     'outflow_Z': outflow_Z,
+                                                                     'insitu_Z': insitu_Z}
         find_inflow_outflow(gas_data_old)
         
         #-----------------------------
@@ -1835,7 +2102,7 @@ class Subhalo_Analysis:
             for rad_i in trim_rad:
                 tmp_data.update({'%s' %str(rad_i): {}})
             
-            # trim_rad = ['1HMR', '2HMR', '1HMR_proj', '2HMR_proj', '30']
+            # trim_rad = ['1.0_hmr', '2.0_hmr', '30']
             for rad_i in trim_rad:
                 
                 # if trim_rad is '1HMR_proj':
@@ -2227,12 +2494,7 @@ class Subhalo_Analysis:
         
             else:
                 return math.nan, math.nan, math.nan, math.nan
-        
-        
-        
-        
-        
-                
+              
 
 """ 
 Purpose
@@ -2498,7 +2760,8 @@ class Subhalo_Extract_Basic:
         return newData
         
    
- 
+
+#================================
 """ 
 DESCRIPTION
 -----------
@@ -2784,7 +3047,7 @@ class MergerTree:
 
 
 
-
+#================================
 # Will find gn, sgn, and snap of galaxy when given ID and sim
 def ConvertID(galID, sim):
     # This uses the eagleSqlTools module to connect to the database with your username and password.
@@ -2853,4 +3116,419 @@ def ConvertID_noMK(galID, sim):
         myData = sql.execute_query(con, myQuery)
         
         return myData['GroupNumber'], myData['SubGroupNumber'], myData['SnapNum'], myData['Redshift'], myData['halo_mass'], np.array([myData['x'], myData['y'], myData['z']]), np.array([math.nan, math.nan, math.nan, math.nan, math.nan, math.nan])
+
+
+#================================
+""" 
+Purpose
+-------
+Will connect to sql database to find halfmassrad, peculiar velocity, 
+centre coordinates (potential & mass) for a given snapshot, and then
+extract data from local files.
+
+Calling function
+----------------
+galaxy = Subhalo_Extract(sample_input['mySims'], dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, aperture_rad, viewing_axis)
+
+Input Parameters
+----------------
+
+mySims:
+    mySims = np.array([('RefL0012N0188', 12)])  
+    Name and boxsize
+dataDir:
+    Location of the snapshot data hdf5 file, 
+    eg. '/Users/c22048063/Documents/.../snapshot_028_xx/snap_028_xx.0.hdf5'
+SnapNum: int
+    Snapshot number, ei. 28
+GroupNum: int
+    GroupNumber of the subhalo, starts at 1
+SubGroupNum: int
+    SubGroupNumber of the subhalo, starts at 0 for each
+    subhalo
+aperture_rad_in: float, [pkpc]
+    Used to trim data, which is used to find peculiar velocity within this sphere
+viewing_axis: 'z'
+    Used to find projected halfmass radius
+
+
+Output Parameters
+-----------------
+
+.gn: int
+    GroupNumber of galaxy
+.sgn: int
+    SubGroupNumber of galaxy
+.a: 
+    Scale factor for given snapshot
+.aexp: 
+    Scale factor exponent for given snapshot
+.h:
+    0.6777 for z=0
+.hexp: 
+    h exponent for given snapshot
+.boxsize:   [cMpc/h]
+    Size of simulation boxsize in [cMpc/h]. Convert
+    to [pMpc] by .boxsize / .h
+.centre:    [pkpc]
+    SQL value of centre of potential for the galaxy
+        
+.halo_mass:     float
+    Value of the halomass within 200 density
+.stars_com:     np.array[x, y, z]
+    stars C.O.M within aperture, w.r.t [0, 0, 0]
+.stars:     dictionary of particle data:
+    ['Coordinates']         - [pkpc]
+    ['Velocity']            - [pkm/s]
+    ['Mass']                - [Msun]
+    ['GroupNumber']         - int array 
+    ['SubGroupNumber']      - int array 
+.gas:     dictionary of particle data
+    ['Coordinates']         - [pkpc]
+    ['Velocity']            - [pkm/s]
+    ['Mass']                - [Msun]
+    ['StarFormationRate']   - [Msun/s] (i think)
+    ['GroupNumber']         - int array 
+    ['SubGroupNumber']      - int array 
+.dm:     dictionary of particle data:
+    ['Coordinates']         - [pkpc]
+    ['Velocity']            - [pkm/s]
+    ['Mass']                - [Msun]
+    ['GroupNumber']         - int array 
+    ['SubGroupNumber']      - int array 
+.bh:     dictionary of particle data:
+    ['Coordinates']         - [pkpc]
+    ['Velocity']            - [pkm/s]
+    ['Mass']                - [Msun]
+    ['GroupNumber']         - int array 
+    ['SubGroupNumber']      - int array 
+
+If centre_galaxy == True; 'Coordinates' - .centre, 'Velocity' - .perc_vel
+"""
+# Extracts the particle and SQL data
+class Subhalo_Extract_old:
+    
+    def __init__(self, sim, data_dir, snapNum, gn, sgn, centre_in, halo_mass_in, aperture_rad_in, viewing_axis,
+                            centre_galaxy=True, 
+                            load_region_length=1.0,   # cMpc/h 
+                            nfiles=16, 
+                            debug=False,
+                            print_progress=False):       
+                            
+        # Begining time
+        time_start = time.time()
+        
+        # Assigning subhalo properties
+        self.gn           = gn
+        self.sgn          = sgn
+        
+        #----------------------------------------------------
+        # Load information from the header for this snapshot to find a, aexp, h, hexp, boxsize
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+            print('Reading header')
+            time_start = time.time()
+        self.a, self.h, self.boxsize = read_header(data_dir) # units of scale factor, h, and L [cMpc/h]  
+        
+        
+        # Distances:    [cMpc/h] * a^1 *h^-1 -> [pMpc]. [pMpc/h] * h^-1 -> [pMpc], [cMpc/h] * h^-1 -> [cMpc]
+        # Velocity:     [cx/sh] * a^0.5 * h^0 -> [x/s]
+        # Mass:         [Mass/h] * a^0 * h*-1 -> [Mass]
+        for i in range(nfiles):
+            f = h5py.File(data_dir, 'r')
+            tmp = f['PartType4/Coordinates']
+
+            # Get conversion factors.
+            self.aexp    = f['PartType4/Coordinates'].attrs.get('aexp-scale-exponent')
+            self.hexp    = f['PartType4/Coordinates'].attrs.get('h-scale-exponent')
+
+            f.close()
+        
+        if debug:
+            print('a        ', self.a)
+            print('aexp     ', self.aexp)
+            print('h        ', self.h)
+            print('hexp     ', self.hexp)
+            print('boxsize  [cMpc/h]', self.boxsize)
+            print('boxsize  [cMpc]  ', self.boxsize/self.h)
+            print('boxsize  [pMpc]  ', self.boxsize*self.a**1)
+        
+        
+        #----------------------------------------------------
+        # For a given gn and sgn, run sql query on SubFind catalogue
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+            print('Subhalo COP query')
+            time_start = time.time()
+        
+        # Assigning halo mass
+        self.halo_mass = halo_mass_in
+        
+        # These were all originally in cMpc, converted to pMpc through self.a and self.aexp
+        self.centre       = centre_in * u.Mpc.to(u.kpc) * self.a**self.aexp                 # [pkpc]
+        
+        #-------------------------------------------------------------
+        # Load data for stars and gas in non-centred units
+        # Msun, pkpc, and pkpc/s
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+            print('Reading particle data _read_galaxy')
+            time_start = time.time()
+        stars     = self._read_galaxy(data_dir, 4, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length) 
+        gas       = self._read_galaxy(data_dir, 0, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length)
+        dm        = self._read_galaxy(data_dir, 1, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length)
+        bh        = self._read_galaxy(data_dir, 5, gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length)
+        
+        # CENTER COORDS, VELOCITY NOT ADJUSTED
+        if centre_galaxy == True:
+            stars['Coordinates'] = stars['Coordinates'] - self.centre
+            gas['Coordinates']   = gas['Coordinates'] - self.centre
+            dm['Coordinates']    = dm['Coordinates'] - self.centre
+            bh['Coordinates']    = bh['Coordinates'] - self.centre
+            
+        
+        #---------------------------
+        # Finding stars COM within 30pkpc
+        stars_com  = self._centre_of_mass(self._trim_within_rad(stars, aperture_rad_in))
+        if debug:
+            print('stars COM')
+            print(stars_com)
+        
+        # Setting the stars COM in 30pkpc as the new centre, and the external stars_com w.r.t potential (which until now was at [0, 0, 0])
+        stars['Coordinates'] = stars['Coordinates'] - stars_com
+        gas['Coordinates']   = gas['Coordinates'] - stars_com
+        dm['Coordinates']    = dm['Coordinates'] - stars_com
+        bh['Coordinates']    = bh['Coordinates'] - stars_com
+        self.stars_com       = [0, 0, 0] - stars_com
+        
+        #---------------------------
+        # Creating temporary array for stars centred on stellar COM, trimming this to the aperture
+        stars_trimmed = self._trim_within_rad(stars, aperture_rad_in)
+        
+        # Making the minimum HMR 1 pkpc
+        self.halfmass_rad_proj  = max(self._projected_rad(stars_trimmed, viewing_axis), 1)
+        self.halfmass_rad       = max(self._half_rad(stars_trimmed), 1)
+            
+        # Finding peculiar velocity of stars within 30 pkpc of COM
+        self.perc_vel = self._peculiar_velocity_part(stars_trimmed)
+         
+        """# Finding peculiar velocity for all particles
+        self.perc_vel = self._peculiar_velocity()
+        """
+        
+        # account for peculiar velocity within aperture rad
+        if centre_galaxy == True:            
+            stars['Velocity'] = stars['Velocity'] - self.perc_vel
+            gas['Velocity']   = gas['Velocity'] - self.perc_vel
+            dm['Velocity']    = dm['Velocity'] - self.perc_vel
+            bh['Velocity']    = bh['Velocity'] - self.perc_vel
+        
+        #---------------------------
+        # Assigning particle data        
+        self.data_nil = {}
+        for parttype, parttype_name in zip([stars, gas, dm, bh], ['stars', 'gas', 'dm', 'bh']):
+            self.data_nil['%s'%parttype_name] = parttype
+        
+        
+        if debug:
+            print('_main DEBUG')
+            print(self.halfmass_rad)
+            print(self.halfmass_rad_proj)
+            print(self.perc_vel)   
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+            print('  EXTRACTION COMPLETE')
+        
+    def _read_galaxy(self, data_dir, itype, gn, sgn, centre, load_region_length, debug=False):
+        """ For a given galaxy (defined by its GroupNumber and SubGroupNumber)
+        extract the coordinates, velocty, and mass of all particles of a selected type.
+        Coordinates are then wrapped around the centre to account for periodicity."""
+        
+        # Where we store all the data
+        data = {}
+        
+        # Initialize read_eagle module.
+        eagle_data = EagleSnapshot(data_dir)
+        
+        # Put centre from pMpc -> cMpc/h units.
+        centre_cMpc = centre * self.a**-1 * self.h
+
+        # Select region to load, a 'load_region_length' cMpc/h cube centred on 'centre'.
+        region = np.array([
+            (centre_cMpc[0]-0.5*load_region_length), (centre_cMpc[0]+0.5*load_region_length),
+            (centre_cMpc[1]-0.5*load_region_length), (centre_cMpc[1]+0.5*load_region_length),
+            (centre_cMpc[2]-0.5*load_region_length), (centre_cMpc[2]+0.5*load_region_length)
+        ])
+        eagle_data.select_region(*region)
+                
+        # Load data using read_eagle, load conversion factors manually.
+        f = h5py.File(data_dir, 'r')
+        # If gas, load StarFormationRate
+        if itype == 0:
+            for att in ['GroupNumber', 'SubGroupNumber', 'Mass', 'Coordinates', 'StarFormationRate', 'Velocity', 'ParticleIDs']:
+                tmp  = eagle_data.read_dataset(itype, att)
+                cgs  = f['PartType%i/%s'%(itype, att)].attrs.get('CGSConversionFactor')
+                aexp = f['PartType%i/%s'%(itype, att)].attrs.get('aexp-scale-exponent')
+                hexp = f['PartType%i/%s'%(itype, att)].attrs.get('h-scale-exponent')
+                data[att] = np.multiply(tmp, cgs * self.a**aexp * self.h**hexp, dtype='f8')
+            f.close()
+        # If dm
+        elif itype == 1:
+            for att in ['GroupNumber', 'SubGroupNumber', 'Mass', 'Coordinates', 'Velocity', 'ParticleIDs']:
+                if att == 'Mass':
+                    cgs  = f['PartType0/%s'%(att)].attrs.get('CGSConversionFactor')
+                    aexp = f['PartType0/%s'%(att)].attrs.get('aexp-scale-exponent')
+                    hexp = f['PartType0/%s'%(att)].attrs.get('h-scale-exponent')
+                    
+                    # Create special extract dm mass
+                    dm_mass     = f['Header'].attrs.get('MassTable')[1]
+                    # Create an array of length n_particles each set to dm_mass.
+                    m = np.ones(n_particles, dtype='f8') * dm_mass
+            
+                    data[att] = np.multiply(m, cgs * self.a**aexp * self.h**hexp, dtype='f8')
+                else:
+                    tmp  = eagle_data.read_dataset(itype, att)
+                    cgs  = f['PartType%i/%s'%(itype, att)].attrs.get('CGSConversionFactor')
+                    aexp = f['PartType%i/%s'%(itype, att)].attrs.get('aexp-scale-exponent')
+                    hexp = f['PartType%i/%s'%(itype, att)].attrs.get('h-scale-exponent')
+                    data[att] = np.multiply(tmp, cgs * self.a**aexp * self.h**hexp, dtype='f8')
+                    
+                    # Used in next cycle for Mass
+                    n_particles = len(tmp)
+                
+            f.close()
+        # If stars, do not load StarFormationRate (as not contained in database)
+        elif itype == 4:
+            for att in ['GroupNumber', 'SubGroupNumber', 'Mass', 'Coordinates', 'Velocity', 'ParticleIDs']:
+                tmp  = eagle_data.read_dataset(itype, att)
+                cgs  = f['PartType%i/%s'%(itype, att)].attrs.get('CGSConversionFactor')
+                aexp = f['PartType%i/%s'%(itype, att)].attrs.get('aexp-scale-exponent')
+                hexp = f['PartType%i/%s'%(itype, att)].attrs.get('h-scale-exponent')
+                data[att] = np.multiply(tmp, cgs * self.a**aexp * self.h**hexp, dtype='f8')
+                
+            f.close()
+        # If bhs
+        elif itype == 5:
+            for att in ['GroupNumber', 'SubGroupNumber', 'BH_Mass', 'BH_Mdot', 'Coordinates', 'Velocity', 'ParticleIDs']:
+                # Ensure we use 'Mass' as name
+                if att == 'BH_Mass':
+                    tmp  = eagle_data.read_dataset(itype, att)
+                    cgs  = f['PartType%i/%s'%(itype, att)].attrs.get('CGSConversionFactor')
+                    aexp = f['PartType%i/%s'%(itype, att)].attrs.get('aexp-scale-exponent')
+                    hexp = f['PartType%i/%s'%(itype, att)].attrs.get('h-scale-exponent')
+                    data['Mass'] = np.multiply(tmp, cgs * self.a**aexp * self.h**hexp, dtype='f8')
+                    
+                else:
+                    tmp  = eagle_data.read_dataset(itype, att)
+                    cgs  = f['PartType%i/%s'%(itype, att)].attrs.get('CGSConversionFactor')
+                    aexp = f['PartType%i/%s'%(itype, att)].attrs.get('aexp-scale-exponent')
+                    hexp = f['PartType%i/%s'%(itype, att)].attrs.get('h-scale-exponent')
+                    data[att] = np.multiply(tmp, cgs * self.a**aexp * self.h**hexp, dtype='f8')
+                    
+            f.close()
+        
+        
+        # Mask to selected GroupNumber and SubGroupNumber.
+        mask = np.logical_and(data['GroupNumber'] == gn, data['SubGroupNumber'] == sgn)
+        for att in data.keys():
+            data[att] = data[att][mask]
+               
+        # Load data, then mask to selected GroupNumber and SubGroupNumber. Automatically converts to pcm from read_dataset, converted to pMpc
+        data['Mass'] = data['Mass'] * u.g.to(u.Msun)                   # [Msun]
+        data['Coordinates'] = data['Coordinates'] * u.cm.to(u.Mpc)     # [pMpc]
+        data['Velocity'] = data['Velocity'] * u.cm.to(u.Mpc)           # [pMpc/s]
+        if itype == 0:
+            data['StarFormationRate'] = data['StarFormationRate'] * u.g.to(u.Msun)  # [Msun/s]
+        if itype == 5:
+            data['BH_Mdot'] = data['BH_Mdot'] * u.g.to(u.Msun)  # [Msun/s]
+        
+        # Periodic wrap coordinates around centre (in proper units). 
+        # boxsize converted from cMpc/h -> pMpc
+        boxsize = self.boxsize * self.h**-1 * self.a**1       # [pkpc]
+        data['Coordinates'] = np.mod(data['Coordinates']-centre+0.5*boxsize, boxsize) + centre-0.5*boxsize
+        
+        # Converting to pkpc
+        data['Coordinates'] = data['Coordinates'] * u.Mpc.to(u.kpc)     # [pkpc]
+        data['Velocity'] = data['Velocity'] * u.Mpc.to(u.km)            # [pkm/s]
+        
+        return data
+        
+    def _trim_within_rad(self, arr, radius, debug=False):
+        # Compute distance to centre and mask all within Radius in pkpc
+        r  = np.linalg.norm(arr['Coordinates'], axis=1)
+        mask = np.where(r <= radius)
+        
+        newData = {}
+        for header in arr.keys():
+            newData[header] = arr[header][mask]
+            
+        return newData
+        
+    def _centre_of_mass(self, arr, debug=False):
+        # Mass-weighted formula from subhalo paper
+        mass_weighted  = arr['Coordinates'] * arr['Mass'][:, None]
+        centre_of_mass = np.sum(mass_weighted, axis=0)/np.sum(arr['Mass'])
+    
+        return centre_of_mass
+    
+    def _peculiar_velocity(self, debug=False):        
+        # Mass-weighted formula from subhalo paper
+        vel_weighted = 0
+        mass_sums = 0
+        for arr in [self.stars, self.gas, self.dm, self.bh]:
+            if len(arr['Mass']) > 0:
+                vel_weighted = vel_weighted + np.sum(arr['Velocity'] * arr['Mass'][:, None], axis=0)
+                mass_sums = mass_sums + np.sum(arr['Mass'])
+            
+        pec_vel = vel_weighted / mass_sums
+            
+        return pec_vel
+        
+    def _peculiar_velocity_part(self, arr, debug=False):        
+        # Mass-weighted formula from subhalo paper
+        vel_weighted = np.sum(arr['Velocity'] * arr['Mass'][:, None], axis=0)
+        mass_sums = np.sum(arr['Mass'])
+            
+        pec_vel = vel_weighted / mass_sums
+            
+        return pec_vel
+    
+    def _projected_rad(self, arr, viewing_axis, debug=False):
+        # Compute distance to centre (projected)        
+        if viewing_axis == 'z':
+            r = np.linalg.norm(arr['Coordinates'][:,[0,1]], axis=1)
+            mask = np.argsort(r)
+            r = r[mask]
+        if viewing_axis == 'y':
+            r = np.linalg.norm(arr['Coordinates'][:,[0,2]], axis=1)
+            mask = np.argsort(r)
+            r = r[mask]
+        if viewing_axis == 'x':
+            r = np.linalg.norm(arr['Coordinates'][:,[1,2]], axis=1)
+            mask = np.argsort(r)
+            r = r[mask]
+            
+        stelmass = np.sum(arr['Mass'][mask])
+            
+        # Compute cumulative mass
+        cmass = np.cumsum(arr['Mass'][mask])
+        index = np.where(cmass >= stelmass*0.5)[0][0]
+        radius = r[index]
+        
+        return radius
+        
+    def _half_rad(self, arr, debug=False):
+        # Compute distance to centre       
+        r = np.linalg.norm(arr['Coordinates'], axis=1)
+        mask = np.argsort(r)
+        r = r[mask]
+            
+        stelmass = np.sum(arr['Mass'][mask])
+            
+        # Compute cumulative mass
+        cmass = np.cumsum(arr['Mass'][mask])
+        index = np.where(cmass >= stelmass*0.5)[0][0]
+        radius = r[index]
+        
+        return radius
 

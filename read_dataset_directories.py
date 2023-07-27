@@ -4,6 +4,12 @@
 #scp -r c22048063@physxlogin.astro.cf.ac.uk:/home/user/c22048063/Documents/EAGLE/samples /Users/c22048063/Documents/EAGLE/
 # COPY OUTPUT
 #scp -r c22048063@physxlogin.astro.cf.ac.uk:/home/cosmos_c22048063/outputs /Users/c22048063/Documents/EAGLE/
+
+# COPY SAMPLE
+#scp -r c22048063@physxlogin.astro.cf.ac.uk:/home/user/c22048063/Documents/EAGLE/samples_snips /Users/c22048063/Documents/EAGLE/
+# COPY OUTPUT
+#scp -r c22048063@physxlogin.astro.cf.ac.uk:/home/cosmos_c22048063/outputs_snips /Users/c22048063/Documents/EAGLE/
+
 # COPY CODE
 #scp -r /Users/c22048063/Documents/EAGLE/code  c22048063@physxlogin.astro.cf.ac.uk:/home/user/c22048063/Documents/EAGLE/
 
@@ -12,11 +18,11 @@
 def _assign_directories(file_type):
     
     # L12 local on Mac
-    if file_type == 'local':
+    if file_type == '1':
         # Directories
         EAGLE_dir       = '/Users/c22048063/Documents/EAGLE'
         dataDir_main    = '/Users/c22048063/Documents/EAGLE/data/RefL0012N0188/'
-        treeDir_main    = ''
+        treeDir_main    = '/Users/c22048063/Desktop/'
         
         # Other directories
         sample_dir      = EAGLE_dir + '/samples'
@@ -49,7 +55,7 @@ def _assign_directories(file_type):
         
         return EAGLE_dir, sample_dir, treeDir_main, output_dir, fig_dir, dataDir_dict
     # L100 snaps on serpens 
-    elif file_type == 'serpens_snap':
+    elif file_type == '2':
         # Directories serpens
         EAGLE_dir       = '/home/user/c22048063/Documents/EAGLE'
         dataDir_main   = '/home/universe/spxtd1-shared/RefL0100N1504/'
@@ -87,16 +93,16 @@ def _assign_directories(file_type):
         
         return EAGLE_dir, sample_dir, treeDir_main, output_dir, fig_dir, dataDir_dict
     # L100 snips on serpens   
-    elif file_type == 'snip':
+    elif file_type == '3':
         # Directories snipshots
         EAGLE_dir       = '/home/user/c22048063/Documents/EAGLE'
         dataDir_main    = '/home/cosmos/c22048063/EAGLE_snipshots/RefL0100N1504/'
-        treeDir_main    = '/home/cosmos/c22048063/EAGLE_mergertree'
+        treeDir_main    = '/home/cosmos/c22048063/EAGLE_mergertree/'
         
         # Other directories
-        sample_dir      = EAGLE_dir + '/samples'
-        output_dir      = EAGLE_dir + '/outputs'
-        fig_dir         = EAGLE_dir + '/plots'
+        sample_dir      = EAGLE_dir + '/samples_snips'
+        output_dir      = EAGLE_dir + '/outputs_snips'
+        fig_dir         = EAGLE_dir + '/plots_snips'
         
         # Directories of data hdf5 file(s)
         dataDir_dict = {}

@@ -22,11 +22,12 @@ from tqdm import tqdm
 from subhalo_main import Initial_Sample, Subhalo_Extract, Subhalo_Analysis, ConvertID
 import eagleSqlTools as sql
 from graphformat import set_rc_params
+from read_dataset_directories import _assign_directories
 
 
 #====================================
 # finding directories
-answer = input("-----------------\nDirectories?:\n      local\n      serpens_snap\n      snip\n")
+answer = input("-----------------\nDirectories?:\n     1 local\n     2 serpens_snap\n     3 snip\n")
 EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_directories(answer)
 #====================================
  
@@ -44,7 +45,7 @@ PURPOSE
 #1, 2, 4, 3, 6, 5, 7, 9, 16, 14, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
 #3748
 #37445, 37446, 37447
-#3748, 20455, 37445, 30494, 43163, 40124, 44545, 48383, 57647, 55343, 51640, 46366, 53904, 52782, 56522, 59467, 49986, 61119, 62355, 63199, 61831
+ID_list = [3748, 20455, 37445, 30494, 43163, 40124, 44545, 48383, 57647, 55343, 51640, 46366, 53904, 52782, 56522, 59467, 49986, 61119, 62355, 63199, 61831]
 
 #====================================
 # Will visualise all particles belonging to a SINGLE galaxy/subhalo
@@ -52,18 +53,18 @@ PURPOSE
 def galaxy_render(csv_sample = False,              # False, Whether to read in existing list of galaxies  
                     #--------------------------
                     mySims = [('RefL0012N0188', 12)],
-                    GalaxyID_List = [50969],
+                    GalaxyID_List = [30494],
                     #--------------------------
                     # Galaxy extraction properties
                     kappa_rad            = 30,          # calculate kappa for this radius [pkpc]
                     viewing_angle        = 0,           # Keep as 0
                     #--------------------------
                     # Visualisation properties
-                    boxradius           = 50,                  # boxradius of render [kpc], 'rad', 'tworad'
-                    particles           = 5000,
-                    viewing_axis        = 'z',                  # Which axis to view galaxy from.  DEFAULT 'z'
-                    aperture_rad        = 30,                   # calculations radius limit [pkpc]
-                    trim_rad            = np.array([50]),           # pkpc WILL PLOT HIGHEST VALUE. trim particles, 2.0_hmr_proj
+                    boxradius           = 50,                           # size of box of render [kpc], 'rad', 'tworad'
+                    particles           = 5000,                         # number of random particles to plot
+                    viewing_axis        = 'z',                          # Which axis to view galaxy from.  DEFAULT 'z'
+                    aperture_rad        = 30,                           # calculations radius limit [pkpc]
+                    trim_rad            = np.array([100]),           # largest radius in pkpc to plot | 2.0_hmr, rad_projected=True
                     align_rad           = False,                          # False/Value
                     #=====================================================
                     # Misalignments we want extracted and at which radii  
@@ -88,6 +89,8 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                     gas_nsf             = True,    
                     dark_matter         = False,
                     black_holes         = True,
+                    #--------------------------
+                    color_metallicity   = False,
                     #=====================================================
                     showfig       = True,
                     savefig       = False,
@@ -196,10 +199,27 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         if print_progress:
             print('Extracting particle data Subhalo_Extract()')
             time_start = time.time()
-            
+          
         # Initial extraction of galaxy particle data
-        galaxy = Subhalo_Extract(mySims, dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, Centre_i, HaloMass, aperture_rad, viewing_axis)
+        galaxy = Subhalo_Extract(mySims, dataDir_dict['%s' %str(SnapNum)], 999, GroupNum, SubGroupNum, Centre_i, HaloMass, aperture_rad, viewing_axis)
         # Gives: galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh
+        
+        """mask_sf        = np.nonzero(galaxy.data_nil['gas']['StarFormationRate'])          
+        mask_nsf       = np.where(galaxy.data_nil['gas']['StarFormationRate'] == 0)
+        
+        # Create dataset of star-forming and non-star-forming gas
+        gas_sf = {}
+        gas_nsf = {}
+        for arr in galaxy.data_nil['gas'].keys():
+            gas_sf[arr]  = galaxy.data_nil['gas'][arr][mask_sf]
+            gas_nsf[arr] = galaxy.data_nil['gas'][arr][mask_nsf]
+            
+        
+        print(gas_sf['StarFormationRate'])
+        print('Gas: ', len(galaxy.data_nil['gas']['Mass']))
+        print('SF:  ', len(gas_sf['Mass']))
+        print('NSF: ', len(gas_nsf['Mass']))
+        """
         
         if debug:
             print(galaxy.gn, galaxy.sgn, galaxy.centre, galaxy.halfmass_rad, galaxy.halfmass_rad_proj)
@@ -265,11 +285,15 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         if print_galaxy:
             print('|%s| |ID:   %s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f' %(SnapNum, str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'])) 
         
-        """ INFLOW OUTFLOW 
-        print(subhalo.mass_flow['2.0_hmr']['gas']['inflow'])
-        print(subhalo.mass_flow['2.0_hmr']['gas']['outflow'])
-        print(subhalo.mass_flow['2.0_hmr']['gas']['massloss'])
-        """
+        # INFLOW OUTFLOW 
+        #print(subhalo.mass_flow['2.0_hmr']['gas_sf']['inflow'])
+        #print(subhalo.mass_flow['2.0_hmr']['gas_sf']['insitu_Z'])
+        #print(subhalo.sfr['hmr'])
+        #print(np.multiply(3.154e+7, subhalo.sfr['gas_sf']))
+        #print(subhalo.Z['hmr'])
+        #print(subhalo.Z['stars'])
+        #print(subhalo.Z['gas_sf'])
+        
             
         #print(subhalo.bh_mdot)
         #print(subhalo.bh_edd)
@@ -316,7 +340,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         fig.add_axes(ax, computed_zorder=False)
         
         
-        def plot_rand_scatter(dict_name, part_type, color, debug=False):
+        def plot_rand_scatter(dict_name, part_type, color, metallicity=color_metallicity, debug=False):
             # Plot formatting
             ax.set_facecolor('xkcd:black')
             ax.w_xaxis.pane.fill = False
@@ -333,15 +357,33 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
             # Selecting N (particles) sets of coordinates
             if dict_name[part_type]['Coordinates'].shape[0] <= particles:
                 coords = dict_name[part_type]['Coordinates']
+                if (part_type == 'gas') | (part_type == 'gas_sf') | (part_type == 'gas_nsf') | (part_type == 'stars'):
+                    metals = dict_name[part_type]['Metallicity']
             else:
                 coords = dict_name[part_type]['Coordinates'][np.random.choice(dict_name[part_type]['Coordinates'].shape[0], particles, replace=False), :]
+                if (part_type == 'gas') | (part_type == 'gas_sf') | (part_type == 'gas_nsf') | (part_type == 'stars'):
+                    metals = dict_name[part_type]['Metallicity'][np.random.choice(dict_name[part_type]['Coordinates'].shape[0], particles, replace=False)]
             
             # Plot scatter
             if part_type == 'bh':
                 bh_size = dict_name[part_type]['Mass']
                 ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=(bh_size/8e5)**(1/3), alpha=1, c=color, zorder=4)
             else:
-                ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=0.02, alpha=0.9, c=color, zorder=4)
+                if (part_type == 'gas') | (part_type == 'gas_sf') | (part_type == 'gas_nsf') | (part_type == 'stars'):
+                    if metallicity:
+                        if part_type == 'gas':
+                            ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=0.02, alpha=0.9, c=metals, zorder=4, cmap='YlGn_r')
+                        if part_type == 'gas_sf':
+                            ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=0.02, alpha=0.9, c=metals, zorder=4, cmap='Blues_r')
+                        if part_type == 'gas_nsf':
+                            ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=0.02, alpha=0.9, c=metals, zorder=4, cmap='Purples_r')
+                        if part_type == 'stars':
+                            ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=0.02, alpha=0.9, c=metals, zorder=4, cmap='YlOrRd_r')
+                        
+                    else:
+                        ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=0.02, alpha=0.9, c=color, zorder=4)
+                else:
+                    ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=0.02, alpha=0.9, c=color, zorder=4)
            
         def plot_spin_vector(dict_name, part_type, rad, color, debug=False):
             # Plot formatting

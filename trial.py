@@ -18,6 +18,7 @@ from read_dataset_tools import read_dataset, read_dataset_dm_mass, read_header
 from pafit.fit_kinematic_pa import fit_kinematic_pa
 from plotbin.sauron_colormap import register_sauron_colormap
 from vorbin.voronoi_2d_binning import voronoi_2d_binning
+from read_dataset_directories import _assign_directories
 
 stars_x = np.array([-3, -2, -2, -2, -1, -1, -1, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3])
 stars_y = np.array([-2, 1, 0, -1, 1, 0, -1, 1, 0, -1, 1, -1, 0, 1, 0, 2, 2])

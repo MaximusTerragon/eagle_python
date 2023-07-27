@@ -1,7 +1,7 @@
 import numpy as np
 import h5py
 
-def read_dataset(data_dir, itype, att, nfiles=16):
+def read_dataset(data_dir, itype, att, conv=False, nfiles=16):
     """ Read a selected dataset, itype is the PartType and att is the attribute name. """
 
     # Output array.
@@ -37,6 +37,12 @@ def read_dataset(data_dir, itype, att, nfiles=16):
         data = np.multiply(data, cgs * a**aexp * h**hexp, dtype='f8')
         
         #print(data) #print conversion data [cm]
+    
+    elif conv == True:
+        data = np.multiply(data, cgs * a**aexp * h**hexp, dtype='f8')
+        
+        
+        print('CONVERTED')
 
     return data
     

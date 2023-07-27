@@ -626,11 +626,7 @@ def _analysis_misalignment_distribution(csv_sample = 'L12_20_all_sample_misalign
             time_start = time.time()
             
         # Initial extraction of galaxy particle data
-        if int(SnapNum) > 28:
-            galaxy = Subhalo_Extract_Snip(sample_input['mySims'], dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, Centre, HaloMass, aperture_rad, viewing_axis)
-        else:
-            #galaxy = Subhalo_Extract_old(sample_input['mySims'], dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, Centre, HaloMass, aperture_rad, viewing_axis)
-            galaxy = Subhalo_Extract(sample_input['mySims'], dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, Centre, HaloMass, aperture_rad, viewing_axis)
+        galaxy = Subhalo_Extract(sample_input['mySims'], dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, Centre, HaloMass, aperture_rad, viewing_axis)
 
         if debug:
             print(galaxy.gn, galaxy.sgn, galaxy.centre, galaxy.halfmass_rad, galaxy.halfmass_rad_proj)

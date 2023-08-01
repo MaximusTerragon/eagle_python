@@ -97,6 +97,12 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
         time_start = time.time()
         
     
+    #-----------------------------------------
+    # adjust mySims for serpens
+    if (answer == '2') or (answer == '3'):
+        mySims = [('RefL0100N1504', 100)]
+        
+        
     #---------------------------------------------
     # Use IDs and such from sample
     if csv_sample:
@@ -135,41 +141,71 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
         print('  SAMPLE LENGTH: ', len(GroupNum_List))
         print('===================')
         
-    #---------------------------------------------
     # If no csv_sample given, use GalaxyID_List
     else:
-        # Extract GroupNum, SubGroupNum, and Snap for each ID
-        GroupNum_List    = []
-        SubGroupNum_List = []
-        SnapNum_List     = []
-        Redshift_List    = []
-        HaloMass_List    = []
-        Centre_List      = []
-        MorphoKinem_List = []
-        
-        for galID in GalaxyID_List:
-            gn, sgn, snap, z, halomass_i, centre_i, morphkinem_i = ConvertID(galID, mySims)
-    
-            # Append to arrays
-            GroupNum_List.append(gn)
-            SubGroupNum_List.append(sgn)
-            SnapNum_List.append(snap)
-            Redshift_List.append(z)
-            HaloMass_List.append(halomass_i) 
-            Centre_List.append(centre_i)
-            MorphoKinem_List.append(morphkinem_i)
+        # If using snipshots...
+        if answer == '3':
+            # Extract GroupNum, SubGroupNum, and Snap for each ID
+            GroupNum_List    = []
+            SubGroupNum_List = []
+            SnapNum_List     = []
+            Redshift_List    = []
+            HaloMass_List    = []
+            Centre_List      = []
+            MorphoKinem_List = []
             
-        if debug:
-            print(GroupNum_List)
-            print(SubGroupNum_List)
-            print(GalaxyID_List)
-            print(SnapNum_List)
+            for galID in GalaxyID_List:
+                gn, sgn, snap, z, halomass_i, centre_i, morphkinem_i = ConvertID_snip(tree_dir, galID, mySims)
+    
+                # Append to arrays
+                GroupNum_List.append(gn)
+                SubGroupNum_List.append(sgn)
+                SnapNum_List.append(snap)
+                Redshift_List.append(z)
+                HaloMass_List.append(halomass_i) 
+                Centre_List.append(centre_i)
+                MorphoKinem_List.append(morphkinem_i)
+            
+            if debug:
+                print(GroupNum_List)
+                print(SubGroupNum_List)
+                print(GalaxyID_List)
+                print(SnapNum_List)
+        
+        # Else...
+        else:
+            # Extract GroupNum, SubGroupNum, and Snap for each ID
+            GroupNum_List    = []
+            SubGroupNum_List = []
+            SnapNum_List     = []
+            Redshift_List    = []
+            HaloMass_List    = []
+            Centre_List      = []
+            MorphoKinem_List = []
+         
+            for galID in GalaxyID_List:
+                gn, sgn, snap, z, halomass_i, centre_i, morphkinem_i = ConvertID(galID, mySims)
+    
+                # Append to arrays
+                GroupNum_List.append(gn)
+                SubGroupNum_List.append(sgn)
+                SnapNum_List.append(snap)
+                Redshift_List.append(z)
+                HaloMass_List.append(halomass_i) 
+                Centre_List.append(centre_i)
+                MorphoKinem_List.append(morphkinem_i)
+            
+            if debug:
+                print(GroupNum_List)
+                print(SubGroupNum_List)
+                print(GalaxyID_List)
+                print(SnapNum_List)
             
         print('\n===================')
         print('SAMPLE INPUT:\n  %s\n  GalaxyIDs: %s' %(mySims[0][0], GalaxyID_List))
         print('  SAMPLE LENGTH: ', len(GroupNum_List))
         print('===================')
-        
+       
     if print_progress:
         print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
     
@@ -211,7 +247,9 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
     
         # Initial extraction of galaxy particle data
         galaxy = Subhalo_Extract(mySims, dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, Centre_i, HaloMass, aperture_rad, viewing_axis)
+        GroupNum = galaxy.gn
         # Gives: galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh
+        # Gives: subhalo.general: GroupNum, SubGroupNum, GalaxyID, stelmass, gasmass, gasmass_sf, gasmass_nsf
         
         if debug:
             print(galaxy.gn, galaxy.sgn, galaxy.centre, galaxy.halfmass_rad, galaxy.halfmass_rad_proj)

@@ -64,7 +64,7 @@ def _assign_directories(file_type):
         
         # Other directories
         sample_dir      = EAGLE_dir + '/samples'
-        output_dir      = EAGLE_dir + '/outputs'
+        output_dir      = '/home/cosmos_c22048063/outputs'
         fig_dir         = EAGLE_dir + '/plots'
         
         # Directories of data hdf5 file(s)
@@ -101,7 +101,7 @@ def _assign_directories(file_type):
         
         # Other directories
         sample_dir      = EAGLE_dir + '/samples_snips'
-        output_dir      = EAGLE_dir + '/outputs_snips'
+        output_dir      = '/home/cosmos_c22048063/outputs_snips'
         fig_dir         = EAGLE_dir + '/plots_snips'
         
         # Directories of data hdf5 file(s)

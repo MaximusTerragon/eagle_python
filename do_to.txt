@@ -1,56 +1,53 @@
 
-# Update serpens
+# update serpens
+# test render
 # run
+# test evolution with id 443974 snip:161
+
+# occasionally descendant not found, = -1. 		34639 34638 -1 34637
 
 
 
+# Make evolution compatible
+
+# once sample used, still need to trim for stellar mass within 30pkpc, so sample will need modifying
 
 
-
-
-
-
-
-
-
-# Create mergertree file?
+# Run minor analysis on serpens 9-10
+# Create mergertree file
 # Run same stacked example
 
 
-# Make evolution compatible - use snip sample, use snip extract
+# Add a few snaps before misalignment/merger
 # Colour stacked_ plots by gasinflow/outflow
-# account for flybys (compare coordinates)
+# account for flybys (compare coordinates of centres using sample)
+
+
 # improve BH detection rate
 # halo mass r200
 # Smoothed metallicity ?
-
 # Explore some of the new variables available for BH
-
-
-# Add line "To account for the resolution of the simulation, mergers are
-only considered ‘resolved’ when M∗,2 ≥ 108 M (≈ 100 stellar
-particles)." -McAlpine 2018
 
 
 
 
 _____________________________________________________________
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-DONE
-- Copied to serpens 
-- Added metallicity and SFR calculations
-- Added inflow/outflow metallicity
-- Updated evolution, render
-- Evolution working and tested compatibility
-- Found missing SubGroupNumber
-- Added option to display all attributes
-- Made filament plots, seems to roughly work :)
-- Made samples on serpens for snips 151-166
-- HMR tested on not using SGN to sample particles... makes little difference
-- Updated render to show mergers
+DONE WEEK 42:
+- Fix for gn bug
+- Made MergerTree compatible but not tested
+- Made evolution compatible
+
 
 # mention minor discrepancy in SF particles to Tim. Of order 1%
 # GalaxyID 30494 (major merger), 40124, 46366, 49986 (distant subhalo), 49986 (gas clump) has flyby in which SubGroupNumber matters
+# What do with HMR... use data instead? Gets large
+
+
+	
+		
+		
+
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 
@@ -83,6 +80,7 @@ DONE
 
 ============================================================
 AVAILABLE VARIABLES:
+
  Gas 0
 ['Coordinates', 'Density', 'Entropy', 'GroupNumber', 'InternalEnergy', 'Mass', 'Metallicity', 'ParticleIDs', 'Temperature', 'Velocity']
 Missing: SubGroupNumber, StarFormationRate
@@ -95,7 +93,44 @@ Missing: SubGroupNumber
  BH 5
 ['BH_CumlAccrMass', 'BH_CumlNumSeeds', 'BH_Density', 'BH_FormationTime', 'BH_Mass', 'BH_Mdot', 'BH_MostMassiveProgenitorID', 'BH_Pressure', 'BH_SoundSpeed', 'BH_SurroundingGasVel', 'BH_TimeLastMerger', 'Coordinates', 'GroupNumber', 'Mass', 'ParticleIDs', 'Velocity']
 Missing: SubGroupNumber
+
 ============================================================
+Issue with gn 
+
+# Fix bug for HMR									V									V					
+Run		iter	ID				Mass in tree	  Mass in snip 	center in tree		center in snip/snap		gn	 sgn	halo
+151		13957 	236710612		1.10e10			  1.68e9		88.88 52.56 5.40	72.40 46.19 34.58		2378 0		5.80629823488E11	
+151		19987 > 342074093		1.67e9							72.40 46.19 34.58							2379 0		5.55924324352E11		... this is what gn=2378 points to
+151		19989	342077564		1.72e9							72.49 46.21 34.44							2379 1		5.55924324352E11
+
+Contenders:								-ROUGH-	  															-ROUGH-
+22		-		11482239		  Y		1.18e10	    N  			  Y		88.88 52.52 5.35	   N			2389 0				centre tree matched, mass matched, particles not matched
+22		-		14648187	     ~Y		5.65e10	    N			  N	    72.85 47.35 35.15	  ~Y			554	 0				centre snip matched ish, mass not matched, particles matched 
+22		-	  >	10321177		  N		1.71e9	    Y			  N		72.39 46.20 34.61	   Y			2398 0				centre snip matched, mass snip matched
+
+Center associated with a given GN stated in merger tree does not agree with snipshot. 
+When looking at the center in tree, turns out a different GN is there	-> wrong/incorrect sample GN
+When looking at the GN, its at a different center						-> wrong/incorrect sample center
+
+Possibilities:
+	1. snipshot GN is not the GN in merger tree
+	2. merger tree has errors in GN or Center
+	3. merger tree sample has bugs and not extracting correct center
+	
+	Likely GN -> go to coords, establish dominant GN in 0.5 radius, reassign that instead.
+
+============================================================
+
+
+
+
+
+
+
+
+
+
+
 
 ⠀⠀⠀⠀⠀⢀⣀⣀⣀⡀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⣴⠋⠉⠉⠉⠛⢷⣦⡀⠀⠀

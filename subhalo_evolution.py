@@ -77,7 +77,8 @@ def _analysis_evolution(csv_sample = False,              # Whether to read in ex
                                #--------------------------
                                mySims = [('RefL0012N0188', 12)],
                                GalaxyID_List_target = [30494],               # Will create a csv file for each galaxy
-                               snapNumMax           = 19,                    # Highest snapNum to go to
+                               snapNumMin           = 19,                    # Highest snapNum to go to
+                               snapNumMax           = 28,                    # Highest snapNum to go to
                                #--------------------------
                                # Galaxy extraction properties
                                viewing_axis        = 'z',                  # Which axis to view galaxy from.  DEFAULT 'z'
@@ -103,8 +104,8 @@ def _analysis_evolution(csv_sample = False,              # Whether to read in ex
                                min_particles       = 20,                # Minimum particles to find spin.  DEFAULT 20
                                min_inclination     = 0,                 # Minimum inclination toward viewing axis [deg] DEFAULT 0
                                #--------------------------   
-                               csv_file       = True,                   # Will write sample to csv file in sapmle_dir
-                                 csv_name     = 'NEW',                     # extra stuff at end
+                               csv_file       = False,                   # Will write sample to csv file in sapmle_dir
+                                 csv_name     = '',                     # extra stuff at end
                                #--------------------------
                                print_progress = False,
                                print_galaxy   = True,
@@ -118,7 +119,11 @@ def _analysis_evolution(csv_sample = False,              # Whether to read in ex
         print('Extracting GroupNum, SubGroupNum, SnapNum lists')
         time_start = time.time()
         
-
+    #-----------------------------------------
+    # adjust mySims for serpens
+    if (answer == '2') or (answer == '3'):
+        mySims = [('RefL0100N1504', 100)]
+        
     #---------------------------------------------
     # Use IDs and such from sample
     if csv_sample:
@@ -158,32 +163,56 @@ def _analysis_evolution(csv_sample = False,              # Whether to read in ex
     #---------------------------------------------
     # If no csv_sample given, use GalaxyID_List
     else:
-        # Extract GroupNum, SubGroupNum, and Snap for each ID
-        GroupNum_List_target    = []
-        SubGroupNum_List_target = []
-        SnapNum_List_target     = []
-        Redshift_List_target    = []
+        # If using snipshots...
+        if answer == '3':
+            # Extract GroupNum, SubGroupNum, and Snap for each ID
+            GroupNum_List_target    = []
+            SubGroupNum_List_target = []
+            SnapNum_List_target     = []
+            Redshift_List_target    = []
         
-        for galID in GalaxyID_List_target:
-            gn, sgn, snap, z, _, _, _ = ConvertID(galID, mySims)
+            for galID in GalaxyID_List_target:
+                gn, sgn, snap, z, _, _, _ = ConvertID_snip(tree_dir, galID, mySims)
     
-            # Append to arrays
-            GroupNum_List_target.append(gn)
-            SubGroupNum_List_target.append(sgn)
-            SnapNum_List_target.append(snap)
-            Redshift_List_target.append(z)
+                # Append to arrays
+                GroupNum_List_target.append(gn)
+                SubGroupNum_List_target.append(sgn)
+                SnapNum_List_target.append(snap)
+                Redshift_List_target.append(z)
             
-        if debug:
-            print(GroupNum_List_target)
-            print(SubGroupNum_List_target)
-            print(GalaxyID_List_target)
-            print(SnapNum_List_target)
+            if debug:
+                print(GroupNum_List_target)
+                print(SubGroupNum_List_target)
+                print(GalaxyID_List_target)
+                print(SnapNum_List_target)
+        
+        else:
+            # Extract GroupNum, SubGroupNum, and Snap for each ID
+            GroupNum_List_target    = []
+            SubGroupNum_List_target = []
+            SnapNum_List_target     = []
+            Redshift_List_target    = []
+        
+            for galID in GalaxyID_List_target:
+                gn, sgn, snap, z, _, _, _ = ConvertID(galID, mySims)
+    
+                # Append to arrays
+                GroupNum_List_target.append(gn)
+                SubGroupNum_List_target.append(sgn)
+                SnapNum_List_target.append(snap)
+                Redshift_List_target.append(z)
+            
+            if debug:
+                print(GroupNum_List_target)
+                print(SubGroupNum_List_target)
+                print(GalaxyID_List_target)
+                print(SnapNum_List_target)
             
         print('\n===================')
         print('SAMPLE INPUT:\n  %s\n  GalaxyIDs: %s' %(mySims[0][0], GalaxyID_List_target))
         print('  SAMPLE LENGTH: ', len(GroupNum_List_target))
         print('===================')
-        
+            
     if print_progress:
         print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
     
@@ -198,8 +227,13 @@ def _analysis_evolution(csv_sample = False,              # Whether to read in ex
     """
     
     # For the time being ensure target snap = 28
-    assert SnapNum_List_target[-1] == 28, 'Merger tree not configured to work with non z=0 targets just yet'
-    assert snapNumMax >= 10, 'Limit of snapshots reached'
+    if (answer == '1') or (answer == '2'):
+        assert SnapNum_List_target[-1] == 28, 'Merger tree not configured to work with non z=0 targets just yet'
+        assert snapNumMin >= 19, 'Limit of snapshots reached'
+        assert snapNumMax <= 28, 'Limit of snapshots reached'
+    if answer == '3':
+        assert snapNumMin >= 151, 'Limit of snapshots reached'
+        assert snapNumMax <= 165, 'Limit of snapshots reached'
     
     
     output_input = {'angle_selection': angle_selection,
@@ -212,6 +246,7 @@ def _analysis_evolution(csv_sample = False,              # Whether to read in ex
                     'com_min_distance': com_min_distance,
                     'min_particles': min_particles,
                     'min_inclination': min_inclination,
+                    'snapNumMin': snapNumMin,
                     'snapNumMax': snapNumMax,
                     'mySims': mySims}
                     
@@ -226,7 +261,7 @@ def _analysis_evolution(csv_sample = False,              # Whether to read in ex
           
            
         # Extract merger tree data
-        tree = MergerTree(mySims, target_GalaxyID, snapNumMax)
+        tree = MergerTree(tree_dir, mySims, target_GalaxyID, snapNumMin, snapNumMax)
         
         
         #------------------------------------------------
@@ -322,7 +357,9 @@ def _analysis_evolution(csv_sample = False,              # Whether to read in ex
     
             # Initial extraction of galaxy particle data
             galaxy = Subhalo_Extract(mySims, dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, Centre_i, HaloMass, aperture_rad, viewing_axis)
+            GroupNum = galaxy.gn
             # Gives: galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh
+            # Gives: subhalo.general: GroupNum, SubGroupNum, GalaxyID, stelmass, gasmass, gasmass_sf, gasmass_nsf
         
             if debug:
                 print(galaxy.gn, galaxy.sgn, galaxy.centre, galaxy.halfmass_rad, galaxy.halfmass_rad_proj)
@@ -533,7 +570,7 @@ def _analysis_evolution(csv_sample = False,              # Whether to read in ex
 #--------------------
 # Will plot evolution of single galaxy but with improved formatting for poster/presentation and with outflows/inflows
 # SAVED: /plots/individual_evolution/
-def _plot_evolution(csv_output = 'L12_evolution_ID30494_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_NEW',   # CSV sample file to load 
+def _plot_evolution(csv_output = 'L12_evolution_ID30494_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm',   # CSV sample file to load 
                                csv_merger_tree = 'L12_merger_tree_',
                                #--------------------------
                                # Galaxy plotting
@@ -606,7 +643,7 @@ def _plot_evolution(csv_output = 'L12_evolution_ID30494_RadProj_Err__stars_gas_s
     print('\n===================')
     print('SAMPLE LOADED:\n  %s\n  GalaxyIDs: %s' %(output_input['mySims'][0][0], GalaxyID_List_target))
     print('  SAMPLE LENGTH: ', len(GalaxyID_List_target))
-    print('\nOUTPUT LOADED:\n  Max Snap: %s\n  Viewing axis: %s\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s\n  COM min distance: %s\n  Min. particles: %s\n  Min. inclination: %s' %(output_input['snapNumMax'], output_input['viewing_axis'], output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected'], output_input['com_min_distance'], output_input['min_particles'], output_input['min_inclination']))
+    print('\nOUTPUT LOADED:\n  Min Snap: %s\n  Max Snap: %s\n  Viewing axis: %s\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s\n  COM min distance: %s\n  Min. particles: %s\n  Min. inclination: %s' %(output_input['snapNumMin'], output_input['snapNumMax'],output_input['viewing_axis'], output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected'], output_input['com_min_distance'], output_input['min_particles'], output_input['min_inclination']))
     print('\nPLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle:    %s\n  Uncertainties:      %s\n  Highlight Criteria: %s\n  Rad or HMR:         %s' %(use_angles, use_hmr, use_proj_angle, use_uncertainties, highlight_criteria, rad_type_plot))
     print('===================')
     
@@ -641,7 +678,7 @@ def _plot_evolution(csv_output = 'L12_evolution_ID30494_RadProj_Err__stars_gas_s
                     for ax in axs:
                         ax.axvline(lookbacktime_i, ls='--', color='grey', alpha=0.8, linewidth=2)
 
-                    if snap_i > int(output_input['snapNumMax']):
+                    if snap_i > int(output_input['snapNumMin']):
                         
                         # Manually finding merger masses
                         primary_stelmass  = float(merger_tree['%s' %(int(target_GalaxyID) +  28 - int(snap_i))]['%s' %(int(target_GalaxyID) +  28 - int(snap_i) + 1)]['stelmass'])
@@ -1676,16 +1713,16 @@ def _plot_evolution_old(csv_output = 'L100_evolution_ID15851557_RadProj_Err__sta
         plt.close()
  
          
+     
                           
 #============================
 #_analysis_evolution()
 
-_plot_evolution()
+#_plot_evolution()
 #_plot_evolution_old() 
-#============================
-
 
 #============================
+
 #for ID_i in ID_list:
 #    _plot_evolution(csv_output = 'L100_evolution_ID' + str(ID_i) + '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_')
 #============================

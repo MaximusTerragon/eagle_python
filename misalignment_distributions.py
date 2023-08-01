@@ -32,10 +32,10 @@ EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_dir
 # Creates a sample of galaxies given the inputs. Returns GroupNum, SubGroupNum, SnapNum, and GalaxyID for each galaxy
 # SAVED: /samples/L%s_%s_cent_sample_misalignment
 # 151
-def _sample_misalignment(mySims = [('RefL0012N0188', 12)],
+def _sample_misalignment(mySims = [('RefL0100N1504', 100)],
                          #--------------------------
-                         galaxy_mass_min    = 10**9,            # Lower mass limit within 30pkpc
-                         galaxy_mass_max    = 10**15,           # Lower mass limit within 30pkpc
+                         galaxy_mass_min    = 10996688895,            # Lower mass limit within 30pkpc
+                         galaxy_mass_max    = 10996688897,           # Lower mass limit within 30pkpc
                          snapNum            = 28,               # Target snapshot
                          use_satellites     = True,             # Whether to include SubGroupNum =/ 0
                          print_sample       = False,             # Print list of IDs
@@ -43,8 +43,8 @@ def _sample_misalignment(mySims = [('RefL0012N0188', 12)],
                          plot_sample        = False,
                          plot_coords        = False,
                          #-------------------------- 
-                         csv_file = False,                       # Will write sample to csv file in sapmle_dir
-                            csv_name = '',
+                         csv_file = True,                       # Will write sample to csv file in sapmle_dir
+                            csv_name = 'TEST',
                          #--------------------------     
                          print_progress = False,
                          debug = False):
@@ -55,10 +55,13 @@ def _sample_misalignment(mySims = [('RefL0012N0188', 12)],
         print('Creating sample')
         time_start = time.time()
         
-    
+    #-----------------------------------------
+    # adjust mySims for serpens
+    if (answer == '2') or (answer == '3') or (snapNum > 28):
+        mySims = [('RefL0100N1504', 100)]
+        
     # Extracting all GroupNum, SubGroupNum, GalaxyID, and SnapNum
-    if snapNum > 28:
-        mySims = [('RefL0100N1504', 100)]        
+    if snapNum > 28:     
         sample = Initial_Sample_Snip(tree_dir, mySims, snapNum, galaxy_mass_min, galaxy_mass_max, use_satellites)
     else:
         sample = Initial_Sample(mySims, snapNum, galaxy_mass_min, galaxy_mass_max, use_satellites)
@@ -92,6 +95,8 @@ def _sample_misalignment(mySims = [('RefL0012N0188', 12)],
     if debug:
         print(sample_input.items())
     
+    
+    print(sample.GalaxyID)
     
     #===================================== 
     # Plotting histogram
@@ -216,9 +221,13 @@ def _sample_misalignment_minor(mySims = [('RefL0012N0188', 12)],
         time_start = time.time()
         
     
+    #-----------------------------------------
+    # adjust mySims for serpens
+    if (answer == '2') or (answer == '3') or (snapNum > 28):
+        mySims = [('RefL0100N1504', 100)]
+        
     # Extracting all GroupNum, SubGroupNum, GalaxyID, and SnapNum
     if snapNum > 28:
-        mySims = [('RefL0100N1504', 100)]
         sample = Initial_Sample_Snip(tree_dir, mySims, snapNum, galaxy_mass_min, galaxy_mass_max, use_satellites)
     else:
         sample = Initial_Sample(mySims, snapNum, galaxy_mass_min, galaxy_mass_max, use_satellites)
@@ -412,7 +421,7 @@ def _analysis_misalignment_minor(csv_sample = 'L100_19_minor_sample_misalignment
             
         # Initial extraction of galaxy particle data
         subhalo = Subhalo_Extract_Basic(sample_input['mySims'], dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, GalaxyID, Centre, HaloMass, aperture_rad)
-        # Gives: subhalo.general: GroupNum, SubGroupNum, GalaxyID, stelmass, gasmass, gasmass_sf, gasmass_nsf
+        GroupNum = galaxy.gn
         
         if debug:
             print(subhalo.gn, subhalo.sgn)
@@ -500,7 +509,7 @@ def _analysis_misalignment_minor(csv_sample = 'L100_19_minor_sample_misalignment
 
 # Reads in a sample file, and does all relevant calculations, and exports as csv file
 # SAVED: /outputs/%s_%s_%s_%s...
-def _analysis_misalignment_distribution(csv_sample = 'L12_20_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misalignment_10.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                                         #--------------------------
                                         # Galaxy extraction properties
                                         viewing_axis        = 'z',                  # Which axis to view galaxy from.  DEFAULT 'z'
@@ -526,7 +535,7 @@ def _analysis_misalignment_distribution(csv_sample = 'L12_20_all_sample_misalign
                                         min_particles       = 20,          # Minimum particles to find spin.  DEFAULT 20
                                         min_inclination     = 0,           # Minimum inclination toward viewing axis [deg] DEFAULT 0
                                         #--------------------------   
-                                        csv_file       = True,             # Will write sample to csv file in sample_dir
+                                        csv_file       = False,             # Will write sample to csv file in sample_dir
                                           csv_name     = '',               # extra stuff at end
                                         #--------------------------
                                         print_progress = False,
@@ -620,6 +629,7 @@ def _analysis_misalignment_distribution(csv_sample = 'L12_20_all_sample_misalign
     # Run analysis for each individual galaxy in loaded sample
     for GroupNum, SubGroupNum, GalaxyID, SnapNum, Redshift, HaloMass, Centre, MorphoKinem in tqdm(zip(GroupNum_List, SubGroupNum_List, GalaxyID_List, SnapNum_List, Redshift_List, HaloMass_List, Centre_List, MorphoKinem_List), total=len(GroupNum_List)):
         
+        
         #-----------------------------
         if print_progress:
             print('Extracting particle data Subhalo_Extract()')
@@ -627,6 +637,7 @@ def _analysis_misalignment_distribution(csv_sample = 'L12_20_all_sample_misalign
             
         # Initial extraction of galaxy particle data
         galaxy = Subhalo_Extract(sample_input['mySims'], dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, Centre, HaloMass, aperture_rad, viewing_axis)
+        GroupNum = galaxy.gn
 
         if debug:
             print(galaxy.gn, galaxy.sgn, galaxy.centre, galaxy.halfmass_rad, galaxy.halfmass_rad_proj)
@@ -1924,22 +1935,27 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
     _plot_misalignment_z()
     #---------------------
     
-    
-#===========================    
-#for snap_i in np.arange(151, 166.1, 1):
-#for snap_i in np.arange(19, 28.1, 1):
-    #_sample_misalignment(snapNum = int(snap_i))
-    #_analysis_misalignment_distribution(csv_sample = 'L12_' + str(int(snap_i)) + '_all_sample_misalignment_9.0')
 
-#_sample_misalignment(snapNum = 28)
+
+
+#===========================    
+_sample_misalignment(snapNum = 151)
 #_sample_misalignment_minor(snapNum = int(snap_i))
 
 #_analysis_misalignment_minor()
-_analysis_misalignment_distribution()
+#_analysis_misalignment_distribution()
+#_analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misalignment_10.040602340114074TEST')
 
 #_plot_misalignment()
 #_plot_misalignment_z()
-#===========================
-    
 
-                              
+#===========================
+# range: 151-166
+#for snap_i in np.arange(19, 28.1, 1):
+    #_sample_misalignment(snapNum = int(snap_i))
+    #_analysis_misalignment_distribution(csv_sample = 'L12_' + str(int(snap_i)) + '_all_sample_misalignment_9.0')
+#for snap_i in np.arange(151, 166.1, 1):
+    #_sample_misalignment(snapNum = int(snap_i))
+    #_analysis_misalignment_distribution(csv_sample = 'L100_' + str(int(snap_i)) + '_all_sample_misalignment_10.0')
+
+#===========================

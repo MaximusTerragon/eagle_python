@@ -19,7 +19,7 @@ import json
 import time
 from datetime import datetime
 from tqdm import tqdm
-from subhalo_main import Initial_Sample, Subhalo_Extract, Subhalo_Analysis, ConvertID
+from subhalo_main import Initial_Sample, Subhalo_Extract, Subhalo_Analysis, ConvertID, ConvertID_snip
 import eagleSqlTools as sql
 from graphformat import set_rc_params
 from read_dataset_directories import _assign_directories
@@ -47,13 +47,25 @@ PURPOSE
 #37445, 37446, 37447
 ID_list = [3748, 20455, 37445, 30494, 43163, 40124, 44545, 48383, 57647, 55343, 51640, 46366, 53904, 52782, 56522, 59467, 49986, 61119, 62355, 63199, 61831]
 
+
+
+
+GalaxyID_List = [236710612, 342074093]
+
+mySims = [('RefL0100N1504', 100)],
+for galID in GalaxyID_List:
+    gn, sgn, snap, z, halomass_i, centre_i, morphkinem_i = ConvertID_snip(tree_dir, galID, mySims)
+
+
+
+
 #====================================
 # Will visualise all particles belonging to a SINGLE galaxy/subhalo
 # SAVED:%s/individual_render/
 def galaxy_render(csv_sample = False,              # False, Whether to read in existing list of galaxies  
                     #--------------------------
                     mySims = [('RefL0012N0188', 12)],
-                    GalaxyID_List = [30494],
+                    GalaxyID_List = [30502],
                     #--------------------------
                     # Galaxy extraction properties
                     kappa_rad            = 30,          # calculate kappa for this radius [pkpc]
@@ -117,6 +129,12 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         
     
     #-----------------------------------------
+    # adjust mySims for serpens
+    if (answer == '2') or (answer == '3'):
+        mySims = [('RefL0100N1504', 100)]
+    
+    
+    #-----------------------------------------
     # Use IDs and such from sample
     if csv_sample:
         # Load sample csv
@@ -154,40 +172,71 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         print('  SAMPLE LENGTH: ', len(GroupNum_List))
         print('===================')
         
-    #---------------------------------------
     # If no csv_sample given, use GalaxyID_List
     else:
-        # Extract GroupNum, SubGroupNum, and Snap for each ID
-        GroupNum_List    = []
-        SubGroupNum_List = []
-        SnapNum_List     = []
-        Redshift_List    = []
-        HaloMass_List    = []
-        Centre_List      = []
-        MorphoKinem_List = []
-         
-        for galID in GalaxyID_List:
-            gn, sgn, snap, z, halomass_i, centre_i, morphkinem_i = ConvertID(galID, mySims)
-    
-            # Append to arrays
-            GroupNum_List.append(gn)
-            SubGroupNum_List.append(sgn)
-            SnapNum_List.append(snap)
-            Redshift_List.append(z)
-            HaloMass_List.append(halomass_i) 
-            Centre_List.append(centre_i)
-            MorphoKinem_List.append(morphkinem_i)
+        # If using snipshots...
+        if answer == '3':
+            # Extract GroupNum, SubGroupNum, and Snap for each ID
+            GroupNum_List    = []
+            SubGroupNum_List = []
+            SnapNum_List     = []
+            Redshift_List    = []
+            HaloMass_List    = []
+            Centre_List      = []
+            MorphoKinem_List = []
             
-        if debug:
-            print(GroupNum_List)
-            print(SubGroupNum_List)
-            print(GalaxyID_List)
-            print(SnapNum_List)
+            for galID in GalaxyID_List:
+                gn, sgn, snap, z, halomass_i, centre_i, morphkinem_i = ConvertID_snip(tree_dir, galID, mySims)
+    
+                # Append to arrays
+                GroupNum_List.append(gn)
+                SubGroupNum_List.append(sgn)
+                SnapNum_List.append(snap)
+                Redshift_List.append(z)
+                HaloMass_List.append(halomass_i) 
+                Centre_List.append(centre_i)
+                MorphoKinem_List.append(morphkinem_i)
+            
+            if debug:
+                print(GroupNum_List)
+                print(SubGroupNum_List)
+                print(GalaxyID_List)
+                print(SnapNum_List)
+        
+        # Else...
+        else:
+            # Extract GroupNum, SubGroupNum, and Snap for each ID
+            GroupNum_List    = []
+            SubGroupNum_List = []
+            SnapNum_List     = []
+            Redshift_List    = []
+            HaloMass_List    = []
+            Centre_List      = []
+            MorphoKinem_List = []
+         
+            for galID in GalaxyID_List:
+                gn, sgn, snap, z, halomass_i, centre_i, morphkinem_i = ConvertID(galID, mySims)
+    
+                # Append to arrays
+                GroupNum_List.append(gn)
+                SubGroupNum_List.append(sgn)
+                SnapNum_List.append(snap)
+                Redshift_List.append(z)
+                HaloMass_List.append(halomass_i) 
+                Centre_List.append(centre_i)
+                MorphoKinem_List.append(morphkinem_i)
+            
+            if debug:
+                print(GroupNum_List)
+                print(SubGroupNum_List)
+                print(GalaxyID_List)
+                print(SnapNum_List)
             
         print('\n===================')
         print('SAMPLE INPUT:\n  %s\n  GalaxyIDs: %s' %(mySims[0][0], GalaxyID_List))
         print('  SAMPLE LENGTH: ', len(GroupNum_List))
         print('===================')
+        
               
     if print_progress:
         print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
@@ -199,10 +248,13 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         if print_progress:
             print('Extracting particle data Subhalo_Extract()')
             time_start = time.time()
-          
+        
+        
         # Initial extraction of galaxy particle data
         galaxy = Subhalo_Extract(mySims, dataDir_dict['%s' %str(SnapNum)], 999, GroupNum, SubGroupNum, Centre_i, HaloMass, aperture_rad, viewing_axis)
+        GroupNum = galaxy.gn
         # Gives: galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh
+        # Gives: subhalo.general: GroupNum, SubGroupNum, GalaxyID, stelmass, gasmass, gasmass_sf, gasmass_nsf
         
         """mask_sf        = np.nonzero(galaxy.data_nil['gas']['StarFormationRate'])          
         mask_nsf       = np.where(galaxy.data_nil['gas']['StarFormationRate'] == 0)
@@ -261,7 +313,8 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         
             if len(spin_hmr_in) != len(spin_hmr_tmp):
                 print('Capped spin_rad: %.2f - %.2f - %.2f HMR | Min/Max %.2f / %.2f pkpc' %(min(spin_hmr_in), (max(spin_hmr_in) - min(spin_hmr_in))/(len(spin_hmr_in) - 1), max(spin_hmr_in), min(spin_rad_in), max(spin_rad_in)))  
-            
+        
+        
         # If we want the original values, enter 0 for viewing angle
         subhalo = Subhalo_Analysis(mySims, GroupNum, SubGroupNum, GalaxyID, SnapNum, MorphoKinem, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.data_nil, 
                                             viewing_axis,
@@ -281,7 +334,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                                             com_min_distance,
                                             min_particles,                                            
                                             min_inclination)
-    
+                        
         if print_galaxy:
             print('|%s| |ID:   %s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f' %(SnapNum, str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'])) 
         

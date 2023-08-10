@@ -23,7 +23,7 @@ from read_dataset_directories import _assign_directories
 
 #====================================
 # finding directories
-answer = input("-----------------\nDirectories?:\n     1 local\n     2 serpens_snap\n     3 snip\n")
+answer = input("-----------------\nDirectories?:\n     1 local\n     2 serpens_snap\n     3 snip\n     4 snip local\n")
 EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_directories(answer)
 #====================================
 
@@ -99,7 +99,7 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
     
     #-----------------------------------------
     # adjust mySims for serpens
-    if (answer == '2') or (answer == '3'):
+    if (answer == '2') or (answer == '3') or (answer == '4'):
         mySims = [('RefL0100N1504', 100)]
         
         

@@ -16,7 +16,7 @@ import json
 import time
 from datetime import datetime
 from tqdm import tqdm
-from subhalo_main import Initial_Sample, Subhalo_Extract, Subhalo_Analysis, ConvertID, ConvertID_noMK, MergerTree
+from subhalo_main import Initial_Sample, Subhalo_Extract, Subhalo_Analysis, ConvertID, ConvertID_noMK, ConvertID_snip, MergerTree
 import eagleSqlTools as sql
 from graphformat import set_rc_params
 from read_dataset_directories import _assign_directories
@@ -24,7 +24,7 @@ from read_dataset_directories import _assign_directories
 
 #====================================
 # finding directories
-answer = input("-----------------\nDirectories?:\n     1 local\n     2 serpens_snap\n     3 snip\n")
+answer = input("-----------------\nDirectories?:\n     1 local\n     2 serpens_snap\n     3 snip\n     4 snip local\n")
 EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_directories(answer)
 #====================================
 
@@ -232,8 +232,8 @@ def _analysis_evolution(csv_sample = False,              # Whether to read in ex
         assert snapNumMin >= 19, 'Limit of snapshots reached'
         assert snapNumMax <= 28, 'Limit of snapshots reached'
     if answer == '3':
-        assert snapNumMin >= 151, 'Limit of snapshots reached'
-        assert snapNumMax <= 165, 'Limit of snapshots reached'
+        assert snapNumMin >= 148, 'Limit of snapshots reached'
+        assert snapNumMax <= 200, 'Limit of snapshots reached'
     
     
     output_input = {'angle_selection': angle_selection,
@@ -277,17 +277,26 @@ def _analysis_evolution(csv_sample = False,              # Whether to read in ex
         
         
         # Finding halomasses, and nan MK's for snap < 15
-        for galID, snapID in zip(GalaxyID_List, SnapNum_List):
-            if snapID >= 15:
-                _, _, _, _, halomass_i, centre_i, morphkinem_i = ConvertID(galID, mySims)
+        if (answer == '1') or (answer == '2'):
+            for galID, snapID in zip(GalaxyID_List, SnapNum_List):
+                if snapID >= 15:
+                    _, _, _, _, halomass_i, centre_i, morphkinem_i = ConvertID(galID, mySims)
                 
-                # Append to arrays
-                HaloMass_List.append(halomass_i) 
-                Centre_List.append(centre_i)
-                MorphoKinem_List.append(morphkinem_i)
-            else:
-                _, _, _, _, halomass_i, centre_i, morphkinem_i = ConvertID_noMK(galID, mySims)
+                    # Append to arrays
+                    HaloMass_List.append(halomass_i) 
+                    Centre_List.append(centre_i)
+                    MorphoKinem_List.append(morphkinem_i)
+                else:
+                    _, _, _, _, halomass_i, centre_i, morphkinem_i = ConvertID_noMK(galID, mySims)
                 
+                    # Append to arrays
+                    HaloMass_List.append(halomass_i) 
+                    Centre_List.append(centre_i)
+                    MorphoKinem_List.append(morphkinem_i)
+        elif answer == '3':
+            for galID, snapID in zip(GalaxyID_List, SnapNum_List):
+                _, _, _, _, halomass_i, centre_i, morphkinem_i = ConvertID_snip(tree_dir, galID, mySims)
+            
                 # Append to arrays
                 HaloMass_List.append(halomass_i) 
                 Centre_List.append(centre_i)
@@ -570,7 +579,7 @@ def _analysis_evolution(csv_sample = False,              # Whether to read in ex
 #--------------------
 # Will plot evolution of single galaxy but with improved formatting for poster/presentation and with outflows/inflows
 # SAVED: /plots/individual_evolution/
-def _plot_evolution(csv_output = 'L12_evolution_ID30494_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm',   # CSV sample file to load 
+def _plot_evolution(csv_output = 'L100_evolution_ID443970_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load 
                                csv_merger_tree = 'L12_merger_tree_',
                                #--------------------------
                                # Galaxy plotting
@@ -631,6 +640,8 @@ def _plot_evolution(csv_output = 'L12_evolution_ID30494_RadProj_Err__stars_gas_s
     
     # Loading sample criteria
     output_input        = dict_output['output_input']
+    
+    assert merger_tree_input['mySims'][0][1] == output_input['mySims'][0][1], 'Wrong merger tree'
     
     
     #---------------------------------
@@ -1199,7 +1210,7 @@ def _plot_evolution(csv_output = 'L12_evolution_ID30494_RadProj_Err__stars_gas_s
 
 # Will plot evolution of single galaxy       
 # SAVED: /plots/individual_evolution/                                                                           
-def _plot_evolution_old(csv_output = 'L100_evolution_ID15851557_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load 
+def _plot_evolution_old(csv_output = 'L100_evolution_ID401467670_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load 
                            #--------------------------
                            # Galaxy plotting
                            print_summary = True,
@@ -1214,10 +1225,10 @@ def _plot_evolution_old(csv_output = 'L100_evolution_ID15851557_RadProj_Err__sta
                            highlight_criteria = True,       # whether to indicate when criteria not met (but still plot)
                            rad_type_plot      = 'hmr',      # 'rad' whether to use absolute distance or hmr 
                            #--------------------------
-                           showfig        = False,
+                           showfig        = True,
                            savefig        = True,
                              file_format  = 'pdf',
-                             savefig_txt  = '_NEW',
+                             savefig_txt  = '',
                            #--------------------------
                            print_progress = False,
                            debug = False):
@@ -1606,8 +1617,8 @@ def _plot_evolution_old(csv_output = 'L100_evolution_ID15851557_RadProj_Err__sta
                 
         # Plot kappas
         axs[3].axhline(0.4, lw=1, ls='--', c='grey', alpha=0.7)
-        axs[3].text(13.4, 0.43, ' LTG', color='grey')
-        axs[3].text(13.4, 0.29, ' ETG', color='grey')
+        axs[3].text(7.4, 0.43, ' LTG', color='grey')
+        axs[3].text(7.4, 0.29, ' ETG', color='grey')
         axs[3].plot(plot_lookbacktime, kappa_stars, alpha=1.0, lw=1.5, c='r', label='$\kappa_{\mathrm{co}}^*$')
         axs[3].plot(plot_lookbacktime, kappa_gas_sf, alpha=1.0, lw=1.5, c='b', label='$\kappa_{\mathrm{co}}^{\mathrm{SF}}$')
                 
@@ -1629,8 +1640,8 @@ def _plot_evolution_old(csv_output = 'L100_evolution_ID15851557_RadProj_Err__sta
             ax_top = ax.twiny()
             ax_top.set_xticks(ageticks)
 
-            ax.set_xlim(0, 13.5)
-            ax_top.set_xlim(0, 13.5)
+            ax.set_xlim(0, 7.5)
+            ax_top.set_xlim(0, 7.5)
 
             if i == 0:
                 ax.set_ylim(0, 180)
@@ -1644,7 +1655,7 @@ def _plot_evolution_old(csv_output = 'L100_evolution_ID15851557_RadProj_Err__sta
                 ax.set_ylabel('Misalignment angle, $\psi$') 
 
                 #ax.set_title('GalaxyID: %s' %str(target_GalaxyID))
-                ax.text(13.5, 200, 'GalaxyID: %s' %str(target_GalaxyID))
+                ax.text(7.5, 200, 'GalaxyID: %s' %str(target_GalaxyID))
                 ax.invert_xaxis()
                 ax_top.invert_xaxis()
             if i == 1:
@@ -1714,7 +1725,6 @@ def _plot_evolution_old(csv_output = 'L100_evolution_ID15851557_RadProj_Err__sta
  
          
      
-                          
 #============================
 #_analysis_evolution()
 

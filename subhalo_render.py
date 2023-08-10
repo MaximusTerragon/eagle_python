@@ -27,7 +27,7 @@ from read_dataset_directories import _assign_directories
 
 #====================================
 # finding directories
-answer = input("-----------------\nDirectories?:\n     1 local\n     2 serpens_snap\n     3 snip\n")
+answer = input("-----------------\nDirectories?:\n     1 local\n     2 serpens_snap\n     3 snip\n     4 snip local\n")
 EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_directories(answer)
 #====================================
  
@@ -48,24 +48,13 @@ PURPOSE
 ID_list = [3748, 20455, 37445, 30494, 43163, 40124, 44545, 48383, 57647, 55343, 51640, 46366, 53904, 52782, 56522, 59467, 49986, 61119, 62355, 63199, 61831]
 
 
-
-
-GalaxyID_List = [236710612, 342074093]
-
-mySims = [('RefL0100N1504', 100)],
-for galID in GalaxyID_List:
-    gn, sgn, snap, z, halomass_i, centre_i, morphkinem_i = ConvertID_snip(tree_dir, galID, mySims)
-
-
-
-
 #====================================
 # Will visualise all particles belonging to a SINGLE galaxy/subhalo
 # SAVED:%s/individual_render/
 def galaxy_render(csv_sample = False,              # False, Whether to read in existing list of galaxies  
                     #--------------------------
                     mySims = [('RefL0012N0188', 12)],
-                    GalaxyID_List = [30502],
+                    GalaxyID_List = [30494],
                     #--------------------------
                     # Galaxy extraction properties
                     kappa_rad            = 30,          # calculate kappa for this radius [pkpc]
@@ -78,6 +67,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                     aperture_rad        = 30,                           # calculations radius limit [pkpc]
                     trim_rad            = np.array([100]),           # largest radius in pkpc to plot | 2.0_hmr, rad_projected=True
                     align_rad           = False,                          # False/Value
+                    mask_sgn            = False,                        # False = plot all nearby subhalos too
                     #=====================================================
                     # Misalignments we want extracted and at which radii  
                     angle_selection     = ['stars_gas',                     # stars_gas     stars_gas_sf    stars_gas_nsf
@@ -130,7 +120,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
     
     #-----------------------------------------
     # adjust mySims for serpens
-    if (answer == '2') or (answer == '3'):
+    if (answer == '2') or (answer == '3') or (answer == '4'):
         mySims = [('RefL0100N1504', 100)]
     
     
@@ -251,11 +241,11 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         
         
         # Initial extraction of galaxy particle data
-        galaxy = Subhalo_Extract(mySims, dataDir_dict['%s' %str(SnapNum)], 999, GroupNum, SubGroupNum, Centre_i, HaloMass, aperture_rad, viewing_axis)
+        galaxy = Subhalo_Extract(mySims, dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, Centre_i, HaloMass, aperture_rad, viewing_axis, mask_sgn = mask_sgn)
         GroupNum = galaxy.gn
+        
         # Gives: galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh
         # Gives: subhalo.general: GroupNum, SubGroupNum, GalaxyID, stelmass, gasmass, gasmass_sf, gasmass_nsf
-        
         """mask_sf        = np.nonzero(galaxy.data_nil['gas']['StarFormationRate'])          
         mask_nsf       = np.where(galaxy.data_nil['gas']['StarFormationRate'] == 0)
         
@@ -336,6 +326,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                                             min_inclination)
                         
         if print_galaxy:
+            print('|Combined particle properties within %s pkpc:' %aperture_rad)
             print('|%s| |ID:   %s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f' %(SnapNum, str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'])) 
         
         # INFLOW OUTFLOW 
@@ -347,7 +338,6 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         #print(subhalo.Z['stars'])
         #print(subhalo.Z['gas_sf'])
         
-            
         #print(subhalo.bh_mdot)
         #print(subhalo.bh_edd)
         #print(subhalo.bh_id)
@@ -358,7 +348,6 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         #print(subhalo.gas_data['2.0_hmr']['gas_sf']['Total_mass'])
         #print(subhalo.gas_data['2.0_hmr']['gas_sf']['ParticleIDs'])
         #print(subhalo.gas_data['2.0_hmr']['gas_sf'].keys())
-        
         
         #print(subhalo.data['%s' %str(trim_rad[0])]['gas_sf']['ParticleIDs'][35])
         # 8035248386127
@@ -389,7 +378,10 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
             plt.rc('figure', figsize=(width, height))  # figure size [inches]
         graphformat(8, 11, 11, 11, 11, 5, 5)
         fig = plt.figure() 
-        ax = Axes3D(fig, auto_add_to_figure=False, box_aspect=[1,1,1])
+        if (answer == '2') or (answer == '3'):
+            ax = Axes3D(fig, box_aspect=[1,1,1])
+        else:
+            ax = Axes3D(fig, auto_add_to_figure=False, box_aspect=[1,1,1])
         fig.add_axes(ax, computed_zorder=False)
         
         
@@ -782,8 +774,8 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
             particle_txt += '_bh'
         
         if savefig:
-            plt.savefig("%s/individual_render/L%s_render_ID%s_%s_%s.%s" %(fig_dir, mySims[0][1], GalaxyID, particle_txt, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print('\n  SAVED:%s/individual_render/L%s_render_ID%s_%s_%s.%s' %(fig_dir, mySims[0][1], GalaxyID, particle_txt, savefig_txt, file_format))
+            plt.savefig("%s/individual_render/L%s_render_ID%s_%s_%s_%s.%s" %(fig_dir, mySims[0][1], GalaxyID, SnapNum, particle_txt, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print('\n  SAVED:%s/individual_render/L%s_render_ID%s_%s_%s_%s.%s' %(fig_dir, mySims[0][1], GalaxyID, SnapNum, particle_txt, savefig_txt, file_format))
         if showfig:
             plt.show()
         plt.close()

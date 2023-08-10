@@ -36,7 +36,7 @@ def match_galaxyID(mySims = [('RefL0100N1504', 100)],
                     snap_snip     = 'snip',             # run of above ID
                     #--------------------------
                     # Extract galaxies within range
-                    CoP_range  = 5.0,                   # Mpc
+                    CoP_range  = 0.5,                   # Mpc
                     mass_range = 20,                    # percent   20 = 20%
                     sub_range = 20,                      # plus/minus SubGroupNumber                 
                     #--------------------------

@@ -1,26 +1,13 @@
 
-# copy updated main to serpens
-
-# Run on all snips 147-200
-samples:
-minor samples:
-147 - 155
-155 - 163
-163 - 171
-171 - 179
-179 - 187
-187 - 195
-195 - 201
-+ analysis
-+ minor analysis
 
 
 
+# make merger_misalined_time_pre work
 
-# Run same stacked example
+# make plot_time_pre work
 
-# Run minor analysis on serpens 9-10
-# Create mergertree file
+# Add snaps before misalignment/merger... move backwards... tweak evolution to look not only at 
+  next snip to cause misalignment, but entire history
 
 # Might need to make a different stacked code, as we now have merger tree.
 when in loop, 
@@ -31,16 +18,37 @@ if GalaxyID = ### and DescendantID =! -1 and DescendantID not in galaxy_dict[sna
 		snapnum_tmp + 2
 		...
 	
-# Add snaps before misalignment/merger... tweak evolution to look not only at 
-  next snip to cause misalignment, but entire history
+# See how analysed galaxies are gathered... we can use that to parametise. Ideally each galaxy evolution
+  individually. Again, add X Mya before misalignment
+  
+# Might need to remove duplicates, or at least flag duplicates of same galaxy
 
 
 
-# create evolutions higher res
+
+
+# plot evolutions higher res
+
+# Make evolution use existing files
+
+# Run on all snips 147-200
+1	147 - 155
+2	155 - 163
+3	163 - 171
+4	171 - 179
+5	179 - 187
+6	187 - 195
+7	195 - 201
++ minor analysis
 
 # Draft out paper
 
 # Read 5 papers
+
+# Run same stacked example
+
+# Run minor analysis on serpens 9-10
+# Create mergertree file
 
 # once sample used, still need to trim for stellar mass within 30pkpc, so sample will need modifying
 
@@ -70,12 +78,18 @@ DONE WEEK 43:
 - Finished particle data download
 - Copied files over
 - Created all major and minor samples from 147-200
+- Run analysis on all snips
+- Run evolution
+- Created galaxy dict and fixed bug
+- Tested galaxy dict, tested time spent misaligned
+- Run revised evolution
+- Added inclination angle limit to all files
 
 Skipping GalaxyID is not a common problem. Skipped Galaxy has stellarmass, but no ID 
 (galaxy passing through one another)
 
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
+-------------------------------------------------------------
 
 
 

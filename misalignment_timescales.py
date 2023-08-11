@@ -28,13 +28,14 @@ answer = input("-----------------\nDirectories?:\n     1 local\n     2 serpens_s
 EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_directories(answer)
 #====================================
 
+[151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165]
 
 #--------------------------------
 # Goes through all csv samples given and collects all galaxies with matching criteria
 # SAVED: /outputs/%sgalaxy_dict_
 def _extract_criteria_galaxies(csv_sample1 = 'L12_',                                 # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                                csv_sample2 = '_all_sample_misalignment_9.0',
-                               csv_sample_range = [19, 20, 21, 22, 23, 24, 25, 26, 27, 28],   # snapnums
+                               csv_sample_range = np.arange(19, 28.1, 1),   # snapnums
                                csv_output_in = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                                #--------------------------
                                # Galaxy analysis
@@ -42,9 +43,10 @@ def _extract_criteria_galaxies(csv_sample1 = 'L12_',                            
                                  use_angle          = 'stars_gas_sf',         # Which angles to plot
                                  use_hmr            = 2.0,                    # Which HMR to use
                                  use_proj_angle     = True,                   # Whether to use projected or absolute angle 10**9
+                                   min_inc_angle    = 10,                     # min. degrees of either spin vector to z-axis, if use_proj_angle
                                  lower_mass_limit   = 10**9,             # Whether to plot only certain masses 10**15
                                  upper_mass_limit   = 10**15,         
-                                 ETG_or_LTG         = 'both',             # Whether to plot only ETG/LTG
+                                 ETG_or_LTG         = 'ETG',             # Whether to plot only ETG/LTG
                                  group_or_field     = 'both',            # Whether to plot only field/group
                                #--------------------------
                                csv_file       = True,             # Will write sample to csv file in sample_dir
@@ -61,15 +63,17 @@ def _extract_criteria_galaxies(csv_sample1 = 'L12_',                            
         time_start = time.time()
     
     print('===================')
-    print('CSV CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Min mass: %.2E M*\n  Max mass: %.2E M*\n  ETG or LTG: %s\n  Group or field: %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field))
+    print('CSV CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Min. inclination: %s\n  Min mass: %.2E M*\n  Max mass: %.2E M*\n  ETG or LTG: %s\n  Group or field: %s' %(use_angle, use_hmr, use_proj_angle, min_inc_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field))
     print('===================\n')
     
     
     #================================================ 
     # Creating dictionary to collect all galaxies that meet criteria
     galaxy_dict = {}
+    
     #----------------------
     # Cycling over all the csv samples we want
+    csv_sample_range = [int(i) for i in csv_sample_range]
     for csv_sample_range_i in csv_sample_range:
         
         # Ensuring the sample and output originated together
@@ -184,7 +188,19 @@ def _extract_criteria_galaxies(csv_sample1 = 'L12_',                            
                 use_particles.append('dm')
             plot_label = 'Gas$_{\mathrm{nsf}}$-DM'
     
-    
+        # Set projection angle criteria
+        if not use_proj_angle:
+            min_inc_angle = 0
+        max_inc_angle = 180 - min_inc_angle
+        if output_input['viewing_axis'] == 'x':
+            viewing_vector = [1., 0, 0]
+        elif output_input['viewing_axis'] == 'y':
+            viewing_vector = [0, 1., 0]
+        elif output_input['viewing_axis'] == 'z':
+            viewing_vector = [0, 0, 1.]
+        else:
+            raise Exception('Cant read viewing_axis')
+            
         #-----------------------------
         # Set definitions
         group_threshold     = 10**14
@@ -226,11 +242,28 @@ def _extract_criteria_galaxies(csv_sample1 = 'L12_',                            
             # Determine if galaxy has flags:
             if (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['com_min_distance'][use_angle]) and (all_general['%s' %GalaxyID]['SubGroupNum'] <= satellite_criteria) and (use_hmr in all_misangles['%s' %GalaxyID]['hmr']):
                 
+                # Find angle galaxy makes with viewing axis
+                def _find_angle(vector1, vector2):
+                    return np.rad2deg(np.arccos(np.clip(np.dot(vector1/np.linalg.norm(vector1), vector2/np.linalg.norm(vector2)), -1.0, 1.0)))     # [deg]
+                
+                # Mask correct integer (formatting weird but works)
+                mask_rad2 = np.where(np.array(all_spins['%s' %GalaxyID]['hmr']) == use_hmr)[0][0]
+                mask_rad  = int(np.where(np.array(all_misangles['%s' %GalaxyID]['hmr']) == use_hmr)[0])
+                
+                # inclination angle
+                if debug: 
+                    if (_find_angle(all_spins['%s' %GalaxyID][use_particles[0]][mask_rad2], viewing_vector) >= min_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[0]][mask_rad2], viewing_vector) <= max_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[1]][mask_rad2], viewing_vector) >= min_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[1]][mask_rad2], viewing_vector) <= max_inc_angle):
+                        print('MET', GalaxyID)
+                    else:
+                        print('  NOT MET')
+                        print(all_spins['%s' %GalaxyID][use_particles[0]][mask_rad2])
+                        print(_find_angle(all_spins['%s' %GalaxyID][use_particles[0]][mask_rad2], viewing_vector))
+                        print(all_spins['%s' %GalaxyID][use_particles[1]][mask_rad2])
+                        print(_find_angle(all_spins['%s' %GalaxyID][use_particles[1]][mask_rad2], viewing_vector))
+                
+
                 # Determine if galaxy meets criteria:
-                if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph):
-                    
-                    # Mask correct integer (formatting weird but works)
-                    mask_rad = int(np.where(np.array(all_misangles['%s' %GalaxyID]['hmr']) == use_hmr)[0])
+                if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[0]][mask_rad2], viewing_vector) >= min_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[0]][mask_rad2], viewing_vector) <= max_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[1]][mask_rad2], viewing_vector) >= min_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[1]][mask_rad2], viewing_vector) <= max_inc_angle):
                     
                     if use_proj_angle:
                         misangle = all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle' %use_angle][mask_rad]
@@ -291,8 +324,12 @@ def _extract_criteria_galaxies(csv_sample1 = 'L12_',                            
                     
 
 
-    if print_progress:
-        print('NUMBER OF GALAXIES MEETING CRITERIA: ', len(list(galaxy_dict.keys())))
+    if print_summary:
+        number_of_galaxies_in_sample = 0
+        for snap_i in galaxy_dict.keys():
+            number_of_galaxies_in_sample += len(galaxy_dict[snap_i])
+        
+        print('NUMBER OF GALAXIES MEETING CRITERIA: ', number_of_galaxies_in_sample)
 
 
     #================================================ 
@@ -368,7 +405,7 @@ def _extract_criteria_galaxies(csv_sample1 = 'L12_',                            
 #--------------------------------
 # Goes through existing CSV files (minor and major) and creates merger tree
 # SAVED: /outputs/%smerger_tree_
-def _create_merger_tree_csv(csv_start        = 'L12_',                                 # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+def _create_merger_tree_csv(csv_start        = 'L100_',                                 # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                             csv_sample       = '_all_sample_misalignment_9.0',
                             csv_sample_minor = '_minor_sample_misalignment_8.0',
                             csv_output_in    = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
@@ -580,7 +617,7 @@ def _create_merger_tree_csv(csv_start        = 'L12_',                          
 #--------------------------------
 # Goes through galaxies that meet criteria, analyses the time spend in misaligned state
 # SAVED: /outputs/%stimescale_tree
-def _analyse_misalignment_timescales(csv_galaxy_dict = 'L12_galaxy_dict_both_stars_gas_sf_rad2.0_projTrue_',
+def _analyse_misalignment_timescales(csv_galaxy_dict = 'L12_galaxy_dict_ETG_stars_gas_sf_rad2.0_projTrue_',
                                      #--------------------------
                                      # Galaxy analysis
                                      print_summary = True,
@@ -728,7 +765,7 @@ def _analyse_misalignment_timescales(csv_galaxy_dict = 'L12_galaxy_dict_both_sta
                                 print('  MISANGLE:      ', misangle)
                             
                             # If current misaligned galaxy out of csv range, break
-                            if (int(SnapNum_tmp) == 28):
+                            if (int(SnapNum_tmp) == int(csv_sample_range[-1])):
                                 if debug:
                                     print('  a')
                                 SnapNum_end  = math.nan
@@ -737,7 +774,7 @@ def _analyse_misalignment_timescales(csv_galaxy_dict = 'L12_galaxy_dict_both_sta
                                 break
                             
                             # If descendant of current misaligned galaxy not a mainline, break
-                            if (int(SnapNum_tmp) < 28) and (int(DescendantID_tmp) != int(GalaxyID_tmp)-1):
+                            if (int(SnapNum_tmp) < int(csv_sample_range[-1])) and (int(DescendantID_tmp) != int(GalaxyID_tmp)-1):
                                 if debug:
                                     print('  b')
                                 SnapNum_end  = math.nan
@@ -1125,16 +1162,18 @@ def _analyse_misalignment_timescales(csv_galaxy_dict = 'L12_galaxy_dict_both_sta
 
 # Goes through galaxies that meet criteria, extracts galaxies that became misaligned coinciding within X Gyr of a merger
 # SAVED: /outputs/%smerger_origin
-def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L12_galaxy_dict_both_stars_gas_sf_rad2.0_projTrue_',
+def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L12_galaxy_dict_ETG_stars_gas_sf_rad2.0_projTrue_',
                                       csv_merger_tree = 'L12_merger_tree_',
                                       #--------------------------
                                       # Galaxy analysis
                                       print_summary = True,
                                       print_galaxy  = False,
-                                        merger_misaligned_time_pre  = 0.1,             # Gyr, Time before last aligned state, and merger between which the galaxy is misaligned
-                                        merger_misaligned_time_post = 2.0,             # Gyr, Time between last aligned state, and merger between which the galaxy is misaligned
-                                        merger_threshold_min   = 0.05,             # >= to include
-                                        merger_threshold_max   = 1.95,             # <= to include
+                                        plot_time_pre               = 1.0,             # Gyr, time to additionally extract evolution of galaxy before misaligning (if available)
+                                        plot_time_post              = 1.0,             # Gyr, time to additionally extract evolution of galaxy after relaxing (if available)
+                                        merger_misaligned_time_pre  = 1.0,             # Gyr, Time before last aligned state, and merger between which the galaxy is misaligned
+                                        merger_misaligned_time_post = 1.0,             # Gyr, Time between last aligned state, and merger between which the galaxy is misaligned
+                                        merger_threshold_min   = 0.1,             # >= to include
+                                        merger_threshold_max   = 1.9,             # <= to include
                                       #--------------------------
                                       csv_file       = True,             # Will write sample to csv file in sample_dir
                                         csv_name     = '',               # extra stuff at end
@@ -1482,7 +1521,7 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L12_galaxy_dict_both_st
                                 print('  MISANGLE:      ', misangle)
                             
                             # If current misaligned galaxy out of csv range, break
-                            if (int(SnapNum_tmp) == 28):
+                            if (int(SnapNum_tmp) == int(csv_sample_range[-1])):
                                 if debug:
                                     print('  a')
                                 SnapNum_end  = math.nan
@@ -1491,7 +1530,7 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L12_galaxy_dict_both_st
                                 break
                             
                             # If descendant of current misaligned galaxy not a mainline, break
-                            if (int(SnapNum_tmp) < 28) and (int(DescendantID_tmp) != int(GalaxyID_tmp)-1):
+                            if (int(SnapNum_tmp) < int(csv_sample_range[-1])) and (int(DescendantID_tmp) != int(GalaxyID_tmp)-1):
                                 if debug:
                                     print('  b')
                                 SnapNum_end  = math.nan
@@ -1992,7 +2031,7 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L12_galaxy_dict_both_st
 #--------------------------------
 # Plots for how long (time and snaps) misalignments perisit (from aligned -> stable) 
 # SAVED: /plots/time_spent_misaligned/
-def _plot_time_spent_misaligned(csv_timescales = 'L100_timescale_tree_both_stars_gas_sf_rad2.0_projTrue_',
+def _plot_time_spent_misaligned(csv_timescales = 'L12_timescale_tree_ETG_stars_gas_sf_rad2.0_projTrue_',
                                 #--------------------------
                                 plot_type = 'time',            # 'time', 'snap'    
                                 #--------------------------
@@ -2032,6 +2071,7 @@ def _plot_time_spent_misaligned(csv_timescales = 'L100_timescale_tree_both_stars
             #print(GalaxyID)
             #print(timescale_dict['%s' %GalaxyID]['kappa_stars_list'])
             #print(timescale_dict['%s' %GalaxyID]['misangle_list'])
+            #print('  ', float(timescale_dict['%s' %GalaxyID]['time_start']) - float(timescale_dict['%s' %GalaxyID]['time_end']))
             
             if plot_type == 'time':
                 plot_timescale.append(float(timescale_dict['%s' %GalaxyID]['time_start']) - float(timescale_dict['%s' %GalaxyID]['time_end']))
@@ -2057,20 +2097,20 @@ def _plot_time_spent_misaligned(csv_timescales = 'L100_timescale_tree_both_stars
     
     #-----------    
     # Plot histogram
-    axs.hist(plot_timescale, weights=np.ones(len(plot_timescale))/len(plot_timescale), bins=np.arange(0, 10.1, 0.5), histtype='bar', edgecolor='none', facecolor='b', alpha=0.1)
-    bin_count, _, _ = axs.hist(plot_timescale, weights=np.ones(len(plot_timescale))/len(plot_timescale), bins=np.arange(0, 10.1, 0.5), histtype='bar', edgecolor='b', facecolor='none', alpha=1.0)
+    axs.hist(plot_timescale, weights=np.ones(len(plot_timescale))/len(plot_timescale), bins=np.arange(0, 5.1, 0.2), histtype='bar', edgecolor='none', facecolor='b', alpha=0.1)
+    bin_count, _, _ = axs.hist(plot_timescale, weights=np.ones(len(plot_timescale))/len(plot_timescale), bins=np.arange(0, 5.1, 0.2), histtype='bar', edgecolor='b', facecolor='none', alpha=1.0)
     
     # Add poisson errors to each bin (sqrt N)
-    hist_n, _ = np.histogram(plot_timescale, bins=np.arange(0, 10.1, 0.5), range=(0, 10))
-    axs.errorbar(np.arange(0.25, 10.1, 0.5), hist_n/len(plot_timescale), xerr=None, yerr=np.sqrt(hist_n)/len(plot_timescale), ecolor='b', ls='none', capsize=4, elinewidth=1, markeredgewidth=1)
+    hist_n, _ = np.histogram(plot_timescale, bins=np.arange(0, 5.1, 0.2), range=(0, 5))
+    axs.errorbar(np.arange(0.1, 5.1, 0.2), hist_n/len(plot_timescale), xerr=None, yerr=np.sqrt(hist_n)/len(plot_timescale), ecolor='b', ls='none', capsize=4, elinewidth=1, markeredgewidth=1)
     
     
     #-----------
     ### General formatting
     # Axis labels
     axs.yaxis.set_major_formatter(PercentFormatter(1, symbol=''))
-    axs.set_xlim(0, 10)
-    axs.set_xticks(np.arange(0, 10.1, step=1))
+    axs.set_xlim(0, 5)
+    axs.set_xticks(np.arange(0, 5.1, step=1))
     if plot_type == 'time':
         axs.set_xlabel('Max. time spent misaligned [Gyr]')
     if plot_type == 'snap':
@@ -2101,7 +2141,7 @@ def _plot_time_spent_misaligned(csv_timescales = 'L100_timescale_tree_both_stars
         legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
         legend_colors.append('b')
     
-    legend_labels.append('${0<z<1}$')
+    legend_labels.append('${0<z<0.7}$')
     legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
     legend_colors.append('k')
     
@@ -2264,11 +2304,11 @@ def _plot_delta_misalignment_timescale(csv_timescales = 'L100_timescale_tree_ETG
 #--------------------------------
 # Will overlay galaxies from the point of becoming misaligned, if they have a merger
 # SAVED: /plots/stacked_misalignments/
-def _plot_stack_misalignments(csv_merger_origin = 'L12_merger_origin_r0.05r1.95_t0.1t2.0_both_stars_gas_sf_rad2.0_projTrue_',
+def _plot_stack_misalignments(csv_merger_origin = 'L12_merger_origin_r0.1r1.9_t1.0t2.0_ETG_stars_gas_sf_rad2.0_projTrue_',
                                        #--------------------------
                                        # Galaxy plotting
                                        print_summary  = True,
-                                         plot_type               = 'time',            # 'time', 'snap', 'raw_time', 'raw_snap'
+                                         plot_type               = 'raw_time',            # 'time', 'snap', 'raw_time', 'raw_snap'
                                          plot_GalaxyIDs          = False,             # Whether to add galaxyIDs 
                                          plot_number_of_galaxies_start = 0,                # galaxy number to start on (default 0)
                                          plot_number_of_galaxies_end   = 999,               # How many galaxies to plot (largely for testing), set to 1000000
@@ -2505,7 +2545,7 @@ def _plot_stack_misalignments(csv_merger_origin = 'L12_merger_origin_r0.05r1.95_
 
 # Will overlay galaxies from the last merger they had that was attributed to a merger  
 # SAVED: /plots/stacked_mergers/ 
-def _plot_stack_mergers(csv_merger_origin = 'L12_merger_origin_r0.05r1.95_t0.1t2.0_both_stars_gas_sf_rad2.0_projTrue_',
+def _plot_stack_mergers(csv_merger_origin = 'L12_merger_origin_r0.1r1.9_t0.1t2.0_ETG_stars_gas_sf_rad2.0_projTrue_',
                                        #--------------------------
                                        # Galaxy plotting
                                        print_summary  = True,
@@ -2753,13 +2793,13 @@ def _plot_stack_mergers(csv_merger_origin = 'L12_merger_origin_r0.05r1.95_t0.1t2
 #_create_merger_tree_csv()
 
 #_analyse_misalignment_timescales()
-#_analyse_merger_origin_timescales()
+_analyse_merger_origin_timescales()
 
 #---------------
 #_plot_time_spent_misaligned()
 #_plot_delta_misalignment_timescale()
 
-#_plot_stack_misalignments()
+_plot_stack_misalignments()
 #_plot_stack_mergers()
 #=============================
 

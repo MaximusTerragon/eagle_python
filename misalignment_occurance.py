@@ -42,6 +42,7 @@ def _find_misalignment_occurance(csv_sample1 = 'L100_',                         
                                    use_angle          = 'stars_gas_sf',         # Which angles to plot
                                    use_hmr            = 2.0,                    # Which HMR to use
                                    use_proj_angle     = False,                   # Whether to use projected or absolute angle 10**9
+                                     min_inc_angle    = 10,                     # min. degrees of either spin vector to z-axis, if use_proj_angle
                                    lower_mass_limit   = 10**9,             # Whether to plot only certain masses 10**15
                                    upper_mass_limit   = 10**15,         
                                    ETG_or_LTG         = 'LTG',             # Whether to plot only ETG/LTG
@@ -62,7 +63,7 @@ def _find_misalignment_occurance(csv_sample1 = 'L100_',                         
         time_start = time.time()
     
     print('===================')
-    print('PLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Min mass: %.2E M*\n  Max mass: %.2E M*\n  ETG or LTG: %s\n  Group or field: %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field))
+    print('PLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Min. inclination: %s\n  Min mass: %.2E M*\n  Max mass: %.2E M*\n  ETG or LTG: %s\n  Group or field: %s' %(use_angle, use_hmr, use_proj_angle, min_inc_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field))
     print('===================\n')
     
     
@@ -189,7 +190,19 @@ def _find_misalignment_occurance(csv_sample1 = 'L100_',                         
                 use_particles.append('dm')
             plot_label = 'Gas$_{\mathrm{nsf}}$-DM'
     
-    
+        # Set projection angle criteria
+        if not use_proj_angle:
+            min_inc_angle = 0
+        max_inc_angle = 180 - min_inc_angle
+        if output_input['viewing_axis'] == 'x':
+            viewing_vector = [1., 0, 0]
+        elif output_input['viewing_axis'] == 'y':
+            viewing_vector = [0, 1., 0]
+        elif output_input['viewing_axis'] == 'z':
+            viewing_vector = [0, 0, 1.]
+        else:
+            raise Exception('Cant read viewing_axis')
+        
         #-----------------------------
         # Set definitions
         group_threshold     = 10**14
@@ -229,6 +242,10 @@ def _find_misalignment_occurance(csv_sample1 = 'L100_',                         
         #=================================
         def _collect_misalignment_distributions_z(debug=False):
             
+            # Find angle galaxy makes with viewing axis
+            def _find_angle(vector1, vector2):
+                return np.rad2deg(np.arccos(np.clip(np.dot(vector1/np.linalg.norm(vector1), vector2/np.linalg.norm(vector2)), -1.0, 1.0)))     # [deg]
+            
             # Looping over all GalaxyIDs
             for GalaxyID, DescendantID in tqdm(zip(GalaxyID_List, DescendantID_List), total=len(GalaxyID_List)):
                 
@@ -236,8 +253,11 @@ def _find_misalignment_occurance(csv_sample1 = 'L100_',                         
                 # Determine if galaxy has flags:
                 if (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['com_min_distance'][use_angle]) and (all_general['%s' %GalaxyID]['SubGroupNum'] <= satellite_criteria) and (use_hmr in all_misangles['%s' %GalaxyID]['hmr']):
                     
+                    # Mask correct integer (formatting weird but works)
+                    mask_rad2 = np.where(np.array(all_spins['%s' %GalaxyID]['hmr']) == use_hmr)[0][0]
+                    
                     # Determine if galaxy meets criteria:
-                    if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph):
+                    if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[0]][mask_rad2], viewing_vector) >= min_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[0]][mask_rad2], viewing_vector) <= max_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[1]][mask_rad2], viewing_vector) >= min_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[1]][mask_rad2], viewing_vector) <= max_inc_angle):
                         
                         # Mask correct integer (formatting weird but works)
                         mask_rad = int(np.where(np.array(all_misangles['%s' %GalaxyID]['hmr']) == use_hmr)[0])
@@ -370,8 +390,8 @@ def _find_misalignment_occurance(csv_sample1 = 'L100_',                         
         metadata_plot = {'Title': metadata_rows}
         
         if savefig:
-            plt.savefig("%s/misalignment_occurance/L%s_ALL_becameMisligned_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print("\n  SAVED: %s/misalignment_occurance/L%s_ALL_becameMisaligned_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format))
+            plt.savefig("%s/misalignment_occurance/L%s_ALL_becameMisligned_%s_HMR%s_proj%s_inc%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], use_angle, str(use_hmr), use_proj_angle, min_inc_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/misalignment_occurance/L%s_ALL_becameMisaligned_%s_HMR%s_proj%s_inc%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], use_angle, str(use_hmr), use_proj_angle, min_inc_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format))
         if showfig:
             plt.show()
         plt.close()

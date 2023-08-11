@@ -985,6 +985,7 @@ def _plot_misalignment(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # 
                          use_angle          = 'stars_gas_sf',         # Which angles to plot
                          use_hmr            = 2.0,                    # Which HMR to use
                          use_proj_angle     = True,                   # Whether to use projected or absolute angle 10**9
+                           min_inc_angle    = 10,                     # min. degrees of either spin vector to z-axis, if use_proj_angle
                          lower_mass_limit   = 10**9,            # Whether to plot only certain masses 10**15
                          upper_mass_limit   = 10**15,         
                          ETG_or_LTG         = 'ETG',           # Whether to plot only ETG/LTG
@@ -995,7 +996,7 @@ def _plot_misalignment(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # 
                        #--------------------------
                        use_alternative_format = True,          # COMPACT/Poster formatting
                        #--------------------------
-                       showfig       = True,
+                       showfig       = False,
                        savefig       = True,
                          file_format = 'pdf',
                          savefig_txt = '',
@@ -1052,7 +1053,7 @@ def _plot_misalignment(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # 
     print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Min mass: %.2E M*\n  Max mass: %.2E M*\n  Satellites: %s' %(output_input['mySims'][0][0], output_input['snapNum'], output_input['Redshift'], output_input['galaxy_mass_min'], output_input['galaxy_mass_max'], use_satellites))
     print('  SAMPLE LENGTH: ', len(GroupNum_List))
     print('\nOUTPUT LOADED:\n  Viewing axis: %s\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s\n  COM min distance: %s\n  Min. particles: %s\n  Min. inclination: %s' %(output_input['viewing_axis'], output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected'], output_input['com_min_distance'], output_input['min_particles'], output_input['min_inclination']))
-    print('\nPLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Min Mass: %.2E M*\n  Max limit: %.2E M*\n  ETG or LTG: %s\n  Group or field: %s\n  Use satellites:  %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field, use_satellites))
+    print('\nPLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Min. inclination: %s\n  Min Mass: %.2E M*\n  Max limit: %.2E M*\n  ETG or LTG: %s\n  Group or field: %s\n  Use satellites:  %s' %(use_angle, use_hmr, use_proj_angle, min_inc_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field, use_satellites))
     print('===================')
     
     #------------------------------
@@ -1113,7 +1114,19 @@ def _plot_misalignment(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # 
             use_particles.append('dm')
         plot_label = 'Gas$_{\mathrm{nsf}}$-DM'
     
-    
+    # Set projection angle criteria
+    if not use_proj_angle:
+        min_inc_angle = 0
+    max_inc_angle = 180 - min_inc_angle
+    if output_input['viewing_axis'] == 'x':
+        viewing_vector = [1., 0, 0]
+    elif output_input['viewing_axis'] == 'y':
+        viewing_vector = [0, 1., 0]
+    elif output_input['viewing_axis'] == 'z':
+        viewing_vector = [0, 0, 1.]
+    else:
+        raise Exception('Cant read viewing_axis')
+        
     #-----------------------------
     # Set definitions
     group_threshold     = 10**13.8
@@ -1177,6 +1190,9 @@ def _plot_misalignment(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # 
             print('Analysing extracted sample and collecting angles')
             time_start = time.time()
         
+        # Find angle galaxy makes with viewing axis
+        def _find_angle(vector1, vector2):
+            return np.rad2deg(np.arccos(np.clip(np.dot(vector1/np.linalg.norm(vector1), vector2/np.linalg.norm(vector2)), -1.0, 1.0)))     # [deg]
         
         #--------------------------
         # Loop over all galaxies we have available, and analyse output of flags
@@ -1192,8 +1208,11 @@ def _plot_misalignment(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # 
                     catalogue['sample']['group'] += 1
                     catalogue['sample']['all'] += 1
                     
+                    # Mask correct integer (formatting weird but works)
+                    mask_rad2 = np.where(np.array(all_spins['%s' %GalaxyID]['hmr']) == use_hmr)[0][0]
+                    
                     # Determine if this is a galaxy we want to plot
-                    if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph):
+                    if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[0]][mask_rad2], viewing_vector) >= min_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[0]][mask_rad2], viewing_vector) <= max_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[1]][mask_rad2], viewing_vector) >= min_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[1]][mask_rad2], viewing_vector) <= max_inc_angle):
                         catalogue['plot']['group'] += 1
                         catalogue['plot']['all'] += 1
                         
@@ -1217,8 +1236,11 @@ def _plot_misalignment(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # 
                     catalogue['sample']['field'] += 1
                     catalogue['sample']['all'] += 1
                     
+                    # Mask correct integer (formatting weird but works)
+                    mask_rad2 = np.where(np.array(all_spins['%s' %GalaxyID]['hmr']) == use_hmr)[0][0]
+                    
                     # Determine if this is a galaxy we want to plot
-                    if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph):
+                    if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[0]][mask_rad2], viewing_vector) >= min_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[0]][mask_rad2], viewing_vector) <= max_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[1]][mask_rad2], viewing_vector) >= min_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[1]][mask_rad2], viewing_vector) <= max_inc_angle):
                         catalogue['plot']['field'] += 1
                         catalogue['plot']['all'] += 1
                         
@@ -1243,8 +1265,11 @@ def _plot_misalignment(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # 
                 if (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['com_min_distance'][use_angle]) and (all_general['%s' %GalaxyID]['SubGroupNum'] <= satellite_criteria) and (use_hmr in all_misangles['%s' %GalaxyID]['hmr']):
                     catalogue['sample']['LTG'] += 1
                     
+                    # Mask correct integer (formatting weird but works)
+                    mask_rad2 = np.where(np.array(all_spins['%s' %GalaxyID]['hmr']) == use_hmr)[0][0]
+                    
                     # Determine if this is a galaxy we want to plot
-                    if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph):
+                    if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[0]][mask_rad2], viewing_vector) >= min_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[0]][mask_rad2], viewing_vector) <= max_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[1]][mask_rad2], viewing_vector) >= min_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[1]][mask_rad2], viewing_vector) <= max_inc_angle):
                         catalogue['plot']['LTG'] += 1
                 else:
                     if debug:
@@ -1257,8 +1282,11 @@ def _plot_misalignment(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # 
                 if (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['com_min_distance'][use_angle]) and (all_general['%s' %GalaxyID]['SubGroupNum'] <= satellite_criteria) and (use_hmr in all_misangles['%s' %GalaxyID]['hmr']):
                     catalogue['sample']['ETG'] += 1
                     
+                    # Mask correct integer (formatting weird but works)
+                    mask_rad2 = np.where(np.array(all_spins['%s' %GalaxyID]['hmr']) == use_hmr)[0][0]
+                    
                     # Determine if this is a galaxy we want to plot
-                    if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph):
+                    if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[0]][mask_rad2], viewing_vector) >= min_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[0]][mask_rad2], viewing_vector) <= max_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[1]][mask_rad2], viewing_vector) >= min_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[1]][mask_rad2], viewing_vector) <= max_inc_angle):
                         catalogue['plot']['ETG'] += 1                        
                 else:
                     if debug:
@@ -1506,8 +1534,8 @@ def _plot_misalignment(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # 
             obs_txt = ''
        
         if savefig:
-            plt.savefig("%s/misalignment_distributions/L%s_%s_%s_misalignment_%s_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], output_input['snapNum'], sat_str, np.log10(float(output_input['galaxy_mass_min'])), use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, obs_txt, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print("\n  SAVED: %s/misalignment_distributions/L%s_%s_%s_misalignment_%s_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], output_input['snapNum'], sat_str, np.log10(float(output_input['galaxy_mass_min'])), use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, obs_txt, savefig_txt, file_format))
+            plt.savefig("%s/misalignment_distributions/L%s_%s_%s_misalignment_%s_%s_HMR%s_proj%s_inc%s_m%sm%s_morph%s_env%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], output_input['snapNum'], sat_str, np.log10(float(output_input['galaxy_mass_min'])), use_angle, str(use_hmr), use_proj_angle, min_inc_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, obs_txt, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/misalignment_distributions/L%s_%s_%s_misalignment_%s_%s_HMR%s_proj%s_inc%s_m%sm%s_morph%s_env%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], output_input['snapNum'], sat_str, np.log10(float(output_input['galaxy_mass_min'])), use_angle, str(use_hmr), use_proj_angle, min_inc_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, obs_txt, savefig_txt, file_format))
         if showfig:
             plt.show()
         plt.close()
@@ -1563,6 +1591,7 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
                            use_angle          = 'stars_gas_sf',         # Which angles to plot
                            use_hmr            = 2.0,                    # Which HMR to use
                            use_proj_angle     = True,                   # Whether to use projected or absolute angle 10**9
+                             min_inc_angle    = 10,                     # min. degrees of either spin vector to z-axis, if use_proj_angle
                            lower_mass_limit   = 10**9,            # Whether to plot only certain masses 10**15
                            upper_mass_limit   = 10**15,         
                            ETG_or_LTG         = 'LTG',           # Whether to plot only ETG/LTG
@@ -1585,7 +1614,7 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
         time_start = time.time()
     
     print('===================')
-    print('PLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Min mass: %.2E M*\n  Max mass: %.2E M*\n  ETG or LTG: %s\n  Group or field: %s\n  Use satellites:  %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field, use_satellites))
+    print('PLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Min. inclination: %s\n  Min mass: %.2E M*\n  Max mass: %.2E M*\n  ETG or LTG: %s\n  Group or field: %s\n  Use satellites:  %s' %(use_angle, use_hmr, use_proj_angle, min_inc_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field, use_satellites))
     print('===================\n')
     
     #--------------------------------
@@ -1717,7 +1746,19 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
                 use_particles.append('dm')
             plot_label = 'Gas$_{\mathrm{nsf}}$-DM'
     
-    
+        # Set projection angle criteria
+        if not use_proj_angle:
+            min_inc_angle = 0
+        max_inc_angle = 180 - min_inc_angle
+        if output_input['viewing_axis'] == 'x':
+            viewing_vector = [1., 0, 0]
+        elif output_input['viewing_axis'] == 'y':
+            viewing_vector = [0, 1., 0]
+        elif output_input['viewing_axis'] == 'z':
+            viewing_vector = [0, 0, 1.]
+        else:
+            raise Exception('Cant read viewing_axis')
+        
         #-----------------------------
         # Set definitions
         group_threshold     = 10**14
@@ -1781,7 +1822,10 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
                 print('Analysing extracted sample and collecting angles')
                 time_start = time.time()
         
-        
+            # Find angle galaxy makes with viewing axis
+            def _find_angle(vector1, vector2):
+                return np.rad2deg(np.arccos(np.clip(np.dot(vector1/np.linalg.norm(vector1), vector2/np.linalg.norm(vector2)), -1.0, 1.0)))     # [deg]
+            
             #--------------------------
             # Loop over all galaxies we have available, and analyse output of flags
             for GalaxyID in GalaxyID_List:
@@ -1795,9 +1839,12 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
                     if (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['com_min_distance'][use_angle]) and (all_general['%s' %GalaxyID]['SubGroupNum'] <= satellite_criteria) and (use_hmr in all_misangles['%s' %GalaxyID]['hmr']):
                         catalogue['sample']['group'] += 1
                         catalogue['sample']['all'] += 1
-                    
+                        
+                        # Mask correct integer (formatting weird but works)
+                        mask_rad2 = np.where(np.array(all_spins['%s' %GalaxyID]['hmr']) == use_hmr)[0][0]
+                        
                         # Determine if this is a galaxy we want to plot
-                        if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph):
+                        if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[0]][mask_rad2], viewing_vector) >= min_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[0]][mask_rad2], viewing_vector) <= max_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[1]][mask_rad2], viewing_vector) >= min_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[1]][mask_rad2], viewing_vector) <= max_inc_angle):
                             catalogue['plot']['group'] += 1
                             catalogue['plot']['all'] += 1
                         
@@ -1820,9 +1867,12 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
                     if (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['com_min_distance'][use_angle])and (all_general['%s' %GalaxyID]['SubGroupNum'] <= satellite_criteria) and (use_hmr in all_misangles['%s' %GalaxyID]['hmr']):
                         catalogue['sample']['field'] += 1
                         catalogue['sample']['all'] += 1
+                        
+                        # Mask correct integer (formatting weird but works)
+                        mask_rad2 = np.where(np.array(all_spins['%s' %GalaxyID]['hmr']) == use_hmr)[0][0]
                     
                         # Determine if this is a galaxy we want to plot
-                        if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph):
+                        if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[0]][mask_rad2], viewing_vector) >= min_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[0]][mask_rad2], viewing_vector) <= max_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[1]][mask_rad2], viewing_vector) >= min_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[1]][mask_rad2], viewing_vector) <= max_inc_angle):
                             catalogue['plot']['field'] += 1
                             catalogue['plot']['all'] += 1
                         
@@ -1846,9 +1896,12 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
                     # Determine if criteria met. If it is, it is part of the final sample
                     if (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['com_min_distance'][use_angle]) and (all_general['%s' %GalaxyID]['SubGroupNum'] <= satellite_criteria) and (use_hmr in all_misangles['%s' %GalaxyID]['hmr']):
                         catalogue['sample']['LTG'] += 1
+                        
+                        # Mask correct integer (formatting weird but works)
+                        mask_rad2 = np.where(np.array(all_spins['%s' %GalaxyID]['hmr']) == use_hmr)[0][0]
                     
                         # Determine if this is a galaxy we want to plot
-                        if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph):
+                        if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[0]][mask_rad2], viewing_vector) >= min_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[0]][mask_rad2], viewing_vector) <= max_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[1]][mask_rad2], viewing_vector) >= min_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[1]][mask_rad2], viewing_vector) <= max_inc_angle):
                             catalogue['plot']['LTG'] += 1
                     else:
                         if debug:
@@ -1860,9 +1913,12 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
                     # Determine if criteria met. If it is, it is part of the final sample
                     if (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['com_min_distance'][use_angle]) and (all_general['%s' %GalaxyID]['SubGroupNum'] <= satellite_criteria) and (use_hmr in all_misangles['%s' %GalaxyID]['hmr']):
                         catalogue['sample']['ETG'] += 1
+                        
+                        # Mask correct integer (formatting weird but works)
+                        mask_rad2 = np.where(np.array(all_spins['%s' %GalaxyID]['hmr']) == use_hmr)[0][0]
                     
                         # Determine if this is a galaxy we want to plot
-                        if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph):
+                        if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[0]][mask_rad2], viewing_vector) >= min_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[0]][mask_rad2], viewing_vector) <= max_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[1]][mask_rad2], viewing_vector) >= min_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[1]][mask_rad2], viewing_vector) <= max_inc_angle):
                             catalogue['plot']['ETG'] += 1
                     else:
                         if debug:
@@ -2053,8 +2109,8 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
             sat_str = 'cent'
        
         if savefig:
-            plt.savefig("%s/misalignment_distributions_z/L%s_ALL_%s_misalignment_summary_%s_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], sat_str, np.log10(float(output_input['galaxy_mass_limit'])), use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print("\n  SAVED: %s/misalignment_distributions_z/L%s_ALL_%s_misalignment_summary_%s_%s_HMR%s_proj%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], sat_str, np.log10(float(output_input['galaxy_mass_limit'])), use_angle, str(use_hmr), use_proj_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format))
+            plt.savefig("%s/misalignment_distributions_z/L%s_ALL_%s_misalignment_summary_%s_%s_HMR%s_proj%s_inc%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], sat_str, np.log10(float(output_input['galaxy_mass_limit'])), use_angle, str(use_hmr), use_proj_angle, min_inc_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/misalignment_distributions_z/L%s_ALL_%s_misalignment_summary_%s_%s_HMR%s_proj%s_inc%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], sat_str, np.log10(float(output_input['galaxy_mass_limit'])), use_angle, str(use_hmr), use_proj_angle, min_inc_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format))
         if showfig:
             plt.show()
         plt.close()
@@ -2086,8 +2142,10 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
 #for snap_i in np.arange(19, 28.1, 1):
     #_sample_misalignment(snapNum = int(snap_i))
     #_analysis_misalignment_distribution(csv_sample = 'L12_' + str(int(snap_i)) + '_all_sample_misalignment_9.0')
-#for snap_i in np.arange(147, 200.1, 1):
+for snap_i in np.arange(151, 152.1, 1):
     #_sample_misalignment(snapNum = int(snap_i))
     #_analysis_misalignment_distribution(csv_sample = 'L100_' + str(int(snap_i)) + '_all_sample_misalignment_10.0')
+    
+    _plot_misalignment(csv_sample = 'L100_' + str(int(snap_i)) + '_all_sample_misalignment_10.0', csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_')
 
 #===========================

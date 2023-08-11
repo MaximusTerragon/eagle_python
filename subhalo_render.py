@@ -54,7 +54,7 @@ ID_list = [3748, 20455, 37445, 30494, 43163, 40124, 44545, 48383, 57647, 55343, 
 def galaxy_render(csv_sample = False,              # False, Whether to read in existing list of galaxies  
                     #--------------------------
                     mySims = [('RefL0012N0188', 12)],
-                    GalaxyID_List = [30494],
+                    GalaxyID_List = [20464],
                     #--------------------------
                     # Galaxy extraction properties
                     kappa_rad            = 30,          # calculate kappa for this radius [pkpc]

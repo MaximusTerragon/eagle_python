@@ -29,15 +29,19 @@ EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_dir
 #====================================
 
 
+ID_list = [15851557, 3327115, 10438463, 10670173, 13866051, 17480553, 8077031, 8494196, 8763330, 9777730, 10009377, 10145405, 14216102, 16049479, 17374402, 17718284, 18447769]
+
+ID_output = []
+
 # When given ID and snip/snap, will try to find closest match ID in snap/snip
 def match_galaxyID(mySims = [('RefL0100N1504', 100)],
                     #--------------------------
-                    GalaxyID_List = [401467693],
-                    snap_snip     = 'snip',             # run of above ID
+                    GalaxyID_List = ID_list,
+                    snap_snip     = 'snap',             # run of above ID
                     #--------------------------
                     # Extract galaxies within range
-                    CoP_range  = 0.5,                   # Mpc
-                    mass_range = 20,                    # percent   20 = 20%
+                    CoP_range  = 0.02,                   # Mpc
+                    mass_range = 50,                    # percent   20 = 20%
                     sub_range = 20,                      # plus/minus SubGroupNumber                 
                     #--------------------------
                     print_progress = False,
@@ -243,15 +247,18 @@ def match_galaxyID(mySims = [('RefL0100N1504', 100)],
             
         
         # want 13866056
-            
-            
-            
+        ID_output.append(GalaxyID_match[0])
+
+
 #=========================
 match_galaxyID()
+
+print('\nID_output:')
+print(ID_output)
 #=========================
+  
             
-            
-            
+
             
             
             

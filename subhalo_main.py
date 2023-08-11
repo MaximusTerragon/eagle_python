@@ -3048,14 +3048,15 @@ class MergerTree:
             mask_mainbranch, target_snapNum = np.where(np.array(f['Histories']['GalaxyID']) == target_GalaxyID)
             mask_mainbranch = mask_mainbranch[0]
             target_snapNum  = target_snapNum[0]
+            
+            # Extract TopLeafID of main branch (done by masking for target_GalaxyID)
+            self.TopLeafID  = int(f['Histories']['TopLeafID'][mask_mainbranch, target_snapNum])
+            
             if debug:
                 print('target_GalaxyID ', target_GalaxyID)
                 print('target_SnapNum ', target_snapNum)
                 print('row ', mask_mainbranch)
-            
-            
-            # Extract TopLeafID of main branch (done by masking for target_GalaxyID)
-            self.TopLeafID  = int(f['Histories']['TopLeafID'][mask_mainbranch, target_snapNum])
+                print('TopLeafID', self.TopLeafID)
             
             # Find LastProgID
             row_i = int(mask_mainbranch) + 1
@@ -3077,7 +3078,9 @@ class MergerTree:
             #LastProgID = min(f['Snapnum_Index']['GalaxyID'][mask] - f['Snapnum_Index']['GalaxyID'][mask_mainbranch])
             
             # Extract all values that lie between self.TopLeafID and LastProgID
-            mask = (np.array(f['Histories']['GalaxyID']) >= f['Histories']['GalaxyID'][mask_mainbranch, 200]) & (np.array(f['Histories']['GalaxyID']) <= LastProgID) & (np.array(f['Histories']['SnapNum']) >= minSnap) & (np.array(f['Histories']['SnapNum']) <= maxSnap) & (np.array(f['Histories']['DescendantID']) >= f['Histories']['GalaxyID'][mask_mainbranch, 200]) & (np.array(f['Histories']['DescendantID']) <= self.TopLeafID)
+            mask = (np.array(f['Histories']['GalaxyID']) >= f['Histories']['GalaxyID'][mask_mainbranch, 200]) & (np.array(f['Histories']['GalaxyID']) <= LastProgID) & (np.array(f['Histories']['SnapNum']) >= minSnap) & (np.array(f['Histories']['SnapNum']) <= maxSnap) & (np.array(f['Histories']['DescendantID']) <= self.TopLeafID)
+            #& (np.array(f['Histories']['DescendantID']) >= f['Histories']['GalaxyID'][mask_mainbranch, 200])
+            
             for header_name, dict_name in zip(['GalaxyID', 'DescendantID', 'TopLeafID', 'GroupNumber', 'SubGroupNumber', 'StellarMass', 'GasMass', 'StellarMass', 'GasMass', 'SnapNum'], ['GalaxyID', 'DescendantID', 'TopLeafID', 'GroupNumber', 'SubGroupNumber', 'stelmass', 'gasmass', 'totalstelmass', 'totalgasmass', 'SnapNum']):
                 myData[dict_name] = f['Histories'][header_name][mask]
             myData['z'] = []

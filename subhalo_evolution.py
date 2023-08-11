@@ -104,7 +104,7 @@ def _analysis_evolution(csv_sample = False,              # Whether to read in ex
                                min_particles       = 20,                # Minimum particles to find spin.  DEFAULT 20
                                min_inclination     = 0,                 # Minimum inclination toward viewing axis [deg] DEFAULT 0
                                #--------------------------   
-                               csv_file       = False,                   # Will write sample to csv file in sapmle_dir
+                               csv_file       = True,                   # Will write sample to csv file in sapmle_dir
                                  csv_name     = '',                     # extra stuff at end
                                #--------------------------
                                print_progress = False,
@@ -232,7 +232,7 @@ def _analysis_evolution(csv_sample = False,              # Whether to read in ex
         assert snapNumMin >= 19, 'Limit of snapshots reached'
         assert snapNumMax <= 28, 'Limit of snapshots reached'
     if answer == '3':
-        assert snapNumMin >= 148, 'Limit of snapshots reached'
+        assert snapNumMin >= 147, 'Limit of snapshots reached'
         assert snapNumMax <= 200, 'Limit of snapshots reached'
     
     
@@ -587,7 +587,7 @@ def _plot_evolution(csv_output = 'L100_evolution_ID443970_RadProj_Err__stars_gas
                                  use_angles         = ['stars_gas_sf'],                 # Which angles to plot
                                  use_hmr            = [1, 2],         # Which misangle HMR to plot
                                  use_hmr_frac       = [2],                # Which mass and fraction HMR to plot  
-                                 use_proj_angle     = 'both',                   # Whether to use projected or absolute angle, 'both'
+                                 use_proj_angle     = True,                   # Whether to use projected or absolute angle, 'both'
                                  use_uncertainties  = True,                   # Whether to plot uncertainties or not
                                  min_merger_ratio   = 0.05,
                               #-------------------------
@@ -1210,14 +1210,14 @@ def _plot_evolution(csv_output = 'L100_evolution_ID443970_RadProj_Err__stars_gas
 
 # Will plot evolution of single galaxy       
 # SAVED: /plots/individual_evolution/                                                                           
-def _plot_evolution_old(csv_output = 'L100_evolution_ID401467670_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load 
+def _plot_evolution_old(csv_output = 'L100_evolution_ID401467650_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',   # CSV sample file to load 
                            #--------------------------
                            # Galaxy plotting
                            print_summary = True,
                              use_angles         = ['stars_gas_sf'],                 # Which angles to plot
                              use_hmr            = [1, 2],         # Which misangle HMR to plot
                              use_hmr_frac       = [2],                # Which mass and fraction HMR to plot             
-                             use_proj_angle     = False,                   # Whether to use projected or absolute angle, 'both'
+                             use_proj_angle     = True,                   # Whether to use projected or absolute angle, 'both'
                              use_uncertainties  = True,                   # Whether to plot uncertainties or not
                              min_merger_ratio   = 0.05,
                            #-------------------------
@@ -1729,7 +1729,7 @@ def _plot_evolution_old(csv_output = 'L100_evolution_ID401467670_RadProj_Err__st
 #_analysis_evolution()
 
 #_plot_evolution()
-#_plot_evolution_old() 
+_plot_evolution_old() 
 
 #============================
 

@@ -22,6 +22,8 @@ from read_dataset_directories import _assign_directories
 #====================================
 # finding directories
 answer = input("-----------------\nDirectories?:\n     1 local\n     2 serpens_snap\n     3 snip\n     4 snip local\n")
+if answer == '4':
+    raise Exception('Doesnt work on snips, use closest snap')
 EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_directories(answer)
 #====================================
 

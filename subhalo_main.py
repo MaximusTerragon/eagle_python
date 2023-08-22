@@ -1124,12 +1124,12 @@ Output Parameters
             ['gas']                     - Inflow/outflow of all gas
             ['gas_sf']                  - Inflow/outflow of only SF gas
             ['gas_nsf']                 - Inflow/outflow of only NSF gas
-                ['inflow']              - Accurate inflow
-                ['outflow']             - Accurate outflow
-                ['massloss']            - Whats left... does not take into account gas particles switching between modes
-                ['inflow_Z']            - Inflow metallicity
-                ['outflow_Z']           - Outflow metallicity
-                ['insitu_Z']            - Whats left... metallicity
+                ['inflow']              - Accurate inflow                       [Msun]
+                ['outflow']             - Accurate outflow                      [Msun]
+                ['massloss']            - Whats left... does not take into account gas particles switching between modes    [Msun]
+                ['inflow_Z']            - Inflow metallicity                    [Mass-wighted metallicity]
+                ['outflow_Z']           - Outflow metallicity                   [Mass-wighted metallicity]
+                ['insitu_Z']            - Whats left... metallicity             [Mass-wighted metallicity]
 """
 # Finds the values we are after and trims particle data
 class Subhalo_Analysis:
@@ -2111,9 +2111,9 @@ class Subhalo_Analysis:
             
             # If we already found kappa_star, don't run stars kappa
             if not math.isnan(MorphoKinem['kappa_stars']):
-                kappa_parttype = ['gas', 'gas_sf']
+                kappa_parttype = ['gas', 'gas_sf', 'gas_nsf']
             else:
-                kappa_parttype = ['stars', 'gas', 'gas_sf']
+                kappa_parttype = ['stars', 'gas', 'gas_sf', 'gas_nsf']
             
             # Trim data to kappa radius
             trimmed_data = self._trim_data(data_nil, kappa_rad)
@@ -3022,111 +3022,131 @@ class MergerTree:
             mask = np.where(GalaxyID == target_GalaxyID)
             self.TopLeafID = TopLeafID[mask]
             
+            #----------------------------------
+            # Create dictionary for all branches (that meet the requirements in the description above)
+            self.all_branches = {}
+
+            if int(maxSnap) <= 28:
+                for name, entry in zip(['redshift', 'snapnum', 'GalaxyID', 'DescendantID', 'TopLeafID', 'GroupNumber', 'SubGroupNumber', 'stelmass', 'gasmass', 'totalstelmass', 'totalgasmass'], [redshift, snapnum, GalaxyID, DescendantID, TopLeafID, GroupNumber, SubGroupNumber, stelmass, gasmass, totalstelmass, totalgasmass]):
+                    self.all_branches[name] = entry
+            else:
+                for name, entry in zip(['redshift', 'snapnum', 'GalaxyID', 'DescendantID', 'TopLeafID', 'GroupNumber', 'SubGroupNumber', 'stelmass', 'gasmass', 'totalstelmass', 'totalgasmass', 'lookbacktime'], [redshift, snapnum, GalaxyID, DescendantID, TopLeafID, GroupNumber, SubGroupNumber, stelmass, gasmass, totalstelmass, totalgasmass, lookbacktime]):
+                    self.all_branches[name] = entry
+        
+        
+            # Extract only main branch data
+            self.main_branch = self._main_branch(self.TopLeafID, self.all_branches)
+            if int(maxSnap) <= 28:
+                self.main_branch['lookbacktime'] = ((13.8205298 * u.Gyr) - FlatLambdaCDM(H0=67.77, Om0=0.307, Ob0 = 0.04825).age(self.main_branch['redshift'])).value
+            
+        
+            # Find merger ratios along tree
+            self.mergers = self._analyze_tree(target_GalaxyID, self.TopLeafID, self.all_branches)
+        
+            
         else:
             # This will navigate the merger tree to find the snap and other properties of a given galaxy 
             f = h5py.File(tree_dir + 'Snip100_MainProgenitorTrees.hdf5', 'r')
-    
-            #------------------------
-            # Create dictionary
-            myData = {}
-            myData['z'] = []
-            myData['SnapNum'] = []
-            myData['GalaxyID'] = []
-            myData['DescendantID'] = []
-            myData['TopLeafID'] = []
-            myData['GroupNumber'] = []
-            myData['SubGroupNumber'] = []
-            myData['stelmass'] = []
-            myData['gasmass'] = []
-            myData['totalstelmass'] = []
-            myData['totalgasmass'] = []
-    
-            #------------------------
-            # Extract data from merger tree
+            GalaxyID_tree             = np.array(f['Histories']['GalaxyID'])
+            DescendantID_tree         = np.array(f['Histories']['DescendantID'])
+            TopLeafID_tree            = np.array(f['Histories']['TopLeafID'])
+            GroupNum_tree             = np.array(f['Histories']['GroupNumber'])
+            SubGroupNum_tree          = np.array(f['Histories']['SubGroupNumber'])
+            SnapNum_tree              = np.array(f['Snapnum_Index']['Snapnum'])
+            Redshift_tree             = np.array(f['Snapnum_Index']['Redshift'])
+            Lookbacktime_tree         = np.array(f['Snapnum_Index']['LookbackTime'])
+            StellarMass_tree          = np.array(f['Histories']['StellarMass'])
+            GasMass_tree              = np.array(f['Histories']['GasMass'])
+            f.close()
             
-            # Find main branch row and target_snapNum
-            mask_mainbranch, target_snapNum = np.where(np.array(f['Histories']['GalaxyID']) == target_GalaxyID)
-            mask_mainbranch = mask_mainbranch[0]
-            target_snapNum  = target_snapNum[0]
+            # use mergertree to find exact tree in mergertree
+            row_mask = np.where(GalaxyID_tree == target_GalaxyID)[0][0]
             
-            # Extract TopLeafID of main branch (done by masking for target_GalaxyID)
-            self.TopLeafID  = int(f['Histories']['TopLeafID'][mask_mainbranch, target_snapNum])
+            # Mask mainbranch of this galaxy
+            mainbranch_GalaxyIDs     = GalaxyID_tree[row_mask][minSnap:(maxSnap+1)][np.where(GalaxyID_tree[row_mask][minSnap:(maxSnap+1)] != -1)[0]]
+            mainbranch_DescendantIDs = DescendantID_tree[row_mask][minSnap:(maxSnap+1)][np.where(GalaxyID_tree[row_mask][minSnap:(maxSnap+1)] != -1)[0]]
+            mainbranch_Redshift      = Redshift_tree[minSnap:(maxSnap+1)][np.where(GalaxyID_tree[row_mask][minSnap:(maxSnap+1)] != -1)[0]]
             
-            if debug:
-                print('target_GalaxyID ', target_GalaxyID)
-                print('target_SnapNum ', target_snapNum)
-                print('row ', mask_mainbranch)
-                print('TopLeafID', self.TopLeafID)
-            
-            # Find LastProgID
-            row_i = int(mask_mainbranch) + 1
-            ID_i = np.array(f['Histories']['GalaxyID'])[row_i, 200]
-            while ID_i == -1:
-                row_i += 1
-                ID_i = np.array(f['Histories']['GalaxyID'])[row_i, 200]
-            col_i = 0
-            ID_i = np.array(f['Histories']['GalaxyID'])[row_i-1, col_i]
-            while ID_i == -1:
-                col_i += 1
-                ID_i = np.array(f['Histories']['GalaxyID'])[row_i-1, col_i]
-            LastProgID = ID_i
-            if debug:
-                print('LastProgID ', LastProgID, (row_i-1), col_i)
-            
-            # alternative method
-            #mask = np.where(f['Snapnum_Index']['GalaxyID'] > f['Snapnum_Index']['GalaxyID'][mask_mainbranch])
-            #LastProgID = min(f['Snapnum_Index']['GalaxyID'][mask] - f['Snapnum_Index']['GalaxyID'][mask_mainbranch])
-            
-            # Extract all values that lie between self.TopLeafID and LastProgID
-            mask = (np.array(f['Histories']['GalaxyID']) >= f['Histories']['GalaxyID'][mask_mainbranch, 200]) & (np.array(f['Histories']['GalaxyID']) <= LastProgID) & (np.array(f['Histories']['SnapNum']) >= minSnap) & (np.array(f['Histories']['SnapNum']) <= maxSnap) & (np.array(f['Histories']['DescendantID']) <= self.TopLeafID)
-            #& (np.array(f['Histories']['DescendantID']) >= f['Histories']['GalaxyID'][mask_mainbranch, 200])
-            
-            for header_name, dict_name in zip(['GalaxyID', 'DescendantID', 'TopLeafID', 'GroupNumber', 'SubGroupNumber', 'StellarMass', 'GasMass', 'StellarMass', 'GasMass', 'SnapNum'], ['GalaxyID', 'DescendantID', 'TopLeafID', 'GroupNumber', 'SubGroupNumber', 'stelmass', 'gasmass', 'totalstelmass', 'totalgasmass', 'SnapNum']):
-                myData[dict_name] = f['Histories'][header_name][mask]
-            myData['z'] = []
-            myData['lookbacktime'] = []
-            for index_i in myData['SnapNum']:
-                myData['z'].append(f['Snapnum_Index']['Redshift'][index_i])
-                myData['lookbacktime'].append(f['Snapnum_Index']['LookbackTime'][index_i])
-            
-            
-            sort_mask = np.argsort(myData['SnapNum'])
-            redshift        = np.array(myData['z'])[sort_mask]
-            snapnum         = np.array(myData['SnapNum'])[sort_mask]
-            GalaxyID        = np.array(myData['GalaxyID'])[sort_mask]
-            DescendantID    = np.array(myData['DescendantID'])[sort_mask]
-            TopLeafID       = np.array(myData['TopLeafID'])[sort_mask]
-            GroupNumber     = np.array(myData['GroupNumber'])[sort_mask]
-            SubGroupNumber  = np.array(myData['SubGroupNumber'])[sort_mask]
-            stelmass        = np.array(myData['stelmass'])[sort_mask]
-            gasmass         = np.array(myData['gasmass'])[sort_mask]
-            totalstelmass   = np.array(myData['totalstelmass'])[sort_mask]
-            totalgasmass    = np.array(myData['totalgasmass'])[sort_mask]
-            lookbacktime    = np.array(myData['lookbacktime'])[sort_mask]
-            
+            #--------------------------------------
+            # Find mergers from previous snap to now. Uses only merger tree data, so no gassf
+            self.mergers = {'redshift': [],
+                            'snapnum': [],
+                            'ratios': [],
+                            'gasratios': [],
+                            'GalaxyIDs': []}
+            for SnapNum, GalaxyID, DescendantID, Redshift in zip(np.arange(minSnap, maxSnap+1), mainbranch_GalaxyIDs, mainbranch_DescendantIDs, mainbranch_Redshift):
+                if GalaxyID == -1:
+                    continue
+                
+                #Ignoring row_mask, look for duplicate DescendantIDs with same GalaxyID as current galaxy
+                merger_mask = [i for i in np.where(np.array(DescendantID_tree)[:,int(SnapNum-1)] == GalaxyID)[0] if i != row_mask]
+                
+                # find peak stelmass of those galaxies
+                merger_ID_array    = []
+                merger_ratio_array = []
+                merger_gas_array   = []
+                if len(merger_mask) > 0:
+                    for mask_i in merger_mask:
+                        # Find largest stellar mass of this satellite.
+                        mass_mask = np.argmax(StellarMass_tree[mask_i][int(SnapNum-10):int(SnapNum)]) + (SnapNum-10)
+                    
+                        # Extract secondary properties
+                        primary_stelmass   = StellarMass_tree[row_mask][mass_mask]
+                        primary_gasmass    = GasMass_tree[row_mask][mass_mask]
+                        component_stelmass = StellarMass_tree[mask_i][mass_mask]
+                        component_gasmass  = GasMass_tree[mask_i][mass_mask]
+                    
+                        if primary_stelmass <= 0.0:
+                            # Adjust stelmass
+                            primary_stelmass   = math.nan
+                            primary_gasmass    = math.nan
+                        
         
-        #----------------------------------
-        # Create dictionary for all branches (that meet the requirements in the description above)
-        self.all_branches = {}
+                        # Find ratios
+                        merger_ratio = component_stelmass / primary_stelmass 
+                        gas_ratio    = (primary_gasmass + component_gasmass) / (primary_stelmass + component_stelmass)
+                        if debug:
+                            print('component stats')
+                            print(GalaxyID_tree[mask_i][int(SnapNum-1)])
+                            print(primary_stelmass)
+                            print(component_stelmass)
+                            print(primary_gasmass)
+                            print(component_gasmass)
+                            print(merger_ratio)
+                            print(gas_ratio)
 
-        if int(maxSnap) <= 28:
-            for name, entry in zip(['redshift', 'snapnum', 'GalaxyID', 'DescendantID', 'TopLeafID', 'GroupNumber', 'SubGroupNumber', 'stelmass', 'gasmass', 'totalstelmass', 'totalgasmass'], [redshift, snapnum, GalaxyID, DescendantID, TopLeafID, GroupNumber, SubGroupNumber, stelmass, gasmass, totalstelmass, totalgasmass]):
-                self.all_branches[name] = entry
-        else:
-            for name, entry in zip(['redshift', 'snapnum', 'GalaxyID', 'DescendantID', 'TopLeafID', 'GroupNumber', 'SubGroupNumber', 'stelmass', 'gasmass', 'totalstelmass', 'totalgasmass', 'lookbacktime'], [redshift, snapnum, GalaxyID, DescendantID, TopLeafID, GroupNumber, SubGroupNumber, stelmass, gasmass, totalstelmass, totalgasmass, lookbacktime]):
-                self.all_branches[name] = entry
-        
-        
-        # Extract only main branch data
-        self.main_branch = self._main_branch(self.TopLeafID, self.all_branches)
-        if int(maxSnap) <= 28:
-            self.main_branch['lookbacktime'] = ((13.8205298 * u.Gyr) - FlatLambdaCDM(H0=67.77, Om0=0.307, Ob0 = 0.04825).age(self.main_branch['redshift'])).value
+                        # Append
+                        merger_ID_array.append([np.array(DescendantID_tree)[row_mask][int(SnapNum-1)], GalaxyID_tree[mask_i][int(SnapNum-1)]])
+                        merger_ratio_array.append(merger_ratio)
+                        merger_gas_array.append(gas_ratio)
+                
+                
+                self.mergers['redshift'].append(Redshift)
+                self.mergers['snapnum'].append(SnapNum)
+                self.mergers['ratios'].append(merger_ratio_array)
+                self.mergers['gasratios'].append(merger_gas_array)
+                self.mergers['GalaxyIDs'].append(merger_ID_array)
             
+            #--------------------------------------
+            # Find main branch
+            self.main_branch = {}
+            self.main_branch['redshift']        = mainbranch_Redshift
+            self.main_branch['snapnum']         = SnapNum_tree[minSnap:(maxSnap+1)][np.where(GalaxyID_tree[row_mask][minSnap:(maxSnap+1)] != -1)[0]]
+            self.main_branch['GalaxyID']        = mainbranch_GalaxyIDs
+            self.main_branch['DescendantID']    = mainbranch_DescendantIDs
+            self.main_branch['TopLeafID']       = TopLeafID_tree[row_mask][minSnap:(maxSnap+1)][np.where(GalaxyID_tree[row_mask][minSnap:(maxSnap+1)] != -1)[0]]
+            self.main_branch['GroupNumber']     = GroupNum_tree[row_mask][minSnap:(maxSnap+1)][np.where(GalaxyID_tree[row_mask][minSnap:(maxSnap+1)] != -1)[0]]
+            self.main_branch['SubGroupNumber']  = SubGroupNum_tree[row_mask][minSnap:(maxSnap+1)][np.where(GalaxyID_tree[row_mask][minSnap:(maxSnap+1)] != -1)[0]]
+            self.main_branch['stelmass']        = StellarMass_tree[row_mask][minSnap:(maxSnap+1)][np.where(GalaxyID_tree[row_mask][minSnap:(maxSnap+1)] != -1)[0]]
+            self.main_branch['gasmass']         = GasMass_tree[row_mask][minSnap:(maxSnap+1)][np.where(GalaxyID_tree[row_mask][minSnap:(maxSnap+1)] != -1)[0]]
+            self.main_branch['totalstelmass']   = StellarMass_tree[row_mask][minSnap:(maxSnap+1)][np.where(GalaxyID_tree[row_mask][minSnap:(maxSnap+1)] != -1)[0]]
+            self.main_branch['totalgasmass']    = GasMass_tree[row_mask][minSnap:(maxSnap+1)][np.where(GalaxyID_tree[row_mask][minSnap:(maxSnap+1)] != -1)[0]]
+            
+            
+            #----------------------------------
+            # Create dictionary for all branches (that meet the requirements in the description above)
+            self.all_branches = {}
         
-        # Find merger ratios along tree
-        self.mergers = self._analyze_tree(target_GalaxyID, self.TopLeafID, self.all_branches)
-        
-        # gasmass is not sf or nsf
           
     def _extract_merger_tree(self, target_GalaxyID, minSnap):
         # This uses the eagleSqlTools module to connect to the database with your username and password.
@@ -3384,6 +3404,7 @@ def ConvertID_snip(tree_dir, galID, sim, debug=False):
         else:
             myData[header_name] = f['Histories'][header_name][row_mask,snapNum]
     
+    f.close()
         
     return myData['GroupNumber'], myData['SubGroupNumber'], myData['SnapNum'], myData['Redshift'], myData['halo_mass'], np.array([myData['x'], myData['y'], myData['z']]), np.array([myData['ellip'], myData['triax'], myData['kappa_stars'], myData['disp_ani'], myData['disc_to_total'], myData['rot_to_disp_ratio']])
 

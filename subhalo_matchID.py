@@ -30,7 +30,6 @@ EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_dir
 
 
 ID_list = [15851557, 3327115, 10438463, 10670173, 13866051, 17480553, 8077031, 8494196, 8763330, 9777730, 10009377, 10145405, 14216102, 16049479, 17374402, 17718284, 18447769]
-
 ID_output = []
 
 # When given ID and snip/snap, will try to find closest match ID in snap/snip

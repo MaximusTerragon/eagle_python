@@ -977,7 +977,7 @@ def _analysis_misalignment_minor(csv_sample = 'L100_19_minor_sample_misalignment
 #--------------------------------
 # Plots singular graphs by reading in existing csv file
 # SAVED: /plots/misalignment_distributions/
-def _plot_misalignment(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_10.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                        csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                        #--------------------------
                        # Galaxy plotting
@@ -993,6 +993,7 @@ def _plot_misalignment(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # 
                          use_satellites     = False,             # Whether to include SubGroupNum =/ 0
                        #--------------------------
                        add_observational  = True,
+                       misangle_threshold = 30,             # what we classify as misaligned
                        #--------------------------
                        use_alternative_format = True,          # COMPACT/Poster formatting
                        #--------------------------
@@ -1381,7 +1382,7 @@ def _plot_misalignment(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # 
         
         #-----------
         # Annotations
-        axs.axvline(30, ls='--', lw=1, c='k')
+        axs.axvline(misangle_threshold, ls='--', lw=1, c='k')
         
         
         #-----------
@@ -1424,6 +1425,11 @@ def _plot_misalignment(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # 
                 legend_labels.append('%s-galaxies' %group_or_field)
                 legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
                 legend_colors.append('grey')
+                
+            if not add_observational:
+                legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+                legend_labels.append(' ')
+                legend_colors.append('w')
         
             # Add redshift
             legend_labels.append('${z=%.2f}$' %sample_input['Redshift'])
@@ -1485,26 +1491,29 @@ def _plot_misalignment(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # 
             print(catalogue['total'])
             print(catalogue['sample'])
             print(catalogue['plot'])
-            print('\nRAW BIN VALUES:')
+            print('\nRAW BIN VALUES:')      
         aligned_tally           = 0
         aligned_err_tally       = 0
         misaligned_tally        = 0 
         misaligned_err_tally    = 0 
         counter_tally           = 0
         counter_err_tally       = 0
-        for i, bin_count_i in enumerate(hist_n):
+        if int(misangle_threshold) != 30:
+            hist_n, _ = np.histogram(plot_angles, bins=np.arange(0, 181, 5), range=(0, 180))
+        for angle_i, bin_count_i in zip(np.arange(0, 181, 5), hist_n):
             if print_summary:
                 print('  %i' %bin_count_i, end='')
-            
-            if i < 3:
+            if angle_i < misangle_threshold:
                 aligned_tally += bin_count_i
                 aligned_err_tally += bin_count_i**0.5
-            if i >= 3:
+            if angle_i >= misangle_threshold:
                 misaligned_tally += bin_count_i
                 misaligned_err_tally += bin_count_i**0.5
-            if i >= 15:
+            if angle_i >= (180-misangle_threshold):
                 counter_tally += bin_count_i
-                counter_err_tally += bin_count_i**0.5
+                counter_err_tally += bin_count_i**0.5        
+                
+                
             
         if print_summary:    
             print('\n')     # total population includes galaxies that failed sample, so can add to less than 100% (ei. remaining % is galaxies that make up non-sample)
@@ -1582,8 +1591,8 @@ def _plot_misalignment(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # 
 # Manually plots a graph tracking share of aligned, misaligned, and counter-rotating systems with z
 # SAVED: /plots/misalignment_distributions_z/
 def _plot_misalignment_z(csv_sample1 = 'L100_',                                 # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
-                         csv_sample_range = [19, 20, 21, 22, 23, 24, 25, 26, 27, 28],   # snapnums
-                         csv_sample2 = '_all_sample_misalignment_9.0',
+                         csv_sample_range = np.arange(147, 201, 1),   # snapnums
+                         csv_sample2 = '_all_sample_misalignment_10.0',
                          csv_output_in = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                          #--------------------------
                          # Galaxy plotting
@@ -1598,7 +1607,10 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
                            group_or_field     = 'both',           # Whether to plot only field/group
                            use_satellites     = False,             # Whether to include SubGroupNum =/ 0
                          #--------------------------
-                         showfig       = True,
+                         # Misalignment criteria
+                         misangle_threshold   = 30,             # what we classify as misaligned
+                         #--------------------------
+                         showfig       = False,
                          savefig       = True,
                            file_format = 'pdf',
                            savefig_txt = '',
@@ -1934,7 +1946,7 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
         
             #=====================================
             # Extracting histogram values
-            hist_n, _ = np.histogram(plot_angles, bins=np.arange(0, 181, 10), range=(0, 180))
+            hist_n, _ = np.histogram(plot_angles, bins=np.arange(0, 181, 5), range=(0, 180))
             
             #-------------
             # Print summary
@@ -1944,16 +1956,17 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
             misaligned_err_tally    = 0 
             counter_tally           = 0
             counter_err_tally       = 0
-            for i, bin_count_i in enumerate(hist_n):
-                if i < 3:
+            for angle_i, bin_count_i in zip(np.arange(0, 181, 5), hist_n):
+                if angle_i < misangle_threshold:
                     aligned_tally += bin_count_i
                     aligned_err_tally += bin_count_i**0.5
-                if i >= 3:
+                if angle_i >= misangle_threshold:
                     misaligned_tally += bin_count_i
                     misaligned_err_tally += bin_count_i**0.5
-                if i >= 15:
+                if angle_i >= (180-misangle_threshold):
                     counter_tally += bin_count_i
                     counter_err_tally += bin_count_i**0.5
+                    
             
             if debug:    
                 print('\n')     # total population includes galaxies that failed sample, so can add to less than 100% (ei. remaining % is galaxies that make up non-sample)
@@ -2009,15 +2022,23 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
         
         #-----------
         ### Creating graphs
-        axs.errorbar(plot_dict['LookbackTime'], plot_dict['aligned'], yerr=plot_dict['aligned_err'], capsize=3, elinewidth=0.7, markeredgewidth=1, color='b')
-        axs.errorbar(plot_dict['LookbackTime'], plot_dict['misaligned'], yerr=plot_dict['misaligned_err'], capsize=3, elinewidth=0.7, markeredgewidth=1, color='r')
-        axs.errorbar(plot_dict['LookbackTime'], plot_dict['counter'], yerr=plot_dict['counter_err'], capsize=3, elinewidth=0.7, markeredgewidth=1, color='indigo')
+        if len(csv_sample_range) > 30:
+            axs.plot(plot_dict['LookbackTime'], plot_dict['aligned'], lw=0.7, color='b', zorder=7)
+            axs.fill_between(plot_dict['LookbackTime'], np.array(plot_dict['aligned'])-np.array(plot_dict['aligned_err']), np.array(plot_dict['aligned'])+np.array(plot_dict['aligned_err']), color='b', lw=0, alpha=0.15, zorder=5)
+            axs.plot(plot_dict['LookbackTime'], plot_dict['misaligned'], lw=0.7, color='r', zorder=7)
+            axs.fill_between(plot_dict['LookbackTime'], np.array(plot_dict['misaligned'])-np.array(plot_dict['misaligned_err']), np.array(plot_dict['misaligned'])+np.array(plot_dict['misaligned_err']), color='r', lw=0, alpha=0.15, zorder=5)
+            axs.plot(plot_dict['LookbackTime'], plot_dict['counter'], lw=0.7, color='indigo', zorder=7)
+            axs.fill_between(plot_dict['LookbackTime'], np.array(plot_dict['counter'])-np.array(plot_dict['counter_err']), np.array(plot_dict['counter'])+np.array(plot_dict['counter_err']), color='indigo', lw=0, alpha=0.15, zorder=5)
+        else:
+            axs.errorbar(plot_dict['LookbackTime'], plot_dict['aligned'], yerr=plot_dict['aligned_err'], capsize=3, elinewidth=0.7, markeredgewidth=1, color='b')
+            axs.errorbar(plot_dict['LookbackTime'], plot_dict['misaligned'], yerr=plot_dict['misaligned_err'], capsize=3, elinewidth=0.7, markeredgewidth=1, color='r')
+            axs.errorbar(plot_dict['LookbackTime'], plot_dict['counter'], yerr=plot_dict['counter_err'], capsize=3, elinewidth=0.7, markeredgewidth=1, color='indigo')
+            
         
-
         #------------------------
         ### General formatting
         # Setting regular axis
-        axs.set_xlim(0, 13.5)
+        axs.set_xlim(0, 7)
         axs.set_xlabel('Lookback time (Gyr)')
         axs.invert_xaxis()
         axs.set_ylim(0, 100)
@@ -2028,12 +2049,12 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
         
         #-----------
         # Create redshift axis:
-        redshiftticks = [0, 0.2, 0.5, 1, 1.5, 2, 5, 10, 20]
+        redshiftticks = [0, 0.1, 0.2, 0.5, 1, 1.5, 2]
         ageticks = ((13.8205298 * u.Gyr) - FlatLambdaCDM(H0=67.77, Om0=0.307, Ob0 = 0.04825).age(redshiftticks)).value
         
         ax_top = axs.twiny()
         ax_top.set_xticks(ageticks)
-        ax_top.set_xlim(0, 13.5)
+        ax_top.set_xlim(0, 7)
         ax_top.set_xticklabels(['{:g}'.format(z) for z in redshiftticks])
         ax_top.set_xlabel('Redshift')
         ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major')
@@ -2109,8 +2130,8 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
             sat_str = 'cent'
        
         if savefig:
-            plt.savefig("%s/misalignment_distributions_z/L%s_ALL_%s_misalignment_summary_%s_%s_HMR%s_proj%s_inc%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], sat_str, np.log10(float(output_input['galaxy_mass_limit'])), use_angle, str(use_hmr), use_proj_angle, min_inc_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print("\n  SAVED: %s/misalignment_distributions_z/L%s_ALL_%s_misalignment_summary_%s_%s_HMR%s_proj%s_inc%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], sat_str, np.log10(float(output_input['galaxy_mass_limit'])), use_angle, str(use_hmr), use_proj_angle, min_inc_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format))
+            plt.savefig("%s/misalignment_distributions_z/L%s_ALL_%s_misalignment_summary_%s_%s_HMR%s_proj%s_inc%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], sat_str, misangle_threshold, use_angle, str(use_hmr), use_proj_angle, min_inc_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/misalignment_distributions_z/L%s_ALL_%s_misalignment_summary_%s_%s_HMR%s_proj%s_inc%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], sat_str, misangle_threshold, use_angle, str(use_hmr), use_proj_angle, min_inc_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format))
         if showfig:
             plt.show()
         plt.close()
@@ -2134,18 +2155,29 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
 #_analysis_misalignment_distribution()
 #_analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misalignment_10.040602340114074TEST')
 
-#_plot_misalignment(csv_sample = 'L100_163_all_sample_misalignment_10.0', csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_')
+#_plot_misalignment()
+_plot_misalignment_z(ETG_or_LTG = 'LTG', misangle_threshold = 30)
+_plot_misalignment_z(ETG_or_LTG = 'ETG', misangle_threshold = 30)
+_plot_misalignment_z(ETG_or_LTG = 'LTG', misangle_threshold = 45)
+_plot_misalignment_z(ETG_or_LTG = 'ETG', misangle_threshold = 45)
+
 #_plot_misalignment_z()
 
 #===========================
+
+
+
+
+
+
 # range: 148-200
 #for snap_i in np.arange(19, 28.1, 1):
     #_sample_misalignment(snapNum = int(snap_i))
     #_analysis_misalignment_distribution(csv_sample = 'L12_' + str(int(snap_i)) + '_all_sample_misalignment_9.0')
-for snap_i in np.arange(151, 152.1, 1):
+#for snap_i in np.arange(151, 152.1, 1):
     #_sample_misalignment(snapNum = int(snap_i))
     #_analysis_misalignment_distribution(csv_sample = 'L100_' + str(int(snap_i)) + '_all_sample_misalignment_10.0')
     
-    _plot_misalignment(csv_sample = 'L100_' + str(int(snap_i)) + '_all_sample_misalignment_10.0', csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_')
+#    _plot_misalignment(csv_sample = 'L100_' + str(int(snap_i)) + '_all_sample_misalignment_10.0', csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_')
 
 #===========================

@@ -27,8 +27,6 @@ from read_dataset_directories import _assign_directories
 answer = input("-----------------\nDirectories?:\n     1 local\n     2 serpens_snap\n     3 snip\n     4 snip local\n")
 EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_directories(answer)
 #====================================
-
-
 """  
 DESCRIPTION
 -----------
@@ -69,7 +67,6 @@ Counter-rotating (0 snip)
 """
 
 ID_list = [15851557, 3327115, 10438463, 10670173, 13866051, 17480553, 8077031, 8494196, 8763330, 9777730, 10009377, 10145405, 14216102, 16049479, 17374402, 17718284, 18447769]
-
 #--------------------
 # Run analysis on individual galaxies and output individual CSV files
 # SAVED: /outputs/L%s_evolution_ID_
@@ -1217,7 +1214,7 @@ def _plot_evolution_old(csv_output = 'L100_evolution_ID401467650_RadProj_Err__st
                              use_angles         = ['stars_gas_sf'],                 # Which angles to plot
                              use_hmr            = [1, 2],         # Which misangle HMR to plot
                              use_hmr_frac       = [2],                # Which mass and fraction HMR to plot             
-                             use_proj_angle     = True,                   # Whether to use projected or absolute angle, 'both'
+                             use_proj_angle     = False,                   # Whether to use projected or absolute angle, 'both'
                              use_uncertainties  = True,                   # Whether to plot uncertainties or not
                              min_merger_ratio   = 0.05,
                            #-------------------------
@@ -1225,7 +1222,7 @@ def _plot_evolution_old(csv_output = 'L100_evolution_ID401467650_RadProj_Err__st
                            highlight_criteria = True,       # whether to indicate when criteria not met (but still plot)
                            rad_type_plot      = 'hmr',      # 'rad' whether to use absolute distance or hmr 
                            #--------------------------
-                           showfig        = True,
+                           showfig        = False,
                            savefig        = True,
                              file_format  = 'pdf',
                              savefig_txt  = '',
@@ -1729,10 +1726,9 @@ def _plot_evolution_old(csv_output = 'L100_evolution_ID401467650_RadProj_Err__st
 #_analysis_evolution()
 
 #_plot_evolution()
-_plot_evolution_old() 
-
+#_plot_evolution_old() 
 #============================
 
-#for ID_i in ID_list:
-#    _plot_evolution(csv_output = 'L100_evolution_ID' + str(ID_i) + '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_')
+#for ID_i in [108988077, 479647060, 21721896, 390595970, 401467650, 182125463, 192213531, 24276812, 116404995, 239808134, 215988755, 86715463, 6972011, 475772617, 374037507, 429352532, 441434976]:
+#    _plot_evolution_old(csv_output = 'L100_evolution_ID' + str(ID_i) + '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_')
 #============================

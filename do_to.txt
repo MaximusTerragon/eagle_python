@@ -1,92 +1,48 @@
 
 
 
+# Make new evolution code for snip to read in tree
 
-# make merger_misalined_time_pre work
-
-# make plot_time_pre work
-
-# Add snaps before misalignment/merger... move backwards... tweak evolution to look not only at 
-  next snip to cause misalignment, but entire history
-
-# Might need to make a different stacked code, as we now have merger tree.
-when in loop, 
-if GalaxyID = ### and DescendantID =! -1 and DescendantID not in galaxy_dict[snap+1]:
-	# Check if decendant in snap+1 (missing ID)
-	if DescendantID in galaxy_dict[snap+2]:
-		# Append NaN values for everything (for missing snap)
-		snapnum_tmp + 2
-		...
-	
-# See how analysed galaxies are gathered... we can use that to parametise. Ideally each galaxy evolution
-  individually. Again, add X Mya before misalignment
-  
-# Might need to remove duplicates, or at least flag duplicates of same galaxy
-
-
-
-
-
-# plot evolutions higher res
-
-# Make evolution use existing files
-
-# Run on all snips 147-200
-1	147 - 155
-2	155 - 163
-3	163 - 171
-4	171 - 179
-5	179 - 187
-6	187 - 195
-7	195 - 201
-+ minor analysis
-
-# Draft out paper
-
-# Read 5 papers
-
-# Run same stacked example
-
-# Run minor analysis on serpens 9-10
-# Create mergertree file
-
-# once sample used, still need to trim for stellar mass within 30pkpc, so sample will need modifying
-
-# Run same stacked example
-
-# Colour stacked_ plots by gasinflow/outflow
+# make parametisation code
 
 # Parametise: mass, morphology (stays above X kappa), time after misalignment, size of merger, gas ratio, 
-  metallicity, inflow/outflow, delta angle
+  metallicity, inflow/outflow, delta angle, X time spent aligned/misaligned
+  Galaxies meeting criteria are saved by last galaxy in list, which is the time at which it relaxes
+  May need to smooth misalignment angle... error bars?... X snips <30 degrees
+  Define misalignments as 45, etc.
+  Mass... at m10, about double the number of counter-rotating than m9 with snaps
+
+
+
+
+# choose galaxy that stops and test 17879310
+# Create stacked
+# Create timescale histogram
+
+# Add kappa_nsf to snip_timescale once run finishes
+
+# modify presentation for end september
+
+# once sample used, still need to trim for stellar mass within 30pkpc, so sample will need modifying
 
 # Ask tim about xmas holiday time off
 
 _____________________________________________________________
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-DONE WEEK 43:
-- Cleaned fossils Monday and Tuesday
-- Checked GalaxyID behaviour
-- Downloaded incorrect snips... found issue, downloading particle data
-  snips and foud missing SubGroupNumber
-- Tested render with SubGroupNum
-- Deleted snipshots
-- Updated directories
-- Checked lookbacktime
-- Modified _render to select single or multi subhalos
-- Experimented with BH finding, stick to current routine
-- Checked sample doesn't include GalaxyID = -1
-- Finished particle data download
-- Copied files over
-- Created all major and minor samples from 147-200
-- Run analysis on all snips
-- Run evolution
-- Created galaxy dict and fixed bug
-- Tested galaxy dict, tested time spent misaligned
-- Run revised evolution
-- Added inclination angle limit to all files
+DONE WEEK 45:
+- Re-created distributions for stars-gas sf, stars-gas, stars-dm
+  at z=0.1 for paper
+- Bug fixes on distributions z-code
+- Found m10 has about double the counter-rotating galaxies as it evolves
+- Created misalignment-z graphs but with m10
+- Added variable misangle_threshold
+- Tweaked merger code in evolution
+- Inserted nans
 
-Skipping GalaxyID is not a common problem. Skipped Galaxy has stellarmass, but no ID 
-(galaxy passing through one another)
+
+
+
+
 
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 -------------------------------------------------------------
@@ -117,22 +73,338 @@ Skipping GalaxyID is not a common problem. Skipped Galaxy has stellarmass, but n
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠉⠛⠛⠒⠒⠒⠒⠒⠒⠒⠂⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 
 
+===========================================================
+GUIDE TO galaxy_tree['%s' %GalaxyID] VALUES:
+We will want to ensure that for whatever we are 
+extracting (eg. stars_gas_sf):
+    'stars':        entire array ['2.0_hmr']['count'] > 20
+    'gas_sf':       entire array ['2.0_hmr']['count'] > 20
+    'stars_gas_sf': entire array ['2.0_hmr']['com_proj'] < 2.0
+
+We can then additionall impose limits, ei.:
+       -            entire array is >10^14
+    'stars':        entire array ['kappa'] > 0.4
+    'gas_sf':       entire array ['2.0_hmr']['count'] > 50
+    'gas_sf':       entire array ['2.0_hmr']['proj_angle'] > 10, < 170
+
+['2.0_hmr'] will always be there but may have math.nan, so will need
+to ensure entire array np.isnan = False
+
+Galaxies that merge do not show final merger ratio and simply end array.
+Galaxies where stellermass cant be defined have merger_ratio = math.nan
+
+Snaps will be recorded from first to last, with nan inbetween
+            
+#-------------------------------------
+galaxy_tree['%s' %ID_dict]
+
+GalaxyID                -
+DescendantID            -
+GroupNum                -
+SubGroupNum             -
+SnapNum                 -
+Redshift                -
+Lookbacktime            -
+halomass                - total per subfind
+rad                     - [pkpc]
+rad_proj                - [pkpc]
+ap_sfr					- from tree, [Msun/yr]
+merger_ID               - merger stuff
+merger_ratio_stars      - peak stellar ratios in past 2 Gyr ish
+merger_ratio_gas        - gas ratios at time of peak stellar ratios
+gasdata_old             - gets updated and replaced with math.nan
+
+'stars'
+    tot_mass            - total subfind mass
+    ap_mass             - total aperture mass
+    kappa               - kappa
+    '1.0_hmr'
+    '2.0_hmr'
+        mass            - mass in radius
+        count           - counts in radius
+        Z               - metallicity in radius
+        proj_angle      - angle to viewing axis
+
+'gas'
+    tot_mass            - total subfind mass
+    ap_mass             - total aperture mass
+    kappa               - kappa
+    '1.0_hmr'
+    '2.0_hmr'
+        mass            - mass in radius
+        count           - counts in radius
+        sfr             - sfr in radius [Msun/yr]
+        Z               - metallicity in radius
+        proj_angle      - angle to viewing axis
+        inflow_rate     - inflow rate at radius [Msun/yr]
+        inflow_Z        - inflow metallicity (mass-weighted, but Z is fine)
+        outflow_rate    - outflow rate at radius [Msun/yr]
+        outflow_Z       - outflow metallicity (mass-weighted, but Z is fine)
+        stelmassloss_rate   - stellar mass loss rate [Msun/yr]
+        insitu_Z        - metallicity of material that remained (mass-weighted, but Z is fine)
+
+'gas_sf'
+    ap_mass             - total aperture mass
+    kappa               - kappa
+    '1.0_hmr'
+    '2.0_hmr'
+        mass            - mass in radius
+        count           - counts in radius
+        sfr             - sfr in radius [Msun/yr]
+        Z               - metallicity in radius
+        proj_angle      - angle to viewing axis
+        inflow_rate     - inflow rate at radius [Msun/yr]
+        inflow_Z        - inflow metallicity (mass-weighted, but Z is fine)
+        outflow_rate    - outflow rate at radius [Msun/yr]
+        outflow_Z       - outflow metallicity (mass-weighted, but Z is fine)
+        stelmassloss_rate   - stellar mass loss rate [Msun/yr]
+        insitu_Z        - metallicity of material that remained (mass-weighted, but Z is fine)
+
+'gas_nsf'
+    ap_mass             - total aperture mass
+    '1.0_hmr'
+    '2.0_hmr'
+        mass            - mass in radius
+        count           - counts in radius
+        Z               - metallicity in radius
+        proj_angle      - angle to viewing axis
+        inflow_rate     - inflow rate at radius [Msun/yr]
+        inflow_Z        - inflow metallicity (mass-weighted, but Z is fine)
+        outflow_rate    - outflow rate at radius [Msun/yr]
+        outflow_Z       - outflow metallicity (mass-weighted, but Z is fine)
+        stelmassloss_rate   - stellar mass loss rate [Msun/yr]
+        insitu_Z        - metallicity of material that remained (mass-weighted, but Z is fine)
+
+'dm'
+    ap_mass             - total aperture mass
+    count               - total count in aperture
+    proj_angle          - angle to viewing axis
+
+'bh'
+    mass                - bh mass of central BH (not particle mass)
+    mdot_instant        - mdot of that particle
+    mdot                - mdot averaged over snipshot time difference
+    edd                 - instantaneous eddington from mdot_instant
+    count               - len(mass)
+
+'stars_gas'
+    '1.0_hmr'           value may not exist if pkpc was capped at maximum. If 0 particles appends math.nan, will have values for everything else (even min particle not met)
+    '2.0_hmr'
+        angle_abs       - angle
+        err_abs         - error 
+        angle_proj      - projected angle
+        err_proj        - error of projected
+        com_abs         - com [pkpc]
+        com_proj        - com [pkpc] for viewing axis
+
+'stars_gas_sf'
+    '1.0_hmr'           value may not exist if pkpc was capped at maximum. If 0 particles appends math.nan, will have values for everything else (even min particle not met)
+    '2.0_hmr'
+        angle_abs       - angle
+        err_abs         - error 
+        angle_proj      - projected angle
+        err_proj        - error of projected
+        com_abs         - com [pkpc]
+        com_proj        - com [pkpc] for  viewing axis
+
+'stars_gas_nsf'
+    '1.0_hmr'           value may not exist if pkpc was capped at maximum. If 0 particles appends math.nan, will have values for everything else (even min particle not met)
+    '2.0_hmr'
+        angle_abs       - angle
+        err_abs         - error 
+        angle_proj      - projected angle
+        err_proj        - error of projected
+        com_abs         - com [pkpc]
+        com_proj        - com [pkpc] for  viewing axis
+
+'gas_sf_gas_nsf'
+    '1.0_hmr'           value may not exist if pkpc was capped at maximum. If 0 particles appends math.nan, will have values for everything else (even min particle not met)
+    '2.0_hmr'
+        angle_abs       - angle
+        err_abs         - error 
+        angle_proj      - projected angle
+        err_proj        - error of projected
+        com_abs         - com [pkpc]
+        com_proj        - com [pkpc] for  viewing axis
+
+'stars_dm'
+    '1.0_hmr'           value may not exist if pkpc was capped at maximum. If 0 particles appends math.nan, will have values for everything else (even min particle not met)
+    '2.0_hmr'
+        angle_abs       - angle
+        err_abs         - error 
+        angle_proj      - projected angle
+        err_proj        - error of projected
+        com_abs         - com [pkpc]
+        com_proj        - com [pkpc] for  viewing axis
+		
+============================================================
+
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣤⡴⠶⠞⠛⠛⠉⠉⠉⠉⠉⠉⠛⠛⠶⢦⣄⡀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣠⣤⣶⣾⠿⠛⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠀⠀⠈⠛⢦⡀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣤⠶⢛⣩⠶⠛⠉⠀⠀⠀⣀⣤⡴⠶⠚⠛⠛⠛⠉⠛⠛⠛⢶⡟⠉⢻⡄⠀⠀⠀⠈⢻⡄
+⠀⠀⠀⠀⠀⠀⠀⣠⡴⠟⢉⣠⠶⠋⠁⠀⠀⣠⡴⠞⠋⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⠷⡤⠾⣇⠀⠀⠀⠀⠀⣿
+⠀⠀⠀⠀⣠⡴⠛⠁⣀⡴⠛⠁⠀⢀⣠⠶⠛⠁⠀⠀⠀⣀⣠⡤⠶⠒⠛⠛⠛⠛⠛⠶⣤⡀⠀⠀⠀⢹⡆⠀⠀⠀⠀⢸
+⠀⢀⣴⠟⠁⠀⣠⡾⠋⠀⠀⢀⡴⠛⠁⠀⢰⠞⠳⡶⠛⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⣷⠀⠀⠀⢈⡇⠀⠀⠀⠀⣾
+⢴⠟⠁⠀⢀⡼⠋⠀⠀⢀⡴⠋⠀⠀⠀⣠⡾⠷⠶⠇⢀⣠⣤⠶⠖⠲⢶⣄⠀⠀⠀⠀⠀⡿⠀⠀⠀⢸⡇⠀⠀⠀⢰⡏
+⠀⠀⠀⣰⠟⠀⠀⠀⣴⠏⠀⠀⠀⣠⠞⠉⠀⠀⣠⡶⠋⠁⠀⠀⠀⠀⢀⡿⠀⠀⠀⠀⣼⠃⠀⠀⢀⡟⠂⠀⠀⢠⡟⠀
+⠀⢀⣼⠋⠀⠀⢀⡾⠁⠀⠀⢠⡞⠁⠀⠀⢠⡾⠁⠀⠀⠀⠀⣀⣀⣠⡾⠁⠀⠀⣠⡾⠁⠀⠀⢠⡞⠁⠀⠀⣰⠟⠀⠀
+⠀⣾⠃⠀⢠⡟⠛⣷⠂⠀⢠⡟⠀⠀⠀⠀⢾⡀⠀⠀⠀⠀⣸⣏⣹⡏⠀⠀⣠⡾⠋⠀⠀⢀⣴⠏⠀⠀⢀⡼⠋⠀⠀⠀
+⣸⠇⠀⠀⠈⢻⡶⠛⠀⠀⣿⠀⠀⠀⠀⠀⠈⠛⠲⠖⠚⠋⠉⠉⠉⣀⣤⠞⠋⠀⠀⢀⣴⠟⠁⠀⠀⣰⠟⠁⠀⣴⠆⠀
+⣿⠀⠀⠀⠀⢸⡇⠀⠀⠀⢻⣆⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣤⠶⠛⠉⣀⣀⡀⣀⡴⠟⠁⠀⢀⣤⠞⠁⢀⣴⠟⠁⠀⠀
+⣿⠀⠀⠀⠀⠘⣧⠀⠀⠀⠀⠙⠳⠶⠤⣤⠤⠶⠶⠚⠋⠉⠀⠀⠀⡟⠉⠈⢻⡏⠀⠀⣀⡴⠛⠁⣠⡶⠋⠁⠀⠀⠀⠀
+⢻⡀⠀⠀⠀⠀⠘⢷⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣤⠶⠻⢦⣤⠟⣀⣤⠞⢋⣠⡴⠛⠁⠀⠀⠀⠀⠀⠀⠀
+⠈⢿⣄⠀⠀⠀⠀⠀⠈⠛⠳⠶⠤⠤⠤⠤⠤⠴⠶⠒⠛⠉⠁⠀⠀⢀⣠⡴⣞⣋⣤⠶⠋⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠙⢷⡶⠛⠳⣦⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣤⣴⣾⠿⠿⠛⠋⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠘⣧⡀⣀⣿⠦⣤⣤⣤⣤⣤⣤⠤⠶⠶⠞⠛⠋⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠈⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+
 
 ============================================================
-AVAILABLE VARIABLES:
+PAPER 1 PLAN (17 pages)
 
- Gas 0
-['Coordinates', 'Density', 'Entropy', 'GroupNumber', 'SubGroupNumber', 'InternalEnergy', 'Mass', 'Metallicity', 'ParticleIDs', 'Temperature', 'Velocity']
-Missing: StarFormationRate
- DM 1
-['Coordinates', 'GroupNumber', 'SubGroupNumber', 'ParticleIDs', 'Velocity']
-Missing: 
- Stars 4
-['Coordinates', 'GroupNumber', 'SubGroupNumber', 'InitialMass', 'Mass', 'Metallicity', 'ParticleIDs', 'SmoothedMetalAbundance_Fe', 'SmoothedMetalAbundance_O', 'SmoothedMetallicity', 'StellarFormationTime', 'Velocity']
-Missing: 
- BH 5
-['BH_CumlAccrMass', 'BH_CumlNumSeeds', 'BH_Density', 'BH_FormationTime', 'BH_Mass', 'BH_Mdot', 'BH_MostMassiveProgenitorID', 'BH_Pressure', 'BH_SoundSpeed', 'BH_SurroundingGasVel', 'BH_TimeLastMerger', 'Coordinates', 'GroupNumber', 'SubGroupNumber', 'Mass', 'ParticleIDs', 'Velocity']
-Missing: 
+Intro: (2 pages)
+- Establish galaxy structure
+- What is misalignment
+	- How are they formed?
+- Occurence and distributions, Tim paper 2011
+- Relaxation timescale issue and the dilemma it creates
+
+Simulation: (1 page)
+- EAGLE and models used (brief)
+- Subfind
+- Use of snipshots
+
+Methods: (3 pages)
+- Aperture size of 30pkpc and all properties calculated within
+	- halo mass and merger_tree properties
+- General properties:
+	- Gas sf (?)
+	- Projected radius
+	- Angular momentum vector
+	- Kappa
+- Temporal properties:
+	- Define relaxation time
+	- Inflow/outflow
+		- Mass change
+		- Metallicity
+	- Mergers
+		- Stellar and gas ratios (and why not gas sf ratio) using
+		  greatest ratio in past 1 Gyr
+- Sample:
+	- Mass limit
+	- Variable minimum particle counts
+	- COM 2pkpc		
+
+Results and Discussion: (7)
+- Stars-gas-sf misalignment angles projected at z=0.1 with raimundo results,
+  differentiated by kappa
+	- Highlight how this is similar to existing observational and 
+	  simulation results
+	-> Appendix A for stars-gas, stars-dm
+	-> Appendix B for distributions z
+- Individual galaxy evolution 
+	- Highlight typical features
+	- Describe relaxation time, and care needed for defining when mergers
+	  occur (and ratios) with respect to misalignment
+	- How we define misalignment, and how that effects relaxation time
+- Timescale stack(s)
+	- Based on when misaligned, merger within X years of misalignment
+	  Abs angles not proj
+	-> Appendix C with 45 degree
+	- Highlight difference between kappa, and how most only 'blip', others 
+	  last much longer
+- Timescale distribution
+	- Parametisation:
+		- Mass
+		- Morphology
+		- SFR
+		- Merger ratio
+		- Delta misalignment angle
+		- Occurence of inflow
+- Discussion of linking this to merger rate... % of galaxies in each that have
+  a merger in recent 0.5 Gyr and a misalignment
+
+Conclusion: (1 page)
+- Short of above
+
+Acknowledgements: (0.25 page)
+- EAGLE and subfind
+- liverpool
+- STFC grant
+
+References: (1.5 pages)
+
+Appendix:(1.5 page)
+A. stars-gas distribution, stars-dm distribution
+	- Highlight how this is similar to existing observational and 
+	  simulation results
+B. Timescale occurence showing when galaxies misalign the most
+C. Timescale stack with 45 degree
+
+
+
+============================================================
+PAPER 2 PLAN (7 pages)
+
+Intro: (1 page)
+- Galaxy structure
+- What is misalignment
+	- How are they formed?
+	- AGN outflows as cause
+	- Reference paper 1 for more detailed breakdown
+- Links between AGN and misalignments
+	- Penny
+	- Raimundo
+	- Duckworth
+
+Simulation: (0.5 page)
+- EAGLE and models used (very brief)
+- Subfind
+- Use of snipshots
+
+Methods: (1.5 page)
+- Aperture size of 30pkpc and all properties calculated within
+	- halo mass and merger_tree properties
+- Refer to same methods as used in paper 1
+- BH properties
+	- Use largest subhalo BH within 1 HMR, then 2 HMR, else none
+  	- Accretion both instantaneous for eddington, and difference
+	  in mass over successive snapshots
+	- Classify AGN as luminosity
+- Sample:
+	- Mass limit
+	- Variable minimum particle counts
+	- COM 2pkpc	
+	- With BH
+
+Results and Discussion: (3.5 pages)
+- BH growth change in 1 GYR before misalignment as cause
+	- parametise
+	- outflow?
+- BH growth for duration of misalignment
+- Create same graph as raimundo:
+	- Misalignments with AGN vs no AGN
+		- Different redshifts
+		- Instant vs average over past Gyr
+	-> Appendix A for 45 degree
+- Cause vs enhance
+
+Conclusion: (0.75 page)
+- Short of above
+
+Acknowledgements: (0.25 page)
+- EAGLE and subfind
+- liverpool
+- STFC grant
+
+References: (0.5 pages)
+
+Appendix: (1 pages)
+A. 45 degree graphs
+
+
 
 ============================================================
 Issue with gn 
@@ -159,9 +431,26 @@ Possibilities:
 	
 	Likely GN -> go to coords, establish dominant GN in 0.5 radius, reassign that instead.
 
+
+
 ============================================================
+AVAILABLE VARIABLES IN SNIPS:
+
+ Gas 0
+['Coordinates', 'Density', 'Entropy', 'GroupNumber', 'SubGroupNumber', 'InternalEnergy', 'Mass', 'Metallicity', 'ParticleIDs', 'Temperature', 'Velocity']
+Missing: StarFormationRate
+ DM 1
+['Coordinates', 'GroupNumber', 'SubGroupNumber', 'ParticleIDs', 'Velocity']
+Missing: 
+ Stars 4
+['Coordinates', 'GroupNumber', 'SubGroupNumber', 'InitialMass', 'Mass', 'Metallicity', 'ParticleIDs', 'SmoothedMetalAbundance_Fe', 'SmoothedMetalAbundance_O', 'SmoothedMetallicity', 'StellarFormationTime', 'Velocity']
+Missing: 
+ BH 5
+['BH_CumlAccrMass', 'BH_CumlNumSeeds', 'BH_Density', 'BH_FormationTime', 'BH_Mass', 'BH_Mdot', 'BH_MostMassiveProgenitorID', 'BH_Pressure', 'BH_SoundSpeed', 'BH_SurroundingGasVel', 'BH_TimeLastMerger', 'Coordinates', 'GroupNumber', 'SubGroupNumber', 'Mass', 'ParticleIDs', 'Velocity']
+Missing: 
 
 
+============================================================
 
 
 
@@ -184,172 +473,3 @@ Possibilities:
 
 
 ============================================================
-
-
-
-Intro
-- establishment of online spaces
-- parasocial relationships
-- my goal here is not to discredit the community, those that still play, nor do i advocate or condone any harassment towards individuals mentioned.
-- still good friends with many of the staff team, and they're trying their best and giving up time to maintain it
-- i stayed uptodate with it until 2021, remaining into is hazy but supposedly not interesting
-- i will try to keep my narrative objective. an insight into a server with very interesting history and lore
-
-Chapter 1: What is PMC, can i eat it?
-- similar to many smaller servers
-- distinguished in its relatively polished array of plugins in 2015
-- unique setting of ships + cannons
-- rival to airship pirates
-- fits into a niche, but completely dominated that niche for close to a decade now
-
-Chapter 2: THE GOOD
-History
-- start and rocky 2014 era
-	into of plugins
-	true pirate area
-	no crews
-	establishment of BH, EE, broad factions... expand in next section
-	establishment of rich lore and RP
-- vibrant 2015-16
-	massive expansion of lore and plugins
-	establishment of BE, EE, CoV, pirate crews as main 'perosnalities'
-	lego, rep, cys
-	ww1 and ww2
-	more RP
-	playstyles much more varied
-	player shops
-	staff relationships
-- iffy 2017, broadly brought about by several factors but also the inevitable expansion of toxic players
-	existing playerbase now 2 years older, leaders now going to college and moving on. naturally new generation moves in, or rather, the older are 
-	more likely to give way to a newer generatoin
-	rise of horsia and update 1.9 pvp
-	initial uptick of fun followed by misery
-	set the seeds for establishing two playstyles: sit in base and farm/build, actively hunt
-	little to no RP
-	me get staff
-	introduction of lootboxes
-	shipbattles
-- 2018 revival
-	notable iffy folk still around but the rest of the server without the tools to meaningfully deal with them
-	emphasis put on staff intervening as a means to bring about desired outcomes
-	staff accused more frequently of bias from being mainly part of 2 crews: TAS and BE
-	running out of land, map gets expanded
-	money cheat
-- 2019 'fine'
-	early playstyle choices made to the server start to bite: multi homes, server shops, no crewhomes
-	my role much more prominant
-	push for changes but none are made, promoted
-	rome and rise of discord
-	donator changes
-	suggestions channel
-- 2020 covid boost
-	player numbers through the roof
-	veterans leave after disinterest
-	burnout of a lot of veterans
-	i become more inactive
-- 2021 removal
-	i resign after inactivity
-	xmas downtime due to update
-- 2022
-	server back in early feb after down for over 7 weeks
-	world expanded, but some players immediatelt claim everything
-	plugins dont work
-	some staff leave
-- 2023
-	player numbers low
-	still going
-	
-
-Now, for some of you who have gone through a typical 'community cycle', no matter the game... or server, you may find a lot of that very similar. 
-A niche, small server with loyal fanbase blows up, fanbase moves on and server has some hiccups, queue some spikes but inevitable retirement home and some needy operations toward the end. 
-No big deal, nothing necissarily unique (besides the kind of cool lore), and im sure this echos other content creators' experiences on other online communities in some form.
-Afterall, we would be naiive to think of ourselves as execptional in our telling of events, we wouldn't want to be stuck within a little bubble of our own creating... 
-Foreshadowing is a narrative device in which a storyteller gives an advance hint of w-
-
-
-CHAPTER 3: THE BAD
-Now if you one of the few thousand players that played and are here to purely reminice about the old times, this next section may come across as a little mean at times. 
-Reality has teeth you see.
-For those of you more ingrained into the community, veterans if you will, this next section may be a breath of fresh air.
-Its time to take off the rosy tinted glasses and talk about staff-community relationships and server management 101
-
-staff team dyanamic
-relationship with community
-issues among staff
-issues running the server
-issues with plugins and updates
-
-
-
-
-
-
-CHAPTER 4: THE GREEDY
-There is one name that i have avoided mentioning in all of this, and that is the owner, Godsdead. While i wanted to make a video on the history of the community i spent so much time apart of (instead of touching grass), ... this section is somewhat the cherry on top
-
-Now, for the sake of this video, i will refer to the owner, GodsDead, as Ben (not his real name).
-in reviweing my script im doing this for two reasons:
-	1. The owner and his aliases have become synonymous among the wider community with negativity. It is my hope that
-	   we can avoid any reflexive bias by using a different name
-	2. And secondly, in all honesty, it feels more natural to talk about another human by a name rather than a nickname
-
-Establish chats: suggestions chat, donator chats, veteran chats, discord staff chat, hangouts staff chat mods, admin chat, DMs
-
-The relationship i shared with Ben was somewhat mixed, but closer than most of the team (brit and brit).
-
-- pre 2014:
-	establishment, ideas of sea of theieves esque server
-	donations p2w
-- 2015, 16
-	donators, extravagant holidays
-	rival servers
-	buy shops
-	egotistical handling of events
-	donate to staff for coffee
-- 2017
-	inaction on teh part of hostile players, suckups
-- 2018-19
-	conflicting ideas, yelling at veterans, growing mistrust
-	making less than part time
-	mojang.
-- 2020
-	greed and frustration
-- 2021
-	entitlement on my part, dickishness on his with me
-	my demands
-	existing staff drama with shops
-	event money
-	server running costs
-	chargeback in december
-	
-	
-
-
-
-CHAPTER 5:
-At the end of the day, when things change and they aren't to our liking, we look to find things to blame. 
-And in doing so, we often lack introspection: that *we* changed, or that *we* contributed to things.
-In doing so, we may feel sad: a form of responsibility, looking back and realising that the fantasy narrative we told ourselves for years wasn't... quite... fair
-It makes all of us grow, mature
-On the flip side it is all the more important that upon leaving the orbit of hubris, we dont get captured by self-loathing or excusing someone else's bad behaviour beacsue... *well it could have just been me*.
-Behaviour that, sadly, often fuels toxic and abusive friendships and relationships
-These feelings can work just as much to widen our worldview through a larger lens, but can also work to blur it all... to gloss over details and attribute everything to bias.
-The appeal to return to view the world and your surroundings through a spyglass, no matter the tint, becomes all the more attractive once more.
-It is those that step beyond that, to acknowledge their bias, to critically analyse, and yet be able to draw a firm conclusion within the caucaphany of people, information, and relationships, that truely go beyond.
-It is therefore with great pleasure for me to declare, cysteen does in fact smell. 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

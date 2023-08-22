@@ -33,8 +33,8 @@ EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_dir
 # Goes through existing CSV files to locate the snapshots at which misalignments are most frequent
 # SAVED: /plots/misalignment_occurance/
 def _find_misalignment_occurance(csv_sample1 = 'L100_',                                 # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
-                                 csv_sample2 = '_all_sample_misalignment_9.0',
-                                 csv_sample_range = [19, 20, 21, 22, 23, 24, 25, 26, 27, 28],   # snapnums
+                                 csv_sample2 = '_all_sample_misalignment_10.0',
+                                 csv_sample_range = np.arange(147, 201),   # snapnums
                                  csv_output_in = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                                  #--------------------------
                                  # Galaxy plotting
@@ -45,10 +45,12 @@ def _find_misalignment_occurance(csv_sample1 = 'L100_',                         
                                      min_inc_angle    = 10,                     # min. degrees of either spin vector to z-axis, if use_proj_angle
                                    lower_mass_limit   = 10**9,             # Whether to plot only certain masses 10**15
                                    upper_mass_limit   = 10**15,         
-                                   ETG_or_LTG         = 'LTG',             # Whether to plot only ETG/LTG
+                                   ETG_or_LTG         = 'ETG',             # Whether to plot only ETG/LTG
                                    group_or_field     = 'both',            # Whether to plot only field/group
                                  #--------------------------
-                                 showfig       = True,
+                                 misangle_threshold = 30,                   # what is classified as a misalignment
+                                 #--------------------------
+                                 showfig       = False,
                                  savefig       = True,
                                    file_format = 'pdf',
                                    savefig_txt = '',
@@ -264,14 +266,14 @@ def _find_misalignment_occurance(csv_sample1 = 'L100_',                         
                         
                         # Determine if it is aligned or misaligned at the radius of interest
                         if use_proj_angle:
-                            if all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle' %use_angle][mask_rad] <= 30:
+                            if all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle' %use_angle][mask_rad] <= misangle_threshold:
                                 alignment_dict['%s' %output_input['snapNum']]['aligned']['GalaxyID'].append(GalaxyID)
                                 alignment_dict['%s' %output_input['snapNum']]['aligned']['DescendantID'].append(DescendantID)
                             else:
                                 alignment_dict['%s' %output_input['snapNum']]['misaligned']['GalaxyID'].append(GalaxyID)
                                 alignment_dict['%s' %output_input['snapNum']]['misaligned']['DescendantID'].append(DescendantID)
                         else:
-                            if all_misangles['%s' %GalaxyID]['%s_angle' %use_angle][mask_rad] <= 30:
+                            if all_misangles['%s' %GalaxyID]['%s_angle' %use_angle][mask_rad] <= misangle_threshold:
                                 alignment_dict['%s' %output_input['snapNum']]['aligned']['GalaxyID'].append(GalaxyID)
                                 alignment_dict['%s' %output_input['snapNum']]['aligned']['DescendantID'].append(DescendantID)
                             else:
@@ -358,9 +360,9 @@ def _find_misalignment_occurance(csv_sample1 = 'L100_',                         
         #----------------------
         ### General formatting
         # Setting regular axis
-        axs.set_xlim(18.5, 28.5)
+        axs.set_xlim(csv_sample_range[0]-1, csv_sample_range[-1]+1)
         axs.set_xlabel('SnapNum')
-        axs.set_ylim(0, 8000)
+        axs.set_ylim(bottom=0)
         axs.set_ylabel('Number of galaxies')
         
         #-----------
@@ -390,8 +392,8 @@ def _find_misalignment_occurance(csv_sample1 = 'L100_',                         
         metadata_plot = {'Title': metadata_rows}
         
         if savefig:
-            plt.savefig("%s/misalignment_occurance/L%s_ALL_becameMisligned_%s_HMR%s_proj%s_inc%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], use_angle, str(use_hmr), use_proj_angle, min_inc_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print("\n  SAVED: %s/misalignment_occurance/L%s_ALL_becameMisaligned_%s_HMR%s_proj%s_inc%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], use_angle, str(use_hmr), use_proj_angle, min_inc_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format))
+            plt.savefig("%s/misalignment_occurance/L%s_ALL_becameMisligned_%s_%s_HMR%s_proj%s_inc%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], misangle_threshold, use_angle, str(use_hmr), use_proj_angle, min_inc_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/misalignment_occurance/L%s_ALL_becameMisaligned_%s_%s_HMR%s_proj%s_inc%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], misangle_threshold, use_angle, str(use_hmr), use_proj_angle, min_inc_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format))
         if showfig:
             plt.show()
         plt.close()

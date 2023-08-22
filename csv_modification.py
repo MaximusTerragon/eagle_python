@@ -21,10 +21,10 @@ from read_dataset_directories import _assign_directories
 
 #====================================
 # finding directories
-answer = input("-----------------\nDirectories?:\n     l local\n     a serpens_snap\n     i snip\n")
+answer = input("-----------------\nDirectories?:\n     1 local\n     2 serpens_snap\n     3 snip\n     4 snip local\n")
 EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_directories(answer)
 #====================================
-
+ 
 
 
 # Modifies existing csv output file by adding or removing relevant fields
@@ -103,11 +103,11 @@ def _modify_sample_csv(csv_sample = '#L12_20_all_sample_misalignment_9.0',     #
     
     
 # Modifies existing csv output file by adding or removing relevant fields
-def _modify_misalignment_csv(csv_sample = '#L100_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
-                             csv_output = '_RadProj_noErr__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
+def _modify_misalignment_csv(csv_sample = 'L100_27_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+                             csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                              csv_output2 = 'L12_TEMP_28_all_sample_misalignment_9.0_TEMP_RadProj_noErr__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                              #--------------------------   
-                             csv_file = True,                       # Will write sample to csv file in sapmle_dir
+                             csv_file = False,                       # Will write sample to csv file in sapmle_dir
                                csv_name = '',
                              #--------------------------
                              print_progress = False,
@@ -145,6 +145,7 @@ def _modify_misalignment_csv(csv_sample = '#L100_28_all_sample_misalignment_9.0'
     old_misangles       = dict_output['all_misangles']
     old_misanglesproj   = dict_output['all_misanglesproj']
     old_gasdata         = dict_output['all_gasdata']
+    old_flags           = dict_output['all_flags']
     
     
     # Loading sample criteria
@@ -169,7 +170,7 @@ def _modify_misalignment_csv(csv_sample = '#L100_28_all_sample_misalignment_9.0'
     
     #===============================================
     # prompt confirmation
-    answer = input("\nContinue?")
+    answer = input("\nContinue?  ")
     if answer.lower() in ["y","yes"]:
          #===============================================
          # MAKE MODIFICATIONS HERE
@@ -181,9 +182,18 @@ def _modify_misalignment_csv(csv_sample = '#L100_28_all_sample_misalignment_9.0'
 
          #------------------------
          # Update lists
-    
          """for GalaxyID in old_general.keys():
              old_general['%s' %GalaxyID]['SnapNum'] = 28"""
+    
+         old_sfr = {}
+         old_Z   = {}
+         for GalaxyID in old_general.keys():
+             old_sfr.update({'%s' %GalaxyID: {'rad': old_misangles['%s' %GalaxyID]['rad'], 'hmr': old_misangles['%s' %GalaxyID]['hmr'], 'gas_sf': np.full(len(old_misangles['%s' %GalaxyID]['hmr']), math.nan)}})
+             old_Z.update({'%s' %GalaxyID: {'rad': old_misangles['%s' %GalaxyID]['rad'], 'hmr': old_misangles['%s' %GalaxyID]['hmr'], 'stars': np.full(len(old_misangles['%s' %GalaxyID]['hmr']), math.nan), 'gas': np.full(len(old_misangles['%s' %GalaxyID]['hmr']), math.nan), 'gas_sf': np.full(len(old_misangles['%s' %GalaxyID]['hmr']), math.nan), 'gas_nsf': np.full(len(old_misangles['%s' %GalaxyID]['hmr']), math.nan)}})
+             
+             for hmr_i in old_gasdata['%s' %GalaxyID].keys():
+                 for parttype_name in old_gasdata['%s' %GalaxyID][hmr_i].keys():
+                     old_gasdata['%s' %GalaxyID][hmr_i][parttype_name].update({'Metallicity': np.full(len(old_gasdata['%s' %GalaxyID][hmr_i][parttype_name]['Mass']), math.nan)})
     
          #------------------------
          # SPLICE CSVS
@@ -231,6 +241,8 @@ def _modify_misalignment_csv(csv_sample = '#L100_28_all_sample_misalignment_9.0'
          all_coms            = old_coms
          all_counts          = old_counts
          all_masses          = old_masses
+         all_sfr             = old_sfr
+         all_Z               = old_Z
          all_misangles       = old_misangles
          all_misanglesproj   = old_misanglesproj
          all_gasdata         = old_gasdata
@@ -261,6 +273,8 @@ def _modify_misalignment_csv(csv_sample = '#L100_28_all_sample_misalignment_9.0'
                          'all_coms': all_coms,
                          'all_counts': all_counts,
                          'all_masses': all_masses,
+                         'all_sfr': all_sfr,
+                         'all_Z': all_Z,
                          'all_misangles': all_misangles,
                          'all_misanglesproj': all_misanglesproj, 
                          'all_gasdata': all_gasdata,
@@ -471,10 +485,62 @@ def _modify_radial_csv(csv_output = '#L12_radial_ID37445_RadProj_Err__stars_gas_
         """
     
 
+# Test read
+def _test_read(csv_sample = 'L100_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+               csv_output = 'MOD_L100_28_all_sample_misalignment_9.0_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
+               #--------------------------
+               print_progress = False,
+               debug = False):
+    
+    #================================================  
+    # Load sample csv
+    if print_progress:
+        print('Loading initial sample')
+        time_start = time.time()
+    
+    #--------------------------------
+    # Loading sample
+    dict_sample = json.load(open('%s/%s.csv' %(sample_dir, csv_sample), 'r'))
+    GroupNum_List       = np.array(dict_sample['GroupNum'])
+    SubGroupNum_List    = np.array(dict_sample['SubGroupNum'])
+    GalaxyID_List       = np.array(dict_sample['GalaxyID'])
+    SnapNum_List        = np.array(dict_sample['SnapNum'])
+    Redshift_List       = np.array(dict_sample['Redshift'])
+    HaloMass_List       = np.array(dict_sample['halo_mass'])
+    Centre_List         = np.array(dict_sample['centre'])
+    MorphoKinem_List    = np.array(dict_sample['MorphoKinem'])
+    
+        
+    # Loading output
+    dict_output = json.load(open('%s/%s.csv' %(output_dir, csv_output), 'r'))
+    old_general         = dict_output['all_general']
+    old_spins           = dict_output['all_spins']
+    old_coms            = dict_output['all_coms']
+    old_counts          = dict_output['all_counts']
+    old_masses          = dict_output['all_masses']
+    old_sfr             = dict_output['all_sfr']
+    old_Z               = dict_output['all_Z']
+    old_misangles       = dict_output['all_misangles']
+    old_misanglesproj   = dict_output['all_misanglesproj']
+    old_gasdata         = dict_output['all_gasdata']
+    old_flags           = dict_output['all_flags']
+    
+    
+    
+    # TEST PRINTS
+    print(old_Z['5371292'].keys())
+    print(old_gasdata['5371292']['2.0_hmr']['gas'].keys())
+    print(len(old_gasdata['5371292']['2.0_hmr']['gas']['Mass']))
+    print(len(old_gasdata['5371292']['2.0_hmr']['gas']['Metallicity']))
+    
+    
+    
 #==========================
 #_modify_sample_csv()
 #_modify_misalignment_csv()
 #_modify_radial_csv()
+
+#_test_read()
 #==========================
 
 

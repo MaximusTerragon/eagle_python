@@ -28,25 +28,25 @@ answer = input("-----------------\nDirectories?:\n     1 local\n     2 serpens_s
 EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_directories(answer)
 #====================================
 
-[151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165]
+
 
 #--------------------------------
 # Goes through all csv samples given and collects all galaxies with matching criteria
 # SAVED: /outputs/%sgalaxy_dict_
-def _extract_criteria_galaxies(csv_sample1 = 'L12_',                                 # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
-                               csv_sample2 = '_all_sample_misalignment_9.0',
-                               csv_sample_range = np.arange(19, 28.1, 1),   # snapnums
+def _extract_criteria_galaxies(csv_sample1 = 'L100_',                                 # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+                               csv_sample2 = '_all_sample_misalignment_10.0',
+                               csv_sample_range = np.arange(151, 165.1, 1),   # snapnums
                                csv_output_in = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                                #--------------------------
                                # Galaxy analysis
                                print_summary = True,
                                  use_angle          = 'stars_gas_sf',         # Which angles to plot
                                  use_hmr            = 2.0,                    # Which HMR to use
-                                 use_proj_angle     = True,                   # Whether to use projected or absolute angle 10**9
+                                 use_proj_angle     = False,                   # Whether to use projected or absolute angle 10**9
                                    min_inc_angle    = 10,                     # min. degrees of either spin vector to z-axis, if use_proj_angle
                                  lower_mass_limit   = 10**9,             # Whether to plot only certain masses 10**15
                                  upper_mass_limit   = 10**15,         
-                                 ETG_or_LTG         = 'ETG',             # Whether to plot only ETG/LTG
+                                 ETG_or_LTG         = 'LTG',             # Whether to plot only ETG/LTG
                                  group_or_field     = 'both',            # Whether to plot only field/group
                                #--------------------------
                                csv_file       = True,             # Will write sample to csv file in sample_dir
@@ -109,7 +109,8 @@ def _extract_criteria_galaxies(csv_sample1 = 'L12_',                            
         all_misanglesproj   = dict_output['all_misanglesproj']
         all_gasdata         = dict_output['all_gasdata']
         all_flags           = dict_output['all_flags']
-    
+        
+        
         # Loading sample criteria
         sample_input        = dict_sample['sample_input']
         output_input        = dict_output['output_input']
@@ -617,11 +618,13 @@ def _create_merger_tree_csv(csv_start        = 'L100_',                         
 #--------------------------------
 # Goes through galaxies that meet criteria, analyses the time spend in misaligned state
 # SAVED: /outputs/%stimescale_tree
-def _analyse_misalignment_timescales(csv_galaxy_dict = 'L12_galaxy_dict_ETG_stars_gas_sf_rad2.0_projTrue_',
+def _analyse_misalignment_timescales(csv_galaxy_dict = 'L100_galaxy_dict_LTG_stars_gas_sf_rad2.0_projFalse_',
                                      #--------------------------
                                      # Galaxy analysis
                                      print_summary = True,
                                      print_galaxy  = False,
+                                     #--------------------------
+                                     misangle_threshold = 30,           # classification of misalignment
                                      #--------------------------
                                      csv_file       = True,             # Will write sample to csv file in sample_dir
                                        csv_name     = '',               # extra stuff at end
@@ -699,7 +702,7 @@ def _analyse_misalignment_timescales(csv_galaxy_dict = 'L12_galaxy_dict_ETG_star
                     
                     #-----------------------------------
                     # if descendant is NOT aligned:
-                    if float(galaxy_dict['%s' %(SnapNum+1)]['%s' %DescendantID]['misangle']) > 30:
+                    if float(galaxy_dict['%s' %(SnapNum+1)]['%s' %DescendantID]['misangle']) > misangle_threshold:
                         
                         if debug:
                             print('\nBECOMES MISALIGNED: %s    %s    %.2E ' %(GalaxyID, SnapNum, float(galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['stelmass'])))
@@ -758,7 +761,7 @@ def _analyse_misalignment_timescales(csv_galaxy_dict = 'L12_galaxy_dict_ETG_star
                         
                         #-----------------------------------
                         # While galaxy is misaligned... (30 - 150)... skips if counter-rotating
-                        while (misangle >= 30) and (misangle <= 150):
+                        while (misangle >= misangle_threshold) and (misangle <= (180-misangle_threshold)):
                             
                             if debug:
                                 print('  BECAME UNSTABLE MISALIGNED AT ', GalaxyID_tmp, SnapNum_tmp)
@@ -1128,8 +1131,8 @@ def _analyse_misalignment_timescales(csv_galaxy_dict = 'L12_galaxy_dict_ETG_star
         
         #-----------------------------
         # Writing one massive JSON file
-        json.dump(csv_dict, open('%s/%stimescale_tree_%s_%s_rad%s_proj%s_%s.csv' %(output_dir, galaxy_dict_input['csv_sample1'], galaxy_dict_input['ETG_or_LTG'], galaxy_dict_input['use_angle'], galaxy_dict_input['use_hmr'], galaxy_dict_input['use_proj_angle'], csv_name), 'w'), cls=NumpyEncoder)
-        print('\n  SAVED: %s/%stimescale_tree_%s_%s_rad%s_proj%s_%s.csv' %(output_dir, galaxy_dict_input['csv_sample1'], galaxy_dict_input['ETG_or_LTG'], galaxy_dict_input['use_angle'], galaxy_dict_input['use_hmr'], galaxy_dict_input['use_proj_angle'], csv_name))
+        json.dump(csv_dict, open('%s/%stimescale_tree_%s_%s_%s_rad%s_proj%s_%s.csv' %(output_dir, galaxy_dict_input['csv_sample1'], misangle_threshold, galaxy_dict_input['ETG_or_LTG'], galaxy_dict_input['use_angle'], galaxy_dict_input['use_hmr'], galaxy_dict_input['use_proj_angle'], csv_name), 'w'), cls=NumpyEncoder)
+        print('\n  SAVED: %s/%stimescale_tree_%s_%s_%s_rad%s_proj%s_%s.csv' %(output_dir, galaxy_dict_input['csv_sample1'], misangle_threshold, galaxy_dict_input['ETG_or_LTG'], galaxy_dict_input['use_angle'], galaxy_dict_input['use_hmr'], galaxy_dict_input['use_proj_angle'], csv_name))
         if print_progress:
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
         
@@ -1162,18 +1165,20 @@ def _analyse_misalignment_timescales(csv_galaxy_dict = 'L12_galaxy_dict_ETG_star
 
 # Goes through galaxies that meet criteria, extracts galaxies that became misaligned coinciding within X Gyr of a merger
 # SAVED: /outputs/%smerger_origin
-def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L12_galaxy_dict_ETG_stars_gas_sf_rad2.0_projTrue_',
-                                      csv_merger_tree = 'L12_merger_tree_',
+def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L100_galaxy_dict_both_stars_gas_sf_rad2.0_projTrue_',
+                                      csv_merger_tree = 'L100_merger_tree_',
                                       #--------------------------
                                       # Galaxy analysis
                                       print_summary = True,
                                       print_galaxy  = False,
-                                        plot_time_pre               = 1.0,             # Gyr, time to additionally extract evolution of galaxy before misaligning (if available)
-                                        plot_time_post              = 1.0,             # Gyr, time to additionally extract evolution of galaxy after relaxing (if available)
+                                        plot_time_pre               = 1.0,             # Gyr, min time to additionally extract evolution of galaxy before misaligning (if available)
+                                        plot_time_post              = 1.0,             # Gyr, min time to additionally extract evolution of galaxy after relaxing (if available)
                                         merger_misaligned_time_pre  = 1.0,             # Gyr, Time before last aligned state, and merger between which the galaxy is misaligned
                                         merger_misaligned_time_post = 1.0,             # Gyr, Time between last aligned state, and merger between which the galaxy is misaligned
                                         merger_threshold_min   = 0.1,             # >= to include
                                         merger_threshold_max   = 1.9,             # <= to include
+                                      #--------------------------
+                                      misangle_threshold = 30,           # classification of misalignment
                                       #--------------------------
                                       csv_file       = True,             # Will write sample to csv file in sample_dir
                                         csv_name     = '',               # extra stuff at end
@@ -1243,7 +1248,7 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L12_galaxy_dict_ETG_sta
                 GalaxyID        = int(GalaxyID)
                 DescendantID    = int(galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['DescendantID'])
                 # if misaligned, skip as we have already included it or we can't constrain when it started (ei. joined sample misaligned)
-                if (float(galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['misangle']) >= 30):
+                if (float(galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['misangle']) >= misangle_threshold):
                     continue
      
                 # Start time
@@ -1257,7 +1262,7 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L12_galaxy_dict_ETG_sta
                     
                     #-----------------------------------
                     # if descendant is NOT aligned:
-                    if float(galaxy_dict['%s' %(SnapNum+1)]['%s' %DescendantID]['misangle']) > 30:
+                    if float(galaxy_dict['%s' %(SnapNum+1)]['%s' %DescendantID]['misangle']) > misangle_threshold:
                         
                         # Galaxies that reach here must be aligned in current SnapNum, become misaligned in SnapNum+1, both meet criteria, and may or may not have undergone a merger meeting criteria in next (or other) snapshots within time specified from last aligned
                         
@@ -1287,17 +1292,181 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L12_galaxy_dict_ETG_sta
                         kappa_gas_sf_list        = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['kappa_gas_sf']]
                         bh_mass_list             = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['bh_mass']]
                         bh_mdot_instant_list     = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['bh_mdot']]        # from particle data
-                        bh_mdot_list             = [math.nan]                                                     # value that we will find
+                        bh_mdot_list             = []                                                     # value that we will find when moving backwards
                         bh_edd_list              = [galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['bh_edd']]
-                        inflow_rate_list         = [math.nan]
-                        outflow_rate_list        = [math.nan]
-                        stelmassloss_rate_list   = [math.nan]
-                        inflow_Z_list            = [math.nan]
-                        outflow_Z_list           = [math.nan]
-                        insitu_Z_list            = [math.nan]
+                        inflow_rate_list         = []
+                        outflow_rate_list        = []
+                        stelmassloss_rate_list   = []
+                        inflow_Z_list            = []
+                        outflow_Z_list           = []
+                        insitu_Z_list            = []
                         
                         merger_analysis = {}
                         merger_time_criteria = False
+                        
+                        
+                        #===================================#===================================
+                        # Go back in time for root decendant until time criteria met
+                        GalaxyID_tmp   = int(GalaxyID + 1)
+                        DescendantID_tmp = int(GalaxyID)
+                        SnapNum_tmp  = int(SnapNum - 1)
+                        time_begin_misalignment = galaxy_dict['%s' %SnapNum]['%s' %GalaxyID]['Lookbacktime']
+                        time_pre                = 0
+                        while (time_pre < plot_time_pre):
+                            
+                            # If past galaxy out of csv range, break
+                            if (int(SnapNum_tmp) < int(csv_sample_range[0])):
+                                if debug:
+                                    print('  a')
+                                break
+                            
+                            # Must be in dict
+                            if (str(int(GalaxyID_tmp)) not in galaxy_dict['%s' %(SnapNum_tmp)]):
+                                if debug:
+                                    print('  b')
+                                break
+                            
+                            
+                            #-----------------------------------
+                            # If past galaxy in range, within plot_time_pre, and meets criteria, gather stats
+                            SnapNum_list.insert(0, SnapNum_tmp)
+                            GalaxyID_list.insert(0, GalaxyID_tmp)
+                            DescendantID_list.insert(0, DescendantID_tmp)
+                            Lookbacktime_list.insert(0, galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Lookbacktime'])
+                            Redshift_list.insert(0, galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Redshift'])
+                            GroupNum_list.insert(0, galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['GroupNum'])
+                            SubGroupNum_list.insert(0, galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['SubGroupNum'])
+                            misangle_list.insert(0, galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['misangle'])
+                            stelmass_list.insert(0, galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['stelmass'])
+                            gasmass_list.insert(0, galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['gasmass'])
+                            gasmass_sf_list.insert(0, galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['gasmass_sf'])
+                            halfmass_rad_list.insert(0, galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['halfmass_rad'])
+                            halfmass_rad_proj_list.insert(0, galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['halfmass_rad_proj'])
+                            sfr_list.insert(0, galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['sfr'])
+                            Z_stars_list.insert(0, galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Z_stars'])
+                            Z_gas_list.insert(0, galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Z_gas'])
+                            Z_sf_list.insert(0, galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Z_sf'])
+                            Z_nsf_list.insert(0, galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Z_nsf'])
+                            kappa_stars_list.insert(0, galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['kappa_stars'])
+                            kappa_gas_sf_list.insert(0, galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['kappa_gas_sf'])
+                            bh_mass_list.insert(0, galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['bh_mass'])
+                            bh_mdot_instant_list.insert(0, galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['bh_mdot'])
+                            bh_edd_list.insert(0, galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['bh_edd'])
+                            
+                            
+                            #================================================
+                            # Find inflow/outflow
+                            time_step   = 1e9 * abs(Lookbacktime_list[0] - Lookbacktime_list[1])
+                            gasdata_old = galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['gasdata']
+                            gasdata     = galaxy_dict['%s' %int(SnapNum_tmp+1)]['%s' %int(GalaxyID_tmp-1)]['gasdata']
+                            
+                            previous_mass = np.sum(gasdata_old['Mass'])       # M1
+                            current_mass  = np.sum(gasdata['Mass'])           # M2
+                            inflow_mass   = 0
+                            outflow_mass  = 0
+                            insitu_mass   = 0
+                            
+                            #------------------
+                            # Check for inflow (use current, run check on previous)
+                            inflow_mass_metal = 0
+                            insitu_mass_metal = 0
+                            for ID_i, mass_i, metal_i in zip(gasdata['ParticleIDs'], gasdata['Mass'], gasdata['Metallicity']):
+                                
+                                # If ID was within 2hmr of _old, gas particle stayed
+                                if ID_i in gasdata_old['ParticleIDs']:
+                                    insitu_mass       = insitu_mass + mass_i
+                                    insitu_mass_metal = insitu_mass_metal + (mass_i * metal_i)
+                                    continue
+                                # If ID was NOT within 2hmr of _old, gas particle was accreted
+                                else:
+                                    inflow_mass = inflow_mass + mass_i
+                                    inflow_mass_metal = inflow_mass_metal + (mass_i * metal_i)
+                            
+                            #------------------
+                            # Find metallicity of inflow
+                            if inflow_mass != 0:
+                                inflow_Z = inflow_mass_metal / inflow_mass
+                            else:
+                                inflow_Z = math.nan
+                            
+                            # Find metallicity of insitu
+                            if insitu_mass != 0:
+                                insitu_Z = insitu_mass_metal / insitu_mass
+                            else:
+                                insitu_Z = math.nan
+                            
+                            #------------------    
+                            # Check for outflow (use old, run check on current)
+                            outflow_mass_metal = 0
+                            for ID_i, mass_i, metal_i in zip(gasdata_old['ParticleIDs'], gasdata_old['Mass'], gasdata_old['Metallicity']):
+                
+                                # If ID will be within 2hmr of current, gas particle stayed
+                                if ID_i in gasdata['ParticleIDs']:
+                                    continue
+                                # If ID will NOT be within 2hmr of current, gas particle was outflowed
+                                else:
+                                    outflow_mass = outflow_mass + mass_i
+                                    outflow_mass_metal = outflow_mass_metal + (mass_i * metal_i)
+
+                            # Find metallicity of outflow
+                            if outflow_mass != 0:
+                                outflow_Z = outflow_mass_metal / outflow_mass
+                            else:
+                                outflow_Z = math.nan
+                            
+                            #------------------  
+                            # Left with current_mass = previous_mass + inflow_mass - outflow_mass + stellarmassloss
+                            stellarmassloss = current_mass - previous_mass - inflow_mass + outflow_mass
+            
+                            # Update stats
+                            inflow_rate_list.insert(0, inflow_mass / time_step)
+                            outflow_rate_list.insert(0, outflow_mass / time_step)
+                            stelmassloss_rate_list.insert(0, stellarmassloss / time_step)
+                            inflow_Z_list.insert(0, inflow_Z)
+                            outflow_Z_list.insert(0, outflow_Z)
+                            insitu_Z_list.insert(0, insitu_Z)
+                            
+                            #-----------------------------------
+                            # Find BH accretion
+                            bh_mdot_list.insert(0, (float(bh_mass_list[1]) - float(bh_mass_list[0])) / time_step)
+                            
+                            if print_galaxy:
+                                if not debug:
+                                    print(' ')
+                                print('IN SAMPLE:   >>> ', GalaxyID_list[-1], len(SnapNum_list), ' <<<')
+                                if len(SnapNum_list) == 2:
+                                    print('  BECAME COUNTER-ROTATING')
+                                else:
+                                    print('  TRANSITIONED')
+                                print('  TIME TAKEN TO RELAX: ', abs(time_start - time_end))
+                                print('  ', SnapNum_list)
+                                print('  ', GalaxyID_list)
+                                print('  ', DescendantID_list)
+                                print('  ', misangle_list)
+                                print('  ', Lookbacktime_list)
+                                print('  MERGERS: ', merger_analysis.items())
+                                
+                                print('-- mass flow --', GalaxyID_list[-1])
+                                for time_i, mass_i, in_i, out_i, stel_i, bh_i in zip(Lookbacktime_list, stelmass_list, inflow_rate_list, outflow_rate_list, stelmassloss_rate_list, bh_mdot_list):
+                                    print('%.2f |  %.2e  |  %.2f     %.2f     %.2f  |  %.2f' %(time_i, mass_i, in_i, out_i, stel_i, bh_i*1000))
+                            
+                            
+                            #-----------------------------------
+                            time_pre         = galaxy_dict['%s' %int(SnapNum_tmp)]['%s' %int(GalaxyID_tmp)]['Lookbacktime'] - time_begin_misalignment
+                            GalaxyID_tmp     = int(GalaxyID_tmp + 1)
+                            DescendantID_tmp = int(GalaxyID_tmp)
+                            SnapNum_tmp      = int(SnapNum_tmp - 1)
+                            
+                            
+                        # Make rates 0 if at start
+                        inflow_rate_list.insert(0, math.nan)
+                        outflow_rate_list.insert(0, math.nan)
+                        stelmassloss_rate_list.insert(0, math.nan)
+                        inflow_Z_list.insert(0, math.nan)
+                        outflow_Z_list.insert(0, math.nan)
+                        insitu_Z_list.insert(0, math.nan)
+                        bh_mdot_list.insert(0, math.nan)
+                        
                         
                         
                         #===================================#===================================
@@ -1514,7 +1683,7 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L12_galaxy_dict_ETG_sta
                         
                         #-----------------------------------
                         # While galaxy is misaligned... (30 - 150)... skips if counter-rotating
-                        while (misangle >= 30) and (misangle <= 150):
+                        while (misangle >= misangle_threshold) and (misangle <= (180-misangle_threshold)):
                             
                             if debug:
                                 print('  BECAME UNSTABLE MISALIGNED AT ', GalaxyID_tmp, SnapNum_tmp)
@@ -1546,8 +1715,8 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L12_galaxy_dict_ETG_sta
                                 Redshift_end = math.nan
                                 time_end     = math.nan
                                 break
+                                                        
                                 
-                            
                             #-----------------------------------
                             # Gather current stats
                             SnapNum_list.append(SnapNum_tmp)
@@ -1768,8 +1937,6 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L12_galaxy_dict_ETG_sta
                         
                         
                         
-                        
-                          
                         #===========================================================
                         # Out of while loop, so descendant has become aligned again and meets criteria by default (for instant counter - already met, while loop takes care of rest). If anything not met will have a nan assigned to time_end
                         
@@ -1785,7 +1952,235 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L12_galaxy_dict_ETG_sta
                             Redshift_end = galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Redshift']
                             time_end     = galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Lookbacktime']
                             
-                            #-----------------------------------
+                            
+                            #====================================================
+                            # Append end
+                            time_end_misalignment = galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Lookbacktime']
+                            time_post             = 0
+                            while (time_post < plot_time_post):
+                                
+                                # If current galaxy out of csv range, break
+                                if (int(SnapNum_tmp) == int(csv_sample_range[-1])):
+                                    if debug:
+                                        print('  a')
+                                    break
+                            
+                                # If descendant of current misaligned galaxy not a mainline, break
+                                if (int(SnapNum_tmp) < int(csv_sample_range[-1])) and (int(DescendantID_tmp) != int(GalaxyID_tmp)-1):
+                                    if debug:
+                                        print('  b')
+                                    break
+                            
+                                # If descendant of current misaligned galaxy not meet criteria, break
+                                if (str(DescendantID_tmp) not in galaxy_dict['%s' %(int(SnapNum_tmp)+1)]):
+                                    if debug:
+                                        print('  c')
+                                    break
+                                                        
+                                
+                                #-----------------------------------
+                                # Gather current stats
+                                SnapNum_list.append(SnapNum_tmp)
+                                GalaxyID_list.append(GalaxyID_tmp)
+                                DescendantID_list.append(DescendantID_tmp)
+                                Lookbacktime_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Lookbacktime'])
+                                Redshift_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Redshift'])
+                                GroupNum_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['GroupNum'])
+                                SubGroupNum_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['SubGroupNum'])
+                                misangle_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['misangle'])
+                                stelmass_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['stelmass'])
+                                gasmass_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['gasmass'])
+                                gasmass_sf_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['gasmass_sf'])
+                                halfmass_rad_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['halfmass_rad'])
+                                halfmass_rad_proj_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['halfmass_rad_proj'])
+                                sfr_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['sfr'])
+                                Z_stars_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Z_stars'])
+                                Z_gas_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Z_gas'])
+                                Z_sf_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Z_sf'])
+                                Z_nsf_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Z_nsf'])
+                                kappa_stars_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['kappa_stars'])
+                                kappa_gas_sf_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['kappa_gas_sf'])
+                                bh_mass_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['bh_mass'])
+                                bh_mdot_instant_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['bh_mdot'])
+                                bh_edd_list.append(galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['bh_edd'])
+                            
+                            
+                                #================================================
+                                # Find inflow/outflow
+                                time_step   = 1e9 * abs(Lookbacktime_list[-1] - Lookbacktime_list[-2])
+                                gasdata     = galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['gasdata']
+                            
+                                previous_mass = np.sum(gasdata_old['Mass'])       # M1
+                                current_mass  = np.sum(gasdata['Mass'])           # M2
+                                inflow_mass   = 0
+                                outflow_mass  = 0
+                                insitu_mass   = 0
+                            
+                                #------------------
+                                # Check for inflow (use current, run check on previous)
+                                inflow_mass_metal = 0
+                                insitu_mass_metal = 0
+                                for ID_i, mass_i, metal_i in zip(gasdata['ParticleIDs'], gasdata['Mass'], gasdata['Metallicity']):
+                                
+                                    # If ID was within 2hmr of _old, gas particle stayed
+                                    if ID_i in gasdata_old['ParticleIDs']:
+                                        insitu_mass       = insitu_mass + mass_i
+                                        insitu_mass_metal = insitu_mass_metal + (mass_i * metal_i)
+                                        continue
+                                    # If ID was NOT within 2hmr of _old, gas particle was accreted
+                                    else:
+                                        inflow_mass = inflow_mass + mass_i
+                                        inflow_mass_metal = inflow_mass_metal + (mass_i * metal_i)
+                            
+                                #------------------
+                                # Find metallicity of inflow
+                                if inflow_mass != 0:
+                                    inflow_Z = inflow_mass_metal / inflow_mass
+                                else:
+                                    inflow_Z = math.nan
+                            
+                                # Find metallicity of insitu
+                                if insitu_mass != 0:
+                                    insitu_Z = insitu_mass_metal / insitu_mass
+                                else:
+                                    insitu_Z = math.nan
+                            
+                                #------------------    
+                                # Check for outflow (use old, run check on current)
+                                outflow_mass_metal = 0
+                                for ID_i, mass_i, metal_i in zip(gasdata_old['ParticleIDs'], gasdata_old['Mass'], gasdata_old['Metallicity']):
+                
+                                    # If ID will be within 2hmr of current, gas particle stayed
+                                    if ID_i in gasdata['ParticleIDs']:
+                                        continue
+                                    # If ID will NOT be within 2hmr of current, gas particle was outflowed
+                                    else:
+                                        outflow_mass = outflow_mass + mass_i
+                                        outflow_mass_metal = outflow_mass_metal + (mass_i * metal_i)
+
+                                # Find metallicity of outflow
+                                if outflow_mass != 0:
+                                    outflow_Z = outflow_mass_metal / outflow_mass
+                                else:
+                                    outflow_Z = math.nan
+                            
+                                #------------------  
+                                # Left with current_mass = previous_mass + inflow_mass - outflow_mass + stellarmassloss
+                                stellarmassloss = current_mass - previous_mass - inflow_mass + outflow_mass
+            
+                                # Update stats
+                                inflow_rate_list.append(inflow_mass / time_step)
+                                outflow_rate_list.append(outflow_mass / time_step)
+                                stelmassloss_rate_list.append(stellarmassloss / time_step)
+                                inflow_Z_list.append(inflow_Z)
+                                outflow_Z_list.append(outflow_Z)
+                                insitu_Z_list.append(insitu_Z)
+                                                        
+                            
+                            
+                                #===================================
+                                # Find BH accretion
+                                bh_mdot_list.append((float(bh_mass_list[-1]) - float(bh_mass_list[-2])) / time_step)
+                            
+                            
+                                #===================================#===================================
+                                # Check for merger fitting criteria within time_start:
+                            
+                                merger_snap_array        = []
+                                merger_age_array         = []
+                                merger_redshift_array    = []
+                                merger_ratio_array       = []
+                                merger_gas_ratio_array   = []
+                                merger_gassf_ratio_array = []
+                                merger_id_array          = []
+                            
+                                if debug:
+                                    print('  DescendantID_tmp components: ', merger_tree['%s' %DescendantID_tmp].keys())
+                        
+                                # Run over all component galaxies for next descendant
+                                for component_GalaxyID in merger_tree['%s' %DescendantID_tmp].keys():
+                        
+                                    if debug:
+                                        print('     componentID: %s     %.2f M' %(component_GalaxyID, np.log10(float(merger_tree['%s' %DescendantID_tmp]['%s' %component_GalaxyID]['stelmass']))))
+                    
+                                    # If descendant is main line progenitor, ignore
+                                    if int(DescendantID_tmp) == (int(component_GalaxyID) - 1):
+                                        if debug:
+                                            print('     Mainline, continue')
+                                        continue
+                        
+                                    # If descendant is bugged, ignore
+                                    if int(DescendantID_tmp) == (int(component_GalaxyID)):
+                                        if debug:
+                                            print('     Bugged, continue')
+                                        continue
+                                
+                                    # If current galaxy has no progenitor, ignore
+                                    if str(int(DescendantID_tmp) + 1) not in merger_tree['%s' %DescendantID_tmp]:
+                                        if debug:
+                                            print('     No progenitor, continue')
+                                        continue
+                                    
+                                    #-------------
+                                    # Assign primary and component values
+                                    primary_stelmass    = float(merger_tree['%s' %DescendantID_tmp]['%s' %(int(DescendantID_tmp) + 1)]['stelmass'])
+                                    primary_gasmass     = float(merger_tree['%s' %DescendantID_tmp]['%s' %(int(DescendantID_tmp) + 1)]['gasmass'])
+                                    primary_gassfmass   = float(merger_tree['%s' %DescendantID_tmp]['%s' %(int(DescendantID_tmp) + 1)]['gasmass_sf'])
+                                    component_stelmass  = float(merger_tree['%s' %DescendantID_tmp]['%s' %component_GalaxyID]['stelmass'])
+                                    component_gasmass   = float(merger_tree['%s' %DescendantID_tmp]['%s' %component_GalaxyID]['gasmass'])
+                                    component_gassfmass = float(merger_tree['%s' %DescendantID_tmp]['%s' %component_GalaxyID]['gasmass_sf'])
+                                
+                                    if debug:
+                                        print('       COMPONENTS: %.2e %.2e %.2e | %.2e %.2e %.2e' %(primary_stelmass, primary_gasmass, primary_gassfmass, component_stelmass, component_gasmass, component_gassfmass))
+                                    
+                                    # Find stellar mass merger ratio
+                                    merger_ratio = component_stelmass / primary_stelmass 
+                        
+                                    # Find gas ratios
+                                    gas_ratio   = (primary_gasmass + component_gasmass) / (primary_stelmass + component_stelmass)
+                                    gassf_ratio = (primary_gassfmass + component_gassfmass) / (primary_stelmass + component_stelmass)
+                        
+                        
+                                    #--------------
+                                    # Append to lists
+                                    merger_snap_array.append(galaxy_dict['%s' %(int(SnapNum_tmp)+1)]['%s' %DescendantID_tmp]['SnapNum'])
+                                    merger_age_array.append(galaxy_dict['%s' %(int(SnapNum_tmp)+1)]['%s' %DescendantID_tmp]['Lookbacktime'])
+                                    merger_redshift_array.append(galaxy_dict['%s' %(int(SnapNum_tmp)+1)]['%s' %DescendantID_tmp]['Redshift'])
+                                    merger_ratio_array.append(float(merger_ratio))
+                                    merger_gas_ratio_array.append(float(gas_ratio))
+                                    merger_gassf_ratio_array.append(float(gassf_ratio))
+                                    merger_id_array.append(int(component_GalaxyID))
+                        
+                                    if debug:
+                                        print(' STATS:  \n  Descendant: %s  GalaxyID: %s  component: %s  component_ratio: %s  snap: %s' %(DescendantID_tmp, GalaxyID_tmp, component_GalaxyID, merger_ratio, galaxy_dict['%s' %(int(SnapNum_tmp)+1)]['%s' %DescendantID_tmp]['SnapNum']))
+                        
+                                # Create and append merger stats
+                                if len(merger_ratio_array) > 0:
+                                    merger_analysis.update({'%s' %(int(SnapNum_tmp)+1): {'SnapNum_list': merger_snap_array,
+                                                                                         'Lookbacktime_list': merger_age_array,
+                                                                                         'Redshift_list': merger_redshift_array,
+                                                                                         'Ratio_stars_list': merger_ratio_array,
+                                                                                         'Ratio_gas_list': merger_gas_ratio_array,
+                                                                                         'Ratio_gassf_list': merger_gassf_ratio_array,
+                                                                                         'GalaxyID_list': merger_id_array}})
+                                    if debug:
+                                        print('HAS MERGER: ', int(SnapNum_tmp)+1)
+                                #===================================#===================================
+                            
+                            
+                                #-----------------------------------
+                                # Update Snap, GalaxyID, and DescendantID:     
+                                SnapNum_tmp      = int(galaxy_dict['%s' %(int(SnapNum_tmp)+1)]['%s' %DescendantID_tmp]['SnapNum'])
+                                GalaxyID_tmp     = int(galaxy_dict['%s' %(int(SnapNum_tmp))]['%s' %DescendantID_tmp]['GalaxyID'])
+                                DescendantID_tmp = int(galaxy_dict['%s' %(int(SnapNum_tmp))]['%s' %GalaxyID_tmp]['DescendantID'])
+                                time_post        = abs(time_end_misalignment - galaxy_dict['%s' %SnapNum_tmp]['%s' %GalaxyID_tmp]['Lookbacktime'])
+                            
+                                #-----------------------------------
+                                # This will update for as long as galaxy remains misaligned
+                                gasdata_old  = gasdata
+                            
+                            
+                            #====================================================
                             # Gather finishing stats
                             SnapNum_list.append(SnapNum_tmp)
                             GalaxyID_list.append(GalaxyID_tmp)
@@ -1884,8 +2279,6 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L12_galaxy_dict_ETG_sta
                             outflow_Z_list.append(outflow_Z)
                             insitu_Z_list.append(insitu_Z)
                                                         
-                            
-                            
                             #-----------------------------------
                             # Find BH accretion
                             bh_mdot_list.append((float(bh_mass_list[-1]) - float(bh_mass_list[-2])) / time_step)
@@ -1910,6 +2303,7 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L12_galaxy_dict_ETG_sta
                                 for time_i, mass_i, in_i, out_i, stel_i, bh_i in zip(Lookbacktime_list, stelmass_list, inflow_rate_list, outflow_rate_list, stelmassloss_rate_list, bh_mdot_list):
                                     print('%.2f |  %.2e  |  %.2f     %.2f     %.2f  |  %.2f' %(time_i, mass_i, in_i, out_i, stel_i, bh_i*1000))
                                 
+                            
                             #------------------------------------
                             # Update dictionary
                             timescale_dict['%s' %GalaxyID] = {'SnapNum_list': SnapNum_list,
@@ -1948,6 +2342,7 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L12_galaxy_dict_ETG_sta
                                                               'outflow_Z_list': outflow_Z_list,
                                                               'insitu_Z_list': insitu_Z_list,
                                                               'merger_analysis': merger_analysis}
+                            
                             #------------------------------------
                                 
     #-------------------
@@ -1994,8 +2389,8 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L12_galaxy_dict_ETG_sta
         
         #-----------------------------
         # Writing one massive JSON file
-        json.dump(csv_dict, open('%s/%smerger_origin_r%sr%s_t%st%s_%s_%s_rad%s_proj%s_%s.csv' %(output_dir, galaxy_dict_input['csv_sample1'], merger_threshold_min, merger_threshold_max, merger_misaligned_time_pre, merger_misaligned_time_post, galaxy_dict_input['ETG_or_LTG'], galaxy_dict_input['use_angle'], galaxy_dict_input['use_hmr'], galaxy_dict_input['use_proj_angle'], csv_name), 'w'), cls=NumpyEncoder)
-        print('\n  SAVED: %s/%smerger_origin_r%sr%s_t%st%s_%s_%s_rad%s_proj%s_%s.csv' %(output_dir, galaxy_dict_input['csv_sample1'], merger_threshold_min, merger_threshold_max, merger_misaligned_time_pre, merger_misaligned_time_post, galaxy_dict_input['ETG_or_LTG'], galaxy_dict_input['use_angle'], galaxy_dict_input['use_hmr'], galaxy_dict_input['use_proj_angle'], csv_name))
+        json.dump(csv_dict, open('%s/%smerger_origin_%s_r%sr%s_t%st%s_%s_%s_rad%s_proj%s_%s.csv' %(output_dir, galaxy_dict_input['csv_sample1'], misangle_threshold, merger_threshold_min, merger_threshold_max, merger_misaligned_time_pre, merger_misaligned_time_post, galaxy_dict_input['ETG_or_LTG'], galaxy_dict_input['use_angle'], galaxy_dict_input['use_hmr'], galaxy_dict_input['use_proj_angle'], csv_name), 'w'), cls=NumpyEncoder)
+        print('\n  SAVED: %s/%smerger_origin_%s_r%sr%s_t%st%s_%s_%s_rad%s_proj%s_%s.csv' %(output_dir, galaxy_dict_input['csv_sample1'], misangle_threshold, merger_threshold_min, merger_threshold_max, merger_misaligned_time_pre, merger_misaligned_time_post, galaxy_dict_input['ETG_or_LTG'], galaxy_dict_input['use_angle'], galaxy_dict_input['use_hmr'], galaxy_dict_input['use_proj_angle'], csv_name))
         if print_progress:
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
         
@@ -2031,7 +2426,7 @@ def _analyse_merger_origin_timescales(csv_galaxy_dict = 'L12_galaxy_dict_ETG_sta
 #--------------------------------
 # Plots for how long (time and snaps) misalignments perisit (from aligned -> stable) 
 # SAVED: /plots/time_spent_misaligned/
-def _plot_time_spent_misaligned(csv_timescales = 'L12_timescale_tree_ETG_stars_gas_sf_rad2.0_projTrue_',
+def _plot_time_spent_misaligned(csv_timescales = 'L100_timescale_tree_30_LTG_stars_gas_sf_rad2.0_projFalse_',
                                 #--------------------------
                                 plot_type = 'time',            # 'time', 'snap'    
                                 #--------------------------
@@ -2178,7 +2573,7 @@ def _plot_time_spent_misaligned(csv_timescales = 'L12_timescale_tree_ETG_stars_g
 
 # Plots time spent misaligned as a function of misalignment angle
 # SAVED: /plots/delta_misangle_t_relax/
-def _plot_delta_misalignment_timescale(csv_timescales = 'L100_timescale_tree_ETG_stars_gas_sf_rad2.0_projTrue_',
+def _plot_delta_misalignment_timescale(csv_timescales = 'L100_timescale_tree_30_ETG_stars_gas_sf_rad2.0_projTrue_',
                                        #--------------------------
                                        plot_type = 'time',            # 'time', 'snap'    
                                        #--------------------------
@@ -2304,20 +2699,20 @@ def _plot_delta_misalignment_timescale(csv_timescales = 'L100_timescale_tree_ETG
 #--------------------------------
 # Will overlay galaxies from the point of becoming misaligned, if they have a merger
 # SAVED: /plots/stacked_misalignments/
-def _plot_stack_misalignments(csv_merger_origin = 'L12_merger_origin_r0.1r1.9_t1.0t2.0_ETG_stars_gas_sf_rad2.0_projTrue_',
+def _plot_stack_misalignments(csv_merger_origin = 'L100_merger_origin_30_r0.1r1.9_t1.0t1.0_both_stars_gas_sf_rad2.0_projTrue_',
                                        #--------------------------
                                        # Galaxy plotting
                                        print_summary  = True,
-                                         plot_type               = 'raw_time',            # 'time', 'snap', 'raw_time', 'raw_snap'
+                                         plot_type               = 'time',            # 'time', 'snap', 'raw_time', 'raw_snap'
                                          plot_GalaxyIDs          = False,             # Whether to add galaxyIDs 
                                          plot_number_of_galaxies_start = 0,                # galaxy number to start on (default 0)
-                                         plot_number_of_galaxies_end   = 999,               # How many galaxies to plot (largely for testing), set to 1000000
+                                         plot_number_of_galaxies_end   = 999999,               # How many galaxies to plot (largely for testing), set to 1000000
                                          plot_specific_ID              = None,         # None, Whether to plot a specific galaxy, 12523088
                                        #--------------------------
                                        plot_sample_hist = False,
                                        #--------------------------
                                        showfig       = True,
-                                       savefig       = True,
+                                       savefig       = False,
                                          file_format = 'pdf',
                                          savefig_txt = '',
                                        #--------------------------
@@ -2387,6 +2782,7 @@ def _plot_stack_misalignments(csv_merger_origin = 'L12_merger_origin_r0.1r1.9_t1
         scatter_c = []
         for GalaxyID in tqdm(timescale_dict.keys()):
             
+            
             # Sanity check on example galaxy
             if plot_specific_ID:
                 if int(timescale_dict['%s' %GalaxyID]['DescendantID_list'][-1]) != plot_specific_ID: #12523088
@@ -2399,9 +2795,11 @@ def _plot_stack_misalignments(csv_merger_origin = 'L12_merger_origin_r0.1r1.9_t1
             
             # Allocate what is plotted (snap, time, raw snap, raw time)
             if plot_type == 'time':
-                plot_time_axis = -1*np.array(timescale_dict['%s' %GalaxyID]['Lookbacktime_list']) + float(timescale_dict['%s' %GalaxyID]['Lookbacktime_list'][1])
+                index_misstart = [n for n,i in enumerate(np.array(timescale_dict['%s' %GalaxyID]['Lookbacktime_list'])) if i < float(timescale_dict['%s' %GalaxyID]['time_start'])][0]
+                plot_time_axis = -1*np.array(timescale_dict['%s' %GalaxyID]['Lookbacktime_list']) + float(timescale_dict['%s' %GalaxyID]['Lookbacktime_list'][index_misstart])
             elif plot_type == 'snap':
-                plot_time_axis = np.array(timescale_dict['%s' %GalaxyID]['SnapNum_list']) - float(timescale_dict['%s' %GalaxyID]['SnapNum_list'][1])
+                index_misstart = [n for n,i in enumerate(np.array(timescale_dict['%s' %GalaxyID]['SnapNum_list'])) if i < float(timescale_dict['%s' %GalaxyID]['SnapNum_start'])][0]
+                plot_time_axis = np.array(timescale_dict['%s' %GalaxyID]['SnapNum_list']) - float(timescale_dict['%s' %GalaxyID]['SnapNum_list'][index_misstart])
             elif plot_type == 'raw_time':
                 plot_time_axis = timescale_dict['%s' %GalaxyID]['Lookbacktime_list']
             elif plot_type == 'raw_snap':
@@ -2447,7 +2845,7 @@ def _plot_stack_misalignments(csv_merger_origin = 'L12_merger_origin_r0.1r1.9_t1
                 
             # Add GalaxyIDs if specified
             if plot_GalaxyIDs:
-                plt.text(plot_time_axis[-1], timescale_dict['%s' %GalaxyID]['misangle_list'][-1], '%s' %(timescale_dict['%s' %GalaxyID]['DescendantID_list'][-1]), color='k', fontsize=8)
+                plt.text(plot_time_axis[-1], timescale_dict['%s' %GalaxyID]['misangle_list'][-1], '%s' %(timescale_dict['%s' %GalaxyID]['GalaxyID_list'][-1]), color='k', fontsize=8)
             
             tmp_plot_number += 1
             
@@ -2455,15 +2853,18 @@ def _plot_stack_misalignments(csv_merger_origin = 'L12_merger_origin_r0.1r1.9_t1
         # Create scatter
         scatter = plt.scatter(scatter_x, scatter_y, c=scatter_c, cmap=merger_colormap, norm=merger_normalize, s=scatter_s, marker='s', edgecolors='grey')
         
+        # Add threshold
+        axs.axhline(30, c='grey', ls='--', alpha=0.5)
+        axs.axhline(150, c='grey', ls='--', alpha=0.5)
         
         #-----------
         ### General formatting
         # Axis labels
         if plot_type == 'time':
-            axs.set_xlim(-2, 8)
+            axs.set_xlim(-8, 8)
             axs.set_xlabel('Time since misalignment (Gyr)')
         if plot_type == 'snap':
-            axs.set_xlim(-2, 8)
+            axs.set_xlim(-8, 8)
             axs.set_xlabel('Snapshots since misalignment')
         if plot_type == 'raw_time':
             axs.set_xlim(9, 0)
@@ -2545,18 +2946,18 @@ def _plot_stack_misalignments(csv_merger_origin = 'L12_merger_origin_r0.1r1.9_t1
 
 # Will overlay galaxies from the last merger they had that was attributed to a merger  
 # SAVED: /plots/stacked_mergers/ 
-def _plot_stack_mergers(csv_merger_origin = 'L12_merger_origin_r0.1r1.9_t0.1t2.0_ETG_stars_gas_sf_rad2.0_projTrue_',
+def _plot_stack_mergers(csv_merger_origin = 'L12_merger_origin_30_r0.1r1.9_t0.1t2.0_both_stars_gas_sf_rad2.0_projTrue_',
                                        #--------------------------
                                        # Galaxy plotting
                                        print_summary  = True,
                                          plot_type               = 'time',            # 'time', 'snap'
                                          plot_GalaxyIDs          = False,             # Whether to add galaxyIDs 
                                          plot_number_of_galaxies_start = 0,                # galaxy number to start on (default 0)
-                                         plot_number_of_galaxies_end   = 9999,               # How many galaxies to plot (largely for testing), set to 1000000
+                                         plot_number_of_galaxies_end   = 999999,               # How many galaxies to plot (largely for testing), set to 1000000
                                          plot_specific_ID              = None,         # None, Whether to plot a specific galaxy, 12523088
                                        #--------------------------
                                        showfig       = True,
-                                       savefig       = True,
+                                       savefig       = False,
                                          file_format = 'pdf',
                                          savefig_txt = '',
                                        #--------------------------
@@ -2611,7 +3012,7 @@ def _plot_stack_mergers(csv_merger_origin = 'L12_merger_origin_r0.1r1.9_t0.1t2.0
             
             # Sanity check on example galaxy
             if plot_specific_ID:
-                if int(timescale_dict['%s' %GalaxyID]['DescendantID_list'][-1]) != plot_specific_ID: #12523088
+                if int(timescale_dict['%s' %GalaxyID]['GalaxyID_list'][-1]) != plot_specific_ID: #12523088
                     continue
             
             # Plot only certain number
@@ -2706,7 +3107,11 @@ def _plot_stack_mergers(csv_merger_origin = 'L12_merger_origin_r0.1r1.9_t0.1t2.0
         #===================    
         # Create scatter
         scatter = plt.scatter(scatter_x, scatter_y, c=scatter_c, cmap=merger_colormap, norm=merger_normalize, s=scatter_s, marker='s', edgecolors='grey')
-            
+        
+        # Add threshold
+        axs.axhline(30, c='grey', ls='--', alpha=0.5)
+        axs.axhline(150, c='grey', ls='--', alpha=0.5)
+        
         #-----------
         ### General formatting
         # Axis labels
@@ -2792,14 +3197,14 @@ def _plot_stack_mergers(csv_merger_origin = 'L12_merger_origin_r0.1r1.9_t0.1t2.0
 #_extract_criteria_galaxies()
 #_create_merger_tree_csv()
 
-#_analyse_misalignment_timescales()
-_analyse_merger_origin_timescales()
+_analyse_misalignment_timescales()
+#_analyse_merger_origin_timescales()
 
 #---------------
-#_plot_time_spent_misaligned()
+_plot_time_spent_misaligned()
 #_plot_delta_misalignment_timescale()
 
-_plot_stack_misalignments()
+#_plot_stack_misalignments()
 #_plot_stack_mergers()
 #=============================
 

@@ -2,7 +2,8 @@ import h5py
 import numpy as np
 import math
 import random
-import inspect
+import uuid
+import hashlib
 import matplotlib as mpl
 import matplotlib.pyplot as plt 
 import matplotlib.colors as colors
@@ -1264,66 +1265,82 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
 def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                   #--------------------------
                   # Galaxy analysis
-                  print_summary  = True,
-                  #=====================================================
+                  print_summary             = True,
+                  print_galaxy              = True,
+                    plot_misangle_detection = True,
+                  #-----------------------
                   # Individual galaxies
-                  force_all_snaps = True,       # KEEP TRUE. force us to use galaxies in which we have all snaps.
-                  #-----------------------
-                  # Sample in range
-                  max_z = 0.3,                  
-                  min_z = 0.1,                  # min/max z to sample galaxies BECOMING MISALIGNED
-                  #-----------------------
-                  # Galaxy properties     False/value   Must meet all of these from point of becoming misaligned
-                  use_satellites      = True,  
-                  # Halo mass
-                  min_halomass        = False,
-                  max_halomass        = False, 
-                  # Morphology
-                  min_kappa_stars     = 0.4,
-                  max_kappa_stars     = False, 
-                  # Radius  
-                  min_rad             = False,
-                  max_rad             = False,
-                  # Local properties
-                  use_hmr_angle       = 2.0,         # min particles, angles, inflow, [pkpc]
-                    min_particles     = 20,
-                    max_com           = 2.0,         # [pkpc]
-                    min_inclination   = 10,          # 10 degrees and 180-10
-                  # Broad properties
-                  use_hmr_general     = 'aperture',     # stellar mass, sfr  
-                    # Mass
-                    min_stelmass      = 1E9,       
-                    max_stelmass      = False,
-                    # Star formation
-                    min_sfr           = False,
-                    max_sfr           = False,
-                  # Inflow
-                  min_inflow          = False,
-                  max_inflow          = False,
-                  # BH
-                  min_bh_mass         = False,
-                  min_edd             = False,
-                  min_lbol            = False,
-                  #-----------------------
-                  # Misalignment angles
-                  use_projected       = 'abs',              # 'abs / proj'
-                    misangle_threshold= 30,                 # [degrees], what we classify as misalignment... could be 45
-                    use_angle         = 'stars_gas_sf',
-                    min_delta_angle   = 10,                 # Change in angle between successive snapshots from aligned to misaligned
-                    snips_to_average  = 1,                  # Between current and last snap, average misalignment angle
-                  #-----------------------
+                  force_all_snaps = True,                # KEEP TRUE. force us to use galaxies in which we have all snaps.
+                    GalaxyID_list = [401467650],         # [ None / list of IDs to process ]
+                  #====================================================================================================
+                  # Misalignment must take place in range   
+                    max_z = 0.8,                  
+                    min_z = None,                         # [ None / value ] min/max z to sample galaxies BECOMING MISALIGNED
+                  # Radii to extract
+                    use_hmr_general     = 'aperture',    # [ 1.0 / 2.0 / aperture]      Used for stelmass, sfr. ssfr
+                    use_hmr_angle       = 2.0,           # [ 1.0 / 2.0 ]                Used for misangle, inc angle, com, counts
+                  #--------------------------------------------------------
+                  # PROPERTIES TO ALWAYS MEET
+                    min_particles     = 20,              # [count]
+                    max_com           = 2.0,             # [pkpc]
+                    min_inclination   = 10,              # [ 0 / degrees]
+                  #--------------------------------------------------------
+                  # PROPERTIES TO AVERAGE OVER WHILE MISALIGNED / RELAXING
+                  # Satellites, central, or both         [ 'satellite' is sgn >= 1 / 'central' is sgn == 1 / None ]
+                    limit_satellites    = 'satellite',
+                  # Group / Field / both                 [ None / value ] (halo threshold: 10**14)
+                    min_halomass        = None,         
+                    max_halomass        = None, 
+                  # Stellar mass and SFR                 [ None / value ]
+                    min_stelmass        = 1E10,
+                    max_stelmass        = 5E10,
+                  # SF and quiescent galaxies            [ None / value ]
+                    min_sfr             = None,          
+                    max_sfr             = None,          # SF limit of ~ 0.1   Msun/yr
+                    min_ssfr            = None,          # SF limit of ~ 1e-11 /yr
+                    max_ssfr            = None,         
+                  # Morphology stars / gas.              [ None / value ] (ETG threshold: 0.4)
+                    min_kappa_stars     = None,
+                    max_kappa_stars     = None,
+                    min_kappa_gas       = None,          # For LTG-style, typically around 0.8+, for ETG-style, 0.6+
+                    max_kappa_gas       = None,          # Take these with pinch of salt though
+                    min_kappa_sf        = None,         
+                    max_kappa_sf        = None,
+                    min_kappa_nsf       = None,
+                    max_kappa_nsf       = None,
+                  # Radius limits                        [ None / value ]
+                    min_rad             = None,     
+                    max_rad             = None,   
+                  # Inflow (gas) | 7.0 is pretty high    [ None / value ]
+                    min_inflow          = None,             
+                    max_inflow          = None,
+                  # BH                                   [ None / value ]
+                    min_bh_mass         = None,
+                    max_bh_mass         = None,
+                    min_edd             = None,          # Uses instantaneous accretion rate
+                    max_edd             = None,
+                    min_lbol            = None,
+                    max_lbol            = None,
+                  #--------------------------------------------------------
+                  # Misalignment angles                
+                    abs_or_proj         = 'abs',         # [ 'abs' / 'proj' ]
+                    use_angle           = 'stars_gas_sf',
+                    misangle_threshold  = 30,            # [ 30 / 45 ]
+                    min_delta_angle     = 10,            # [ None / deg ] Change in angle between successive snapshots from aligned to misaligned
+                    latency_time        = 0.24,          # [ None / Gyr ] Consecutive time galaxy must be <30 / >150 to count as finished relaxing
+                  #--------------------------------------------------------
                   # Mergers 
-                  use_merger_criteria   = False,              # Whether we care about below
-                    min_stellar_ratio   = 0.1,              
-                    max_stellar_ratio   = 2.0,
-                    min_gas_ratio       = False,
-                    max_gas_ratio       = False,
-                    max_closest_merger  = 1.0,       # [Gyr], within when misalignment occurs meeting min_delta_angle, and ratios, that a merger follows or preceeds 
-                  #-----------------------
+                  use_merger_criteria   = True,          # Whether we limit to merger-induced, or any misalignments
+                    min_stellar_ratio   = 0.1,           # [ value ]
+                    max_stellar_ratio   = 2.0,               
+                    min_gas_ratio       = None,          # [ None / value ]
+                    max_gas_ratio       = None,          # [ None / value ]
+                    max_closest_merger  = 1.0,           # [Gyr] ± max time to closest merger from point of misalignment
+                  #--------------------------------------------------------
                   # Temporal selection
-                  time_preceeding       = 0.5,      # [Gyr], time preceeding misalignment in which the galaxy 
-                  time_succeeding       = 0.5,      # [Gyr], time after relaxation in which the galaxy
-                  #=====================================================
+                    time_extra       = 0.2,      # [Gyr], extra time before and after misalignment which is also extracted
+                    time_no_misangle = None,     # [Gyr], extra time before and after misalignment which has no misalignments. Similar to relax snapshots
+                  #====================================================================================================
                   csv_file       = False,             # Will write sample to csv file in sample_dir
                     csv_name     = '',               # extra stuff at end
                   #--------------------------
@@ -1335,119 +1352,343 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
     assert (answer == '4') or (answer == '3'), 'Must use snips'
     
     #---------------------------
-    # Loading mergertree file
-    
-    # Load galaxy_tree
+    # Loading files
     if print_progress:
-        print('Loading galaxy_tree')
+        print('Loading files')
         time_start = time.time()
     
-    #dict_tree = json.load(open('%s/%s.csv' %(output_dir, csv_tree), 'r'))
-    #galaxy_tree     = dict_tree['galaxy_tree']
-    #tree_input      = dict_tree['tree_input']
-    #output_input    = dict_tree['output_input']
-    #sample_input    = dict_tree['sample_input']
+    # Loading mergertree file to establish windows
+    f = h5py.File(tree_dir + 'Snip100_MainProgenitorTrees.hdf5', 'r')
+    Redshift_tree     = np.array(f['Snapnum_Index']['Redshift'])
+    Lookbacktime_tree = np.array(f['Snapnum_Index']['LookbackTime'])
+    f.close()
+    
+    # Load galaxy_tree
+    dict_tree = json.load(open('%s/%s.csv' %(output_dir, csv_tree), 'r'))
+    galaxy_tree     = dict_tree['galaxy_tree']
+    tree_input      = dict_tree['tree_input']
+    output_input    = dict_tree['output_input']
+    sample_input    = dict_tree['sample_input']
     
     
+    #---------------------------
+    # Test for required particles
+    particle_selection = []         #particle_list_in = []
+    compound_selection = []         #angle_selection  = []
+    if 'stars_gas' == use_angle:
+        if 'stars' not in particle_selection:
+            particle_selection.append('stars')
+        if 'gas' not in particle_selection:
+            particle_selection.append('gas')
+        compound_selection.append(['stars', 'gas'])
+    if 'stars_gas_sf' == use_angle:
+        if 'stars' not in particle_selection:
+            particle_selection.append('stars')
+        if 'gas_sf' not in particle_selection:
+            particle_selection.append('gas_sf')
+        compound_selection.append(['stars', 'gas_sf'])
+    if 'stars_gas_nsf' == use_angle:
+        if 'stars' not in particle_selection:
+            particle_selection.append('stars')
+        if 'gas_nsf' not in particle_selection:
+            particle_selection.append('gas_nsf')
+        compound_selection.append(['stars', 'gas_nsf'])
+    if 'gas_sf_gas_nsf' == use_angle:
+        if 'gas_sf' not in particle_selection:
+            particle_selection.append('gas_sf')
+        if 'gas_nsf' not in particle_selection:
+            particle_selection.append('gas_nsf')
+        compound_selection.append(['gas_sf', 'gas_nsf'])
+    if 'stars_dm' == use_angle:
+        if 'stars' not in particle_selection:
+            particle_selection.append('stars')
+        if 'dm' not in particle_selection:
+            particle_selection.append('dm')
+        compound_selection.append(['stars', 'dm'])
+    if 'gas_dm' == use_angle:
+        if 'gas' not in particle_selection:
+            particle_selection.append('gas')
+        if 'dm' not in particle_selection:
+            particle_selection.append('dm')
+        compound_selection.append(['gas', 'dm'])
+    if 'gas_sf_dm' == use_angle:
+        if 'gas_sf' not in particle_selection:
+            particle_selection.append('gas_sf')
+        if 'dm' not in particle_selection:
+            particle_selection.append('dm')
+        compound_selection.append(['gas_sf', 'dm'])
+    if 'gas_nsf_dm' == use_angle:
+        if 'gas_nsf' not in particle_selection:
+            particle_selection.append('gas_nsf')
+        if 'dm' not in particle_selection:
+            particle_selection.append('dm')
+        compound_selection.append(['gas_nsf', 'dm'])
     
-    galaxy_tree = {'12345': {'SnapNum': 0, 
-                             'Lookbacktime': 0, 
-                             'merger_ratio_stars': 0, 
-                             'stars': {'ap_mass': 0, 
-                                       'kappa': 0, 
-                                       '2.0_hmr': {'count': 0, 
-                                                   'proj_angle': 0}}, 
-                             'stars_gas_sf': {'2.0_hmr': {'angle_abs': 0, 
-                                                          'com_abs': 0}}}}
-    galaxy_tree['12345']['SnapNum']             = [168, 169, math.nan, 171, 172, 173, 174, 175, 176, 177, math.nan, math.nan, 180]
-    galaxy_tree['12345']['Redshift']            = [0.34, 0.32, math.nan, 0.30, 0.28, 0.27, 0.26, 0.24, 0.23, 0.22, math.nan, math.nan, 0.18]
-    galaxy_tree['12345']['Lookbacktime']        = [3.86, 3.73, math.nan, 3.48, 3.35, 3.22, 3.09, 2.97, 2.84, 2.71, math.nan, math.nan, 2.33]
-    galaxy_tree['12345']['merger_ratio_stars']  = [[], [], [], [], [0.01], [], [0.14, 0.52], [], [], [0.11], [], [], []]
     
-    galaxy_tree['12345']['stars']['ap_mass']    = [8E9, 9E9, math.nan, 9.5E9, 1E10, 1.1E10, 1.1E10, 1.1E10, 9E9, 1E10, math.nan, math.nan, 2E10]
-    galaxy_tree['12345']['stars']['kappa']      = [0.5, 0.5, math.nan, 0.5, 0.5, 0.5, 0.6, 0.2, 0.4, 0.5, math.nan, math.nan, 0.6]
-    galaxy_tree['12345']['stars']['2.0_hmr']['count']       = [34, 13, math.nan, 135, 124, 126, 135, 111, 80, 12, math.nan, math.nan, 153]
-    galaxy_tree['12345']['stars']['2.0_hmr']['proj_angle']  = [70, 73, math.nan, 60, 65, 53, 31, 9, 6, 12, math.nan, math.nan, 20]
-    
-    galaxy_tree['12345']['stars_gas_sf']['2.0_hmr']['angle_abs'] = [10, 5, math.nan, 7, 26, 87, 64, 32, 22, 10, math.nan, math.nan, 6]
-    galaxy_tree['12345']['stars_gas_sf']['2.0_hmr']['com_abs']   = [0.5, 0.4, math.nan, 0.2, 0.5, 0.7, 2.2, 0.6, 0.3, 0.2, math.nan, math.nan, 0.5]
+    #---------------------------
+    # Find GalaxyID in tree and only process this
+    if GalaxyID_list != None:
+        GalaxyID_list_extract = []
+        for GalaxyID_find in GalaxyID_list:
+            for ID_i in np.arange(GalaxyID_find, GalaxyID_find+65):
+                if str(ID_i) in galaxy_tree.keys():
+                    GalaxyID_list_extract.append(ID_i)
+                    print('ID %s found in galaxy_tree' %ID_i)
     
     
     #----------------------------
-    # plot raw above
-    fig, axs = plt.subplots(nrows=5, ncols=1, gridspec_kw={'height_ratios': [3, 1.5, 1.5, 1.5, 1.5]}, figsize=[7, 10], sharex=True, sharey=False)
-    axs[0].plot(galaxy_tree['12345']['Lookbacktime'], galaxy_tree['12345']['stars_gas_sf']['2.0_hmr']['angle_abs'], c='k', lw=5, alpha=0.2)
-    axs[0].plot(galaxy_tree['12345']['Lookbacktime'], galaxy_tree['12345']['stars']['2.0_hmr']['proj_angle'], ls='--', c='k', lw=5, alpha=0.2)
-    axs[1].plot(galaxy_tree['12345']['Lookbacktime'], np.log10(np.array(galaxy_tree['12345']['stars']['ap_mass'])), c='k', lw=5, alpha=0.2)
-    axs[2].plot(galaxy_tree['12345']['Lookbacktime'], galaxy_tree['12345']['stars']['2.0_hmr']['count'], c='k', lw=5, alpha=0.2)
-    axs[3].plot(galaxy_tree['12345']['Lookbacktime'], galaxy_tree['12345']['stars_gas_sf']['2.0_hmr']['com_abs'], c='k', lw=5, alpha=0.2)
-    axs[4].plot(galaxy_tree['12345']['Lookbacktime'], galaxy_tree['12345']['stars']['kappa'], c='k', lw=5, alpha=0.2)
-    
-    for time_i, ratio_i in zip(galaxy_tree['12345']['Lookbacktime'], galaxy_tree['12345']['merger_ratio_stars']):
-        if len(ratio_i) > 0:
-            if max(ratio_i) > 0.1:
-                for ax in axs:
-                    ax.axvline(time_i, c='grey', ls='--', lw=2, alpha=0.2)
-                    ax.text(time_i-0.2, 170, '%.2f' %max(ratio_i), color='grey', alpha=0.2)
+    # Loop over all galaxies
+    misalignment_tree = {}
+    for GalaxyID in tqdm(galaxy_tree.keys()):
+        
+        #--------------------------------
+        # QUICK FILTERS
+        
+        # If we are looking at individual galaxies, filter them out
+        if GalaxyID_list != None:
+            if int(GalaxyID) not in GalaxyID_list_extract:
+                continue
+        
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+            print('QUICK FILTERS')
+            time_start = time.time()
+        
+        # Test if any misalignments even present in z range, else move on
+        mask_test_z = np.where((np.array(galaxy_tree['%s' %GalaxyID]['Redshift']) >= (-1 if min_z == None else min_z)) & (np.array(galaxy_tree['%s' %GalaxyID]['Redshift']) <= (999 if max_z == None else max_z)))[0]
+        mask_test_z = np.arange(mask_test_z[0], mask_test_z[-1]+1)
+        mask_test_z_misangle = np.where(np.array(galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj])[mask_test_z] > misangle_threshold)
+        if len(mask_test_z_misangle) == 0:
+            continue
+        
+        if print_galaxy:
+            print('ID: ', ID_i)
+            print('In range %s - %s:\nIndex\tSnap\tz\tTime\tAngLo\tAngle\tAngHi\tRatio' %(max_z, min_z))
+            for index, snap_i, time_i, z_i, angle_i, err_i, merger_i in zip(np.array(galaxy_tree['%s' %GalaxyID]['SnapNum'])[mask_test_z] - np.array(galaxy_tree['%s' %GalaxyID]['SnapNum'])[0], np.array(galaxy_tree['%s' %GalaxyID]['SnapNum'])[mask_test_z], np.array(galaxy_tree['%s' %GalaxyID]['Lookbacktime'])[mask_test_z], np.array(galaxy_tree['%s' %GalaxyID]['Redshift'])[mask_test_z], np.array(galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj])[mask_test_z], np.array(galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[mask_test_z], np.array(galaxy_tree['%s' %GalaxyID]['merger_ratio_stars'], dtype=object)[mask_test_z]):
+                print('%s\t%s\t%.2f\t%.2f\t%.1f\t%.1f\t%.1f\t%.2f' %(index, snap_i, z_i, time_i, err_i[0], angle_i, err_i[1], max(merger_i, default=0)))
+            print(' ')
+            
+        
+        
+        #--------------------------------
+        # CHECK 1: establishing a complete window for misalignment (pre-post at z)
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+            print('LOCATING MISALIGNMENTS')
+            time_start = time.time()
+        
+        # Identify indexes of start and ends of individual relaxations
+        misalignment_locations = {'misalign': {'index': [],
+                                               'snapnum': []},
+                                  'relax':    {'index': [],
+                                               'snapnum': []}}
+                                               
+        all_angles = galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj]
+        misalignment_started = False
+        index_ahead = math.nan
+        for index, snap_i, angle_i in zip(np.arange(0, len(all_angles)+1), galaxy_tree['%s' %GalaxyID]['SnapNum'], all_angles):
+        
+            # If there is a nan inbetween, reset count
+            if angle_i == math.nan:
+                misalignment_started = False
+        
+            if index < (len(all_angles)-1):
+                # Check for start of misalignment that meets conditions
+                if (misalignment_started == False) & (angle_i < misangle_threshold) & (all_angles[index+1] > misangle_threshold) & ((all_angles[index+1] - angle_i) >= (0 if min_delta_angle == None else min_delta_angle)) & (galaxy_tree['%s' %GalaxyID]['Redshift'][index] >= (-1 if min_z == None else min_z)) & (galaxy_tree['%s' %GalaxyID]['Redshift'][index] <= (999 if max_z == None else max_z)):
+                    misalignment_started = True
+                    misalignment_started_index = index
+                    misalignment_started_snap  = snap_i
+        
+            # If we have begun a misalignment, check how many snaps we need to check for in the future
+            if (misalignment_started == True):
+                if len(np.where(Lookbacktime_tree <= (galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index] - (0 if latency_time == None else latency_time)))[0]) == 0:
+                    index_ahead = math.nan
+                    continue
+                else:
+                    index_ahead = np.where(Lookbacktime_tree <= (galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index] - (0 if latency_time == None else latency_time)))[0][0] - snap_i
+                if debug:
+                    print(snap_i, angle_i, index_ahead)
+            
+            # If we have begun a misalignment, check if it relaxes within the time
+            if np.isnan(index_ahead) == False:
+                if (misalignment_started == True) & (index < (len(all_angles)-1-index_ahead)):
+                    check_consecutive_index = 0
+                    if debug:
+                        print('limiting index:', len(all_angles)-1-index_ahead, index)
+            
+                    # if it relaxes to counter-, ensure it stays counter
+                    if (all_angles[index+1] < misangle_threshold):
+                        # Loop over all snaps ahead of time
+                        for index_ahead_i in np.arange(0, index_ahead+1):
+                            if debug:
+                                print('ahead: ', all_angles[index+1+index_ahead_i])
+                                print(galaxy_tree['%s' %GalaxyID]['SnapNum'][index+1+index_ahead_i])
+                            if (all_angles[index+1+index_ahead_i] < misangle_threshold): 
+                                check_consecutive_index += 1
+                                if debug:
+                                    print('   met ', all_angles[index+1+index_ahead_i])
+                            else:
+                                if debug:
+                                    print('   not met ', all_angles[index+1+index_ahead_i])
+                    
+                        if abs(check_consecutive_index) == index_ahead+1:
+                            misalignment_locations['misalign']['index'].append(misalignment_started_index )
+                            misalignment_locations['misalign']['snapnum'].append(misalignment_started_snap)
+                            misalignment_locations['relax']['index'].append((index+1))
+                            misalignment_locations['relax']['snapnum'].append(galaxy_tree['%s' %GalaxyID]['SnapNum'][index+1])
+                            misalignment_started = False        
                 
-    axs[4].set_xlabel('Lookbacktime')
-    axs[0].set_ylabel('Angle')
-    axs[1].set_ylabel('Mass')
-    axs[2].set_ylabel('Count')
-    axs[3].set_ylabel('CoM distance')
-    axs[4].set_ylabel('Kappa')
+            
+                    # if it relaxes to co-, ensure it stays regular
+                    elif (all_angles[index+1] > (180-misangle_threshold)):
+                        # Loop over all snaps ahead of time
+                        for index_ahead_i in np.arange(0, index_ahead+1):
+                            if debug:
+                                print('ahead: ', all_angles[index+1+index_ahead_i])
+                                print(galaxy_tree['%s' %GalaxyID]['SnapNum'][index+1+index_ahead_i])
+                            if (all_angles[index+1+index_ahead_i] > (180-misangle_threshold)):
+                                check_consecutive_index += 1
+                                if debug:
+                                    print('   met ', all_angles[index+1+index_ahead_i])
+                            else:
+                                if debug:
+                                    print('   not met ', all_angles[index+1+index_ahead_i])
+                    
+                        if abs(check_consecutive_index) == index_ahead+1:
+                            misalignment_locations['misalign']['index'].append(misalignment_started_index )
+                            misalignment_locations['misalign']['snapnum'].append(misalignment_started_snap)
+                            misalignment_locations['relax']['index'].append((index+1))
+                            misalignment_locations['relax']['snapnum'].append(galaxy_tree['%s' %GalaxyID]['SnapNum'][index+1])
+                            misalignment_started = False
+                    
+                    else:
+                        continue
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+            print('done')
+            time_start = time.time()
+        if debug:
+            print(misalignment_locations.items())
+           
+        # Optionally plot detection
+        if print_galaxy:
+            if len(misalignment_locations['misalign']['index']) > 0:
+                print('Snap -\tSnap\tTime -\tTime\tDuration [Gyr]')
+                for index_m, index_r, snap_m, snap_r in zip(misalignment_locations['misalign']['index'], misalignment_locations['relax']['index'], misalignment_locations['misalign']['snapnum'], misalignment_locations['relax']['snapnum']):
+                    print('%s\t%s\t%.2f\t%.2f\t%.2f' %(snap_m, snap_r, galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m], galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r], abs(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r]-galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m])))
+            else:
+                print('\n> No misalignments using imposed limits <')
+        if plot_misangle_detection:
+            # Plot mergers
+            for time_i, ratio_i in zip(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['merger_ratio_stars']):
+                #print('%.1f\t%.2f' %(time_i, max(ratio_i, default=math.nan)))
+                if len(ratio_i) > 0:
+                    if max(ratio_i) > 0.1:
+                        plt.axvline(time_i, c='grey', ls='--', lw=2)
+                        plt.text(time_i-0.2, 170, '%.2f' %max(ratio_i), color='grey')
+            # Plot misalignment detections
+            for index_m, index_r in zip(misalignment_locations['misalign']['index'], misalignment_locations['relax']['index']):
+                plt.plot([galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m], galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r]], [90,90], lw=10, color='grey', solid_capstyle="butt", alpha=0.5)
+                plt.plot([galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m], galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r]-(0 if latency_time==None else latency_time)], [90,90], lw=5, color='lightgrey', solid_capstyle="butt", alpha=0.5)
+                plt.text(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m], 88, '%.2f' %abs(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r]-galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m]), fontsize=9)
+                plt.vlines(x=galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m], ymin=85, ymax=95, lw=1, colors='grey', alpha=0.5)
+                plt.vlines(x=galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r], ymin=85, ymax=95, lw=1, colors='grey', alpha=0.5)
+                
+            plt.plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], all_angles, 'go-', mec='k', ms=1)
+            plt.axhline(misangle_threshold, lw=0.5, c='k')
+            plt.axhline(180-misangle_threshold, lw=0.5, c='k')
+            plt.ylim(0, 181)
+            plt.xlim(8.1, 0)
+            plt.show()
+        
+        # Skip galaxy if no misalignments detected
+        if len(misalignment_locations['misalign']['index']) == 0:
+            continue
+        
+        
+           
+        
+
+        # For each misalignment and relaxation PAIR:
+        # Use mergertree to find hypothetical snapnums either side, and their indexes for this galaxy (lower + upper)
+        # Use lower + upper to create np.arange(), and ensure these are all in SnapNum list for this galaxy
+        
+        
+        
+        
+        raise Exception('current break')
+        
+        
+        
+        
+        
+        
     
-    axs[0].set_xlim(4, 2)
-    axs[0].set_ylim(0, 180)
-    axs[1].set_ylim(9, 11)
-    axs[2].set_ylim(bottom=0)
-    axs[3].set_ylim(0, 3)
-    axs[4].set_ylim(0, 1)
-    #plt.show()
-    #----------------------------
-    
-    # apply filters
-    mask_z = np.where((np.array(galaxy_tree['12345']['Redshift']) >= min_z) & (np.array(galaxy_tree['12345']['Redshift']) <= max_z))[0]
-    mask_z = np.arange(mask_z[0], mask_z[-1]+1)
-    print(np.array(galaxy_tree['12345']['Redshift'])[mask_z])
-    
-    
-    
-    
-    use_hmr_angle
-    min_particles
-    min_inclination
-    
-    use_hmr_general
-    min_stelmass
-    max_stelmass
-    
-    use_projected
-    misangle_threshold
-    use_angle
-    min_delta_angle
-    
-    time_preceeding
-    time_succeeding
-    
-    use_merger_criteria 
-    min_stellar_ratio       
-    max_stellar_ratio 
-    max_closest_merger  = 1.0
-    
-    
-    
-    
-    
-    # overplot filters
-    
+        
+        
+        
+        
+        
+        # CHECK 1: establishing a complete window for misalignment (pre-post at z)
+        # Find location of misalignments (which is within z range)
+        # Find location of relaxations (X consecutive snapshots aligned)
+        # For each misalignment and relaxation PAIR:
+        # Use mergertree to find hypothetical snapnums either side, and their indexes for this galaxy (lower + upper)
+        # Use lower + upper to create np.arange(), and ensure these are all in SnapNum list for this galaxy
+        # If all these conditions met, this galaxy can be checked for mergers and inflows
+        
+        # CHECK 2: if use_merger_criteria
+        # Using index of misalignment and merger tree, find index range to seach for mergers
+        # Check if there is a merger meeting criteria
+        # If met, move on to next check
+        
+        # CHECK 3: inflows/outflows, other misalignments
+        # Check if there are any other misalignments in range
+        # If met, move on to next check
+        
+        # CHECK 4: all in range checks
+        # Apply checks over all in range
+        
+        # CHECK 5:
+        # Apply checks to averages in misaligned range
+        
+        # If this galaxy's particular misalignment passes, append arrays to new misalignment_tree starting from first ID
+        # Append also: index start, index relax, relaxation time
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
     
     
+    #if use_hmr_general == 'aperture':
+    #    check_mass = (np.array(galaxy_tree['12345']['stars']['ap_mass'])[mask_z] >= (1e9 if min_stelmass == None else min_stelmass)) & (np.array(galaxy_tree['12345']['stars']['ap_mass'])[mask_z] <= (1e15 if max_stelmass == None else max_stelmass))
+    #else:
+    #    check_mass = (np.array(galaxy_tree['12345']['stars']['%s_hmr' %use_hmr_general]['mass'])[mask_z] >= (1e9 if min_stelmass == None else min_stelmass)) & (np.array(galaxy_tree['12345']['%s_hmr' %use_hmr_general]['mass'])[mask_z] <= (1e15 if max_stelmass == None else max_stelmass))
+    #check_count = (np.array(galaxy_tree['12345']['stars']['%s_hmr' %use_hmr_angle]['count'])[mask_z] >= (1 if min_particles == None else min_particles)) 
+    #check_inc   = (np.array(galaxy_tree['12345']['stars']['%s_hmr' %use_hmr_angle]['proj_angle'])[mask_z] >= (0 if min_inclination == None else min_inclination))
     
     
     
     
     
+    
+    
+    
+    
+    
+    #------------------------------
+    # Test plot
+    
+    # apply criteria to range of misangle
+    # overplot outcome of filters
     
     """#------------
     GalaxyID_insert = 17879310
@@ -1477,18 +1718,54 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
     """
     
     
+    #================================================ 
+    if csv_file: 
+        # Converting numpy arrays to lists. When reading, may need to simply convert list back to np.array() (easy)
+        class NumpyEncoder(json.JSONEncoder):
+            ''' Special json encoder for numpy types '''
+            def default(self, obj):
+                if isinstance(obj, np.integer):
+                    return int(obj)
+                elif isinstance(obj, np.floating):
+                    return float(obj)
+                elif isinstance(obj, np.ndarray):
+                    return obj.tolist()
+                return json.JSONEncoder.default(self, obj)
+                  
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+            print('Writing to csv...')
+            time_start = time.time() 
+        
+        # Combining all dictionaries
+        csv_dict = {'misalignment_tree': misalignment_tree}
+        
+        misalignment_input = {'all entries': 0}
+        csv_dict.update({'misalignment_input': misalignment_input,
+                         'tree_input': tree_input,
+                         'output_input': output_input,
+                         'sample_input': sample_input})
+        
+        #-----------------------------
+        # Create unique string name for file
+        def create_uuid_from_string(val: str):
+            hex_string = hashlib.md5(val.encode("UTF-8")).hexdigest()
+            return uuid.UUID(hex=hex_string)
+
+        csv_string = "TrueTrueFalse8E10TrueTrueFalse8E10TrueTrueFalse8E10TrueTrueFalse8E10TrueTrueFalse8E10TrueTrueFalse8E10TrueTrueFalse8E10TrueTrueFalse8E10TrueTrueFalse8E10"
+        print(create_uuid_from_string(csv_string))
+        
+        
+        # Writing one massive JSON file
+        json.dump(csv_dict, open('%s/L100_misalignment_tree_%s_%s.csv' %(output_dir, csv_string, csv_name), 'w'), cls=NumpyEncoder)
+        print('\n  SAVED: %s/L100_misalignment_tree_%s_%s.csv' %(output_dir, csv_string, csv_name))
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+        
+        
+        
+        
     
-    
-    
-    
-    
-    
-    
-    # time:
-    # limit to z range
-    # ensure of what we have, its all arange()
-    # Apply filters
-    # plot?
     
     
     
@@ -1497,8 +1774,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
 
     
 #=============================
-_create_galaxy_tree()  
+#_create_galaxy_tree()  
 
-#_analyse_tree()
+_analyse_tree()
 #=============================
     

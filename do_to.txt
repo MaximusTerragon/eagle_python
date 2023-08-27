@@ -1,7 +1,7 @@
 
 
 
-# Make new evolution code for snip to read in tree
+
 
 # make parametisation code
 
@@ -11,21 +11,43 @@
   May need to smooth misalignment angle... error bars?... X snips <30 degrees
   Define misalignments as 45, etc.
   Mass... at m10, about double the number of counter-rotating than m9 with snaps
+  
+# save as unique ID
+
+# Make new evolution code for snip to read in tree
 
 
 
+# Accomodation ask
+# Accomodation clean
+# Accomodation move
+# Presentation for 29th. 12 + 3 mins. 
+# Email title of presentation by 15th
 
 # choose galaxy that stops and test 17879310
 # Create stacked
 # Create timescale histogram
 
 # Add kappa_nsf to snip_timescale once run finishes
-
-# modify presentation for end september
-
+# Kappa gas values within 1/2 hmr, not aperture
 # once sample used, still need to trim for stellar mass within 30pkpc, so sample will need modifying
 
+
+# Ask about setting limits to relaxations. X consecutive snapshots below 30, average?
 # Ask tim about xmas holiday time off
+# Talk to tim about vienna - would it be worth going
+# Talk to tim about cancel leiden. 
+  Thought about it over the summer and I haven't warmed up to the idea.
+  Would rather postpone it to the following year to see how things go then, especially as some of the 
+  early work on ColiBre will be done by then.
+  Don't feel like I would be comfortable working there for a while on the project and would prefer to 
+  stay here.
+  The project is OK (if a bit dull for my tastes), but working on such a new simulation right out
+  of the box... I'd rather wait a year.
+  Prefer the idea of continuing with misalignments in some form, perhaps more directly with AGN or looking
+  at origins. 
+  Optionally also go on to look at zoom-in simulations as its something i wouldn't mind trying or testing
+  as I enjoyed the Tim-Freeke paper.
 
 _____________________________________________________________
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -38,6 +60,10 @@ DONE WEEK 45:
 - Added variable misangle_threshold
 - Tweaked merger code in evolution
 - Inserted nans
+- Checked serpens
+- Issues with method for timescales
+- Created misalignment detection
+- Sorted variables
 
 
 

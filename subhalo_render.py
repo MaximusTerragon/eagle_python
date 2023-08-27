@@ -54,7 +54,7 @@ ID_list = [3748, 20455, 37445, 30494, 43163, 40124, 44545, 48383, 57647, 55343, 
 def galaxy_render(csv_sample = False,              # False, Whether to read in existing list of galaxies  
                     #--------------------------
                     mySims = [('RefL0012N0188', 12)],
-                    GalaxyID_List = [20464],
+                    GalaxyID_List = ID_list,
                     #--------------------------
                     # Galaxy extraction properties
                     kappa_rad            = 30,          # calculate kappa for this radius [pkpc]
@@ -88,7 +88,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                     stars               = True,
                     gas                 = False,
                     gas_sf              = True,
-                    gas_nsf             = True,    
+                    gas_nsf             = False,    
                     dark_matter         = False,
                     black_holes         = True,
                     #--------------------------
@@ -327,7 +327,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                         
         if print_galaxy:
             print('|Combined particle properties within %s pkpc:' %aperture_rad)
-            print('|%s| |ID:   %s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f' %(SnapNum, str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'])) 
+            print('|%s| |ID:   %s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f  %.2f  %.2f' %(SnapNum, str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'], subhalo.general['kappa_gas'], subhalo.general['kappa_gas_sf'])) 
         
         # INFLOW OUTFLOW 
         #print(subhalo.mass_flow['2.0_hmr']['gas_sf']['inflow'])

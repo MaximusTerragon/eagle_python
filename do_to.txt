@@ -1,7 +1,7 @@
 
+# re-run tree with /yr values
 
-
-
+# visualisation of galaxy that flips
 
 # make parametisation code
 
@@ -18,11 +18,20 @@
 
 
 
-# Accomodation ask
-# Accomodation clean
+
 # Accomodation move
+
 # Presentation for 29th. 12 + 3 mins. 
 # Email title of presentation by 15th
+	- intro
+	- gas powers galaxies, so understanding where it comes from, how it gets there tells us a lot about evolution
+	- misalignments: what are they (diagram standard, mis, counter), 40%, formed by major gas accretion events
+	- Goals
+	- EAGLE (short)
+	- Example galaxy
+	- Misalignment distributions
+	- Things affecting timescales
+	- Conclusions
 
 # choose galaxy that stops and test 17879310
 # Create stacked
@@ -33,7 +42,9 @@
 # once sample used, still need to trim for stellar mass within 30pkpc, so sample will need modifying
 
 
-# Ask about setting limits to relaxations. X consecutive snapshots below 30, average?
+# Ask about setting limits to relaxations. 
+  X consecutive snapshots below 30, average?
+  peak between snapshots? as in... if there is a bump+relax+higher bump, start time from just before higher bump
 # Ask tim about xmas holiday time off
 # Talk to tim about vienna - would it be worth going
 # Talk to tim about cancel leiden. 
@@ -51,22 +62,9 @@
 
 _____________________________________________________________
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-DONE WEEK 45:
-- Re-created distributions for stars-gas sf, stars-gas, stars-dm
-  at z=0.1 for paper
-- Bug fixes on distributions z-code
-- Found m10 has about double the counter-rotating galaxies as it evolves
-- Created misalignment-z graphs but with m10
-- Added variable misangle_threshold
-- Tweaked merger code in evolution
-- Inserted nans
-- Checked serpens
-- Issues with method for timescales
-- Created misalignment detection
-- Sorted variables
-
-
-
+DONE WEEK 46:
+- Half room clean and pack
+- Asked about room move, Friday or saturday
 
 
 
@@ -134,7 +132,6 @@ Lookbacktime            -
 halomass                - total per subfind
 rad                     - [pkpc]
 rad_proj                - [pkpc]
-ap_sfr					- from tree, [Msun/yr]
 merger_ID               - merger stuff
 merger_ratio_stars      - peak stellar ratios in past 2 Gyr ish
 merger_ratio_gas        - gas ratios at time of peak stellar ratios
@@ -208,8 +205,8 @@ gasdata_old             - gets updated and replaced with math.nan
 
 'bh'
     mass                - bh mass of central BH (not particle mass)
-    mdot_instant        - mdot of that particle
-    mdot                - mdot averaged over snipshot time difference
+    mdot_instant        - [ Msun/yr ] mdot of that particle
+    mdot                - [ Msun/yr ] mdot averaged over snipshot time difference
     edd                 - instantaneous eddington from mdot_instant
     count               - len(mass)
 

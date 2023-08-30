@@ -400,6 +400,7 @@ Output Parameters
     ['Coordinates']         - [pkpc]
     ['Velocity']            - [pkm/s]
     ['Mass']                - [Msun]
+    ['BH_Mdot']             = [Msun/s]
     ['GroupNumber']         - int array 
     ['SubGroupNumber']      - int array 
     #['main']                - bool array, will have a single True for BH closest to CoP

@@ -1,21 +1,12 @@
 
-# re-run tree with /yr values
+# tweak misalignment detection to find CONSECUTIVE <30 or >150, not dependant on last
 
-# visualisation of galaxy that flips
-
-# make parametisation code
+# make new evolution code
 
 # Parametise: mass, morphology (stays above X kappa), time after misalignment, size of merger, gas ratio, 
   metallicity, inflow/outflow, delta angle, X time spent aligned/misaligned
-  Galaxies meeting criteria are saved by last galaxy in list, which is the time at which it relaxes
   May need to smooth misalignment angle... error bars?... X snips <30 degrees
-  Define misalignments as 45, etc.
   Mass... at m10, about double the number of counter-rotating than m9 with snaps
-  
-# save as unique ID
-
-# Make new evolution code for snip to read in tree
-
 
 
 
@@ -33,14 +24,11 @@
 	- Things affecting timescales
 	- Conclusions
 
-# choose galaxy that stops and test 17879310
 # Create stacked
 # Create timescale histogram
 
-# Add kappa_nsf to snip_timescale once run finishes
-# Kappa gas values within 1/2 hmr, not aperture
+# Add kappa_nsf, ap_sfr to snip_timescale once run finishes. New entry, old, and insert nan.
 # once sample used, still need to trim for stellar mass within 30pkpc, so sample will need modifying
-
 
 # Ask about setting limits to relaxations. 
   X consecutive snapshots below 30, average?
@@ -65,6 +53,15 @@ _____________________________________________________________
 DONE WEEK 46:
 - Half room clean and pack
 - Asked about room move, Friday or saturday
+- Finished parametisation code
+- Re-run merger tree with correct units
+- Fixed nan bug
+- Improved print statements
+- Re-run with sfr in 30 pkpc and some other tweaks
+- Rendered galaxy that flips
+- Created animation for presentation
+- Added satellite criteria
+- Created misalignment_tree
 
 
 
@@ -118,7 +115,7 @@ Galaxies that merge do not show final merger ratio and simply end array.
 Galaxies where stellermass cant be defined have merger_ratio = math.nan
 
 Snaps will be recorded from first to last, with nan inbetween
-            
+     
 #-------------------------------------
 galaxy_tree['%s' %ID_dict]
 
@@ -131,7 +128,7 @@ Redshift                -
 Lookbacktime            -
 halomass                - total per subfind
 rad                     - [pkpc]
-rad_proj                - [pkpc]
+radproj                 - [pkpc]
 merger_ID               - merger stuff
 merger_ratio_stars      - peak stellar ratios in past 2 Gyr ish
 merger_ratio_gas        - gas ratios at time of peak stellar ratios
@@ -261,7 +258,67 @@ gasdata_old             - gets updated and replaced with math.nan
         com_proj        - com [pkpc] for  viewing axis
 		
 ============================================================
+GUIDE TO misalignment_tree['%s' %GalaxyID] VALUES:
 
+GalaxyID is first ID in window of misalignment.
+Arrays contain no missing entries
+
+'GalaxyID'				-
+'SnapNum'				-
+'Redshift'				-
+'Lookbacktime'			- [ Gyr ]
+
+'SubGroupNum'			- 
+'halomass'				- [ Msun ]
+'stelmass'				- [ Msun ]
+'gasmass'				- [ Msun ]
+'sfmass'				- [ Msun ]
+'nsfmass'				- [ Msun ]				
+'dmmass'				- [ Msun ]
+
+'sf'					- [ Msun/yr]
+'ssfr'					- [ /yr ]
+
+'stars_Z'				-
+'gas_Z'					-
+'sf_Z'					-	
+'nsf_Z'					-
+
+'kappa_stars'			-
+'kappa_gas'				-
+'kappa_sf'				-
+#'kappa_nsf'			-
+
+'rad'					- [ pkpc ]
+'radproj'				- [ pkpc ]
+
+'inflow_rate'			- [ Msun/yr ]
+'inflow_Z'				-
+'outflow_rate'			- [ Msun/yr ]
+'outflow_Z'				-
+'stelmassloss_rate'		- [ Msun/yr ]
+'insitu_Z'				-
+
+'bh_mass'				- [ Msun ]
+'bh_mdot_av'			- [ Msun/yr ]
+'bh_mdot_inst'			- [ Msun/yr ]
+'bh_edd'				-
+'bh_lbol'				- [ erg/s ]
+
+'stars_gas_sf'			- all in degrees
+'stars_gas_sf_err'		-
+'stars_dm'				- not checked for inclination
+'stars_dm_err'			-
+
+'merger_ratio_stars'	- Includes ALL mergers in window
+'merger_ratio_gas'		- ^
+
+'index_m'				- Last before misaligned, adjusted for current window
+'index_r'				- First to be relaxed
+'index_merger' 			- Index of mergers that met locations. Use this to sample 'merger_ratio_stars'
+'relaxation_time' 		- [ Gyr ] Time between index_m and index_r
+
+============================================================
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣤⡴⠶⠞⠛⠛⠉⠉⠉⠉⠉⠉⠛⠛⠶⢦⣄⡀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣠⣤⣶⣾⠿⠛⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠀⠀⠈⠛⢦⡀⠀

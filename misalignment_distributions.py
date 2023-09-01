@@ -493,7 +493,7 @@ def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misali
                                         #--------------------------
                                         # Selection criteria
                                         com_min_distance    = 2.0,         # [pkpc] min distance between sfgas and stars.  DEFAULT 2.0 
-                                        min_particles       = 20,          # Minimum particles to find spin.  DEFAULT 20
+                                        min_particles       = 4,          # Minimum particles to find spin.  DEFAULT 20
                                         min_inclination     = 0,           # Minimum inclination toward viewing axis [deg] DEFAULT 0
                                         #--------------------------   
                                         csv_file       = True,             # Will write sample to csv file in sample_dir
@@ -2156,16 +2156,9 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
 #_analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misalignment_10.040602340114074TEST')
 
 #_plot_misalignment()
-_plot_misalignment_z(ETG_or_LTG = 'LTG', misangle_threshold = 30)
-_plot_misalignment_z(ETG_or_LTG = 'ETG', misangle_threshold = 30)
-_plot_misalignment_z(ETG_or_LTG = 'LTG', misangle_threshold = 45)
-_plot_misalignment_z(ETG_or_LTG = 'ETG', misangle_threshold = 45)
-
 #_plot_misalignment_z()
 
 #===========================
-
-
 
 
 
@@ -2174,10 +2167,22 @@ _plot_misalignment_z(ETG_or_LTG = 'ETG', misangle_threshold = 45)
 #for snap_i in np.arange(19, 28.1, 1):
     #_sample_misalignment(snapNum = int(snap_i))
     #_analysis_misalignment_distribution(csv_sample = 'L12_' + str(int(snap_i)) + '_all_sample_misalignment_9.0')
-#for snap_i in np.arange(151, 152.1, 1):
+#for snap_i in np.arange(147, 155, 1):
+#for snap_i in np.arange(155, 163, 1):
+#for snap_i in np.arange(163, 171, 1):
+#for snap_i in np.arange(171, 179, 1):
+#for snap_i in np.arange(179, 187, 1):
+#for snap_i in np.arange(187, 195, 1):
+for snap_i in np.arange(195, 200.1, 1):
     #_sample_misalignment(snapNum = int(snap_i))
-    #_analysis_misalignment_distribution(csv_sample = 'L100_' + str(int(snap_i)) + '_all_sample_misalignment_10.0')
+    _analysis_misalignment_distribution(csv_sample = 'L100_' + str(int(snap_i)) + '_all_sample_misalignment_9.0')
     
 #    _plot_misalignment(csv_sample = 'L100_' + str(int(snap_i)) + '_all_sample_misalignment_10.0', csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_')
 
 #===========================
+
+
+
+
+
+

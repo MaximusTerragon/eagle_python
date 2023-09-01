@@ -965,9 +965,14 @@ Output Parameters
 -----------------
 
 .general:       dictionary
-    'GroupNum', 'SubGroupNum', 'GalaxyID', 'SnapNum', 
-    'halo_mass', 'stelmass', 'gasmass', 'gasmass_sf', 'gasmass_nsf', 
-    'halfmass_rad', 'halfmass_rad_proj'
+    'GroupNum', 'SubGroupNum', 'GalaxyID', 'SnapNum', 'halo_mass', 
+        'stelmass', 'gasmass', 'gasmass_sf', 'gasmass_nsf', 'dmmass', 
+        'sfr', 'bh_id', 'bh_mass', 'bh_mdot', 'bh_edd', 'halfmass_rad', 
+        'halfmass_rad_proj', 'viewing_axis',
+        'kappa_stars' - 30 kpc
+        'kappa_gas'   - 2.0 hmr
+        'kappa_gas_sf'
+        'kappa_gas_nsf'
 
 .flags:     dictionary
     Has list of arrays that will be != if flagged. Contains hmr at failure, or 30pkpc
@@ -1265,6 +1270,7 @@ class Subhalo_Analysis:
         self.gasmass_sf         = np.sum(self.data['gas_sf']['Mass'])    # [Msun] within 30 pkpc (aperture_rad_in)
         self.gasmass_nsf        = np.sum(self.data['gas_nsf']['Mass'])   # [Msun] within 30 pkpc (aperture_rad_in)
         self.dmmass             = np.sum(self.data['dm']['Mass'])        # [Msun] within 30 pkpc (aperture_rad_in)
+        self.ap_sfr             = np.sum(self.data['gas_sf']['StarFormationRate'])           # [Msun/s] within 30 pkpc (aperture_rad_in)  
         self.halfmass_rad       = halfmass_rad                          # [pkpc]
         self.halfmass_rad_proj  = halfmass_rad_proj                     # [pkpc]
         self.viewing_axis       = viewing_axis                          # 'x', 'y', 'z'
@@ -1275,8 +1281,8 @@ class Subhalo_Analysis:
         
         #----------------------------------------------------
         # Filling self.general
-        for general_name, general_item in zip(['GroupNum', 'SubGroupNum', 'GalaxyID', 'SnapNum', 'halo_mass', 'stelmass', 'gasmass', 'gasmass_sf', 'gasmass_nsf', 'dmmass', 'bh_id', 'bh_mass', 'bh_mdot', 'bh_edd', 'halfmass_rad', 'halfmass_rad_proj', 'viewing_axis'], 
-                                              [self.GroupNum, self.SubGroupNum, self.GalaxyID, self.SnapNum, self.halo_mass, self.stelmass, self.gasmass, self.gasmass_sf, self.gasmass_nsf, self.dmmass, self.bh_id, self.bh_mass, self.bh_mdot, self.bh_edd, self.halfmass_rad, self.halfmass_rad_proj, self.viewing_axis]):
+        for general_name, general_item in zip(['GroupNum', 'SubGroupNum', 'GalaxyID', 'SnapNum', 'halo_mass', 'stelmass', 'gasmass', 'gasmass_sf', 'gasmass_nsf', 'dmmass', 'sfr', 'bh_id', 'bh_mass', 'bh_mdot', 'bh_edd', 'halfmass_rad', 'halfmass_rad_proj', 'viewing_axis'], 
+                                              [self.GroupNum, self.SubGroupNum, self.GalaxyID, self.SnapNum, self.halo_mass, self.stelmass, self.gasmass, self.gasmass_sf, self.gasmass_nsf, self.dmmass, self.ap_sfr, self.bh_id, self.bh_mass, self.bh_mdot, self.bh_edd, self.halfmass_rad, self.halfmass_rad_proj, self.viewing_axis]):
             self.general[general_name] = general_item
         self.general.update(MorphoKinem)
             
@@ -2136,6 +2142,44 @@ class Subhalo_Analysis:
             
             #-------------------------------    
             for parttype_name in kappa_parttype:
+                # For stars, cap at 30kpc
+                if parttype_name == 'stars':
+                    # Trim data to kappa radius
+                    trimmed_data = self._trim_data(data_nil, kappa_rad)
+            
+                    # Find peculiar velocity of trimmed data
+                    pec_vel_rad = self._peculiar_velocity(trimmed_data)
+
+                    # Adjust velocity of trimmed_data to account for peculiar velocity
+                    for parttype_name_i in trimmed_data.keys():
+                        if len(trimmed_data[parttype_name_i]['Mass']) == 0:
+                            continue
+                        else:
+                            trimmed_data[parttype_name_i]['Velocity'] = trimmed_data[parttype_name_i]['Velocity'] - pec_vel_rad
+                    if debug:
+                        print('Peculiar velocity in rad', kappa_rad)
+                        print(pec_vel_rad)
+                        print('Gas_sf in rad: ', kappa_rad)
+                        print(len(trimmed_data['gas_sf']['Mass']))
+                else:
+                    # Trim data to kappa radius
+                    trimmed_data = self._trim_data(data_nil, 2*halfmass_rad)
+            
+                    # Find peculiar velocity of trimmed data
+                    pec_vel_rad = self._peculiar_velocity(trimmed_data)
+
+                    # Adjust velocity of trimmed_data to account for peculiar velocity
+                    for parttype_name_i in trimmed_data.keys():
+                        if len(trimmed_data[parttype_name_i]['Mass']) == 0:
+                            continue
+                        else:
+                            trimmed_data[parttype_name_i]['Velocity'] = trimmed_data[parttype_name_i]['Velocity'] - pec_vel_rad
+                    if debug:
+                        print('Peculiar velocity in rad', kappa_rad)
+                        print(pec_vel_rad)
+                        print('Gas_sf in rad: ', kappa_rad)
+                        print(len(trimmed_data['gas_sf']['Mass']))
+                    
                 
                 # If particles of type exist within aperture_rad... find kappas
                 if len(trimmed_data[parttype_name]['Mass']) > 0:

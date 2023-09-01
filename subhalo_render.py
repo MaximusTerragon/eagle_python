@@ -45,8 +45,7 @@ PURPOSE
 #1, 2, 4, 3, 6, 5, 7, 9, 16, 14, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
 #3748
 #37445, 37446, 37447
-ID_list = [3748, 20455, 37445, 30494, 43163, 40124, 44545, 48383, 57647, 55343, 51640, 46366, 53904, 52782, 56522, 59467, 49986, 61119, 62355, 63199, 61831]
-
+#ID_list = [3748, 20455, 37445, 30494, 43163, 40124, 44545, 48383, 57647, 55343, 51640, 46366, 53904, 52782, 56522, 59467, 49986, 61119, 62355, 63199, 61831]
 
 #====================================
 # Will visualise all particles belonging to a SINGLE galaxy/subhalo
@@ -54,7 +53,7 @@ ID_list = [3748, 20455, 37445, 30494, 43163, 40124, 44545, 48383, 57647, 55343, 
 def galaxy_render(csv_sample = False,              # False, Whether to read in existing list of galaxies  
                     #--------------------------
                     mySims = [('RefL0012N0188', 12)],
-                    GalaxyID_List = ID_list,
+                    GalaxyID_List = [37447],
                     #--------------------------
                     # Galaxy extraction properties
                     kappa_rad            = 30,          # calculate kappa for this radius [pkpc]
@@ -324,10 +323,12 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                                             com_min_distance,
                                             min_particles,                                            
                                             min_inclination)
-                        
+                
         if print_galaxy:
             print('|Combined particle properties within %s pkpc:' %aperture_rad)
             print('|%s| |ID:   %s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f  %.2f  %.2f' %(SnapNum, str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'], subhalo.general['kappa_gas'], subhalo.general['kappa_gas_sf'])) 
+        
+        
         
         # INFLOW OUTFLOW 
         #print(subhalo.mass_flow['2.0_hmr']['gas_sf']['inflow'])
@@ -490,6 +491,9 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                 ax.set_xlim(-boxradius, boxradius)
                 ax.set_ylim(-boxradius, boxradius)
                 ax.set_zlim(-boxradius, boxradius)
+                ax.set_xlabel('x-pos [pkpc]')
+                ax.set_ylabel('y-pos [pkpc]')
+                ax.set_zlabel('z-pos [pkpc]')
                 fig.canvas.draw_idle()
             def stars_button(self, event):
                 plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'stars', 'lightyellow')
@@ -594,7 +598,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                 fig.canvas.draw_idle()
                 for ii in np.arange(ax.azim, ax.azim+360, 1):
                     ax.view_init(elev=ax.elev, azim=ii)
-                    plt.pause(0.01)
+                    plt.pause(0.1)
                     ax.set_zlim(ax.get_ylim())
                     fig.canvas.draw_idle()
             def view_x(self, event):

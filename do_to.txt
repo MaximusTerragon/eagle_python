@@ -1,12 +1,23 @@
 
-# tweak misalignment detection to find CONSECUTIVE <30 or >150, not dependant on last
+
+
+
+copy updated viewing_axis to serpens, align_rad 30, viewingaxis x
+re-create render but orientated edge-on: 274449295->274449300
+		10421852, 10421850, 10421848, 10421844, 10421833
+		0		  0.3 Gyr	0.5Gyr	  1.0Gyr	2.4Gyr		
+		
+
+
 
 # make new evolution code
+Make evolution of several notable galaxies
 
-# Parametise: mass, morphology (stays above X kappa), time after misalignment, size of merger, gas ratio, 
-  metallicity, inflow/outflow, delta angle, X time spent aligned/misaligned
-  May need to smooth misalignment angle... error bars?... X snips <30 degrees
-  Mass... at m10, about double the number of counter-rotating than m9 with snaps
+# Play with parameters
+
+
+
+
 
 
 
@@ -18,14 +29,14 @@
 	- gas powers galaxies, so understanding where it comes from, how it gets there tells us a lot about evolution
 	- misalignments: what are they (diagram standard, mis, counter), 40%, formed by major gas accretion events
 	- Goals
-	- EAGLE (short)
+	- EAGLE (short) with video
 	- Example galaxy
 	- Misalignment distributions
+	- Relaxation timescales
 	- Things affecting timescales
 	- Conclusions
 
-# Create stacked
-# Create timescale histogram
+# Download 144-146 and run on those too
 
 # Add kappa_nsf, ap_sfr to snip_timescale once run finishes. New entry, old, and insert nan.
 # once sample used, still need to trim for stellar mass within 30pkpc, so sample will need modifying
@@ -62,12 +73,18 @@ DONE WEEK 46:
 - Created animation for presentation
 - Added satellite criteria
 - Created misalignment_tree
+- Cleaned appartment
+- Added sample histogram
+- Added relaxation time histogram
+- Added delta timescale
+- Fixed graph formatting
+- Added merger time pre and post as separate variables
+- Added mergers to stacked
 
 
 
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 -------------------------------------------------------------
-
 
 
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠀⠀⠈⠉⠉⠛⠛⠷⢶⣤⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -94,6 +111,23 @@ DONE WEEK 46:
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠉⠛⠛⠒⠒⠒⠒⠒⠒⠒⠂⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 
 
+===========================================================
+NOTABLE GALAXIES:
+1361598 	- Counter -> Co slow relax
+1403994		- Counter -> Co quick relax
+10421872	- Perfect little misalignment from a merger
+17879310	- Couple of peaks
+21200847	- Perfect spike misalignment with mergers
+21659372	- Completely counter-rotating
+24053428	- Counter -> Co steady relax
+182125501	- Relaxation included
+274449295	- LTG with small misalignment
+
+Number of misalignments: 119	abs pre: 0.5, post: 1
+						 464	abs, no mergers
+						 130	proj, inc 10, pre: 0.5, post: 1
+						 540 	proj, inc 10, no mergers
+						 
 ===========================================================
 GUIDE TO galaxy_tree['%s' %GalaxyID] VALUES:
 We will want to ensure that for whatever we are 
@@ -262,6 +296,8 @@ GUIDE TO misalignment_tree['%s' %GalaxyID] VALUES:
 
 GalaxyID is first ID in window of misalignment.
 Arrays contain no missing entries
+
+Mergers searched for from first misaligned, to first relax
 
 'GalaxyID'				-
 'SnapNum'				-

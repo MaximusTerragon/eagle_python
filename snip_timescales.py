@@ -1257,9 +1257,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
         
     
 ID_list = [108988077, 479647060, 21721896, 390595970, 401467650, 182125463, 192213531, 24276812, 116404995, 239808134, 215988755, 86715463, 6972011, 475772617, 374037507, 429352532, 441434976]
-ID_list = [17879310, 401467650]
-ID_list = [1184558]
-
+ID_list = [1361598, 1403994, 10421872, 17879310, 21200847, 21659372, 24053428, 182125501, 274449295]
 
 #--------------------------------
 # Reads in tree and extracts galaxies that meet criteria
@@ -1269,12 +1267,12 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                   # Galaxy analysis
                   print_summary             = True,
                   print_galaxy              = False,
-                    plot_misangle_detection = True,
-                  print_checks              = True,
+                    plot_misangle_detection = False,    # toggle show and save below
+                  print_checks              = False,
                   #-----------------------
                   # Individual galaxies
                   force_all_snaps = True,                # KEEP TRUE. force us to use galaxies in which we have all snaps.
-                    GalaxyID_list = ID_list,             # [ None / ID_list ]
+                    GalaxyID_list = [10421872],             # [ None / ID_list ]
                   #====================================================================================================
                   # Misalignment must take place in range   
                     max_z = 0.8,                  
@@ -1286,7 +1284,6 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                   # PROPERTIES TO ALWAYS MEET
                     min_particles     = 20,              # [count]
                     max_com           = 2.0,             # [pkpc]
-                    min_inclination   = 0,              # [ 0 / degrees]
                   #------------------------------------------------------------
                   # PROPERTIES TO AVERAGE OVER WHILE MISALIGNED / RELAXING
                   # Satellites, central, or both         [ 'satellite' is sgn >= 1 / 'central' is sgn == 1 / None ]
@@ -1294,7 +1291,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                   # Group / Field / both                 [ None / value ] (halo threshold: 10**14)
                     min_halomass        = None,     max_halomass        = None, 
                   # Masses and                           [ None / value ]
-                    min_stelmass        = 1E10,     max_stelmass        = None,
+                    min_stelmass        = None,     max_stelmass        = None,
                     min_gasmass         = None,     max_gasmass         = None,
                     min_sfmass          = None,     max_sfmass          = None,
                     min_nsfmass         = None,     max_nsfmass         = None,
@@ -1322,10 +1319,10 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                   #------------------------------------------------------------
                   # Misalignment angles                
                     abs_or_proj         = 'abs',         # [ 'abs' / 'proj' ]
+                    min_inclination     = 0,              # [ 0 / degrees]
                     use_angle           = 'stars_gas_sf',
-                    misangle_threshold  = 45,            # [ 30 / 45 ]  
+                    misangle_threshold  = 30,            # [ 30 / 45 ]  
                     min_delta_angle     = 5,            # [ None / deg ] 10    Change in angle between successive snapshots from aligned to misaligned
-                    latency_time        = 0.2,          # [ None / Gyr ] 0.2   Consecutive time galaxy must be <30 / >150 to count as finished relaxing
                   #------------------------------------------------------------
                   # Mergers 
                   use_merger_criteria   = True,          # Whether we limit to merger-induced, or any misalignments
@@ -1333,11 +1330,40 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                     max_stellar_ratio   = 2.0,               
                     min_gas_ratio       = None,          # [ None / value ]
                     max_gas_ratio       = None,          # [ None / value ]
-                    max_closest_merger  = 0.5,           # [Gyr] ± max time to closest merger from point of misalignment
+                    max_merger_pre      = 0.5,           # [Gyr] - max time to closest merger from point of misalignment
+                    max_merger_post     = 1.0,           # [Gyr] + max time to closest merger from point of misalignment
+                    max_closest_merger  = 1.0,           
                   #------------------------------------------------------------
                   # Temporal selection
-                    time_extra       = 0.25,      # [Gyr] 0.2     extra time before and after misalignment which is also extracted
+                    latency_time     = 0.2,          # [ None / Gyr ] 0.2   Consecutive time galaxy must be <30 / >150 to count as finished relaxing
+                    time_extra       = 0.2,      # [Gyr] 0.2     extra time before and after misalignment which is also extracted
                     time_no_misangle = 0.2,     # [Gyr]         extra time before and after misalignment which has no misalignments. Similar to relax snapshots
+                  #====================================================================================================
+                  # Plot histogram of sample we ended up selecting
+                  plot_sample_hist  = False,
+                    bin_width_mass  = 0.1,
+                  #-----------------------------
+                  # Plot timescale histogram with current sample
+                  plot_timescale_histogram  = False,      
+                    bin_width               = 0.25,      # [ Gyr ]
+                    plot_percentage         = False,
+                  #-----------------------------
+                  # Plot time spent misaligned as a function of misalignment angle
+                  plot_delta_timescale  = False,
+                  #-----------------------------
+                  # Plot stacked misalignments based on current sample
+                  plot_stacked          = False,
+                    plot_type           = 'time',            # 'time', 'snap', 'raw_time', 'raw_snap'
+                    plot_stacked_type   = 'misangle',        # 'misangle', 'merger' where to lineup stacks to
+                    plot_extra_time     = True,              # Plot extra time after relaxation
+                    plot_merger_limit   = 0.1,               # [ None / merger ratio ]
+                    plot_GalaxyIDs      = False,             # Add GalaxyID of entry
+                  #-----------------------------
+                  # General formatting
+                  showfig       = True,
+                  savefig       = False,    
+                    file_format = 'pdf',
+                    savefig_txt = '',
                   #====================================================================================================
                   csv_file       = False,             # Will write sample to csv file in sample_dir
                     csv_name     = '',               # extra stuff at end
@@ -1434,10 +1460,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                     print('ID %s found in galaxy_tree' %ID_i)
     
     
-    #----------------------------
+    #================================================ 
     # Loop over all galaxies
     misalignment_tree = {}
     for GalaxyID in tqdm(galaxy_tree.keys()):
+        
         
         #=========================================================================
         # CHECK 1: checking if there are any misalignments in range at all
@@ -1460,26 +1487,33 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         if plot_misangle_detection:
             plt.close()
             
+            ### Create figure
+            fig, axs = plt.subplots(1, 1, figsize=[7.0, 4.2], sharex=True, sharey=False)
+            plt.subplots_adjust(wspace=0.4, hspace=0.4)
+            
             # Plot mergers
             for time_i, ratio_i, gas_i in zip(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['merger_ratio_stars'], galaxy_tree['%s' %GalaxyID]['merger_ratio_gas']):
                 #print('%.1f\t%.2f' %(time_i, max(ratio_i, default=math.nan)))
                 if len(ratio_i) > 0:
                     if max(ratio_i) > 0.01:
-                        plt.axvline(time_i, c='grey', ls='--', lw=1)
-                        plt.text(time_i-0.2, 175, '%.2f' %max(ratio_i), color='grey', fontsize=8, zorder=999)
-                        plt.text(time_i-0.2, 170, '%.2f' %gas_i[np.argmax(ratio_i)], color='blue', fontsize=8, zorder=999)
-            plt.plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj], 'bo-', mec='k', ms=1)
-            plt.text(8, 196, 'ID: %s' %GalaxyID, fontsize=8)
-            plt.text(8, 190, '%s' %(use_angle), fontsize=8, color='grey')
-            plt.text(8, 184, '%s' %(abs_or_proj), fontsize=8, color='grey')
-            plt.axhspan(0, misangle_threshold, alpha=0.25, ec=None, fc='grey')
-            plt.axhspan(180-misangle_threshold, 180, alpha=0.25, ec=None, fc='grey')
-            plt.ylim(0, 181)
-            plt.xlim(8.1, -0.1)
-            plt.xticks(np.arange(8, -0.1, -1))
-            plt.yticks(np.arange(0, 181, 30))
-            plt.xlabel('Lookback-time (Gyr)')
-            plt.ylabel('Misalignment angle [deg]')
+                        axs.axvline(time_i, c='grey', ls='--', lw=1)
+                        axs.text(time_i-0.2, 175, '%.2f' %max(ratio_i), color='grey', fontsize=8, zorder=999)
+                        axs.text(time_i-0.2, 170, '%.2f' %gas_i[np.argmax(ratio_i)], color='blue', fontsize=8, zorder=999)
+            axs.plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj], 'bo-', mec='k', ms=1)
+            axs.text(8, 196, 'ID: %s' %GalaxyID, fontsize=8)
+            axs.text(8, 190, '%s' %(use_angle), fontsize=8, color='grey')
+            axs.text(8, 184, '%s' %(abs_or_proj), fontsize=8, color='grey')
+            axs.axhspan(0, misangle_threshold, alpha=0.25, ec=None, fc='grey')
+            axs.axhspan(180-misangle_threshold, 180, alpha=0.25, ec=None, fc='grey')
+            axs.set_ylim(0, 180)
+            axs.set_xlim(8.1, -0.1)
+            axs.set_xticks(np.arange(8, -0.1, -1))
+            axs.set_yticks(np.arange(0, 181, 30))
+            axs.set_xlabel('Lookback-time (Gyr)')
+            axs.set_ylabel('Misalignment angle')
+            axs.minorticks_on()
+            axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
+            axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
             
         
         #>>>>>>>>>>>>>>>>>>>>>
@@ -1487,7 +1521,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             if print_checks:
                 print('x FAILED CHECK 1: no misalignments in z range: %s - %s' %(max_z, min_z))
             if plot_misangle_detection:
-                plt.show()
+                if showfig:
+                    plt.show()
             continue
         elif print_checks:
             print('  CHECK 1: %s misalignments in z range: %s - %s' %(len(mask_test_z_misangle), max_z, min_z))
@@ -1495,9 +1530,9 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
         if print_galaxy:
             print('ID: ', GalaxyID)
-            print('In range %s - %s:\nIndex\tSnap\tz\tTime\tAngLo\tAngle\tAngHi\tRatio\tStelmass' %(max_z, min_z))
-            for index, snap_i, time_i, z_i, angle_i, err_i, merger_i, stars_i in zip(np.array(galaxy_tree['%s' %GalaxyID]['SnapNum'])[mask_test_z] - np.array(galaxy_tree['%s' %GalaxyID]['SnapNum'])[0], np.array(galaxy_tree['%s' %GalaxyID]['SnapNum'])[mask_test_z], np.array(galaxy_tree['%s' %GalaxyID]['Lookbacktime'])[mask_test_z], np.array(galaxy_tree['%s' %GalaxyID]['Redshift'])[mask_test_z], np.array(galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj])[mask_test_z], np.array(galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[mask_test_z], np.array(galaxy_tree['%s' %GalaxyID]['merger_ratio_stars'], dtype=object)[mask_test_z], np.array(galaxy_tree['%s' %GalaxyID]['stars']['ap_mass'])[mask_test_z]):
-                print('%s\t%s\t%.2f\t%.2f\t%.1f\t%.1f\t%.1f\t%.2f\t%.1f' %(index, snap_i, z_i, time_i, err_i[0], angle_i, err_i[1], max(merger_i, default=0), np.log10(stars_i)))
+            print('In range %s - %s:\nID      Index\tSnap\tz\tTime\tAngLo\tAngle\tAngHi\tRatio\tStelmass' %(max_z, min_z))
+            for ID_ii, index, snap_i, time_i, z_i, angle_i, err_i, merger_i, stars_i in zip(np.array(galaxy_tree['%s' %GalaxyID]['GalaxyID'])[mask_test_z], np.array(galaxy_tree['%s' %GalaxyID]['SnapNum'])[mask_test_z] - np.array(galaxy_tree['%s' %GalaxyID]['SnapNum'])[0], np.array(galaxy_tree['%s' %GalaxyID]['SnapNum'])[mask_test_z], np.array(galaxy_tree['%s' %GalaxyID]['Lookbacktime'])[mask_test_z], np.array(galaxy_tree['%s' %GalaxyID]['Redshift'])[mask_test_z], np.array(galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj])[mask_test_z], np.array(galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[mask_test_z], np.array(galaxy_tree['%s' %GalaxyID]['merger_ratio_stars'], dtype=object)[mask_test_z], np.array(galaxy_tree['%s' %GalaxyID]['stars']['ap_mass'])[mask_test_z]):
+                print('%s  %s\t%s\t%.2f\t%.2f\t%.1f\t%.1f\t%.1f\t%.2f\t%.1f' %(ID_ii, index, snap_i, z_i, time_i, err_i[0], angle_i, err_i[1], max(merger_i, default=0), np.log10(stars_i)))
             print(' ')
         #=========================================================================
         
@@ -1611,18 +1646,18 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         # Green and orange bar, grey bars
         if plot_misangle_detection:
             # Plot misalignment detections
-            plt.text(6.5, 196, 'Detected misalignments: %s' %len(index_dict['misalignment_locations']['misalign']['index']), fontsize=8, color='green')
-            plt.text(6.5, 190, 'Latency period: %s Gyr' %latency_time, fontsize=8, color='orange')
+            axs.text(6.5, 196, 'Detected misalignments: %s' %len(index_dict['misalignment_locations']['misalign']['index']), fontsize=8, color='green')
+            axs.text(6.5, 190, 'Latency period: %s Gyr' %latency_time, fontsize=8, color='orange')
             
             for index_m, index_r, plot_height in zip(index_dict['misalignment_locations']['misalign']['index'], index_dict['misalignment_locations']['relax']['index'], np.linspace(180-misangle_threshold-10, misangle_threshold+10, len(index_dict['misalignment_locations']['misalign']['index']))):
                 
                 index_dict['plot_height'].append(plot_height)
                 
-                plt.plot([galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m], galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r]], [plot_height, plot_height], lw=10, color='green', solid_capstyle="butt", alpha=0.4)
-                plt.plot([galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r], galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r]-(0 if latency_time==None else latency_time)], [plot_height, plot_height], lw=10, color='orange', solid_capstyle="butt", alpha=0.4)
-                plt.text(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m], plot_height-2, '%.2f' %abs(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r]-galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m]), fontsize=9)
-                plt.vlines(x=galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m], ymin=plot_height-7, ymax=plot_height+7, lw=1.5, colors='k', alpha=0.3)
-                plt.vlines(x=galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r], ymin=plot_height-7, ymax=plot_height+7, lw=1.5, colors='k', alpha=0.3)
+                axs.plot([galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m], galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r]], [plot_height, plot_height], lw=10, color='green', solid_capstyle="butt", alpha=0.4)
+                axs.plot([galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r], galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r]-(0 if latency_time==None else latency_time)], [plot_height, plot_height], lw=10, color='orange', solid_capstyle="butt", alpha=0.4)
+                axs.text(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m], plot_height-2, '%.2f' %abs(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r]-galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m]), fontsize=9)
+                axs.vlines(x=galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m], ymin=plot_height-7, ymax=plot_height+7, lw=1.5, colors='k', alpha=0.3)
+                axs.vlines(x=galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r], ymin=plot_height-7, ymax=plot_height+7, lw=1.5, colors='k', alpha=0.3)
                 
    
         #>>>>>>>>>>>>>>>>>>>>>
@@ -1631,7 +1666,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             if print_checks:
                 print('x FAILED CHECK 2: no misalignments meeting algorithm criteria: %s°, latency time: %s Gyr' %(misangle_threshold, latency_time))
             if plot_misangle_detection:
-                plt.show()
+                if showfig:
+                    plt.show()
             continue
         elif print_checks:
             print('  CHECK 2: %s misalignments meeting algorithm criteria: %s°, latency time: %s Gyr' %(len(index_dict['misalignment_locations']['misalign']['index']), misangle_threshold, latency_time))
@@ -1687,7 +1723,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         # Black bars = extract data
         if plot_misangle_detection:
             # Plot misalignment detections
-            plt.text(6.5, 184, 'Sample window: %s Gyr' %time_extra, fontsize=8, color='k')
+            axs.text(6.5, 184, 'Sample window: %s Gyr' %time_extra, fontsize=8, color='k')
             
             for index_m, index_r, index_window_m, index_window_r, plot_height in zip(index_dict['misalignment_locations']['misalign']['index'], index_dict['misalignment_locations']['relax']['index'], index_dict['window_locations']['misalign']['index'], index_dict['window_locations']['relax']['index'], index_dict['plot_height']):
                 
@@ -1696,10 +1732,10 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                     continue
                 
                 # Plot line from window edge to mis start, and from mis end to window edge
-                plt.plot([galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_window_m], galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m]], [plot_height, plot_height], lw=1, color='k', solid_capstyle="butt", alpha=0.8)
-                plt.plot([galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r], galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_window_r]], [plot_height, plot_height], lw=1, color='k', solid_capstyle="butt", alpha=0.8)
-                plt.vlines(x=galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_window_m], ymin=plot_height-10, ymax=plot_height+10, lw=2, colors='k', alpha=0.8)
-                plt.vlines(x=galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_window_r], ymin=plot_height-10, ymax=plot_height+10, lw=2, colors='k', alpha=0.8)
+                axs.plot([galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_window_m], galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m]], [plot_height, plot_height], lw=1, color='k', solid_capstyle="butt", alpha=0.8)
+                axs.plot([galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r], galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_window_r]], [plot_height, plot_height], lw=1, color='k', solid_capstyle="butt", alpha=0.8)
+                axs.vlines(x=galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_window_m], ymin=plot_height-10, ymax=plot_height+10, lw=2, colors='k', alpha=0.8)
+                axs.vlines(x=galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_window_r], ymin=plot_height-10, ymax=plot_height+10, lw=2, colors='k', alpha=0.8)
                 
                 
         #>>>>>>>>>>>>>>>>>>>>>
@@ -1708,13 +1744,15 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             if print_checks:
                 print('x FAILED CHECK 3: incomplete window for ± %s Gyr' %(time_extra))
             if plot_misangle_detection:
-                plt.show()
+                if showfig:
+                    plt.show()
             continue
         elif np.isnan(np.array(index_dict['window_locations']['misalign']['index'])).all() == True:
             if print_checks:
                 print('x FAILED CHECK 3: incomplete window for ± %s Gyr' %(time_extra))
             if plot_misangle_detection:
-                plt.show()
+                if showfig:
+                    plt.show()
             continue
         elif print_checks:
             print('  CHECK 3: %s misalignments matching window for ± %s Gyr' %(np.count_nonzero(~np.isnan(index_dict['window_locations']['misalign']['index'])), time_extra))
@@ -1808,7 +1846,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         # Orange bars = no misalignments  
         if plot_misangle_detection:
             # Plot misalignment detections
-            plt.text(4, 196, 'Isolation time: %s Gyr' %time_no_misangle, fontsize=8, color='orange')
+            axs.text(4.2, 196, 'Isolation time: %s Gyr' %time_no_misangle, fontsize=8, color='orange')
             
             for index_m, index_r, index_window_m, index_window_r, plot_height in zip(index_dict['misalignment_locations']['misalign']['index'], index_dict['misalignment_locations']['relax']['index'], index_dict['windowgap_locations']['misalign']['index'], index_dict['windowgap_locations']['relax']['index'], index_dict['plot_height']):
                 
@@ -1817,10 +1855,10 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                     continue
                 
                 # Plot line from window edge to mis start, and from mis end to window edge
-                plt.plot([galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m]+(0 if time_no_misangle == None else time_no_misangle), galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m]], [plot_height, plot_height], lw=1, color='orange', solid_capstyle="butt", alpha=0.8)
-                plt.plot([galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r], galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r]-(0 if time_no_misangle == None else time_no_misangle)], [plot_height, plot_height], lw=1, color='orange', solid_capstyle="butt", alpha=0.8)
-                plt.vlines(x=galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m]+(0 if time_no_misangle == None else time_no_misangle), ymin=plot_height-4, ymax=plot_height+4, lw=2, colors='orange', alpha=0.8)
-                plt.vlines(x=galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r]-(0 if time_no_misangle == None else time_no_misangle), ymin=plot_height-4, ymax=plot_height+4, lw=2, colors='orange', alpha=0.8)
+                axs.plot([galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m]+(0 if time_no_misangle == None else time_no_misangle), galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m]], [plot_height, plot_height], lw=1, color='orange', solid_capstyle="butt", alpha=0.8)
+                axs.plot([galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r], galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r]-(0 if time_no_misangle == None else time_no_misangle)], [plot_height, plot_height], lw=1, color='orange', solid_capstyle="butt", alpha=0.8)
+                axs.vlines(x=galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m]+(0 if time_no_misangle == None else time_no_misangle), ymin=plot_height-4, ymax=plot_height+4, lw=2, colors='orange', alpha=0.8)
+                axs.vlines(x=galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r]-(0 if time_no_misangle == None else time_no_misangle), ymin=plot_height-4, ymax=plot_height+4, lw=2, colors='orange', alpha=0.8)
 
                 
         #>>>>>>>>>>>>>>>>>>>>>
@@ -1829,13 +1867,15 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             if print_checks:
                 print('x FAILED CHECK 4: no isolated misalignments/gaps for ± %s Gyr' %(time_no_misangle))
             if plot_misangle_detection:
-                plt.show()
+                if showfig:
+                    plt.show()
             continue
         elif np.isnan(np.array(index_dict['windowgap_locations']['misalign']['index'])).all() == True:
             if print_checks:
                 print('x FAILED CHECK 4: no isolated misalignments/gaps for ± %s Gyr' %(time_no_misangle))
             if plot_misangle_detection:
-                plt.show()
+                if showfig:
+                    plt.show()
             continue
         elif print_checks:
             print('  CHECK 4: %s misalignments with isolated misalignments/gaps for ± %s Gyr' %(np.count_nonzero(~np.isnan(index_dict['window_locations']['misalign']['index'])), time_no_misangle))
@@ -1846,9 +1886,9 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         # CHECK 5: Check mergers in range. Will look for all we have available, will keep even if window incomplete
         # USES FIRST MISALIGNED INDEX NOT LAST ALIGNED
         # For each misalignment and relaxation PAIR, find hypothetical snapnums and indexes either side
+        index_dict.update({'merger_locations': {'index': [],
+                                                'snapnum': []}})
         if use_merger_criteria:
-            index_dict.update({'merger_locations': {'index': [],
-                                                    'snapnum': []}})
             for index_m, index_r, snap_m, snap_r, index_window_m, index_window_r, snap_window_m, snap_window_r, index_gap_m, index_gap_r, snap_gap_m, snap_gap_r in zip(index_dict['misalignment_locations']['misalign']['index'], index_dict['misalignment_locations']['relax']['index'], index_dict['misalignment_locations']['misalign']['snapnum'], index_dict['misalignment_locations']['relax']['snapnum'], index_dict['window_locations']['misalign']['index'], index_dict['window_locations']['relax']['index'], index_dict['window_locations']['misalign']['snapnum'], index_dict['window_locations']['relax']['snapnum'], index_dict['windowgap_locations']['misalign']['index'], index_dict['windowgap_locations']['relax']['index'], index_dict['windowgap_locations']['misalign']['snapnum'], index_dict['windowgap_locations']['relax']['snapnum']):
           
                 # If no window available, skip
@@ -1868,15 +1908,25 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                     
                     
                 # Find indexes 
-                time_extra_snap_b = np.where(Lookbacktime_tree >= (galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m+1] + (0 if max_closest_merger == None else max_closest_merger)))[0][-1]
-                if len(np.where(Lookbacktime_tree <= (galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m+1] - (0 if max_closest_merger == None else max_closest_merger)))[0]) == 0:
+                time_extra_snap_b = np.where(Lookbacktime_tree >= (galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m+1] + (0 if max_merger_pre == None else max_merger_pre)))[0][-1]
+                if time_extra_snap_b < tree_input['csv_sample_range'][0]:
+                    time_extra_snap_b = tree_input['csv_sample_range'][0]
+                if len(np.where(Lookbacktime_tree <= (galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r] - (0 if max_merger_post == None else max_merger_post)))[0]) == 0:
                     time_extra_snap_a = 200
                 else:
-                    time_extra_snap_a = np.where(Lookbacktime_tree <= (galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m+1] - (0 if max_closest_merger == None else max_closest_merger)))[0][0]
+                    time_extra_snap_a = np.where(Lookbacktime_tree <= (galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r] - (0 if max_merger_post == None else max_merger_post)))[0][0]
+            
             
                 # Find indexes that we have
-                time_extra_index_b = np.where(np.array(galaxy_tree['%s' %GalaxyID]['SnapNum']) <= time_extra_snap_b)[0][-1]
-                time_extra_index_a = np.where(np.array(galaxy_tree['%s' %GalaxyID]['SnapNum']) >= time_extra_snap_a)[0][0]
+                if len(np.where(np.array(galaxy_tree['%s' %GalaxyID]['SnapNum']) <= time_extra_snap_b)[0]) > 0:
+                    time_extra_index_b = np.where(np.array(galaxy_tree['%s' %GalaxyID]['SnapNum']) <= time_extra_snap_b)[0][-1]
+                else:
+                    time_extra_index_b = 0
+                if len(np.where(np.array(galaxy_tree['%s' %GalaxyID]['SnapNum']) >= time_extra_snap_a)[0]) > 0:
+                    time_extra_index_a = np.where(np.array(galaxy_tree['%s' %GalaxyID]['SnapNum']) >= time_extra_snap_a)[0][0]
+                else:
+                    time_extra_index_a = len(galaxy_tree['%s' %GalaxyID]['SnapNum'])-1
+                
             
                 # Look over index range to look for mergers that meet stellar and gas criteria
                 gather_merger_index = []
@@ -1889,10 +1939,14 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 # Add to merger locations index
                 index_dict['merger_locations']['index'].append(gather_merger_index)
                 index_dict['merger_locations']['snapnum'].append(gather_merger_snapnum)
-        
+            
             # Red lines = mergers
             if plot_misangle_detection:
                 for index_m, index_window_m, index_gap_m, index_list_merger, plot_height in zip(index_dict['misalignment_locations']['misalign']['index'], index_dict['window_locations']['misalign']['index'], index_dict['windowgap_locations']['misalign']['index'], index_dict['merger_locations']['index'], index_dict['plot_height']):
+                    # Plot range
+                    axs.vlines(x=(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m+1] + (0 if max_merger_pre == None else max_merger_pre)), ymin=plot_height-5, ymax=plot_height+5, lw=2, colors='r', alpha=0.8, zorder=999)
+                    axs.vlines(x=(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r] - (0 if max_merger_post == None else max_merger_post)), ymin=plot_height-5, ymax=plot_height+5, lw=2, colors='r', alpha=0.8, zorder=999)
+                    
                     # If its one for which no window exists, skip
                     if np.isnan(index_window_m) == True:
                         continue
@@ -1903,33 +1957,31 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                     if len(index_list_merger) == 0:
                         continue
             
-                    # Plot range
-                    plt.vlines(x=(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m+1] + (0 if max_closest_merger == None else max_closest_merger)), ymin=plot_height-5, ymax=plot_height+5, lw=2, colors='r', alpha=0.5, zorder=999)
-                    plt.vlines(x=(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m+1] - (0 if max_closest_merger == None else max_closest_merger)), ymin=plot_height-5, ymax=plot_height+5, lw=2, colors='r', alpha=0.5, zorder=999)
-                    
                     # overplot mergers with second line that meet criteria
                     for index_i in index_list_merger:
-                        plt.axvline(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_i], c='r', ls='--', lw=1, zorder=999)
-                        plt.text(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_i]-0.2, 175, '%.2f' %max(galaxy_tree['%s' %GalaxyID]['merger_ratio_stars'][index_i]), color='r', zorder=999, fontsize=8)
-                        plt.text(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_i]-0.2, 170, '%.2f' %galaxy_tree['%s' %GalaxyID]['merger_ratio_gas'][index_i][np.argmax(galaxy_tree['%s' %GalaxyID]['merger_ratio_stars'][index_i])], color='b', zorder=999, fontsize=8)
-                plt.text(4, 190, 'Merger window: %s' %max_closest_merger, fontsize=8, color='r')
+                        axs.axvline(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_i], c='r', ls='--', lw=1, zorder=999)
+                        axs.text(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_i]-0.2, 175, '%.2f' %max(galaxy_tree['%s' %GalaxyID]['merger_ratio_stars'][index_i]), color='r', zorder=999, fontsize=8)
+                        axs.text(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_i]-0.2, 170, '%.2f' %galaxy_tree['%s' %GalaxyID]['merger_ratio_gas'][index_i][np.argmax(galaxy_tree['%s' %GalaxyID]['merger_ratio_stars'][index_i])], color='b', zorder=999, fontsize=8)
+                axs.text(4.2, 190, 'Merger window: %s-%s Gyr' %(max_merger_pre, max_merger_post), fontsize=8, color='r')
                 
             #>>>>>>>>>>>>>>>>>>>>>
             # Skip galaxy if no mergers meeting criteria in range
             if len(index_dict['merger_locations']['index']) == 0:
                 if print_checks:
-                    print('x FAILED CHECK 5: no mergers in range ± %s Gyr' %(max_closest_merger))
+                    print('x FAILED CHECK 5: no mergers in range %s-%s Gyr' %(max_merger_pre, max_merger_post))
                 if plot_misangle_detection:
-                    plt.show()
+                    if showfig:
+                        plt.show()
                 continue
             elif print_checks:
-                print('  CHECK 5: %s misalignments with mergers in range ± %s Gyr' %(np.count_nonzero(~np.isnan(index_dict['window_locations']['misalign']['index'])), max_closest_merger))
+                print('  CHECK 5: %s misalignments with mergers in range %s-%s Gyr' %(np.count_nonzero(~np.isnan(index_dict['window_locations']['misalign']['index'])), max_merger_pre, max_merger_post))
                 
         #=========================================================================
             
         
         #if plot_misangle_detection:
-        #    plt.show()
+        #    if showfig:
+        #       plt.show()
         
         
         #=========================================================================
@@ -1949,15 +2001,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             if (np.isnan(index_dict['misalignment_locations']['misalign']['index'][misindex_i]) == True) | (np.isnan(index_dict['window_locations']['misalign']['index'][misindex_i]) == True) | (np.isnan(index_dict['windowgap_locations']['misalign']['index'][misindex_i]) == True):
                 if print_checks:
                     print('    x Misalignment index, window index, or window gap index nan for current misalignment')
-                if plot_misangle_detection:
-                    plt.show()
                 continue
             elif use_merger_criteria:
                 if len(index_dict['merger_locations']['index'][misindex_i]) == 0:
                     if print_checks:
                         print('    x No mergers for current misalignment')
-                    if plot_misangle_detection:
-                        plt.show()
                     continue
             
             #------------------------------------------------------------------------------------------------
@@ -2011,10 +2059,10 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             check.append((np.array(galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['com_abs'][index_start:index_stop]) <= max_com).all())
             if np.array(check).all() == False:
                 if print_checks:
-                    print('    x FAILED CoM:\t min %.1f kpc, for limit %s [kpc]' %(np.max(np.array(galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['com_abs'][index_start:index_stop])), min_inclination))
+                    print('    x FAILED CoM:\t max %.1f kpc, for limit %s [kpc]' %(np.max(np.array(galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['com_abs'][index_start:index_stop])), min_inclination))
                 continue
             if print_checks:
-                print('    MET CoM:\t\t min %.1f kpc, for limit %s [kpc]' %(np.max(np.array(galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['com_abs'][index_start:index_stop])), min_inclination))
+                print('    MET CoM:\t\t max %.1f kpc, for limit %s [kpc]' %(np.max(np.array(galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['com_abs'][index_start:index_stop])), min_inclination))
                 
                 
             #------------------------------------------------------------------------------------------------
@@ -2217,7 +2265,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             if abs_or_proj == 'abs':
                 check_array = np.array(galaxy_tree['%s' %GalaxyID]['rad'][index_start:index_stop])
             elif abs_or_proj == 'proj':
-                check_array = np.array(galaxy_tree['%s' %GalaxyID]['rad_proj'][index_start:index_stop])
+                check_array = np.array(galaxy_tree['%s' %GalaxyID]['radproj'][index_start:index_stop])
             check.append(np.mean(check_array) <= (1e20 if max_rad == None else max_rad))
             check.append(np.mean(check_array) >= (0.0 if min_rad == None else min_rad))
             if np.array(check).all() == False:
@@ -2379,10 +2427,12 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                                                                                                                  
             # Add indexes adjusted to window: index_m = index_m - index_window_m, and relaxation time
             # Can access time of first misaligned as time_to_stack = misalignment_tree['12345']['Lookbacktime'][int(misalignment_tree['12345']['index_m'] + 1)]
-            
             index_misalignment_start = int(index_dict['misalignment_locations']['misalign']['index'][misindex_i]) - int(index_dict['window_locations']['misalign']['index'][misindex_i])
             index_misalignment_end   = int(index_dict['misalignment_locations']['relax']['index'][misindex_i]) - int(index_dict['window_locations']['misalign']['index'][misindex_i])
-            index_merger_locations   = np.array(index_dict['merger_locations']['index'][misindex_i]) - int(index_dict['window_locations']['misalign']['index'][misindex_i])
+            if use_merger_criteria:
+                index_merger_locations = np.array(index_dict['merger_locations']['index'][misindex_i]) - int(index_dict['window_locations']['misalign']['index'][misindex_i])
+            else:
+                index_merger_locations = [] 
             relaxation_time_entry    = float(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_misalignment_start]) - float(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_misalignment_end])
             
             misalignment_tree['%s' %galaxy_tree['%s' %GalaxyID]['GalaxyID'][index_start:index_stop][0]].update({'index_m': index_misalignment_start,       # last before misaligned
@@ -2390,26 +2440,449 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                                                                                                                 'index_merger': index_merger_locations,   # index of merger that meets criteria
                                                                                                                 'relaxation_time': relaxation_time_entry})
 
-            
+            # PLot final misalignment selection
             if plot_misangle_detection:
                 print('\n\t\t\tADDED TO SAMPLE | Duration: %.2f Gyr' %relaxation_time_entry)
-                plt.plot(misalignment_tree['%s' %galaxy_tree['%s' %GalaxyID]['GalaxyID'][index_start:index_stop][0]]['Lookbacktime'], misalignment_tree['%s' %galaxy_tree['%s' %GalaxyID]['GalaxyID'][index_start:index_stop][0]]['stars_gas_sf'], lw=7, alpha=0.4, zorder=1)
-                plt.plot(misalignment_tree['%s' %galaxy_tree['%s' %GalaxyID]['GalaxyID'][index_start:index_stop][0]]['Lookbacktime'][misalignment_tree['%s' %galaxy_tree['%s' %GalaxyID]['GalaxyID'][index_start:index_stop][0]]['index_m']:misalignment_tree['%s' %galaxy_tree['%s' %GalaxyID]['GalaxyID'][index_start:index_stop][0]]['index_r']+1], misalignment_tree['%s' %galaxy_tree['%s' %GalaxyID]['GalaxyID'][index_start:index_stop][0]]['stars_gas_sf'][misalignment_tree['%s' %galaxy_tree['%s' %GalaxyID]['GalaxyID'][index_start:index_stop][0]]['index_m']:misalignment_tree['%s' %galaxy_tree['%s' %GalaxyID]['GalaxyID'][index_start:index_stop][0]]['index_r']+1], 'ro-', mec='k', ms=1.3, zorder=999)
-                plt.text(1.8, 196, 'Window extracted', fontsize=8, color='lightblue')
-                plt.text(1.8, 190, 'Misalignment extracted', fontsize=8, color='r')
-                plt.show()
-            
-        
+                axs.plot(misalignment_tree['%s' %galaxy_tree['%s' %GalaxyID]['GalaxyID'][index_start:index_stop][0]]['Lookbacktime'], misalignment_tree['%s' %galaxy_tree['%s' %GalaxyID]['GalaxyID'][index_start:index_stop][0]][use_angle], lw=7, alpha=0.4, zorder=1)
+                axs.plot(misalignment_tree['%s' %galaxy_tree['%s' %GalaxyID]['GalaxyID'][index_start:index_stop][0]]['Lookbacktime'][misalignment_tree['%s' %galaxy_tree['%s' %GalaxyID]['GalaxyID'][index_start:index_stop][0]]['index_m']:misalignment_tree['%s' %galaxy_tree['%s' %GalaxyID]['GalaxyID'][index_start:index_stop][0]]['index_r']+1], misalignment_tree['%s' %galaxy_tree['%s' %GalaxyID]['GalaxyID'][index_start:index_stop][0]][use_angle][misalignment_tree['%s' %galaxy_tree['%s' %GalaxyID]['GalaxyID'][index_start:index_stop][0]]['index_m']:misalignment_tree['%s' %galaxy_tree['%s' %GalaxyID]['GalaxyID'][index_start:index_stop][0]]['index_r']+1], 'ro-', mec='k', ms=1.3, zorder=999)
+                axs.text(1.8, 196, 'Window extracted', fontsize=8, color='lightblue')
+                axs.text(1.8, 190, 'Misalignment extracted', fontsize=8, color='r')
+                if savefig:
+                    plt.savefig("%s/individual_misalignments/L%s_misalignment_ID%s_%s_%s%s.%s" %(fig_dir, output_input['mySims'][0][1], galaxy_tree['%s' %GalaxyID]['GalaxyID'][index_start:index_stop][0], use_angle, abs_or_proj, savefig_txt, file_format), format=file_format, bbox_inches='tight', dpi=600)    
+                    print("\n  SAVED: %s/individual_misalignments/L%s_misalignment_ID%s_%s_%s%s.%s" %(fig_dir, output_input['mySims'][0][1], galaxy_tree['%s' %GalaxyID]['GalaxyID'][index_start:index_stop][0], use_angle, abs_or_proj, savefig_txt, file_format))
+                if showfig:
+                    plt.show()
+                plt.close()
+
+    
     #================================================ 
+    plt.close()
     if print_summary:
-        print('\n\nNUMBER OF MISALIGNMENTS RECORDED: ', len(misalignment_tree.keys()))    
-       
+        print('\n======================================')
+        print('NUMBER OF MISALIGNMENTS RECORDED: ', len(misalignment_tree.keys()))    
+        print('======================================')
+    if len(misalignment_tree.keys()) == 0:
+        print('Insufficient galaxies meeting criteria')
+        quit()
     
-    #------------------------------
-    # Test plot
+    """ GUIDE TO misalignment_tree['%s' %GalaxyID] VALUES:
+
+    GalaxyID is first ID in window of misalignment.
+    Arrays contain no missing entries
+
+    Mergers searched for from first misaligned, to first relax
+
+    'GalaxyID'				-
+    'SnapNum'				-
+    'Redshift'				-
+    'Lookbacktime'			- [ Gyr ]
+
+    'SubGroupNum'			- 
+    'halomass'				- [ Msun ]
+    'stelmass'				- [ Msun ]
+    'gasmass'				- [ Msun ]
+    'sfmass'				- [ Msun ]
+    'nsfmass'				- [ Msun ]				
+    'dmmass'				- [ Msun ]
+
+    'sf'					- [ Msun/yr]
+    'ssfr'					- [ /yr ]
+
+    'stars_Z'				-
+    'gas_Z'					-
+    'sf_Z'					-	
+    'nsf_Z'					-
+
+    'kappa_stars'			-
+    'kappa_gas'				-
+    'kappa_sf'				-
+    #'kappa_nsf'			-
+
+    'rad'					- [ pkpc ]
+    'radproj'				- [ pkpc ]
+
+    'inflow_rate'			- [ Msun/yr ]
+    'inflow_Z'				-
+    'outflow_rate'			- [ Msun/yr ]
+    'outflow_Z'				-
+    'stelmassloss_rate'		- [ Msun/yr ]
+    'insitu_Z'				-
+
+    'bh_mass'				- [ Msun ]
+    'bh_mdot_av'			- [ Msun/yr ]
+    'bh_mdot_inst'			- [ Msun/yr ]
+    'bh_edd'				-
+    'bh_lbol'				- [ erg/s ]
+
+    'stars_gas_sf'			- all in degrees
+    'stars_gas_sf_err'		-
+    'stars_dm'				- not checked for inclination
+    'stars_dm_err'			-
+
+    'merger_ratio_stars'	- Includes ALL mergers in window
+    'merger_ratio_gas'		- ^
+
+    'index_m'				- Last before misaligned, adjusted for current window
+    'index_r'				- First to be relaxed
+    'index_merger' 			- Index of mergers that met locations. Use this to sample 'merger_ratio_stars'
+    'relaxation_time' 		- [ Gyr ] Time between index_m and index_r
+    """
     
-    # apply criteria to range of misangle
-    # overplot outcome of filters
+    
+    #-------------------------
+    # Plot sample histogram of misalignments extracted
+    if plot_sample_hist:
+        # Gather data
+        stelmass_plot = []
+        for ID_i in misalignment_tree.keys():
+            stelmass_plot.append(np.log10(np.mean(misalignment_tree['%s' %ID_i]['stelmass'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])))
+        
+        #-------------
+        ### Plotting
+        fig, axs = plt.subplots(1, 1, figsize=[5.0, 4.2], sharex=True, sharey=False)
+        plt.subplots_adjust(wspace=0.4, hspace=0.4)
+        
+        axs.hist(stelmass_plot, bins=np.arange(9.0, 12+bin_width_mass, bin_width_mass), histtype='bar', edgecolor='none', facecolor='b', alpha=0.1)
+        axs.hist(stelmass_plot, bins=np.arange(9.0, 12+bin_width_mass, bin_width_mass), histtype='bar', edgecolor='b', facecolor='none', alpha=1.0)
+        
+        #-------------
+        ### Formatting
+        axs.set_xlabel(r'log$_{10}$ M$_{*}$ [M$_{\odot}$]')
+        axs.set_ylabel('Galaxies in sample')
+        axs.set_xticks(np.arange(9, 12.1, 0.5))
+        axs.set_xlim(9, 12.1)
+        
+        #-----------
+        ### other
+        plt.tight_layout()
+        
+        if showfig:
+            plt.show()
+        plt.close()
+            
+
+    #-------------------------
+    # Plot timescale histogram of current criteria
+    if plot_timescale_histogram:
+        # Gather data
+        relaxationtime_plot = []
+        for ID_i in misalignment_tree.keys():
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+        
+        
+        #-------------
+        ### Plotting
+        fig, axs = plt.subplots(1, 1, figsize=[5.0, 4.2], sharex=True, sharey=False)
+        plt.subplots_adjust(wspace=0.4, hspace=0.4)
+        
+        
+        #-------------
+        ### Plot histogram
+        if plot_percentage:
+            axs.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, 5+bin_width, bin_width), histtype='bar', edgecolor='none', facecolor='b', alpha=0.1)
+            bin_count, _, _ = axs.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, 5+bin_width, bin_width), histtype='bar', edgecolor='b', facecolor='none', alpha=1.0)
+        
+            # Add poisson errors to each bin (sqrt N)
+            hist_n, _ = np.histogram(relaxationtime_plot, bins=np.arange(0, 5+bin_width, bin_width), range=(0, 5))
+            axs.errorbar(np.arange(bin_width/2, 5+0.5*bin_width, bin_width), hist_n/len(relaxationtime_plot), xerr=None, yerr=np.sqrt(hist_n)/len(relaxationtime_plot), ecolor='b', ls='none', capsize=4, elinewidth=1, markeredgewidth=1)
+        else:
+            axs.hist(relaxationtime_plot, bins=np.arange(0, 5+bin_width, bin_width), histtype='bar', edgecolor='none', facecolor='b', alpha=0.1)
+            bin_count, _, _ = axs.hist(relaxationtime_plot, bins=np.arange(0, 5+bin_width, bin_width), histtype='bar', edgecolor='b', facecolor='none', alpha=1.0)
+        
+            # Add poisson errors to each bin (sqrt N)
+            hist_n, _ = np.histogram(relaxationtime_plot, bins=np.arange(0, 5+bin_width, bin_width), range=(0, 5))
+            axs.errorbar(np.arange(bin_width/2, 5+0.5*bin_width, bin_width), hist_n, xerr=None, yerr=np.sqrt(hist_n), ecolor='b', ls='none', capsize=4, elinewidth=1, markeredgewidth=1)
+            
+            
+        #-----------
+        ### General formatting
+        # Axis labels
+        if plot_percentage:
+            axs.yaxis.set_major_formatter(PercentFormatter(1, symbol=''))
+        axs.set_xlim(0, 5)
+        axs.set_xticks(np.arange(0, 5.1, step=1))
+        axs.set_xlabel('Max. time spent misaligned (Gyr)')
+        axs.set_ylabel('Number of misalignments')
+    
+        
+        #-----------
+        ### Legend
+        legend_elements = []
+        legend_labels = []
+        legend_colors = []
+    
+        # Add any selection criteria if given
+        if min_halomass != None or max_halomass != None:
+            if min_halomass == 1E14:
+                legend_labels.append('Group')
+                legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+                legend_colors.append('coral')
+            elif max_halomass == 1E14:
+                legend_labels.append('Field')  
+                legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+                legend_colors.append('coral')  
+        if limit_satellites != None:
+            legend_labels.append('%ss' %limit_satellites)
+            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+            legend_colors.append('coral')
+        if min_stelmass != None or max_stelmass != None:
+            legend_labels.append('%1e>M$_{*}$>%1e' %(0 if max_stelmass == None else max_stelmass, 0 if min_stelmass == None else min_stelmass))
+            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+            legend_colors.append('orange')
+        if min_gasmass != None or max_gasmass != None:
+            legend_labels.append('%1e>M$_{\mathrm{gas}}$>%1e' %(0 if max_gasmass == None else max_gasmass, 0 if min_gasmass == None else min_gasmass))
+            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+            legend_colors.append('orange')    
+        if min_sfmass != None or max_sfmass != None:
+            legend_labels.append('%1e>M$_{\mathrm{SF}}$>%1e' %(0 if max_sfmass == None else max_sfmass, 0 if min_sfmass == None else min_sfmass))
+            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+            legend_colors.append('orange')
+        if min_nsfmass != None or max_nsfmass != None:
+            legend_labels.append('%1e>M$_{\mathrm{SF}}$>%1e' %(0 if max_nsfmass == None else max_nsfmass, 0 if min_nsfmass == None else min_nsfmass))
+            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+            legend_colors.append('orange')
+        if min_sfr != None or max_sfr != None:
+            legend_labels.append('%1e>SFR>%1e' %(0 if max_sfr == None else max_sfr, 0 if min_sfr == None else min_sfr))
+            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+            legend_colors.append('teal')
+        if min_ssfr != None or max_ssfr != None:
+            legend_labels.append('%.1f>sSFR>%.1f' %(0 if max_ssfr == None else max_ssfr, 0 if min_ssfr == None else min_ssfr))
+            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+            legend_colors.append('teal')
+        if min_kappa_stars != None or max_kappa_stars != None:
+            legend_labels.append('%.1f$>\kappa_{\mathrm{co}}^{\mathrm{*}}>$%.1f' %(0 if max_kappa_stars == None else max_kappa_stars, 0 if min_kappa_stars == None else min_kappa_stars))
+            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+            legend_colors.append('cornflowerblue')
+        if min_kappa_gas != None or max_kappa_gas != None:
+            legend_labels.append('%.1f$>\kappa_{\mathrm{co}}^{\mathrm{gas}}>$%.1f' %(0 if max_kappa_gas == None else max_kappa_gas, 0 if min_kappa_gas == None else min_kappa_gas))
+            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+            legend_colors.append('cornflowerblue')
+        if min_kappa_sf != None or max_kappa_sf != None:
+            legend_labels.append('%.1f$>\kappa_{\mathrm{co}}^{\mathrm{SF}}>$%.1f' %(0 if max_kappa_sf == None else max_kappa_sf, 0 if min_kappa_sf == None else min_kappa_sf))
+            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+            legend_colors.append('cornflowerblue')
+        if min_kappa_nsf != None or max_kappa_nsf != None:
+            legend_labels.append('%.1f$>\kappa_{\mathrm{co}}^{\mathrm{NSF}}>$%.1f' %(0 if max_kappa_nsf == None else max_kappa_nsf, 0 if min_kappa_nsf == None else min_kappa_nsf))
+            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+            legend_colors.append('cornflowerblue')
+        if min_rad != None or max_rad != None:
+            legend_labels.append('%.1f>R>%.1f' %(0 if max_rad == None else max_rad, 0 if min_rad == None else min_rad))
+            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+            legend_colors.append('peru')
+        if min_inflow != None or max_inflow != None:
+            legend_labels.append('%.1f>inflow>%.1f' %(0 if max_inflow == None else max_inflow, 0 if min_inflow == None else min_inflow))
+            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+            legend_colors.append('darkgreen')
+        if min_inflow_Z != None or max_inflow_Z != None:
+            legend_labels.append('%.1f>inflow Z>%.1f' %(0 if max_inflow_Z == None else max_inflow_Z, 0 if min_inflow_Z == None else min_inflow_Z))
+            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+            legend_colors.append('darkgreen')
+            
+        legend_labels.append('${%.1f<z<%.1f}$' %((0 if min_z == None else min_z), (0.7 if max_z == None else max_z)))
+        legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+        legend_colors.append('k')
+    
+        axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
+        
+        
+        #-----------
+        ### other
+        plt.tight_layout()
+        
+        
+        #-----------
+        ### Savefig
+        metadata_plot = {'Title': '%s, %s\nThreshold: %s\nMin delta:%s\nLatency time: %s\nMin ratio: %s\nUSE MERGERS: %s\nMax closest merger: %s-%s\nTime extra: %s\nTime no misangle: %s' %(abs_or_proj, use_angle, misangle_threshold, min_delta_angle, latency_time, min_stellar_ratio, use_merger_criteria, max_merger_pre, max_merger_post, time_extra, time_no_misangle),
+                         'Author': 'Min particles: %s\nMax CoM: %s\nMin inc: %s' %(min_particles, max_com, min_inclination),
+                         'Subject': '# MISALIGNMENTS: %s' %len(misalignment_tree.keys()),
+                         'Producer': str(hist_n)}
+        
+        if savefig:
+            plt.savefig("%s/time_spent_misaligned/%stime_spent_misaligned_%s_%s.%s" %(fig_dir, tree_input['csv_sample1'], len(misalignment_tree.keys()), savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/time_spent_misaligned/%stime_spent_misaligned_%s_%s.%s" %(fig_dir, tree_input['csv_sample1'], len(misalignment_tree.keys()), savefig_txt, file_format)) 
+        if showfig:
+            plt.show()
+        plt.close()
+    
+    
+    #-------------------------
+    # Plot delta angle. Looks at peak angle from 180
+    if plot_delta_timescale:
+        angles_plot = []
+        err_plot_l  = []
+        err_plot_u  = []
+        relaxationtime_plot = []
+        ID_plot     = []
+        for ID_i in misalignment_tree.keys():
+            # Find index of peak angle from 90 degrees
+            index_peak = np.argmax(np.abs(np.array(misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])))
+            
+            angles_plot.append(misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_peak])
+            err_plot_l.append(misalignment_tree['%s' %ID_i]['%s_err' %use_angle][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_peak][0] - misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_peak])
+            err_plot_u.append(misalignment_tree['%s' %ID_i]['%s_err' %use_angle][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_peak][1] - misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_peak])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
+            
+            
+        #-------------
+        # Plotting
+        fig, axs = plt.subplots(1, 1, figsize=[5.0, 4.2], sharex=True, sharey=False)
+        plt.subplots_adjust(wspace=0.4, hspace=0.4)
+        
+        axs.errorbar(angles_plot, relaxationtime_plot, xerr=[np.abs(err_plot_l), err_plot_u], ls='none', fmt='o', capsize=3, elinewidth=0.7, markeredgewidth=1, color='k', ecolor='grey', ms=1)
+        
+        #-----------
+        ### General formatting
+        # Axis labels
+        axs.set_xlim(0, 181)
+        axs.set_xticks(np.arange(0, 181, 30))
+        axs.set_xlabel('Peak misalignment angle')
+        axs.set_ylabel('Max. time spent misaligned (Gyr)')
+        axs.minorticks_on()
+        axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
+        axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
+        
+        #-----------
+        ### Annotations
+        if plot_GalaxyIDs:
+            for ID_plot_i, x_i, y_i in zip(ID_plot, angles_plot, relaxationtime_plot):
+                axs.text(x_i+5, y_i+0.1, '%s' %ID_plot_i, fontsize=7)
+        
+        #-----------
+        ### other
+        plt.tight_layout()
+        
+        #-----------
+        #### Savefig
+        metadata_plot = {'Title': '%s, %s\nThreshold: %s\nMin delta:%s\nLatency time: %s\nMin ratio: %s\nUSE MERGERS: %s\nMax closest merger: %s-%s\nTime extra: %s\nTime no misangle: %s' %(abs_or_proj, use_angle, misangle_threshold, min_delta_angle, latency_time, min_stellar_ratio, use_merger_criteria, max_merger_pre, max_merger_post, time_extra, time_no_misangle),
+                         'Author': 'Min particles: %s\nMax CoM: %s\nMin inc: %s' %(min_particles, max_com, min_inclination),
+                         'Subject': '# MISALIGNMENTS: %s' %len(misalignment_tree.keys())}
+        
+        if savefig:
+            plt.savefig("%s/delta_misangle_t_relax/%sdelta_misangle_%s_%s.%s" %(fig_dir, tree_input['csv_sample1'], len(misalignment_tree.keys()), savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/delta_misangle_t_relax/%sdelta_misangle_%s_%s.%s" %(fig_dir, tree_input['csv_sample1'], len(misalignment_tree.keys()), savefig_txt, file_format)) 
+        if showfig:
+            plt.show()
+        plt.close()
+    
+    
+    
+    #-------------------------
+    # Plot stacked of current criteria
+    if plot_stacked:
+        
+        # Graph initialising and base formatting
+        fig, axs = plt.subplots(1, 1, figsize=[7.0, 4.2], sharex=True, sharey=False)
+        plt.subplots_adjust(wspace=0.4, hspace=0.4)
+        
+        # Creating colormaps to mark mergers
+        merger_colormap = plt.get_cmap('Blues', 5)
+        merger_normalize = colors.Normalize(vmin=0, vmax=1)
+        
+        #-----------
+        ### Loop over all windows and plot them
+        ID_plot     = []
+        scatter_x = []
+        scatter_y = []
+        scatter_c = []
+        scatter_s = []
+        for ID_i in misalignment_tree.keys():
+            ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
+            if plot_type == 'time':
+                timeaxis_plot = -1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']])
+            elif plot_type == 'raw_time':
+                timeaxis_plot = np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - (0)
+            elif plot_type == 'snap':
+                timeaxis_plot = np.array(misalignment_tree['%s' %ID_i]['SnapNum']) - misalignment_tree['%s' %ID_i]['SnapNum'][misalignment_tree['%s' %ID_i]['index_m']]
+            elif plot_type == 'raw_snap':
+                timeaxis_plot = np.array(misalignment_tree['%s' %ID_i]['SnapNum']) - (0)
+            
+            # Plot stacked
+            axs.plot(timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], lw=1, c='k', alpha=0.2)
+            
+            ### Annotate
+            if plot_GalaxyIDs:
+                axs.text(timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)][-1]+0.1, misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)][-1]+5, '%s' %misalignment_tree['%s' %ID_i]['GalaxyID'][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)][-1], fontsize=7)
+            
+            # Plot mergers (some may be missing if they are out of window)
+            if plot_merger_limit != None:
+                for time_i, angle_i, ratio_i, ratio_gas_i in zip(timeaxis_plot, misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i]['merger_ratio_stars'][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i]['merger_ratio_gas'][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)]):
+                    if len(ratio_i) > 0:
+                        if max(ratio_i) >= plot_merger_limit:
+                            scatter_x.append(time_i)
+                            scatter_y.append(angle_i)
+                            scatter_c.append(ratio_gas_i[np.argmax(np.array(ratio_i))])
+                            scatter_s.append(50*(ratio_i[np.argmax(np.array(ratio_i))])**0.5)
+                            
+        #-----------
+        # Add threshold
+        axs.axhspan(0, misangle_threshold, alpha=0.25, ec=None, fc='grey')
+        axs.axhspan(180-misangle_threshold, 180, alpha=0.25, ec=None, fc='grey')
+        
+        
+        #-----------
+        ### Formatting
+        axs.set_ylim(0, 180)
+        axs.set_yticks(np.arange(0, 181, 30))
+        axs.set_ylabel('Misalignment angle')
+        if plot_type == 'time':
+            axs.set_xlim(0-3*time_extra, 5)
+            axs.set_xticks(np.arange(0.5, 5.1, 0.5))
+            axs.set_xlabel('Time since misalignment (Gyr)')
+        elif plot_type == 'raw_time':
+            axs.set_xlim(7, 0)
+            axs.set_xticks(np.arange(7, -0.1, -0.5))
+            axs.set_xlabel('Lookbacktime (Gyr)')
+        elif plot_type == 'snap':
+            axs.set_xlim(-10, 70)
+            axs.set_xticks(np.arange(-10, 71, 10))
+            axs.set_xlabel('Snapshots since misalignment')
+        elif plot_type == 'raw_snap':
+            axs.set_xlim(140, 200)
+            axs.set_xticks(np.arange(140, 201, 5))
+            axs.set_xlabel('Snapshots')
+        axs.minorticks_on()
+        axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
+        axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
+        
+        
+        #-----------
+        ### Annotations
+        if (plot_type == 'time') or (plot_type == 'snap'):
+            axs.axvline(0, ls='--', lw=1, c='k')
+          
+        #-----------
+        ### Customise legend labels
+        if plot_merger_limit != None:
+            axs.scatter(scatter_x, scatter_y, c=scatter_c, cmap=merger_colormap, norm=merger_normalize, s=scatter_s, marker='s', edgecolors='grey')
+            
+            plt.scatter(-20, -160, c=0.1, s=50*(0.5**0.5), cmap=merger_colormap, norm=merger_normalize, marker='s', edgecolors='grey', label='$\mu_{\mathrm{gas}}$=0.1')
+            plt.scatter(-20, -150, c=0.3, s=50*(0.5**0.5), cmap=merger_colormap, norm=merger_normalize, marker='s', edgecolors='grey', label='$\mu_{\mathrm{gas}}$=0.3')
+            plt.scatter(-20, -140, c=1.0, s=50*(0.5**0.5), cmap=merger_colormap, norm=merger_normalize, marker='s', edgecolors='grey', label='$\mu_{\mathrm{gas}}$=1.0')
+            plt.scatter(-20, -160, c='w', s=50*(0.1**0.5), marker='s', edgecolors='grey', label='$\mu_{\mathrm{*}}$=0.1')
+            plt.scatter(-20, -150, c='w', s=50*(0.3**0.5), marker='s', edgecolors='grey', label='$\mu_{\mathrm{*}}$=0.3')
+            plt.scatter(-20, -140, c='w', s=50*(1.0**0.5), marker='s', edgecolors='grey', label='$\mu_{\mathrm{*}}$=1.0')
+            axs.legend(loc='upper right', frameon=False, labelspacing=0.1, handlelength=0)
+        
+        
+        #-----------
+        ### other
+        plt.tight_layout()
+        
+        #-----------
+        #### Savefig
+        metadata_plot = {'Title': '%s, %s\nThreshold: %s\nMin delta:%s\nLatency time: %s\nMin ratio: %s\nUSE MERGERS: %s\nMax closest merger: %s-%s\nTime extra: %s\nTime no misangle: %s' %(abs_or_proj, use_angle, misangle_threshold, min_delta_angle, latency_time, min_stellar_ratio, use_merger_criteria, max_merger_pre, max_merger_post, time_extra, time_no_misangle),
+                         'Author': 'Min particles: %s\nMax CoM: %s\nMin inc: %s\nPlot ratio limit: %s\n' %(min_particles, max_com, min_inclination, plot_merger_limit),
+                         'Subject': '# MISALIGNMENTS: %s' %len(misalignment_tree.keys())}
+        
+        if savefig:
+            plt.savefig("%s/stacked_misalignments/%sstacked_misalignments_%s_%s_%s.%s" %(fig_dir, tree_input['csv_sample1'], plot_type, len(misalignment_tree.keys()), savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/stacked_misalignments/%sstacked_misalignments_%s_%s_%s.%s" %(fig_dir, tree_input['csv_sample1'], plot_type, len(misalignment_tree.keys()), savefig_txt, file_format)) 
+        if showfig:
+            plt.show()
+        plt.close()
+    
+   
     
     """#------------
     GalaxyID_insert = 17879310
@@ -2465,20 +2938,6 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         csv_dict.update({'misalignment_input': misalignment_input,
                          'tree_input': tree_input,
                          'output_input': output_input,
@@ -2494,16 +2953,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
         
         
-        
-        
-    
-    
-    
-    
-    
-    
 
-    
 #=============================
 #_create_galaxy_tree()  
 _analyse_tree()

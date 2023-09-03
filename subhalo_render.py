@@ -739,7 +739,14 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
             ax.quiver(0, 0, -boxradius, 0, 0, boxradius/3, color='b', linewidth=0.5)
                         
         # Viewing angle
-        ax.view_init(90, 0)
+        if viewing_axis == 'z':
+            ax.view_init(90, 0)
+        elif viewing_axis == 'x':
+            ax.view_init(0, 0)
+        elif viewing_axis == 'y':
+            ax.view_init(0, 90)
+        
+        
         
         # Formatting 
         ax.set_xlabel('x-pos [pkpc]')

@@ -1,51 +1,52 @@
 
+# merger tree: ensure galaxy stellar mass doesnt drop too much
+
+# add dm mass in 1.0, 2.0
+
+# re-run
+
+# Add tdyn into merger tree
+# Add counter relaxation
+# Isolate relaxation paths: counter-counter, co-counter, co-co, etc.
+
+# Play with parameters:
+	See what difference mergers make
+	Plot vs dynamical time in aperture, using sf gas in 30pkpc and mass to get a sort of 
+	  delta per dynamical time (Freeke paper)
+	Change delta to see where it relaxed too and the deviation from that
+	Morphology
+	Group vs field
+
+# change number to percent, overplot merger vs no merger
 
 
 
-copy updated viewing_axis to serpens, align_rad 30, viewingaxis x
-re-create render but orientated edge-on: 274449295->274449300
-		10421852, 10421850, 10421848, 10421844, 10421833
-		0		  0.3 Gyr	0.5Gyr	  1.0Gyr	2.4Gyr		
-		
 
 
+# remove excess numbers from lbol and evolution in snip
 
-# make new evolution code
-Make evolution of several notable galaxies
-
-# Play with parameters
-
-
-
-
-
-
-
-# Accomodation move
-
-# Presentation for 29th. 12 + 3 mins. 
 # Email title of presentation by 15th
-	- intro
+# Presentation for 29th. 12 + 3 mins. 
+	- intro (niche)
 	- gas powers galaxies, so understanding where it comes from, how it gets there tells us a lot about evolution
 	- misalignments: what are they (diagram standard, mis, counter), 40%, formed by major gas accretion events
 	- Goals
 	- EAGLE (short) with video
-	- Example galaxy
 	- Misalignment distributions
-	- Relaxation timescales
+	- Example galaxy evolution highlighting relaxation time
+	- Relaxation timescale distributions
 	- Things affecting timescales
 	- Conclusions
 
-# Download 144-146 and run on those too
+# check disk usage
+# Download 134-146 and run on those too
 
 # Add kappa_nsf, ap_sfr to snip_timescale once run finishes. New entry, old, and insert nan.
+# Add kappa_nsf, ap_sfr to snip_evolution once run finishes
 # once sample used, still need to trim for stellar mass within 30pkpc, so sample will need modifying
 
-# Ask about setting limits to relaxations. 
-  X consecutive snapshots below 30, average?
-  peak between snapshots? as in... if there is a bump+relax+higher bump, start time from just before higher bump
-# Ask tim about xmas holiday time off
-# Talk to tim about vienna - would it be worth going
+
+# Talk to tim about BH-misalignments as next mini thing
 # Talk to tim about cancel leiden. 
   Thought about it over the summer and I haven't warmed up to the idea.
   Would rather postpone it to the following year to see how things go then, especially as some of the 
@@ -61,26 +62,16 @@ Make evolution of several notable galaxies
 
 _____________________________________________________________
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-DONE WEEK 46:
-- Half room clean and pack
-- Asked about room move, Friday or saturday
-- Finished parametisation code
-- Re-run merger tree with correct units
-- Fixed nan bug
-- Improved print statements
-- Re-run with sfr in 30 pkpc and some other tweaks
-- Rendered galaxy that flips
+DONE WEEK 48:
+- Found sgn bug
 - Created animation for presentation
-- Added satellite criteria
-- Created misalignment_tree
-- Cleaned appartment
-- Added sample histogram
-- Added relaxation time histogram
-- Added delta timescale
-- Fixed graph formatting
-- Added merger time pre and post as separate variables
-- Added mergers to stacked
+- Sent Tim graphs for conference
 
+
+WRITING:
+Can prove selection effect by changing histogram time or latency 
+time?
+tdyn is time-averaged
 
 
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -122,12 +113,20 @@ NOTABLE GALAXIES:
 24053428	- Counter -> Co steady relax
 182125501	- Relaxation included
 274449295	- LTG with small misalignment
+105202325	- good misalignment without merger
 
-Number of misalignments: 119	abs pre: 0.5, post: 1
+
+21532243	- good misalignment with merger (example)
+
+
+
+Number of misalignments: 121	abs pre: 0.5, post: 1
 						 464	abs, no mergers
-						 130	proj, inc 10, pre: 0.5, post: 1
+						 134	proj, inc 10, pre: 0.5, post: 1
 						 540 	proj, inc 10, no mergers
-						 
+
+We don't use projected angles
+
 ===========================================================
 GUIDE TO galaxy_tree['%s' %GalaxyID] VALUES:
 We will want to ensure that for whatever we are 
@@ -239,6 +238,7 @@ gasdata_old             - gets updated and replaced with math.nan
     mdot_instant        - [ Msun/yr ] mdot of that particle
     mdot                - [ Msun/yr ] mdot averaged over snipshot time difference
     edd                 - instantaneous eddington from mdot_instant
+	lbol				- instantaneous bolometric luminosity [erg/s]
     count               - len(mass)
 
 'stars_gas'

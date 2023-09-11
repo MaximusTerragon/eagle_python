@@ -43,7 +43,7 @@ def _sample_misalignment(mySims = [('RefL0100N1504', 100)],
                          plot_sample        = False,
                          plot_coords        = False,
                          #-------------------------- 
-                         csv_file = True,                       # Will write sample to csv file in sapmle_dir
+                         csv_file = False,                       # Will write sample to csv file in sapmle_dir
                             csv_name = '',
                          #--------------------------     
                          print_progress = False,
@@ -2173,9 +2173,9 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
 #for snap_i in np.arange(171, 179, 1):
 #for snap_i in np.arange(179, 187, 1):
 #for snap_i in np.arange(187, 195, 1):
-for snap_i in np.arange(195, 200.1, 1):
-    #_sample_misalignment(snapNum = int(snap_i))
-    _analysis_misalignment_distribution(csv_sample = 'L100_' + str(int(snap_i)) + '_all_sample_misalignment_9.0')
+#for snap_i in np.arange(195, 200.1, 1):
+#    #_sample_misalignment(snapNum = int(snap_i))
+#    _analysis_misalignment_distribution(csv_sample = 'L100_' + str(int(snap_i)) + '_all_sample_misalignment_9.0')
     
 #    _plot_misalignment(csv_sample = 'L100_' + str(int(snap_i)) + '_all_sample_misalignment_10.0', csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_')
 

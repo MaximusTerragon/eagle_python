@@ -401,6 +401,8 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                                                'SnapNum': [all_general['%s' %GalaxyID]['SnapNum']],
                                                'Redshift': [Redshift],
                                                'Lookbacktime': [Lookbacktime],
+                                               # dynamical time
+                                               'tdyn': [],
                                                # total mass of halo from mergertree
                                                'halomass': [all_general['%s' %GalaxyID]['halo_mass']],
                                                # radii
@@ -594,6 +596,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                                                       'mdot': [math.nan],
                                                       'mdot_instant': [(3.154e+7*all_general['%s' %GalaxyID]['bh_mdot'])],
                                                       'edd': [all_general['%s' %GalaxyID]['bh_edd']],
+                                                      'lbol': [(3.154e+7*all_general['%s' %GalaxyID]['bh_mdot']* (2e30 / 3.154e+7) * (0.1 * (3e8)**2) * (1e7))],
                                                       'count': [count_bh]}
                             
                 #------------------                       
@@ -1056,6 +1059,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                 galaxy_tree['%s' %ID_dict]['bh']['mdot'].append(mdot)
                 galaxy_tree['%s' %ID_dict]['bh']['mdot_instant'].append((3.154e+7*all_general['%s' %GalaxyID]['bh_mdot']))
                 galaxy_tree['%s' %ID_dict]['bh']['edd'].append(all_general['%s' %GalaxyID]['bh_edd'])
+                galaxy_tree['%s' %ID_dict]['bh']['lbol'].append((3.154e+7*all_general['%s' %GalaxyID]['bh_mdot']* (2e30 / 3.154e+7) * (0.1 * (3e8)**2) * (1e7)))
                 galaxy_tree['%s' %ID_dict]['bh']['count'].append(count_bh)
                 
                 #------------------                       
@@ -1255,13 +1259,13 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
         if print_progress:
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
         
-    
-ID_list = [108988077, 479647060, 21721896, 390595970, 401467650, 182125463, 192213531, 24276812, 116404995, 239808134, 215988755, 86715463, 6972011, 475772617, 374037507, 429352532, 441434976]
-ID_list = [1361598, 1403994, 10421872, 17879310, 21200847, 21659372, 24053428, 182125501, 274449295]
 
 #--------------------------------
 # Reads in tree and extracts galaxies that meet criteria
-# SAVED: 
+# SAVED: does not save outputs currently
+ID_list = [108988077, 479647060, 21721896, 390595970, 401467650, 182125463, 192213531, 24276812, 116404995, 239808134, 215988755, 86715463, 6972011, 475772617, 374037507, 429352532, 441434976]
+ID_list = [1361598, 1403994, 10421872, 17879310, 21200847, 21659372, 24053428, 182125501, 274449295]
+
 def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                   #--------------------------
                   # Galaxy analysis
@@ -1272,7 +1276,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                   #-----------------------
                   # Individual galaxies
                   force_all_snaps = True,                # KEEP TRUE. force us to use galaxies in which we have all snaps.
-                    GalaxyID_list = [10421872],             # [ None / ID_list ]
+                    GalaxyID_list = None,             # [ None / ID_list ]
                   #====================================================================================================
                   # Misalignment must take place in range   
                     max_z = 0.8,                  
@@ -1297,7 +1301,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                     min_nsfmass         = None,     max_nsfmass         = None,
                   # SF and quiescent galaxies            [ None / value ]
                     min_sfr             = None,     max_sfr             = None,     # [ Msun/yr ] SF limit of ~ 0.1
-                    min_ssfr            = None,     max_ssfr            = None,     # [ /yr ] SF limit of ~ 1e-11
+                    min_ssfr            = None,     max_ssfr            = None,     # [ /yr ] SF limit of ~ 1e-10-11
                   # Morphology stars / gas.              [ None / value ] 
                     min_kappa_stars     = None,     max_kappa_stars     = None,     # For LTG-style, typically around 0.8+, for ETG-style, 0.6+
                     min_kappa_gas       = None,     max_kappa_gas       = None,     # Take these with pinch of salt though
@@ -1344,15 +1348,15 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                     bin_width_mass  = 0.1,
                   #-----------------------------
                   # Plot timescale histogram with current sample
-                  plot_timescale_histogram  = False,      
-                    bin_width               = 0.25,      # [ Gyr ]
+                  plot_timescale_histogram  = True,      
+                    bin_width               = 0.2,      # [ Gyr ]
                     plot_percentage         = False,
                   #-----------------------------
                   # Plot time spent misaligned as a function of misalignment angle
                   plot_delta_timescale  = False,
                   #-----------------------------
                   # Plot stacked misalignments based on current sample
-                  plot_stacked          = False,
+                  plot_stacked          = True,
                     plot_type           = 'time',            # 'time', 'snap', 'raw_time', 'raw_snap'
                     plot_stacked_type   = 'misangle',        # 'misangle', 'merger' where to lineup stacks to
                     plot_extra_time     = True,              # Plot extra time after relaxation
@@ -1361,7 +1365,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                   #-----------------------------
                   # General formatting
                   showfig       = True,
-                  savefig       = False,    
+                  savefig       = True,    
                     file_format = 'pdf',
                     savefig_txt = '',
                   #====================================================================================================
@@ -1452,12 +1456,20 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
     #---------------------------
     # Find GalaxyID in tree and only process this
     if GalaxyID_list != None:
+        # Load merger tree 
+        f = h5py.File(tree_dir + 'Snip100_MainProgenitorTrees.hdf5', 'r')
+        
         GalaxyID_list_extract = []
         for GalaxyID_find in GalaxyID_list:
-            for ID_i in np.arange(GalaxyID_find, GalaxyID_find+65):
+            # Find row
+            row_mask, _ = np.where(np.array(f['Histories']['GalaxyID']) == GalaxyID_find)
+            row_mask = row_mask[0]
+            
+            for ID_i in np.array(f['Histories']['GalaxyID'])[row_mask]:
                 if str(ID_i) in galaxy_tree.keys():
                     GalaxyID_list_extract.append(ID_i)
                     print('ID %s found in galaxy_tree' %ID_i)
+    f.close()
     
     
     #================================================ 
@@ -1507,13 +1519,13 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             axs.axhspan(180-misangle_threshold, 180, alpha=0.25, ec=None, fc='grey')
             axs.set_ylim(0, 180)
             axs.set_xlim(8.1, -0.1)
-            axs.set_xticks(np.arange(8, -0.1, -1))
+            axs.set_xticks(np.arange(8, -1, -1))
             axs.set_yticks(np.arange(0, 181, 30))
             axs.set_xlabel('Lookback-time (Gyr)')
             axs.set_ylabel('Misalignment angle')
-            axs.minorticks_on()
-            axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
-            axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
+            #axs.minorticks_on()
+            #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
+            #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
             
         
         #>>>>>>>>>>>>>>>>>>>>>
@@ -1639,7 +1651,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             if len(index_dict['misalignment_locations']['misalign']['index']) > 0:
                 print('Snap -\tSnap\tTime -\tTime\tDuration [Gyr]')
                 for index_m, index_r, snap_m, snap_r in zip(index_dict['misalignment_locations']['misalign']['index'], index_dict['misalignment_locations']['relax']['index'], index_dict['misalignment_locations']['misalign']['snapnum'], index_dict['misalignment_locations']['relax']['snapnum']):
-                    print('%s\t%s\t%.2f\t%.2f\t%.2f' %(snap_m, snap_r, galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m], galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r], abs(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r]-galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m])))
+                    print('%s\t%s\t%.2f\t%.2f\t%.10f' %(snap_m, snap_r, galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m], galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r], abs(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r]-galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m])))
             else:
                 print('\n> No misalignments using imposed limits <')
             print(' ')
@@ -1908,7 +1920,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                     
                     
                 # Find indexes 
-                time_extra_snap_b = np.where(Lookbacktime_tree >= (galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m+1] + (0 if max_merger_pre == None else max_merger_pre)))[0][-1]
+                time_extra_snap_b = np.where(Lookbacktime_tree >= (galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m] + (0 if max_merger_pre == None else max_merger_pre)))[0][-1]
                 if time_extra_snap_b < tree_input['csv_sample_range'][0]:
                     time_extra_snap_b = tree_input['csv_sample_range'][0]
                 if len(np.where(Lookbacktime_tree <= (galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r] - (0 if max_merger_post == None else max_merger_post)))[0]) == 0:
@@ -1942,9 +1954,10 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             
             # Red lines = mergers
             if plot_misangle_detection:
-                for index_m, index_window_m, index_gap_m, index_list_merger, plot_height in zip(index_dict['misalignment_locations']['misalign']['index'], index_dict['window_locations']['misalign']['index'], index_dict['windowgap_locations']['misalign']['index'], index_dict['merger_locations']['index'], index_dict['plot_height']):
+                for index_m, index_r, index_window_m, index_gap_m, index_list_merger, plot_height in zip(index_dict['misalignment_locations']['misalign']['index'], index_dict['misalignment_locations']['relax']['index'], index_dict['window_locations']['misalign']['index'], index_dict['windowgap_locations']['misalign']['index'], index_dict['merger_locations']['index'], index_dict['plot_height']):
+
                     # Plot range
-                    axs.vlines(x=(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m+1] + (0 if max_merger_pre == None else max_merger_pre)), ymin=plot_height-5, ymax=plot_height+5, lw=2, colors='r', alpha=0.8, zorder=999)
+                    axs.vlines(x=(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m] + (0 if max_merger_pre == None else max_merger_pre)), ymin=plot_height-5, ymax=plot_height+5, lw=2, colors='r', alpha=0.8, zorder=999)
                     axs.vlines(x=(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r] - (0 if max_merger_post == None else max_merger_post)), ymin=plot_height-5, ymax=plot_height+5, lw=2, colors='r', alpha=0.8, zorder=999)
                     
                     # If its one for which no window exists, skip
@@ -2433,8 +2446,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 index_merger_locations = np.array(index_dict['merger_locations']['index'][misindex_i]) - int(index_dict['window_locations']['misalign']['index'][misindex_i])
             else:
                 index_merger_locations = [] 
-            relaxation_time_entry    = float(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_misalignment_start]) - float(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_misalignment_end])
-            
+            relaxation_time_entry    = float(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_dict['misalignment_locations']['misalign']['index'][misindex_i]]) - float(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_dict['misalignment_locations']['relax']['index'][misindex_i]])
             misalignment_tree['%s' %galaxy_tree['%s' %GalaxyID]['GalaxyID'][index_start:index_stop][0]].update({'index_m': index_misalignment_start,       # last before misaligned
                                                                                                                 'index_r': index_misalignment_end,        # first relaxed
                                                                                                                 'index_merger': index_merger_locations,   # index of merger that meets criteria
@@ -2458,9 +2470,18 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
     #================================================ 
     plt.close()
     if print_summary:
+        relaxationtime_array = []
+        for ID_i in misalignment_tree.keys():
+            relaxationtime_array.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            
         print('\n======================================')
         print('NUMBER OF MISALIGNMENTS RECORDED: ', len(misalignment_tree.keys()))    
+        print('   Mean:\t%.2f Gyr' %np.mean(np.array(relaxationtime_array)))   
+        print('   Median:\t%.2f Gyr' %np.median(np.array(relaxationtime_array)))   
+        print('   std:\t\t%.2f Gyr' %np.std(np.array(relaxationtime_array)))
         print('======================================')
+        
+        
     if len(misalignment_tree.keys()) == 0:
         print('Insufficient galaxies meeting criteria')
         quit()
@@ -2764,7 +2785,6 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         if showfig:
             plt.show()
         plt.close()
-    
     
     
     #-------------------------

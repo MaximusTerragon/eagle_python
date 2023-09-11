@@ -60,12 +60,12 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                     viewing_angle        = 0,           # Keep as 0
                     #--------------------------
                     # Visualisation properties
-                    boxradius           = 50,                           # size of box of render [kpc], 'rad', 'tworad'
+                    boxradius           = 40,                           # size of box of render [kpc], 'rad', 'tworad'
                     particles           = 5000,                         # number of random particles to plot
                     viewing_axis        = 'z',                          # Which axis to view galaxy from.  DEFAULT 'z'
                     aperture_rad        = 30,                           # calculations radius limit [pkpc]
-                    trim_rad            = np.array([100]),           # largest radius in pkpc to plot | 2.0_hmr, rad_projected=True
-                    align_rad           = False,                          # False/Value
+                    trim_rad            = np.array([50]),           # largest radius in pkpc to plot | 2.0_hmr, rad_projected=True
+                    align_rad           = False,                          # 2hmr, 1hmr, False/Value
                     mask_sgn            = False,                        # False = plot all nearby subhalos too
                     #=====================================================
                     # Misalignments we want extracted and at which radii  
@@ -303,6 +303,17 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
             if len(spin_hmr_in) != len(spin_hmr_tmp):
                 print('Capped spin_rad: %.2f - %.2f - %.2f HMR | Min/Max %.2f / %.2f pkpc' %(min(spin_hmr_in), (max(spin_hmr_in) - min(spin_hmr_in))/(len(spin_hmr_in) - 1), max(spin_hmr_in), min(spin_rad_in), max(spin_rad_in)))  
         
+        # Set align_rad
+        if align_rad == '1hmr':
+            if rad_projected:
+                align_rad = 1*galaxy.halfmass_rad_proj
+            else:
+                align_rad = 1*galaxy.halfmass_rad
+        elif align_rad == '2hmr':
+            if rad_projected:
+                align_rad = 2*galaxy.halfmass_rad_proj
+            else:
+                align_rad = 2*galaxy.halfmass_rad
         
         # If we want the original values, enter 0 for viewing angle
         subhalo = Subhalo_Analysis(mySims, GroupNum, SubGroupNum, GalaxyID, SnapNum, MorphoKinem, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.data_nil, 
@@ -327,8 +338,6 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         if print_galaxy:
             print('|Combined particle properties within %s pkpc:' %aperture_rad)
             print('|%s| |ID:   %s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f  %.2f  %.2f' %(SnapNum, str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'], subhalo.general['kappa_gas'], subhalo.general['kappa_gas_sf'])) 
-        
-        
         
         # INFLOW OUTFLOW 
         #print(subhalo.mass_flow['2.0_hmr']['gas_sf']['inflow'])
@@ -785,8 +794,8 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
             particle_txt += '_bh'
         
         if savefig:
-            plt.savefig("%s/individual_render/L%s_render_ID%s_%s_%s_%s.%s" %(fig_dir, mySims[0][1], GalaxyID, SnapNum, particle_txt, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print('\n  SAVED:%s/individual_render/L%s_render_ID%s_%s_%s_%s.%s' %(fig_dir, mySims[0][1], GalaxyID, SnapNum, particle_txt, savefig_txt, file_format))
+            plt.savefig("%s/individual_render/L%s_render_ID%s_sgn%s_%s_%s_%s.%s" %(fig_dir, mySims[0][1], GalaxyID, mask_sgn, SnapNum, particle_txt, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print('\n  SAVED:%s/individual_render/L%s_render_ID%s_sgn%_%s_%s_%s.%s' %(fig_dir, mySims[0][1], GalaxyID, mask_sgn, SnapNum, particle_txt, savefig_txt, file_format))
         if showfig:
             plt.show()
         plt.close()

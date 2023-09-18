@@ -21,7 +21,7 @@ from read_dataset_directories import _assign_directories
 
 #====================================
 # finding directories
-answer = input("-----------------\nDirectories?:\n     1 local\n     2 serpens_snap\n     3 snip\n     4 snip local\n")
+answer = input("-----------------\nDirectories?:\n     1 local\n     2 serpens_snap\n     3 snip\n     4 snip local           ->  ")
 EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_directories(answer)
 #====================================
  
@@ -338,7 +338,168 @@ def _modify_misalignment_csv(csv_sample = 'L100_27_all_sample_misalignment_9.0',
     else:
          raise Exception('Terminated')
     
+
+
+
+
+# Modifies existing csv output file by adding or removing relevant fields
+def _merge_misalignment_csv(csv_sample1    = 'L100_198_all_sample_misalignment_10.0',     ##### USE 9-10
+                            csv_output1_in = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
+                            csv_sample2    = 'L100_199_all_sample_misalignment_10.0',     ##### USE 10-15
+                            csv_output2_in = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
+                             #--------------------------   
+                             csv_file = True,                       # Will write sample to csv file in sapmle_dir
+                               csv_name = '',
+                             #--------------------------
+                             print_progress = False,
+                             debug = False):
+
+    # Ensuring the sample and output originated together
+    csv_output1 = csv_sample1 + csv_output1_in
+    csv_output2 = csv_sample2 + csv_output2_in
     
+    #--------------------------------
+    # Loading sample
+    dict_sample1 = json.load(open('%s/%s.csv' %(sample_dir, csv_sample1), 'r'))
+    dict_sample2 = json.load(open('%s/%s.csv' %(sample_dir, csv_sample2), 'r'))
+    
+    
+    #--------------------------------
+    # Loading outputs
+    dict_output1 = json.load(open('%s/%s.csv' %(output_dir, csv_output1), 'r'))
+    dict_output2 = json.load(open('%s/%s.csv' %(output_dir, csv_output2), 'r'))
+    print('Len sample1: ', len(np.array(dict_sample1['GroupNum'])))
+    print('Len output1: ', len(dict_output1['all_general'].keys()))
+    print('Len sample2: ', len(np.array(dict_sample2['GroupNum'])))
+    print('Len output2: ', len(dict_output2['all_general'].keys()))
+    print('--->    EXPECTED NEW SAMPLE AND OUTPUT: ', (len(np.array(dict_sample1['GroupNum']))+len(np.array(dict_sample2['GroupNum']))))
+    
+    #--------------------------------
+    # Loading sample criteria
+    sample1_input        = dict_sample1['sample_input']
+    sample2_input        = dict_sample2['sample_input']
+    output1_input        = dict_output1['output_input']
+    output2_input        = dict_output2['output_input']
+    
+    
+    #===============================================
+    # Modifying inputs
+    
+    # find min galaxy
+    modify_galaxy_mass_min = min(dict_sample1['sample_input']['galaxy_mass_min'], dict_sample2['sample_input']['galaxy_mass_min'])
+    modify_galaxy_mass_max = max(dict_sample1['sample_input']['galaxy_mass_max'], dict_sample2['sample_input']['galaxy_mass_max'])
+    print('New min/max: %.2e - %.2e' %(modify_galaxy_mass_min, modify_galaxy_mass_max))
+    print(' ')
+    
+    # modify
+    sample_input_new = sample2_input
+    sample_input_new['galaxy_mass_min'] = modify_galaxy_mass_min
+    sample_input_new['galaxy_mass_max'] = modify_galaxy_mass_max
+    
+    output_input_new = output2_input
+    output_input_new['galaxy_mass_min'] = modify_galaxy_mass_min
+    output_input_new['galaxy_mass_max'] = modify_galaxy_mass_max
+    
+    
+    
+    #===============================================
+    # Modifying sample
+    print('==================\nModifying sample')
+    dict_sample_new = {}
+    for key_i in dict_sample1.keys():
+        if key_i == 'sample_input':
+            continue
+        array1 = np.array(dict_sample1['%s' %key_i])   
+        array2 = np.array(dict_sample2['%s' %key_i])   
+        
+        dict_sample_new['%s' %key_i] = np.concatenate((array1, array2))
+        
+        print('New len %s: %s' %(key_i, len(dict_sample_new['%s' %key_i])))
+    
+    dict_sample_new['sample_input'] = sample_input_new
+    print('old keys: ', dict_sample1.keys())
+    print('new keys: ', dict_sample_new.keys())
+    print('  sample_input:')
+    print(dict_sample_new['sample_input'].keys())
+    
+    
+    # Modifying outputs
+    print('\n==================\nModifying output')
+    dict_output_new = {}
+    for key_i in dict_output1.keys():
+        if key_i == 'output_input':
+            continue
+        dict_output_new['%s' %key_i] = dict_output1['%s' %key_i]
+        dict_output_new['%s' %key_i].update(dict_output2['%s' %key_i])
+        
+        print('New len %s: %s' %(key_i, len(dict_output_new['%s' %key_i].keys())))
+    
+    dict_output_new['output_input'] = output_input_new
+    
+    print(' ')
+    print('old keys: ', dict_output1.keys())
+    print('new keys: ', dict_output_new.keys())
+    print('  output_input:')
+    print(dict_output_new['output_input'].keys())
+    
+    
+    
+    #===============================================
+    # prompt confirmation
+    answer = input("\nContinue to save?  y/n  ")
+    if answer.lower() in ["y","yes"]:
+         #================================================
+         if csv_file: 
+             # Converting numpy arrays to lists. When reading, may need to simply convert list back to np.array() (easy)
+             class NumpyEncoder(json.JSONEncoder):
+                 ''' Special json encoder for numpy types '''
+                 def default(self, obj):
+                     if isinstance(obj, np.integer):
+                         return int(obj)
+                     elif isinstance(obj, np.floating):
+                         return float(obj)
+                     elif isinstance(obj, np.ndarray):
+                         return obj.tolist()
+                     return json.JSONEncoder.default(self, obj)
+             
+             
+             csv_sample_save = 'L100_%i_all_sample_misalignment_%.1f' %(sample_input_new['snapNum'], np.log10(sample_input_new['galaxy_mass_min']))
+             csv_output_save = csv_sample_save + csv_output1_in
+             
+             
+             # Combining all sample dictionaries
+             #csv_dict = dict_sample_new
+             #-----------------------------
+             # Writing one massive JSON file
+             #json.dump(csv_dict, open('%s/MOD_%s.csv' %(sample_dir, csv_sample_save), 'w'), cls=NumpyEncoder)
+             #print('\n  SAVED: %s/MOD_%s.csv' %(sample_dir, csv_sample_save))
+             
+             
+             # Combining all output dictionaries
+             csv_dict = dict_output_new
+             #-----------------------------
+             # Writing one massive JSON file
+             json.dump(csv_dict, open('%s/MOD_%s.csv' %(output_dir, csv_output_save), 'w'), cls=NumpyEncoder)
+             print('\n  SAVED: %s/MOD_%s.csv' %(output_dir, csv_output_save))
+         #================================================  
+
+         
+    elif answer.lower() in ["n","no"]:
+         raise Exception('Terminated')
+    else:
+         raise Exception('Terminated')
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+
 # Modifies existing csv output file by adding or removing relevant fields
 def _modify_radial_csv(csv_output = '#L12_radial_ID37445_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                        #--------------------------   
@@ -537,7 +698,10 @@ def _test_read(csv_sample = 'L100_28_all_sample_misalignment_9.0',     # CSV sam
     
 #==========================
 #_modify_sample_csv()
+
 #_modify_misalignment_csv()
+_merge_misalignment_csv()
+
 #_modify_radial_csv()
 
 #_test_read()

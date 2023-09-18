@@ -967,7 +967,7 @@ Output Parameters
 .general:       dictionary
     'GroupNum', 'SubGroupNum', 'GalaxyID', 'SnapNum', 'halo_mass', 
         'stelmass', 'gasmass', 'gasmass_sf', 'gasmass_nsf', 'dmmass', 
-        'sfr', 'bh_id', 'bh_mass', 'bh_mdot', 'bh_edd', 'halfmass_rad', 
+        'ap_sfr', 'bh_id', 'bh_mass', 'bh_mdot', 'bh_edd', 'halfmass_rad', 
         'halfmass_rad_proj', 'viewing_axis',
         'kappa_stars' - 30 kpc
         'kappa_gas'   - 2.0 hmr
@@ -1045,6 +1045,11 @@ Output Parameters
         ['gas_sf']       - [Msun]
         ['gas_nsf']      - [Msun]
         ['dm']           - Msun at 30pkpc
+.tot_mass:      dictionary
+    Has total mass within hmr:
+        ['rad']          - [pkpc]
+        ['hmr']          - multiples of halfmass_rad
+        ['mass']         - [Msun]
 .Z:   dictionary        
         ['rad']          - [pkpc]
         ['hmr']          - multiples of halfmass_rad
@@ -1136,6 +1141,7 @@ Output Parameters
                 ['inflow_Z']            - Inflow metallicity                    [Mass-wighted metallicity]
                 ['outflow_Z']           - Outflow metallicity                   [Mass-wighted metallicity]
                 ['insitu_Z']            - Whats left... metallicity             [Mass-wighted metallicity]
+        
 """
 # Finds the values we are after and trims particle data
 class Subhalo_Analysis:
@@ -1228,6 +1234,7 @@ class Subhalo_Analysis:
         self.general            = {}
         self.counts             = {}
         self.masses             = {}
+        self.tot_mass           = {}
         self.sfr                = {}
         self.Z                  = {}
         self.coms               = {}
@@ -1281,7 +1288,7 @@ class Subhalo_Analysis:
         
         #----------------------------------------------------
         # Filling self.general
-        for general_name, general_item in zip(['GroupNum', 'SubGroupNum', 'GalaxyID', 'SnapNum', 'halo_mass', 'stelmass', 'gasmass', 'gasmass_sf', 'gasmass_nsf', 'dmmass', 'sfr', 'bh_id', 'bh_mass', 'bh_mdot', 'bh_edd', 'halfmass_rad', 'halfmass_rad_proj', 'viewing_axis'], 
+        for general_name, general_item in zip(['GroupNum', 'SubGroupNum', 'GalaxyID', 'SnapNum', 'halo_mass', 'stelmass', 'gasmass', 'gasmass_sf', 'gasmass_nsf', 'dmmass', 'ap_sfr', 'bh_id', 'bh_mass', 'bh_mdot', 'bh_edd', 'halfmass_rad', 'halfmass_rad_proj', 'viewing_axis'], 
                                               [self.GroupNum, self.SubGroupNum, self.GalaxyID, self.SnapNum, self.halo_mass, self.stelmass, self.gasmass, self.gasmass_sf, self.gasmass_nsf, self.dmmass, self.ap_sfr, self.bh_id, self.bh_mass, self.bh_mdot, self.bh_edd, self.halfmass_rad, self.halfmass_rad_proj, self.viewing_axis]):
             self.general[general_name] = general_item
         self.general.update(MorphoKinem)
@@ -1391,7 +1398,12 @@ class Subhalo_Analysis:
                 # Create radial distributions of all components, assume dm = 30 pkpc only
                 for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf', 'dm']:
                     dict_list[parttype_name] = []
-                    
+            
+            for dict_list in [self.tot_mass]:
+                dict_list['rad'] = spin_rad   
+                dict_list['hmr'] = spin_hmr
+                dict_list['mass'] = []
+            
             for dict_list in [self.sfr]:
                 dict_list['rad'] = spin_rad   
                 dict_list['hmr'] = spin_hmr
@@ -1410,6 +1422,9 @@ class Subhalo_Analysis:
             for rad_i, hmr_i in zip(spin_rad, spin_hmr):
                 # Trim data to particular radius
                 trimmed_data = self._trim_data(self.data, rad_i)
+                
+                # Find total mass at this radius
+                self.tot_mass['mass'].append((np.sum(trimmed_data['stars']['Mass']) + np.sum(trimmed_data['gas']['Mass']) + np.sum(trimmed_data['dm']['Mass']) + np.sum(trimmed_data['bh']['Mass'])))
                 
                 # Find peculiar velocity of trimmed data
                 #pec_vel_rad = self._peculiar_velocity(trimmed_data)
@@ -1470,7 +1485,8 @@ class Subhalo_Analysis:
                     else:
                         self.counts[parttype_name].append(particle_count)
                         self.masses[parttype_name].append(particle_mass)
-                        self.Z[parttype_name].append(particle_Z)
+                        if parttype_name != 'dm':
+                            self.Z[parttype_name].append(particle_Z)
                         if parttype_name == 'gas_sf':
                             self.sfr[parttype_name].append(particle_sfr)
                     

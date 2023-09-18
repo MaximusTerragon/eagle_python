@@ -106,6 +106,19 @@ def _assign_directories(file_type):
         
         # Directories of data hdf5 file(s)
         dataDir_dict = {}
+        dataDir_dict['134'] = dataDir_main + 'particledata_snip_272_z001p000/eagle_subfind_snip_particles_272_z001p000.0.hdf5'
+        dataDir_dict['135'] = dataDir_main + 'particledata_snip_274_z000p976/eagle_subfind_snip_particles_274_z000p976.0.hdf5'
+        dataDir_dict['136'] = dataDir_main + 'particledata_snip_276_z000p952/eagle_subfind_snip_particles_276_z000p952.0.hdf5'
+        dataDir_dict['137'] = dataDir_main + 'particledata_snip_278_z000p928/eagle_subfind_snip_particles_278_z000p928.0.hdf5'
+        dataDir_dict['138'] = dataDir_main + 'particledata_snip_280_z000p905/eagle_subfind_snip_particles_280_z000p905.0.hdf5'
+        dataDir_dict['139'] = dataDir_main + 'particledata_snip_282_z000p881/eagle_subfind_snip_particles_282_z000p881.0.hdf5'
+        dataDir_dict['140'] = dataDir_main + 'particledata_snip_284_z000p859/eagle_subfind_snip_particles_284_z000p859.0.hdf5'
+        dataDir_dict['141'] = dataDir_main + 'particledata_snip_286_z000p836/eagle_subfind_snip_particles_286_z000p836.0.hdf5'
+        dataDir_dict['142'] = dataDir_main + 'particledata_snip_288_z000p814/eagle_subfind_snip_particles_288_z000p814.0.hdf5'
+        dataDir_dict['143'] = dataDir_main + 'particledata_snip_290_z000p792/eagle_subfind_snip_particles_290_z000p792.0.hdf5'
+        dataDir_dict['144'] = dataDir_main + 'particledata_snip_292_z000p770/eagle_subfind_snip_particles_292_z000p770.0.hdf5'
+        dataDir_dict['145'] = dataDir_main + 'particledata_snip_294_z000p749/eagle_subfind_snip_particles_294_z000p749.0.hdf5'
+        dataDir_dict['146'] = dataDir_main + 'particledata_snip_296_z000p728/eagle_subfind_snip_particles_296_z000p728.0.hdf5'
         dataDir_dict['147'] = dataDir_main + 'particledata_snip_298_z000p707/eagle_subfind_snip_particles_298_z000p707.0.hdf5'
         dataDir_dict['148'] = dataDir_main + 'particledata_snip_300_z000p687/eagle_subfind_snip_particles_300_z000p687.0.hdf5'
         dataDir_dict['149'] = dataDir_main + 'particledata_snip_302_z000p667/eagle_subfind_snip_particles_302_z000p667.0.hdf5'
@@ -180,6 +193,19 @@ def _assign_directories(file_type):
         
         # Directories of data hdf5 file(s)
         dataDir_dict = {}
+        dataDir_dict['134'] = dataDir_main + 'particledata_snip_272_z001p000/eagle_subfind_snip_particles_272_z001p000.0.hdf5'
+        dataDir_dict['135'] = dataDir_main + 'particledata_snip_274_z000p976/eagle_subfind_snip_particles_274_z000p976.0.hdf5'
+        dataDir_dict['136'] = dataDir_main + 'particledata_snip_276_z000p952/eagle_subfind_snip_particles_276_z000p952.0.hdf5'
+        dataDir_dict['137'] = dataDir_main + 'particledata_snip_278_z000p928/eagle_subfind_snip_particles_278_z000p928.0.hdf5'
+        dataDir_dict['138'] = dataDir_main + 'particledata_snip_280_z000p905/eagle_subfind_snip_particles_280_z000p905.0.hdf5'
+        dataDir_dict['139'] = dataDir_main + 'particledata_snip_282_z000p881/eagle_subfind_snip_particles_282_z000p881.0.hdf5'
+        dataDir_dict['140'] = dataDir_main + 'particledata_snip_284_z000p859/eagle_subfind_snip_particles_284_z000p859.0.hdf5'
+        dataDir_dict['141'] = dataDir_main + 'particledata_snip_286_z000p836/eagle_subfind_snip_particles_286_z000p836.0.hdf5'
+        dataDir_dict['142'] = dataDir_main + 'particledata_snip_288_z000p814/eagle_subfind_snip_particles_288_z000p814.0.hdf5'
+        dataDir_dict['143'] = dataDir_main + 'particledata_snip_290_z000p792/eagle_subfind_snip_particles_290_z000p792.0.hdf5'
+        dataDir_dict['144'] = dataDir_main + 'particledata_snip_292_z000p770/eagle_subfind_snip_particles_292_z000p770.0.hdf5'
+        dataDir_dict['145'] = dataDir_main + 'particledata_snip_294_z000p749/eagle_subfind_snip_particles_294_z000p749.0.hdf5'
+        dataDir_dict['146'] = dataDir_main + 'particledata_snip_296_z000p728/eagle_subfind_snip_particles_296_z000p728.0.hdf5'
         dataDir_dict['147'] = dataDir_main + 'particledata_snip_298_z000p707/eagle_subfind_snip_particles_298_z000p707.0.hdf5'
         dataDir_dict['148'] = dataDir_main + 'particledata_snip_300_z000p687/eagle_subfind_snip_particles_300_z000p687.0.hdf5'
         dataDir_dict['149'] = dataDir_main + 'particledata_snip_302_z000p667/eagle_subfind_snip_particles_302_z000p667.0.hdf5'

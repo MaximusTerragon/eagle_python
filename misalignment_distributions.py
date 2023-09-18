@@ -23,7 +23,7 @@ from read_dataset_directories import _assign_directories
 
 #====================================
 # finding directories
-answer = input("-----------------\nDirectories?:\n     1 local\n     2 serpens_snap\n     3 snip\n     4 snip local\n")
+answer = input("-----------------\nDirectories?:\n     1 local\n     2 serpens_snap\n     3 snip\n     4 snip local           ->  ")
 EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_directories(answer)
 #====================================
 
@@ -43,7 +43,7 @@ def _sample_misalignment(mySims = [('RefL0100N1504', 100)],
                          plot_sample        = False,
                          plot_coords        = False,
                          #-------------------------- 
-                         csv_file = False,                       # Will write sample to csv file in sapmle_dir
+                         csv_file = True,                       # Will write sample to csv file in sapmle_dir
                             csv_name = '',
                          #--------------------------     
                          print_progress = False,
@@ -487,9 +487,9 @@ def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misali
                                                                'stars_gas_nsf',        # gas_sf_gas_nsf
                                                                'gas_sf_gas_nsf',
                                                                'stars_dm'],           
-                                        spin_hmr            = np.array([1.0, 2.0]),          # multiples of hmr for which to find spin
+                                        spin_hmr            = np.array([1.0, 1.5, 2.0]),          # multiples of hmr for which to find spin
                                         find_uncertainties  = True,                    # whether to find 2D and 3D uncertainties
-                                        rad_projected       = True,                     # whether to use rad in projection or 3D
+                                        rad_projected       = False,                     # whether to use rad in projection or 3D
                                         #--------------------------
                                         # Selection criteria
                                         com_min_distance    = 2.0,         # [pkpc] min distance between sfgas and stars.  DEFAULT 2.0 
@@ -570,6 +570,7 @@ def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misali
     all_spins         = {}          # has all spins
     all_counts        = {}          # has all the particle count within rad
     all_masses        = {}          # has all the particle mass within rad
+    all_totmass       = {}          # has total masses at hmr
     all_sfr           = {}          # has bulk sfr
     all_Z             = {}          # has bulk metallicity
     all_misangles     = {}          # has all 3D angles
@@ -689,6 +690,7 @@ def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misali
         all_coms['%s' %str(subhalo.GalaxyID)]           = subhalo.coms
         all_counts['%s' %str(subhalo.GalaxyID)]         = subhalo.counts
         all_masses['%s' %str(subhalo.GalaxyID)]         = subhalo.masses
+        all_totmass['%s' %str(subhalo.GalaxyID)]        = subhalo.tot_mass
         all_sfr['%s' %str(subhalo.GalaxyID)]            = subhalo.sfr
         all_Z['%s' %str(subhalo.GalaxyID)]              = subhalo.Z
         all_misangles['%s' %str(subhalo.GalaxyID)]      = subhalo.mis_angles
@@ -728,6 +730,7 @@ def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misali
                     'all_coms': all_coms,
                     'all_counts': all_counts,
                     'all_masses': all_masses,
+                    'all_totmass': all_totmass,
                     'all_sfr': all_sfr,
                     'all_Z': all_Z,
                     'all_misangles': all_misangles,
@@ -998,7 +1001,7 @@ def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_10.0',     
                        use_alternative_format = True,          # COMPACT/Poster formatting
                        #--------------------------
                        showfig       = False,
-                       savefig       = True,
+                       savefig       = False,
                          file_format = 'pdf',
                          savefig_txt = '',
                        #--------------------------
@@ -1009,6 +1012,7 @@ def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_10.0',     
                         
     # Ensuring the sample and output originated together
     csv_output = csv_sample + csv_output 
+    csv_output
     
     #================================================  
     # Load sample csv
@@ -1591,7 +1595,7 @@ def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_10.0',     
 # Manually plots a graph tracking share of aligned, misaligned, and counter-rotating systems with z
 # SAVED: /plots/misalignment_distributions_z/
 def _plot_misalignment_z(csv_sample1 = 'L100_',                                 # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
-                         csv_sample_range = np.arange(147, 201, 1),   # snapnums
+                         csv_sample_range = np.arange(134, 201, 1),   # snapnums
                          csv_sample2 = '_all_sample_misalignment_10.0',
                          csv_output_in = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                          #--------------------------
@@ -1601,7 +1605,7 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
                            use_hmr            = 2.0,                    # Which HMR to use
                            use_proj_angle     = True,                   # Whether to use projected or absolute angle 10**9
                              min_inc_angle    = 10,                     # min. degrees of either spin vector to z-axis, if use_proj_angle
-                           lower_mass_limit   = 10**9,            # Whether to plot only certain masses 10**15
+                           lower_mass_limit   = 10**10,            # Whether to plot only certain masses 10**15
                            upper_mass_limit   = 10**15,         
                            ETG_or_LTG         = 'LTG',           # Whether to plot only ETG/LTG
                            group_or_field     = 'both',           # Whether to plot only field/group
@@ -2038,7 +2042,7 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
         #------------------------
         ### General formatting
         # Setting regular axis
-        axs.set_xlim(0, 7)
+        axs.set_xlim(0, 8)
         axs.set_xlabel('Lookback time (Gyr)')
         axs.invert_xaxis()
         axs.set_ylim(0, 100)
@@ -2054,7 +2058,7 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
         
         ax_top = axs.twiny()
         ax_top.set_xticks(ageticks)
-        ax_top.set_xlim(0, 7)
+        ax_top.set_xlim(0, 8)
         ax_top.set_xticklabels(['{:g}'.format(z) for z in redshiftticks])
         ax_top.set_xlabel('Redshift')
         ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major')
@@ -2160,22 +2164,20 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
 
 #===========================
 
+ 
 
-
-
-# range: 148-200
-#for snap_i in np.arange(19, 28.1, 1):
-    #_sample_misalignment(snapNum = int(snap_i))
-    #_analysis_misalignment_distribution(csv_sample = 'L12_' + str(int(snap_i)) + '_all_sample_misalignment_9.0')
-#for snap_i in np.arange(147, 155, 1):
-#for snap_i in np.arange(155, 163, 1):
-#for snap_i in np.arange(163, 171, 1):
-#for snap_i in np.arange(171, 179, 1):
-#for snap_i in np.arange(179, 187, 1):
-#for snap_i in np.arange(187, 195, 1):
-#for snap_i in np.arange(195, 200.1, 1):
-#    #_sample_misalignment(snapNum = int(snap_i))
+#for snap_i in np.arange(134, 143, 1):
+#for snap_i in np.arange(143, 152, 1):
+#for snap_i in np.arange(152, 161, 1):
+#for snap_i in np.arange(161, 171, 1):
+#for snap_i in np.arange(171, 181, 1):
+#for snap_i in np.arange(181, 191, 1):
+#for snap_i in np.arange(191, 201, 1):
+#for snap_i in np.arange(134, 201, 1):
+#    _sample_misalignment(snapNum = int(snap_i), galaxy_mass_min    = 10**10, galaxy_mass_max    = 10**15)
+#    _sample_misalignment(snapNum = int(snap_i), galaxy_mass_min    = 10**9, galaxy_mass_max    = 10**10)
 #    _analysis_misalignment_distribution(csv_sample = 'L100_' + str(int(snap_i)) + '_all_sample_misalignment_9.0')
+#    _analysis_misalignment_distribution(csv_sample = 'L100_' + str(int(snap_i)) + '_all_sample_misalignment_10.0')
     
 #    _plot_misalignment(csv_sample = 'L100_' + str(int(snap_i)) + '_all_sample_misalignment_10.0', csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_')
 

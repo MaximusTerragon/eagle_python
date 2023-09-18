@@ -24,7 +24,7 @@ from read_dataset_directories import _assign_directories
 
 #====================================
 # finding directories
-answer = input("-----------------\nDirectories?:\n     1 local\n     2 serpens_snap\n     3 snip\n     4 snip local\n")
+answer = input("-----------------\nDirectories?:\n     1 local\n     2 serpens_snap\n     3 snip\n     4 snip local           ->  ")
 EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_directories(answer)
 #====================================
 """  
@@ -1218,10 +1218,13 @@ ID_list = [108988077, 479647060, 21721896, 390595970, 401467650, 182125463, 1922
 ID_list = [1361598, 1403994, 10421872, 17879310, 21200847, 21532243, 21659372, 24053428, 182125501, 274449295]
 # tim:
 ID_list = [182125516, 21200847]
+
+ID_list = [462956130]
+
 def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                          #--------------------------
                          # Individual galaxies
-                         GalaxyID_list = [21532243],             # [ None / ID_list ]
+                         GalaxyID_list = ID_list,             # [ None / ID_list ]
                          #==================================================================================
                          # Highlight criteria settings
                          highlight_criteria    = False,       # NOT WORKING whether to indicate when criteria not met (but still plot)
@@ -1279,7 +1282,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                          # Luminosity   [ erg/s ]
                            plot_lbol            = False,
                          #==================================================================================
-                         showfig        = False,
+                         showfig        = True,
                          savefig        = True,
                            file_format  = 'pdf',
                            savefig_txt  = '',
@@ -1431,30 +1434,6 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
         #fig, axs = plt.subplots(nrows=len(plot_height_ratios), ncols=1, gridspec_kw={'height_ratios': plot_height_ratios}, figsize=[5.5, 1*np.sum(np.array(plot_height_ratios))], sharex=True, sharey=False)
         fig, axs = plt.subplots(nrows=len(plot_height_ratios), ncols=1, gridspec_kw={'height_ratios': plot_height_ratios}, figsize=[6.5, 1.2*np.sum(np.array(plot_height_ratios))], sharex=True, sharey=False)
         
-        
-        # tests
-        R = 30
-        tot_mass = (np.array(galaxy_tree['%s' %GalaxyID]['stars']['2.0_hmr']['mass']) + np.array(galaxy_tree['%s' %GalaxyID]['gas']['2.0_hmr']['mass']))
-        tot_mass = (np.array(galaxy_tree['%s' %GalaxyID]['stars']['ap_mass']) + np.array(galaxy_tree['%s' %GalaxyID]['gas']['ap_mass']) + np.array(galaxy_tree['%s' %GalaxyID]['dm']['ap_mass']))
-        v = (1/1000 * np.sqrt(np.divide(tot_mass*2e30 * 6.67e-11, R * 3.09e19)))
-        
-        
-        tdyn = 1e-9 * np.divide(2*np.pi * 2*np.array(galaxy_tree['%s' %GalaxyID]['rad']) * 3.09e19, v*1000) / 3.154e+7
-        
-        # disc velocity
-        print(' disc velocity km/s')
-        #print(v)
-        print('tdyn (Gyr)')
-        #print(tdyn)
-        #print((np.sqrt(np.divide(, ))))
-        
-        # total mass
-        # 4.51e-6   [ Msun, Gyr, kpc]
-        
-        
-        # use 2 hmr
-        
-        
         #------------------------
         # Create each graph separately
         # Create redshift axis:
@@ -1467,8 +1446,8 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
             if redshift_axis:
                 ax_top.set_xticks(ageticks)
             
-            axs[i].set_xlim(7, 0)
-            ax_top.set_xlim(7, 0)
+            axs[i].set_xlim(8, 0)
+            ax_top.set_xlim(8, 0)
             
             # Plot 0 - use_hmr_angle
             if plot_names_i == 'angles':
@@ -1542,7 +1521,8 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                 if plot_bh_acc_instant:
                     axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], 1000*np.array(galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant']), alpha=1.0, lw=0.8, c='k', ls=':', label='$\dot{M}_{\mathrm{BH}}$(×$10^3$) (inst)')
                 if plot_sfr:
-                    # change to ap sfr  ########################################################
+                    ##### WHEN RUN FINISHES:
+                    #axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['ap_sfr'])), alpha=0.8, lw=1, c='brown', ls='dashdot', label='star formation')
                 
                     axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_angle]['sfr'])), alpha=0.8, lw=1, c='brown', ls='dashdot', label='star formation')
                 

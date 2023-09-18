@@ -1,49 +1,32 @@
 
-# merger tree: ensure galaxy stellar mass doesnt drop too much
 
-# add dm mass in 1.0, 2.0
+# time presentation
 
-# re-run
+# Talk to Tim about misalignments: must remain below angle X for X time?
+  Interpolate? or force all snaps?
+  Cut uncertainties?
+  Use projected rad- proj and abs, or abs rad, proj and abs
 
-# Add tdyn into merger tree
-# Add counter relaxation
-# Isolate relaxation paths: counter-counter, co-counter, co-co, etc.
+
+
 
 # Play with parameters:
 	See what difference mergers make
-	Plot vs dynamical time in aperture, using sf gas in 30pkpc and mass to get a sort of 
-	  delta per dynamical time (Freeke paper)
-	Change delta to see where it relaxed too and the deviation from that
 	Morphology
 	Group vs field
+	Delta plots
+	mergers but only gas ratio
 
-# change number to percent, overplot merger vs no merger
+# copy snips 10
+# re-run on sample 9-10
+# SAMPLES 9.0 IS FROM 9-10, 10.0 IS FROM 10-15, COMBINE
 
-
-
-
-
-# remove excess numbers from lbol and evolution in snip
-
-# Email title of presentation by 15th
-# Presentation for 29th. 12 + 3 mins. 
-	- intro (niche)
-	- gas powers galaxies, so understanding where it comes from, how it gets there tells us a lot about evolution
-	- misalignments: what are they (diagram standard, mis, counter), 40%, formed by major gas accretion events
-	- Goals
-	- EAGLE (short) with video
-	- Misalignment distributions
-	- Example galaxy evolution highlighting relaxation time
-	- Relaxation timescale distributions
-	- Things affecting timescales
-	- Conclusions
-
-# check disk usage
-# Download 134-146 and run on those too
-
-# Add kappa_nsf, ap_sfr to snip_timescale once run finishes. New entry, old, and insert nan.
+# Add kappa_nsf, ap_sfr to _analyse_tree ctrl+f 'WHEN RUN FINISHES'
 # Add kappa_nsf, ap_sfr to snip_evolution once run finishes
-# once sample used, still need to trim for stellar mass within 30pkpc, so sample will need modifying
+# Check lbol, ap_sfr, tot_mass, vcirc, tdyn by plotting some galaxies
+	# remove excess lbol calculations in snip analysis and evolution
+Plot vs dynamical time in aperture, using sf gas in 30pkpc and mass to get a sort of 
+	  delta per dynamical time (Freeke paper)
 
 
 # Talk to tim about BH-misalignments as next mini thing
@@ -62,16 +45,18 @@
 
 _____________________________________________________________
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-DONE WEEK 48:
-- Found sgn bug
-- Created animation for presentation
-- Sent Tim graphs for conference
+DONE WEEK 49:
+- Finished presentation
+- Met with Ruediger Pakmor
+- Added trelax option to analysis
+- Added option to have NO mergers meeting criteria
 
 
 WRITING:
 Can prove selection effect by changing histogram time or latency 
 time?
-tdyn is time-averaged
+tdyn and other values are all time-averaged over misalignment window
+Care taken to minimise spurious SubFind stuff, and ensure between snips stellar mass doesnt drop by more than 0.5
 
 
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -114,42 +99,24 @@ NOTABLE GALAXIES:
 182125501	- Relaxation included
 274449295	- LTG with small misalignment
 105202325	- good misalignment without merger
-
-
 21532243	- good misalignment with merger (example)
 
 
+1e10-1e15				 tot  co-co co-count count-co count-count
+Number of misalignments: 209  	143   	28		27		11		30 abs pre: 0.5, post: 0.5, time: 0.1				
+						 957   	524		205		109		119		30 abs, no mergers, time: 0.1
+						    									30 proj, inc 10, pre: 0.5, post: 0.5, time: 0.1
+						     									30 proj, inc 10, no mergers, time: 0.1
 
-Number of misalignments: 121	abs pre: 0.5, post: 1
-						 464	abs, no mergers
-						 134	proj, inc 10, pre: 0.5, post: 1
-						 540 	proj, inc 10, no mergers
-
-We don't use projected angles
+We don't use projected angles and all in abs halfmass rad
 
 ===========================================================
 GUIDE TO galaxy_tree['%s' %GalaxyID] VALUES:
-We will want to ensure that for whatever we are 
-extracting (eg. stars_gas_sf):
-    'stars':        entire array ['2.0_hmr']['count'] > 20
-    'gas_sf':       entire array ['2.0_hmr']['count'] > 20
-    'stars_gas_sf': entire array ['2.0_hmr']['com_proj'] < 2.0
-
-We can then additionall impose limits, ei.:
-       -            entire array is >10^14
-    'stars':        entire array ['kappa'] > 0.4
-    'gas_sf':       entire array ['2.0_hmr']['count'] > 50
-    'gas_sf':       entire array ['2.0_hmr']['proj_angle'] > 10, < 170
-
-['2.0_hmr'] will always be there but may have math.nan, so will need
-to ensure entire array np.isnan = False
 
 Galaxies that merge do not show final merger ratio and simply end array.
 Galaxies where stellermass cant be defined have merger_ratio = math.nan
-
 Snaps will be recorded from first to last, with nan inbetween
      
-#-------------------------------------
 galaxy_tree['%s' %ID_dict]
 
 GalaxyID                -
@@ -160,6 +127,7 @@ SnapNum                 -
 Redshift                -
 Lookbacktime            -
 halomass                - total per subfind
+#ap_sfr					- [Msun/yr] in aperture
 rad                     - [pkpc]
 radproj                 - [pkpc]
 merger_ID               - merger stuff
@@ -167,6 +135,13 @@ merger_ratio_stars      - peak stellar ratios in past 2 Gyr ish
 merger_ratio_gas        - gas ratios at time of peak stellar ratios
 gasdata_old             - gets updated and replaced with math.nan
 
+#'other'
+#    '1.0_hmr'
+#    '2.0_hmr'
+#        tot_mass        - [Msun] total mass of all masses
+#        vcirc           - [km/s] circular velocity according to virial theorem
+#        tdyn            - [Gyr] relaxation time at this radius
+		
 'stars'
     tot_mass            - total subfind mass
     ap_mass             - total aperture mass
@@ -215,6 +190,7 @@ gasdata_old             - gets updated and replaced with math.nan
 
 'gas_nsf'
     ap_mass             - total aperture mass
+    #kappa               - kappa
     '1.0_hmr'
     '2.0_hmr'
         mass            - mass in radius

@@ -1,21 +1,30 @@
 
+# Print timescale notes
 
 # time presentation
 
-# Talk to Tim about misalignments: must remain below angle X for X time?
-  Interpolate? or force all snaps?
-  Cut uncertainties?
-  Use projected rad- proj and abs, or abs rad, proj and abs
-
-
-
-
 # Play with parameters:
-	See what difference mergers make
-	Morphology
-	Group vs field
-	Delta plots
-	mergers but only gas ratio
+	Mass vs relaxation time, controlled for offset
+	Inflow vs relaxation time, controlled for offset
+	Environment vs relaxation time, controlled for offset
+	Morphology vs relaxation time, controlled for offset
+	Gas ratio of mergers vs offset or relaxation time, controllef for 
+	PLS, and PLSRegression python function from Scikit-learn
+	
+#  
+  must remain below angle 20 for X time?
+  Interpolate? or force all snaps?
+  Cut uncertainties? spin parameter?
+  ellipticity?
+  Use projected rad- proj and abs, or abs rad, proj and abs
+  rad of gas disk? 0.5-3.0 hmr
+  Accretion rate... rather than plotting mean, could plot something else? skip super quick relaxes, and focus on 0.5-1, and 1+ ?
+
+
+	
+
+
+
 
 # copy snips 10
 # re-run on sample 9-10
@@ -25,23 +34,36 @@
 # Add kappa_nsf, ap_sfr to snip_evolution once run finishes
 # Check lbol, ap_sfr, tot_mass, vcirc, tdyn by plotting some galaxies
 	# remove excess lbol calculations in snip analysis and evolution
-Plot vs dynamical time in aperture, using sf gas in 30pkpc and mass to get a sort of 
-	  delta per dynamical time (Freeke paper)
+# Plot trelax/dyn vs radius? (Freeke paper)
 
 
-# Talk to tim about BH-misalignments as next mini thing
-# Talk to tim about cancel leiden. 
-  Thought about it over the summer and I haven't warmed up to the idea.
-  Would rather postpone it to the following year to see how things go then, especially as some of the 
-  early work on ColiBre will be done by then.
-  Don't feel like I would be comfortable working there for a while on the project and would prefer to 
-  stay here.
-  The project is OK (if a bit dull for my tastes), but working on such a new simulation right out
-  of the box... I'd rather wait a year.
-  Prefer the idea of continuing with misalignments in some form, perhaps more directly with AGN or looking
-  at origins. 
-  Optionally also go on to look at zoom-in simulations as its something i wouldn't mind trying or testing
-  as I enjoyed the Tim-Freeke paper.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 _____________________________________________________________
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -50,6 +72,10 @@ DONE WEEK 49:
 - Met with Ruediger Pakmor
 - Added trelax option to analysis
 - Added option to have NO mergers meeting criteria
+- 3 papers and notes on tuesday
+- Notes management
+- Made extensive timescale notes and re-read papers for presentation
+- Added max deviation and type to misalignments dict
 
 
 WRITING:
@@ -565,3 +591,17 @@ Missing:
 
 
 ============================================================
+
+# Talk to tim about BH-misalignments as next mini thing
+# Talk to tim about cancel leiden. 
+  Thought about it over the summer and I haven't warmed up to the idea.
+  Would rather postpone it to the following year to see how things go then, especially as some of the 
+  early work on ColiBre will be done by then.
+  Don't feel like I would be comfortable working there for a while on the project and would prefer to 
+  stay here.
+  The project is OK (if a bit dull for my tastes), but working on such a new simulation right out
+  of the box... I'd rather wait a year.
+  Prefer the idea of continuing with misalignments in some form, perhaps more directly with AGN or looking
+  at origins. 
+  Optionally also go on to look at zoom-in simulations as its something i wouldn't mind trying or testing
+  as I enjoyed the Tim-Freeke paper.

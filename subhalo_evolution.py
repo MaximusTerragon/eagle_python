@@ -1224,7 +1224,7 @@ ID_list = [462956130]
 def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                          #--------------------------
                          # Individual galaxies
-                         GalaxyID_list = ID_list,             # [ None / ID_list ]
+                         GalaxyID_list = [21200847],             # [ None / ID_list ]
                          #==================================================================================
                          # Highlight criteria settings
                          highlight_criteria    = False,       # NOT WORKING whether to indicate when criteria not met (but still plot)
@@ -1573,12 +1573,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                         axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['gas_nsf']['%s_hmr' %use_hmr_general]['mass'])), alpha=1.0, lw=1, c='b', ls=':', label='gas$_{\mathrm{NSF}}$')
                 if plot_bhmass:
                     axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['bh']['mass'])), alpha=1.0, lw=1, c='purple', ls='dashdot', label='BH')
-                
-                print(' aaaaaaaaaa  ')
-                #for timei, masi, toti, gali in zip(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['stars']['ap_mass'], galaxy_tree['%s' %GalaxyID]['stars']['tot_mass'], galaxy_tree['%s' %GalaxyID]['GalaxyID']):
-                #    print('  %.2f\t%.2e\t%.2e\t%s' %(timei, masi, toti, gali))
-                
-                
+
                 
                 #---------------------
                 ### Formatting

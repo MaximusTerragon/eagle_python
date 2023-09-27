@@ -45,7 +45,7 @@ PURPOSE
 #1, 2, 4, 3, 6, 5, 7, 9, 16, 14, 11, 8, 13, 12, 15, 18, 10, 20, 22, 24, 21
 #3748
 #37445, 37446, 37447
-#ID_list = [3748, 20455, 37445, 30494, 43163, 40124, 44545, 48383, 57647, 55343, 51640, 46366, 53904, 52782, 56522, 59467, 49986, 61119, 62355, 63199, 61831]
+ID_list = [3748, 20455, 37445, 30494, 43163, 40124, 44545, 48383, 57647, 55343, 51640, 46366, 53904, 52782, 56522, 59467, 49986, 61119, 62355, 63199, 61831]
 
 #====================================
 # Will visualise all particles belonging to a SINGLE galaxy/subhalo
@@ -53,7 +53,7 @@ PURPOSE
 def galaxy_render(csv_sample = False,              # False, Whether to read in existing list of galaxies  
                     #--------------------------
                     mySims = [('RefL0012N0188', 12)],
-                    GalaxyID_List = [37447],
+                    GalaxyID_List = ID_list,
                     #--------------------------
                     # Galaxy extraction properties
                     kappa_rad            = 30,          # calculate kappa for this radius [pkpc]
@@ -66,7 +66,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                     aperture_rad        = 30,                           # calculations radius limit [pkpc]
                     trim_rad            = np.array([50]),           # largest radius in pkpc to plot | 2.0_hmr, rad_projected=True
                     align_rad           = False,                          # 2hmr, 1hmr, False/Value
-                    mask_sgn            = False,                        # False = plot all nearby subhalos too
+                    mask_sgn            = True,                        # False = plot all nearby subhalos too
                     #=====================================================
                     # Misalignments we want extracted and at which radii  
                     angle_selection     = ['stars_gas',                     # stars_gas     stars_gas_sf    stars_gas_nsf
@@ -75,7 +75,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                                            'gas_sf_gas_nsf',
                                            'stars_dm'],           
                     spin_hmr            = np.array([1.0, 2.0]),                  # multiples of hmr for which to find spin. Will plot lowest value
-                    rad_projected       = True,                             # whether to use rad in projection or 3D
+                    rad_projected       = False,                             # whether to use rad in projection or 3D
                     #--------------------------
                     # Plot options
                     plot_spin_vectors   = True,
@@ -237,11 +237,12 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         if print_progress:
             print('Extracting particle data Subhalo_Extract()')
             time_start = time.time()
-        
-        
+            
+
         # Initial extraction of galaxy particle data
-        galaxy = Subhalo_Extract(mySims, dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, Centre_i, HaloMass, aperture_rad, viewing_axis, mask_sgn = mask_sgn)
+        galaxy = Subhalo_Extract(mySims, dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, Centre_i, HaloMass, aperture_rad, viewing_axis, MorphoKinem, mask_sgn = mask_sgn)
         GroupNum = galaxy.gn
+        
         
         # Gives: galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh
         # Gives: subhalo.general: GroupNum, SubGroupNum, GalaxyID, stelmass, gasmass, gasmass_sf, gasmass_nsf
@@ -316,7 +317,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                 align_rad = 2*galaxy.halfmass_rad
         
         # If we want the original values, enter 0 for viewing angle
-        subhalo = Subhalo_Analysis(mySims, GroupNum, SubGroupNum, GalaxyID, SnapNum, MorphoKinem, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.data_nil, 
+        subhalo = Subhalo_Analysis(mySims, GroupNum, SubGroupNum, GalaxyID, SnapNum, galaxy.MorphoKinem, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.data_nil, 
                                             viewing_axis,
                                             aperture_rad,
                                             kappa_rad, 
@@ -337,33 +338,53 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                 
         if print_galaxy:
             print('|Combined particle properties within %s pkpc:' %aperture_rad)
-            print('|%s| |ID:   %s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f  %.2f  %.2f' %(SnapNum, str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'], subhalo.general['kappa_gas'], subhalo.general['kappa_gas_sf'])) 
+            print('|%s| |ID:   %s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f  %.2f  %.2f' %(SnapNum, str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad, subhalo.general['kappa_stars'], subhalo.general['kappa_gas'], subhalo.general['kappa_gas_sf'])) 
         
         
-        # INFLOW OUTFLOW 
-        #print(subhalo.mass_flow['2.0_hmr']['gas_sf']['inflow'])
-        #print(subhalo.mass_flow['2.0_hmr']['gas_sf']['insitu_Z'])
-        #print(subhalo.sfr['hmr'])
-        #print(np.multiply(3.154e+7, subhalo.sfr['gas_sf']))
-        #print(subhalo.Z['hmr'])
-        #print(subhalo.Z['stars'])
-        #print(subhalo.Z['gas_sf'])
+        """ # RELAXATION TIMES 
+        print('rads:')
+        print('hmr:    %.2f kpc' %subhalo.general['halfmass_rad'])
+        print('hmr_sf: %.2f kpc' %subhalo.general['halfmass_rad_sf'])
+        print('masses: ')
+        print(subhalo.tot_mass['mass'])
+        print(subhalo.tot_mass['mass_disc'])
+        print(' ')
         
-        #print(subhalo.bh_mdot)
-        #print(subhalo.bh_edd)
-        #print(subhalo.bh_id)
+        for hmr_i in spin_hmr:
+            print('CURRENT HMR: ', hmr_i)
+            
+            # Creating masks
+            mask_masses = np.where(np.array(subhalo.tot_mass['hmr']) == float(hmr_i))[0][0]
+            
+            R = min(subhalo.general['halfmass_rad_sf'], hmr_i*subhalo.general['halfmass_rad'])
+            if subhalo.general['halfmass_rad_sf'] < hmr_i*subhalo.general['halfmass_rad']:
+                M = subhalo.tot_mass['mass_disc'][0]
+            if subhalo.general['halfmass_rad_sf'] > hmr_i*subhalo.general['halfmass_rad']:
+                M = subhalo.tot_mass['mass'][mask_masses]
+                
+            vcirc = (1/1000 * np.sqrt(np.divide(np.array(M) * 2e30 * 6.67e-11, R * 3.09e19)))
+            tdyn  = 1e-9 * np.divide(2*np.pi * np.array(R) * 3.09e19, vcirc*1000) / 3.154e+7
         
-        #print(len(subhalo.gas_data['2.0_hmr']['gas']['ParticleIDs']))
-        #print(subhalo.gas_data['2.0_hmr']['gas']['Total_mass'])
-        #print(len(subhalo.gas_data['2.0_hmr']['gas_sf']['ParticleIDs']))
-        #print(subhalo.gas_data['2.0_hmr']['gas_sf']['Total_mass'])
-        #print(subhalo.gas_data['2.0_hmr']['gas_sf']['ParticleIDs'])
-        #print(subhalo.gas_data['2.0_hmr']['gas_sf'].keys())
+            print('Mass:  %.2e' %M)
+            print('R:     %.2f' %R)
+            print('vcirc: %.1f' %vcirc)
+            print('ellip: %.2f' %subhalo.general['ellip'])
+            print('t_dyn:    %.2f Gyr' %tdyn)
+            print('t_torque: %.2f Gyr' %(tdyn/subhalo.general['ellip']))
+            print(' ')
+        """
+        """ # INFLOW OUTFLOW 
+        print(subhalo.bh_mdot)
+        print(subhalo.bh_edd)
+        print(subhalo.bh_id)
         
-        #print(subhalo.data['%s' %str(trim_rad[0])]['gas_sf']['ParticleIDs'][35])
-        # 8035248386127
-        #if 8035248386127.0 in subhalo.data['%s' %str(trim_rad[0])]['gas_sf']['ParticleIDs']:
-            #print('True')
+        print(len(subhalo.gas_data['2.0_hmr']['gas']['ParticleIDs']))
+        print(subhalo.gas_data['2.0_hmr']['gas']['Total_mass'])
+        print(len(subhalo.gas_data['2.0_hmr']['gas_sf']['ParticleIDs']))
+        print(subhalo.gas_data['2.0_hmr']['gas_sf']['Total_mass'])
+        print(subhalo.gas_data['2.0_hmr']['gas_sf']['ParticleIDs'])
+        print(subhalo.gas_data['2.0_hmr']['gas_sf'].keys())
+        """
         
         
         #===========================================

@@ -362,7 +362,7 @@ def _analysis_evolution(csv_sample = False,              # Whether to read in ex
                  time_start = time.time()
     
             # Initial extraction of galaxy particle data
-            galaxy = Subhalo_Extract(mySims, dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, Centre_i, HaloMass, aperture_rad, viewing_axis)
+            galaxy = Subhalo_Extract(mySims, dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, Centre_i, HaloMass, aperture_rad, viewing_axis, MorphoKinem)
             GroupNum = galaxy.gn
             # Gives: galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh
             # Gives: subhalo.general: GroupNum, SubGroupNum, GalaxyID, stelmass, gasmass, gasmass_sf, gasmass_nsf
@@ -418,7 +418,7 @@ def _analysis_evolution(csv_sample = False,              # Whether to read in ex
             
             
             # If we want the original values, enter 0 for viewing angle
-            subhalo = Subhalo_Analysis(mySims, GroupNum, SubGroupNum, GalaxyID, SnapNum, MorphoKinem, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.data_nil, 
+            subhalo = Subhalo_Analysis(mySims, GroupNum, SubGroupNum, GalaxyID, SnapNum, galaxy.MorphoKinem, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.data_nil, 
                                                 viewing_axis,
                                                 aperture_rad,
                                                 kappa_rad, 

@@ -1,91 +1,110 @@
+# add new tdyn calculation
 
-# Print timescale notes
+# update main and re-run
 
-# time presentation
+# update tdyn calculation to min(r_50 sf, current radius)
+
+# box and whisker plot for relaxation types ETG vs LTG. x:type, yaxis:relaxation time
+
+# try out ETG to ETG, LTG to LTG, etc. based on start vs final kappa. relaxation_morphology = ['LTG-LTG', 'ETG-ETG', 'LTG-ETG', 'ETG-LTG'],               # ['LTG-LTG', 'ETG-ETG', 'LTG-ETG', 'ETG-LTG']
+
+# make spearman_plot scatter
+
+# practice presentation
+
+# try 1 hmr... see what happens
+# trim for uncertainty... say 20 degrees? see what happens
+
+
+
+
+# presentation
+# pay rent on 29th
+
+# add writing notes to project 1 plan
 
 # Play with parameters:
+    The ones that take the longest... is it due to multiple mergers?
+	trelax/tdyn... maybe we get a peak with a tail
+	trelax/tdyn vs ellipticity... should be inverse relationship
 	Mass vs relaxation time, controlled for offset
 	Inflow vs relaxation time, controlled for offset
+		ignore first 200 mya of long tones? Or over some threshold? could do specific... might need control. ei. 20% of mass was accreted within X Mya
 	Environment vs relaxation time, controlled for offset
 	Morphology vs relaxation time, controlled for offset
 	Gas ratio of mergers vs offset or relaxation time, controllef for 
-	PLS, and PLSRegression python function from Scikit-learn
-	
-#  
-  must remain below angle 20 for X time?
-  Interpolate? or force all snaps?
-  Cut uncertainties? spin parameter?
-  ellipticity?
-  Use projected rad- proj and abs, or abs rad, proj and abs
-  rad of gas disk? 0.5-3.0 hmr
-  Accretion rate... rather than plotting mean, could plot something else? skip super quick relaxes, and focus on 0.5-1, and 1+ ?
+	Check for effect of centrals vs satellites
 
+# run snips 134-165 on serpens on SUNDAY
+# re-run locally with 10**9.5 as min for misalignments
+# Run 9.5-10 samples
+# Merge outputs, merge samples on serpens
 
-	
-
-
-
-
-# copy snips 10
-# re-run on sample 9-10
-# SAMPLES 9.0 IS FROM 9-10, 10.0 IS FROM 10-15, COMBINE
-
-# Add kappa_nsf, ap_sfr to _analyse_tree ctrl+f 'WHEN RUN FINISHES'
-# Add kappa_nsf, ap_sfr to snip_evolution once run finishes
-# Check lbol, ap_sfr, tot_mass, vcirc, tdyn by plotting some galaxies
+# Add kappa_nsf, ap_sfr to misalignment_tree ctrl+f 'WHEN RUN FINISHES'
+# Add kappa_nsf, ap_sfr to snip_evolution 
+# Add ellip, triax, etc... to misalignment_tree
 	# remove excess lbol calculations in snip analysis and evolution
-# Plot trelax/dyn vs radius? (Freeke paper)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 _____________________________________________________________
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-DONE WEEK 49:
-- Finished presentation
-- Met with Ruediger Pakmor
-- Added trelax option to analysis
-- Added option to have NO mergers meeting criteria
-- 3 papers and notes on tuesday
-- Notes management
-- Made extensive timescale notes and re-read papers for presentation
-- Added max deviation and type to misalignments dict
-
+DONE WEEK 50:
+- Messaged Tim about paris
+- RE-RUN with ellip, triax, abs
+- Tested merge csv
+- Spoke with Tim
+- Remade plots for co-co, etc.
+- Added SF radius, new tdyn calculations and the likes
 
 WRITING:
-Can prove selection effect by changing histogram time or latency 
-time?
-tdyn and other values are all time-averaged over misalignment window
-Care taken to minimise spurious SubFind stuff, and ensure between snips stellar mass doesnt drop by more than 0.5
+- We do not consider satellite galaxies in our analysis because they are more sensitive to external sources of turbulence, such as ram-pressure stripping and strong tidal interactions (e.g. Gunn & Gott 1972; Boselli & Gavazzi 2006; Bahé & McCarthy 2015; Wright et al. 2022)
+- all w.r.t stellar COM 
+- Assume gas disk descibed by r_50 for sf. tdyn is calculated with min(r_50_sf, and [current radius]), capped at 1 kpc for resolution. Masses chosen to match
+	- Faster relaxation times are broadly ETGs due to smaller SF r_50, LTGs have slower relaxation times due to large radii or capping... but t_torque is an upper limit anyway
+- Mention how larger R SF for LTG makes up for larger ellipticity
+
+
+Tim:
+- Agree that misalignments for which mergers are clearly the cause appear only 20%, so its gas accretion
+	- Contends with casanueva as AGN feedback may have made it easier for gas to become misaligned in the first place ?
+- Dont have the resolution for many Radii, try SF radius
+- Agree there is no separate group
+- Look into ETG vs LTG relaxation types
+- Agree that selection effects on delta play a role, he noticed the gap
+- kappa and spin parameter basically the same
+- Can get working on BH/AGN during writing phase
 
 
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+-------------------------------------------------------------
+
+# NOTES ON SAMMI GALAXY SURVEY PAPER:
+- observational paper using SAMI IFS to investigating alignment of galaxies (and components of stars and gas) w.r.t closest filament
+- thought that galaxies during formation and while they are low mass naturally have spins parallel to filament
+- mergers along filaments, interactions can disrupt that, and make it so these galaxies have perpendicular alignments 
+- But as they continue to passively accrete, they are expected to realign to parallel
+- Some suggest AGN feedback plays a role by preventing gas inflow and avoiding realignment, such as via randomising direction of cold gas accretion early on
+- star formation not found to have big impact
+
+- paper basically looks at : does BH activity matter, if so is it instantaneous or integrated activity (using central velocity dispersion as proxy)
+							 differences in stellar alignment and ionized gas alignment
+- Sample of about 1000 galaxies with masses 9-12
+- use C_AGN as proxy for instantaneous bh activity as departure in log scale from SF limit. high C = AGN. Spearman of -0.09, p of 0.005 showig significant correlation
+
+FIG 4 TOP | as AGN activity incerases, we see more misalignment for stars -> parallel to perpendicular. Second fig shows PDF skewed towards more parallel spin-filament for low activity, and vice versa
+- however, Cagn also correlates strongly with bulge... and we know of a bulge dependancy of spin-filamenet alignments (tracer for mergers)
+- they then apply a partial least squares regression and find 86% of the variance in stellar spin explained through bulges, only 0.6% through AGN activity...
+
+ergo, spin-flip correlaction with AGN is due to AGN-bulge relation. Similar results for gas, but we only have ~70% explained by mergers, with AGN going to 10%. 
+-> points toward instantaneous AGN activity affecting gas alignmenet much more strongly than stars 
+
+FIG 8 | same angle correlation also found for cumulative BH mass, but with bulge mass dominating correlation as opposed to BH mass
+
+FIG 11 | relative importance of each galaxy parameter for spin filament alignment
+
+FIG 13 RIGHT | bulge-BH mass, and alignment
+
+-> concludes: AGN feedback drives galaxy qucnhing while mergers trigger spin fliament alignment flips and bulge growth
 -------------------------------------------------------------
 
 
@@ -156,6 +175,11 @@ halomass                - total per subfind
 #ap_sfr					- [Msun/yr] in aperture
 rad                     - [pkpc]
 radproj                 - [pkpc]
+ellip					- For spherical, e=0. Typically 0.2-0.3 for ETG, 0.6-0.8 for LTG
+triax					- low and high values of T correspond to oblate and prolate ellipsoids, respectively
+disp_ani				- Values of δ > 0 indicate that the velocity dispersion is primarily contributed by disordered motion in the disc plane
+disc_to_total			- The mass fraction of stars that are rotationally-supported (which can be considered the ‘disc’ mass fraction) is a simple and intuitive kinematic diagnostic.
+rot_to_disp_ratio		- the ratio of rotation and dispersion velocities
 merger_ID               - merger stuff
 merger_ratio_stars      - peak stellar ratios in past 2 Gyr ish
 merger_ratio_gas        - gas ratios at time of peak stellar ratios
@@ -355,6 +379,9 @@ Mergers searched for from first misaligned, to first relax
 'index_r'				- First to be relaxed
 'index_merger' 			- Index of mergers that met locations. Use this to sample 'merger_ratio_stars'
 'relaxation_time' 		- [ Gyr ] Time between index_m and index_r
+'relaxation_type'		- co-co, counter-counter, co-counter, counter-co
+'angle_peak'			- peak misalignment angle from where it relaxes to (-co, -counter)
+'index_peak'			- index of the above w.r.t array
 
 ============================================================
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀

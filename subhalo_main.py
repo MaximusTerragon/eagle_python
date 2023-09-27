@@ -9,6 +9,7 @@ from astropy.constants import G
 import eagleSqlTools as sql
 from pyread_eagle import EagleSnapshot
 from read_dataset_tools import read_dataset, read_dataset_dm_mass, read_header
+from morphokinematicsdiagnostics import kinematics_diagnostics, morphological_diagnostics
 from astropy.cosmology import FlatLambdaCDM
 
 
@@ -348,6 +349,8 @@ aperture_rad_in: float, [pkpc]
     Used to trim data, which is used to find peculiar velocity within this sphere
 viewing_axis: 'z'
     Used to find projected halfmass radius
+MorphoKinem: array-like
+    [ellip, triax, kappa_stars, disp_ani, disc_to_total, rot_to_disp_ratio]
 
 
 Output Parameters
@@ -410,7 +413,7 @@ If centre_galaxy == True; 'Coordinates' - .centre, 'Velocity' - .perc_vel
 # Extracts the particle and SQL data from snips
 class Subhalo_Extract:
     
-    def __init__(self, sim, data_dir, snapNum, gn, sgn, centre_in, halo_mass_in, aperture_rad_in, viewing_axis,
+    def __init__(self, sim, data_dir, snapNum, gn, sgn, centre_in, halo_mass_in, aperture_rad_in, viewing_axis, MorphoKinem,
                             mask_sgn=True,
                             centre_galaxy=True, 
                             load_region_length=1.0,   # cMpc/h 
@@ -489,7 +492,6 @@ class Subhalo_Extract:
         dm        = self._read_galaxy(data_dir, 1, self.gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length, snapNum, mask_sgn)
         bh        = self._read_galaxy(data_dir, 5, self.gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length, snapNum, mask_sgn)
         
-        
         # CENTER COORDS, VELOCITY NOT ADJUSTED  [pkpc]
         if centre_galaxy == True:
             stars['Coordinates'] = stars['Coordinates'] - self.centre
@@ -497,6 +499,18 @@ class Subhalo_Extract:
             dm['Coordinates']    = dm['Coordinates'] - self.centre
             bh['Coordinates']    = bh['Coordinates'] - self.centre
         
+        
+        # if ellipticity is nan (from snip), make sure we calculate it at this stage
+        self.MorphoKinem = MorphoKinem
+        if np.isnan(MorphoKinem[0]) == True:
+            # Find morphokinem values
+            kappa, delta, discfrac, vrotsig = kinematics_diagnostics(stars['Coordinates']*u.kpc.to(u.Mpc), stars['Mass'], stars['Velocity']*u.km.to(u.Mpc), aperture = aperture_rad_in*u.kpc.to(u.Mpc))
+            ellip, triax                    = morphological_diagnostics(np.array(stars['Coordinates'])*u.kpc.to(u.Mpc), np.array(stars['Mass']), np.array(stars['Velocity'])*u.km.to(u.Mpc), aperture = aperture_rad_in*u.kpc.to(u.Mpc))
+            
+            # Assign to self
+            self.MorphoKinem = [ellip, triax, kappa, delta, discfrac, vrotsig]
+            
+            
         #---------------------------
         # Find main BH after all coords have been centred based on CoP
         #bh = self._find_main_bh(bh)
@@ -525,7 +539,7 @@ class Subhalo_Extract:
         # Making the minimum HMR 1 pkpc
         self.halfmass_rad_proj  = max(self._projected_rad(stars_trimmed, viewing_axis), 1)
         self.halfmass_rad       = max(self._half_rad(stars_trimmed), 1)
-            
+        
         # Finding peculiar velocity of stars within 30 pkpc of COM
         self.perc_vel = self._peculiar_velocity_part(stars_trimmed)
          
@@ -702,7 +716,6 @@ class Subhalo_Extract:
                     aexp = f['PartType%i/%s'%(itype, att)].attrs.get('aexp-scale-exponent')
                     hexp = f['PartType%i/%s'%(itype, att)].attrs.get('h-scale-exponent')
                     data['Mass'] = np.multiply(tmp, cgs * self.a**aexp * self.h**hexp, dtype='f8')
-                    
                 else:
                     tmp  = eagle_data.read_dataset(itype, att)
                     cgs  = f['PartType%i/%s'%(itype, att)].attrs.get('CGSConversionFactor')
@@ -973,6 +986,7 @@ Output Parameters
         'kappa_gas'   - 2.0 hmr
         'kappa_gas_sf'
         'kappa_gas_nsf'
+        'ellip', 'triax', 'kappa_stars', 'disp_ani', 'disc_to_total', 'rot_to_disp_ratio'
 
 .flags:     dictionary
     Has list of arrays that will be != if flagged. Contains hmr at failure, or 30pkpc
@@ -1280,16 +1294,16 @@ class Subhalo_Analysis:
         self.ap_sfr             = np.sum(self.data['gas_sf']['StarFormationRate'])           # [Msun/s] within 30 pkpc (aperture_rad_in)  
         self.halfmass_rad       = halfmass_rad                          # [pkpc]
         self.halfmass_rad_proj  = halfmass_rad_proj                     # [pkpc]
+        self.halfmass_rad_sf    = max(self._half_rad(self.data['gas_sf']), 0.7)                         # [pkpc]
         self.viewing_axis       = viewing_axis                          # 'x', 'y', 'z'
         self.viewing_angle      = viewing_angle                         # [deg]
         
         self.bh_id, self.bh_mass, self.bh_mdot, self.bh_edd = self._bh_accretion(self.data['bh'], halfmass_rad)     # [Msun]/s of largest BH within 0.5 HMR
         
-        
         #----------------------------------------------------
         # Filling self.general
-        for general_name, general_item in zip(['GroupNum', 'SubGroupNum', 'GalaxyID', 'SnapNum', 'halo_mass', 'stelmass', 'gasmass', 'gasmass_sf', 'gasmass_nsf', 'dmmass', 'ap_sfr', 'bh_id', 'bh_mass', 'bh_mdot', 'bh_edd', 'halfmass_rad', 'halfmass_rad_proj', 'viewing_axis'], 
-                                              [self.GroupNum, self.SubGroupNum, self.GalaxyID, self.SnapNum, self.halo_mass, self.stelmass, self.gasmass, self.gasmass_sf, self.gasmass_nsf, self.dmmass, self.ap_sfr, self.bh_id, self.bh_mass, self.bh_mdot, self.bh_edd, self.halfmass_rad, self.halfmass_rad_proj, self.viewing_axis]):
+        for general_name, general_item in zip(['GroupNum', 'SubGroupNum', 'GalaxyID', 'SnapNum', 'halo_mass', 'stelmass', 'gasmass', 'gasmass_sf', 'gasmass_nsf', 'dmmass', 'ap_sfr', 'bh_id', 'bh_mass', 'bh_mdot', 'bh_edd', 'halfmass_rad', 'halfmass_rad_proj', 'halfmass_rad_sf', 'viewing_axis'], 
+                                              [self.GroupNum, self.SubGroupNum, self.GalaxyID, self.SnapNum, self.halo_mass, self.stelmass, self.gasmass, self.gasmass_sf, self.gasmass_nsf, self.dmmass, self.ap_sfr, self.bh_id, self.bh_mass, self.bh_mdot, self.bh_edd, self.halfmass_rad, self.halfmass_rad_proj,  self.halfmass_rad_sf, self.viewing_axis]):
             self.general[general_name] = general_item
         self.general.update(MorphoKinem)
             
@@ -1381,6 +1395,35 @@ class Subhalo_Analysis:
             '''
         
         #-----------------------------
+        # Find total masses within the stellar r_50, and sf_r_50
+        def find_tot_masses(debug=False):
+            # Create dictionary arrays    
+            for dict_list in [self.tot_mass]:
+                dict_list['rad'] = spin_rad   
+                dict_list['hmr'] = spin_hmr
+                dict_list['mass'] = []
+                dict_list['mass_disc'] = []     # total masses at r_50 gas sf, and 2*r_50
+                
+            #-----------------------------
+            # Baryonic matter that is calculated over several radii 
+            for rad_i, hmr_i in zip(spin_rad, spin_hmr):
+                # Trim data to particular radius
+                trimmed_data = self._trim_data(self.data, rad_i)
+                
+                # Find total mass at this radius
+                self.tot_mass['mass'].append((np.sum(trimmed_data['stars']['Mass']) + np.sum(trimmed_data['gas']['Mass']) + np.sum(trimmed_data['dm']['Mass']) + np.sum(trimmed_data['bh']['Mass'])))
+                
+            #-----------------------------
+            # Baryonic matter that is calculated over several radii 
+            for hmr_i in spin_hmr:
+                # Trim data to particular radius
+                trimmed_data = self._trim_data(self.data, hmr_i*self.halfmass_rad_sf)
+                
+                # Find total mass at this radius
+                self.tot_mass['mass_disc'].append((np.sum(trimmed_data['stars']['Mass']) + np.sum(trimmed_data['gas']['Mass']) + np.sum(trimmed_data['dm']['Mass']) + np.sum(trimmed_data['bh']['Mass'])))
+        find_tot_masses()
+            
+        #-----------------------------
         # Also extract gas data
         def find_particle_properties(debug=False):
             
@@ -1398,11 +1441,6 @@ class Subhalo_Analysis:
                 # Create radial distributions of all components, assume dm = 30 pkpc only
                 for parttype_name in ['stars', 'gas', 'gas_sf', 'gas_nsf', 'dm']:
                     dict_list[parttype_name] = []
-            
-            for dict_list in [self.tot_mass]:
-                dict_list['rad'] = spin_rad   
-                dict_list['hmr'] = spin_hmr
-                dict_list['mass'] = []
             
             for dict_list in [self.sfr]:
                 dict_list['rad'] = spin_rad   
@@ -1422,9 +1460,6 @@ class Subhalo_Analysis:
             for rad_i, hmr_i in zip(spin_rad, spin_hmr):
                 # Trim data to particular radius
                 trimmed_data = self._trim_data(self.data, rad_i)
-                
-                # Find total mass at this radius
-                self.tot_mass['mass'].append((np.sum(trimmed_data['stars']['Mass']) + np.sum(trimmed_data['gas']['Mass']) + np.sum(trimmed_data['dm']['Mass']) + np.sum(trimmed_data['bh']['Mass'])))
                 
                 # Find peculiar velocity of trimmed data
                 #pec_vel_rad = self._peculiar_velocity(trimmed_data)
@@ -2588,7 +2623,45 @@ class Subhalo_Analysis:
         
             return bh_id, bh_mass, accretion_rate, bh_edd
             
+    def _projected_rad(self, arr, viewing_axis, debug=False):
+        # Compute distance to centre (projected)        
+        if viewing_axis == 'z':
+            r = np.linalg.norm(arr['Coordinates'][:,[0,1]], axis=1)
+            mask = np.argsort(r)
+            r = r[mask]
+        if viewing_axis == 'y':
+            r = np.linalg.norm(arr['Coordinates'][:,[0,2]], axis=1)
+            mask = np.argsort(r)
+            r = r[mask]
+        if viewing_axis == 'x':
+            r = np.linalg.norm(arr['Coordinates'][:,[1,2]], axis=1)
+            mask = np.argsort(r)
+            r = r[mask]
+            
+        stelmass = np.sum(arr['Mass'][mask])
+            
+        # Compute cumulative mass
+        cmass = np.cumsum(arr['Mass'][mask])
+        index = np.where(cmass >= stelmass*0.5)[0][0]
+        radius = r[index]
         
+        return radius
+        
+    def _half_rad(self, arr, debug=False):
+        # Compute distance to centre       
+        r = np.linalg.norm(arr['Coordinates'], axis=1)
+        mask = np.argsort(r)
+        r = r[mask]
+            
+        stelmass = np.sum(arr['Mass'][mask])
+            
+        # Compute cumulative mass
+        cmass = np.cumsum(arr['Mass'][mask])
+        index = np.where(cmass >= stelmass*0.5)[0][0]
+        radius = r[index]
+        
+        return radius
+    
               
 
 """ 

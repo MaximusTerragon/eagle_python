@@ -342,7 +342,7 @@ def _modify_misalignment_csv(csv_sample = 'L100_27_all_sample_misalignment_9.0',
 
 
 
-# Modifies existing csv output file by adding or removing relevant fields
+# Merges two output files
 def _merge_misalignment_csv(csv_sample1    = 'L100_198_all_sample_misalignment_10.0',     ##### USE 9-10
                             csv_output1_in = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                             csv_sample2    = 'L100_199_all_sample_misalignment_10.0',     ##### USE 10-15
@@ -468,11 +468,11 @@ def _merge_misalignment_csv(csv_sample1    = 'L100_198_all_sample_misalignment_1
              
              
              # Combining all sample dictionaries
-             #csv_dict = dict_sample_new
+             csv_dict = dict_sample_new
              #-----------------------------
              # Writing one massive JSON file
-             #json.dump(csv_dict, open('%s/MOD_%s.csv' %(sample_dir, csv_sample_save), 'w'), cls=NumpyEncoder)
-             #print('\n  SAVED: %s/MOD_%s.csv' %(sample_dir, csv_sample_save))
+             json.dump(csv_dict, open('%s/MOD_%s.csv' %(sample_dir, csv_sample_save), 'w'), cls=NumpyEncoder)
+             print('\n  SAVED: %s/MOD_%s.csv' %(sample_dir, csv_sample_save))
              
              
              # Combining all output dictionaries
@@ -647,8 +647,8 @@ def _modify_radial_csv(csv_output = '#L12_radial_ID37445_RadProj_Err__stars_gas_
     
 
 # Test read
-def _test_read(csv_sample = 'L100_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
-               csv_output = 'MOD_L100_28_all_sample_misalignment_9.0_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
+def _test_read(csv_sample = 'MOD_L100_199_all_sample_misalignment_10.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+               csv_output = 'MOD_L100_199_all_sample_misalignment_10.0_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                #--------------------------
                print_progress = False,
                debug = False):
@@ -689,10 +689,8 @@ def _test_read(csv_sample = 'L100_28_all_sample_misalignment_9.0',     # CSV sam
     
     
     # TEST PRINTS
-    print(old_Z['5371292'].keys())
-    print(old_gasdata['5371292']['2.0_hmr']['gas'].keys())
-    print(len(old_gasdata['5371292']['2.0_hmr']['gas']['Mass']))
-    print(len(old_gasdata['5371292']['2.0_hmr']['gas']['Metallicity']))
+    print('SAMPLE LENGTH: ', len(GalaxyID_List))
+    print('OUTPUT LENGTH: ', len(old_general.keys()))
     
     
     
@@ -700,7 +698,8 @@ def _test_read(csv_sample = 'L100_28_all_sample_misalignment_9.0',     # CSV sam
 #_modify_sample_csv()
 
 #_modify_misalignment_csv()
-_merge_misalignment_csv()
+
+#_merge_misalignment_csv()
 
 #_modify_radial_csv()
 

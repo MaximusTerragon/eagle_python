@@ -1,8 +1,6 @@
-# add new tdyn calculation
+
 
 # update main and re-run
-
-# update tdyn calculation to min(r_50 sf, current radius)
 
 # box and whisker plot for relaxation types ETG vs LTG. x:type, yaxis:relaxation time
 
@@ -40,11 +38,10 @@
 # Run 9.5-10 samples
 # Merge outputs, merge samples on serpens
 
-# Add kappa_nsf, ap_sfr to misalignment_tree ctrl+f 'WHEN RUN FINISHES'
-# Add kappa_nsf, ap_sfr to snip_evolution 
-# Add ellip, triax, etc... to misalignment_tree
+# Activate ap_sfr, ssfr to snip_evolution 
+# Activate kappa nsf, ellip, triax, tdyn, ttorque, rad_sf, tvcirc, dyn, ttoqrue, etc... to misalignment_tree
 	# remove excess lbol calculations in snip analysis and evolution
-
+# Re-create evolutions with time axis :)
 
 _____________________________________________________________
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -55,6 +52,9 @@ DONE WEEK 50:
 - Spoke with Tim
 - Remade plots for co-co, etc.
 - Added SF radius, new tdyn calculations and the likes
+- Updated evolution with rad_sf, vcirc, tdyn, ttorque
+- Added selection criteria for vcirc, tdyn, and ttorque
+
 
 WRITING:
 - We do not consider satellite galaxies in our analysis because they are more sensitive to external sources of turbulence, such as ram-pressure stripping and strong tidal interactions (e.g. Gunn & Gott 1972; Boselli & Gavazzi 2006; Bahé & McCarthy 2015; Wright et al. 2022)
@@ -62,6 +62,8 @@ WRITING:
 - Assume gas disk descibed by r_50 for sf. tdyn is calculated with min(r_50_sf, and [current radius]), capped at 1 kpc for resolution. Masses chosen to match
 	- Faster relaxation times are broadly ETGs due to smaller SF r_50, LTGs have slower relaxation times due to large radii or capping... but t_torque is an upper limit anyway
 - Mention how larger R SF for LTG makes up for larger ellipticity
+
+
 
 
 Tim:
@@ -172,9 +174,10 @@ SnapNum                 -
 Redshift                -
 Lookbacktime            -
 halomass                - total per subfind
-#ap_sfr					- [Msun/yr] in aperture
+# ap_sfr					- [Msun/yr] in aperture
 rad                     - [pkpc]
 radproj                 - [pkpc]
+# rad_sf					- [pkpc]
 ellip					- For spherical, e=0. Typically 0.2-0.3 for ETG, 0.6-0.8 for LTG
 triax					- low and high values of T correspond to oblate and prolate ellipsoids, respectively
 disp_ani				- Values of δ > 0 indicate that the velocity dispersion is primarily contributed by disordered motion in the disc plane
@@ -184,13 +187,18 @@ merger_ID               - merger stuff
 merger_ratio_stars      - peak stellar ratios in past 2 Gyr ish
 merger_ratio_gas        - gas ratios at time of peak stellar ratios
 gasdata_old             - gets updated and replaced with math.nan
+# ellip						- 1 is flat, 0 is sphere
+# triax						- Low values are oblate, high are prolate
+# disp_ani					-
+# disc_to_total				-
+# rot_to_disp_ratio			- 
 
 #'other'
 #    '1.0_hmr'
 #    '2.0_hmr'
-#        tot_mass        - [Msun] total mass of all masses
-#        vcirc           - [km/s] circular velocity according to virial theorem
-#        tdyn            - [Gyr] relaxation time at this radius
+#        tot_mass        	- [Msun] total mass of all masses
+#        vcirc           	- [km/s] circular velocity according to virial theorem
+#        tdyn            	- [Gyr] relaxation time at this radius
 		
 'stars'
     tot_mass            - total subfind mass
@@ -350,9 +358,19 @@ Mergers searched for from first misaligned, to first relax
 'kappa_gas'				-
 'kappa_sf'				-
 #'kappa_nsf'			-
+#'ellip'					-
+#'triax'					-
+#'disp_ani'				-
+#'disc_to_total'			-
+#'rot_to_disp_ratio'		-
 
 'rad'					- [ pkpc ]
 'radproj'				- [ pkpc ]
+#'rad_sf'				- [ pkpc ]
+
+#'vcirc'				- [ km/s ]
+#'tdyn'					- [ Gyr ]
+#'ttorque'				- [ Gyr ] 
 
 'inflow_rate'			- [ Msun/yr ]
 'inflow_Z'				-

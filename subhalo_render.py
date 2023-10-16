@@ -93,7 +93,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                     #--------------------------
                     color_metallicity   = False,
                     #=====================================================
-                    showfig       = True,
+                    showfig       = False,
                     savefig       = False,
                       savefig_txt = '',                # added txt to append to end of savefile
                       file_format = 'pdf',
@@ -341,7 +341,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
             print('|%s| |ID:   %s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f  %.2f  %.2f' %(SnapNum, str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad, subhalo.general['kappa_stars'], subhalo.general['kappa_gas'], subhalo.general['kappa_gas_sf'])) 
         
         
-        """ # RELAXATION TIMES 
+        # RELAXATION TIMES 
         print('rads:')
         print('hmr:    %.2f kpc' %subhalo.general['halfmass_rad'])
         print('hmr_sf: %.2f kpc' %subhalo.general['halfmass_rad_sf'])
@@ -356,10 +356,10 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
             # Creating masks
             mask_masses = np.where(np.array(subhalo.tot_mass['hmr']) == float(hmr_i))[0][0]
             
-            R = min(subhalo.general['halfmass_rad_sf'], hmr_i*subhalo.general['halfmass_rad'])
-            if subhalo.general['halfmass_rad_sf'] < hmr_i*subhalo.general['halfmass_rad']:
-                M = subhalo.tot_mass['mass_disc'][0]
-            if subhalo.general['halfmass_rad_sf'] > hmr_i*subhalo.general['halfmass_rad']:
+            R = min(2*subhalo.general['halfmass_rad_sf'], hmr_i*subhalo.general['halfmass_rad'])
+            if 2*subhalo.general['halfmass_rad_sf'] < hmr_i*subhalo.general['halfmass_rad']:
+                M = subhalo.tot_mass['mass_disc'][1]
+            if 2*subhalo.general['halfmass_rad_sf'] > hmr_i*subhalo.general['halfmass_rad']:
                 M = subhalo.tot_mass['mass'][mask_masses]
                 
             vcirc = (1/1000 * np.sqrt(np.divide(np.array(M) * 2e30 * 6.67e-11, R * 3.09e19)))
@@ -372,7 +372,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
             print('t_dyn:    %.2f Gyr' %tdyn)
             print('t_torque: %.2f Gyr' %(tdyn/subhalo.general['ellip']))
             print(' ')
-        """
+        
         """ # INFLOW OUTFLOW 
         print(subhalo.bh_mdot)
         print(subhalo.bh_edd)

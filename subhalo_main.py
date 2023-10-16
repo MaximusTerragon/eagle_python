@@ -1308,7 +1308,6 @@ class Subhalo_Analysis:
         self.general.update(MorphoKinem)
             
         
-        
         #====================================================
         # From here we only calculate particle properties that are linked to misalignment angles requested
         
@@ -2652,16 +2651,22 @@ class Subhalo_Analysis:
         r = np.linalg.norm(arr['Coordinates'], axis=1)
         mask = np.argsort(r)
         r = r[mask]
-            
+        
+        # THIS IS GAS_SF DONT WORRY
         stelmass = np.sum(arr['Mass'][mask])
             
         # Compute cumulative mass
         cmass = np.cumsum(arr['Mass'][mask])
-        index = np.where(cmass >= stelmass*0.5)[0][0]
-        radius = r[index]
         
-        return radius
-    
+        if len(np.where(cmass >= stelmass*0.5)[0]) == 0:
+            return math.nan
+        else:
+            index = np.where(cmass >= stelmass*0.5)[0][0]
+            radius = r[index]
+        
+            return radius
+        
+      
               
 
 """ 

@@ -31,18 +31,22 @@ EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_dir
 #================================
 # Will plot sample selection given criteria
 # SAVED: /outputs/sample_stellar_mass_function/
-def _plot_stellar_mass_function(csv_sample = 'L100_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+def _plot_stellar_mass_function(csv_sample = 'L100_27_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                                 csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                                  #--------------------------
                                  # What determines our final sample
                                  print_summary = True,
-                                   use_angle          = 'stars_gas_sf',   # Which angles to ensure we have
-                                   use_hmr            = 2.0,              # Which HMR ^
-                                   use_proj_angle     = True,                   # Whether to use projected or absolute angle 10**9
-                                     min_inc_angle    = 10,                     # min. degrees of either spin vector to z-axis, if use_proj_angle
-                                   pop_mass_limit     = 10**7,            # Lower limit of population plot sampled
-                                   sample_mass_limit  = 10**9,            # Lower limit of chosen sample
-                                   use_satellites     = False,   
+                                   use_angle           = 'stars_gas_sf',   # Which angles to ensure we have
+                                   use_hmr             = 1.0,              # Which HMR ^
+                                   use_proj_angle      = True,                   # Whether to use projected or absolute angle 10**9
+                                     min_inc_angle     = 10,                     # min. degrees of either spin vector to z-axis, if use_proj_angle
+                                     min_particles     = 20,               # [ 20 ] number of particles
+                                     min_com           = 2.0,              # [ 2.0 ] pkpc
+                                     max_uncertainty   = None,            # [ None / 30 / 45 ]                  Degrees
+                                     lower_mass_limit  = 10**9.5,            # Lower limit of chosen sample
+                                     upper_mass_limit  = 10**15,            # Lower limit of chosen sample
+                                   pop_mass_limit      = 10**7,            # Lower limit of population plot sampled
+                                   use_satellites      = False,   
                                  #--------------------------
                                  hist_bin_width = 0.2,
                                  #--------------------------
@@ -104,7 +108,7 @@ def _plot_stellar_mass_function(csv_sample = 'L100_28_all_sample_misalignment_9.
     print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Min mass: %.2E M*\n  Max mass: %.2E M*\nSatellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_min'], sample_input['galaxy_mass_max'], sample_input['use_satellites']))
     print('  SAMPLE LENGTH: ', len(GroupNum_List))
     print('\nOUTPUT LOADED:\n  Viewing axis: %s\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s\n  COM min distance: %s\n  Min. particles: %s\n  Min. inclination: %s' %(output_input['viewing_axis'], output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected'], output_input['com_min_distance'], output_input['min_particles'], output_input['min_inclination']))
-    print('\nPLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Min. inclination: %s\n  Population mass limit: %.2E M*\n  Sample mass limit:     %.2E M*\n  Use satellites:  %s' %(use_angle, use_hmr, use_proj_angle, min_inc_angle, pop_mass_limit, sample_mass_limit, use_satellites))
+    print('\nPLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Min. inclination: %s\n  Population mass limit: %.2E M*\n  Sample mass min/max:     %.2E / %.2E M*\n  Use satellites:  %s' %(use_angle, use_hmr, use_proj_angle, min_inc_angle, pop_mass_limit, lower_mass_limit, upper_mass_limit, use_satellites))
     print('===================')
     
     #------------------------------
@@ -238,26 +242,71 @@ def _plot_stellar_mass_function(csv_sample = 'L100_28_all_sample_misalignment_9.
             print('Analysing extracted sample and collecting masses')
             time_start = time.time()
         
+        # Find angle galaxy makes with viewing axis
+        def _find_angle(vector1, vector2):
+            return np.rad2deg(np.arccos(np.clip(np.dot(vector1/np.linalg.norm(vector1), vector2/np.linalg.norm(vector2)), -1.0, 1.0)))     # [deg]
+        
+        # Find distance between coms
+        def _evaluate_com(com1, com2, abs_proj, debug=False):
+            if abs_proj == 'abs':
+                d = np.linalg.norm(np.array(com1) - np.array(com2))
+            elif abs_proj == 'x':
+                d = np.linalg.norm(np.array([com1[1], com1[2]]) - np.array([com2[1], com2[2]]))
+            elif abs_proj == 'y':
+                d = np.linalg.norm(np.array([com1[0], com1[2]]) - np.array([com2[0], com2[2]]))
+            elif abs_proj == 'z':
+                d = np.linalg.norm(np.array([com1[0], com1[1]]) - np.array([com2[0], com2[1]]))
+            else:
+                raise Exception('unknown entery')
+            return d
+        
+        
         #--------------------------
         # Loop over all galaxies we have available, and analyse output of flags
         for GalaxyID in GalaxyID_List:
             
-            # If galaxy is in mass range we want, check whether it is part of sample
-            if all_general['%s' %GalaxyID]['stelmass'] >= sample_mass_limit:
+            #-----------------------------
+            # Check if galaxy meets criteria
+            
+            # check if hmr exists 
+            if (use_hmr in all_misangles['%s' %GalaxyID]['hmr']):
+                # creating masks
+                mask_counts = np.where(np.array(all_counts['%s' %GalaxyID]['hmr']) == float(use_hmr))[0][0]
+                mask_coms   = np.where(np.array(all_coms['%s' %GalaxyID]['hmr']) == float(use_hmr))[0][0]
+                mask_spins  = np.where(np.array(all_spins['%s' %GalaxyID]['hmr']) == float(use_hmr))[0][0]
+                mask_angles = np.where(np.array(all_misangles['%s' %GalaxyID]['hmr']) == float(use_hmr))[0][0]
                 
-                # Determine if criteria met. If it is, use stelmass
-                if (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['total_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_particles'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[0]]) and (use_hmr not in all_flags['%s' %GalaxyID]['min_inclination'][use_particles[1]]) and (use_hmr not in all_flags['%s' %GalaxyID]['com_min_distance'][use_angle]) and (all_general['%s' %GalaxyID]['SubGroupNum'] <= satellite_criteria):
-                    
-                    # Find angle galaxy makes with viewing axis
-                    def _find_angle(vector1, vector2):
-                        return np.rad2deg(np.arccos(np.clip(np.dot(vector1/np.linalg.norm(vector1), vector2/np.linalg.norm(vector2)), -1.0, 1.0)))     # [deg]
+                # find particle counts
+                if use_particles[0] == 'dm':
+                    count_1 = all_counts['%s' %GalaxyID][use_particles[0]]
+                else:
+                    count_1 = all_counts['%s' %GalaxyID][use_particles[0]][mask_counts]
+                if use_particles[1] == 'dm':
+                    count_2 = all_counts['%s' %GalaxyID][use_particles[1]]
+                else:
+                    count_2 = all_counts['%s' %GalaxyID][use_particles[1]][mask_counts]
                 
-                    # Mask correct integer (formatting weird but works)
-                    mask_rad2 = np.where(np.array(all_spins['%s' %GalaxyID]['hmr']) == use_hmr)[0][0]
+                # find inclination angle(s)
+                inc_angle_1 = _find_angle(all_spins['%s' %GalaxyID][use_particles[0]][mask_spins], viewing_vector)
+                inc_angle_2 = _find_angle(all_spins['%s' %GalaxyID][use_particles[1]][mask_spins], viewing_vector)
+                
+                # find CoMs = com_abs
+                if use_angle != 'stars_dm':
+                    com_abs  = _evaluate_com(all_coms['%s' %GalaxyID][use_particles[0]][mask_angles], all_coms['%s' %GalaxyID][use_particles[1]][mask_angles], 'abs')
+                else:
+                    com_abs  = _evaluate_com(all_coms['%s' %GalaxyID][use_particles[0]][mask_angles], all_coms['%s' %GalaxyID][use_particles[1]], 'abs')
+                
+                # applying selection criteria for min_inc_angle, min_com, min_particles
+                if (count_1 >= min_particles) and (count_2 >= min_particles) and (com_abs <= min_com) and (inc_angle_1 >= min_inc_angle) and (inc_angle_1 <= max_inc_angle) and (inc_angle_2 >= min_inc_angle) and (inc_angle_2 <= max_inc_angle):
                     
-                    # Remove any galaxies that have bad inclination angle
-                    if (_find_angle(all_spins['%s' %GalaxyID][use_particles[0]][mask_rad2], viewing_vector) >= min_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[0]][mask_rad2], viewing_vector) <= max_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[1]][mask_rad2], viewing_vector) >= min_inc_angle) & (_find_angle(all_spins['%s' %GalaxyID][use_particles[1]][mask_rad2], viewing_vector) <= max_inc_angle):
+                    #--------------
+                    # Determine if this is a galaxy we want to plot and meets the remaining criteria (stellar mass, halo mass, kappa, satellite, uncertainty)
+                    max_error = max(np.abs((np.array(all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle_err' %use_angle][mask_angles]) - all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle' %use_angle][mask_angles])))
+                    
+                    if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['SubGroupNum'] <= satellite_criteria) and (max_error <= (999 if max_uncertainty == None else max_uncertainty)):
+                        
                         plot_stelmass.append(all_general['%s' %GalaxyID]['stelmass'])
+                    
                     else:
                         continue
                 else:
@@ -265,16 +314,20 @@ def _plot_stellar_mass_function(csv_sample = 'L100_28_all_sample_misalignment_9.
             else:
                 continue
                 
+                
         if print_summary:
             print('\nPLOT CRITERIA SIZE: %s' %(len(plot_stelmass)))
             
         
         #--------------------------
+        if np.log10(lower_mass_limit) == 9.5:
+            mod_lower_mass_limit = 10**9.0
+        
         # Create histogram of our sample    
-        hist_sample, _ = np.histogram((hist_bin_width/2)+np.floor(np.log10(plot_stelmass)/hist_bin_width)*hist_bin_width , bins=np.arange(np.log10(sample_mass_limit)+(hist_bin_width/2), np.log10(10**15), hist_bin_width))
+        hist_sample, _ = np.histogram((hist_bin_width/2)+np.floor(np.log10(plot_stelmass)/hist_bin_width)*hist_bin_width , bins=np.arange(np.log10(mod_lower_mass_limit)+(hist_bin_width/2), np.log10(upper_mass_limit), hist_bin_width))
         hist_sample = hist_sample[:] / (float(sample_input['mySims'][0][1]))**3
         hist_sample = hist_sample / hist_bin_width                      # why?
-        hist_bins   = np.arange(np.log10(sample_mass_limit)+(hist_bin_width/2), np.log10(10**15)-hist_bin_width, hist_bin_width)
+        hist_bins   = np.arange(np.log10(mod_lower_mass_limit)+(hist_bin_width/2), np.log10(upper_mass_limit)-hist_bin_width, hist_bin_width)
         
         # Masking out nans
         with np.errstate(divide='ignore', invalid='ignore'):

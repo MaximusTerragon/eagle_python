@@ -258,6 +258,12 @@ def morphological_diagnostics(XYZ, mass, Vxyz, aperture=0.03, CoMvelocity=True, 
         # Compute change of basis matrix
         transform = linalg.inv(temp)
         stop = (np.max((1-np.sqrt(eigval[:2]/eigval[2])/np.array([q,s]))**2)<1e-4)
+        
+        if np.isnan(np.sqrt(eigval[:2]/eigval[2])).any():
+            stop = True
+        elif np.isinf(1/np.sqrt(eigval[:2]/eigval[2])).any():
+            stop = True
+        
         if (reduced_structure and not(stop)):
             q,s = np.sqrt(eigval[:2]/eigval[2])
             Rsphall = linalg.norm(np.matmul(transform,particlesall[:,:3,np.newaxis])[:,:,0]/np.array([q,s,1]),axis=1)
@@ -265,6 +271,8 @@ def morphological_diagnostics(XYZ, mass, Vxyz, aperture=0.03, CoMvelocity=True, 
             
     Transform = transform.copy()
     ellip = 1-np.sqrt(eigval[1]/eigval[2])
+    if ellip == 1.0:
+        ellip = math.nan
     triax = (1-eigval[0]/eigval[2])/(1-eigval[1]/eigval[2])
     Transform = Transform[...,[2,0,1],:]#so that transform[0] = major, transform[1] = inter, transform[2] = minor
     abc = np.sqrt(eigval[[2,0,1]])

@@ -42,16 +42,16 @@ def _plot_stellar_mass_function(csv_sample = 'L100_27_all_sample_misalignment_9.
                                      min_inc_angle     = 10,                     # min. degrees of either spin vector to z-axis, if use_proj_angle
                                      min_particles     = 20,               # [ 20 ] number of particles
                                      min_com           = 2.0,              # [ 2.0 ] pkpc
-                                     max_uncertainty   = None,            # [ None / 30 / 45 ]                  Degrees
+                                     max_uncertainty   = 30,            # [ None / 30 / 45 ]                  Degrees
                                      lower_mass_limit  = 10**9.5,            # Lower limit of chosen sample
                                      upper_mass_limit  = 10**15,            # Lower limit of chosen sample
-                                   pop_mass_limit      = 10**7,            # Lower limit of population plot sampled
-                                   use_satellites      = False,   
+                                   pop_mass_limit      = 10**8,            # Lower limit of population plot sampled
+                                   use_satellites      = True,   
                                  #--------------------------
                                  hist_bin_width = 0.2,
                                  #--------------------------
-                                 showfig       = True,
-                                 savefig       = False,
+                                 showfig       = False,
+                                 savefig       = True,
                                    file_format = 'pdf',
                                    savefig_txt = '',
                                  #--------------------------
@@ -322,6 +322,8 @@ def _plot_stellar_mass_function(csv_sample = 'L100_27_all_sample_misalignment_9.
         #--------------------------
         if np.log10(lower_mass_limit) == 9.5:
             mod_lower_mass_limit = 10**9.0
+        else:
+            mod_lower_mass_limit = np.log10(lower_mass_limit) 
         
         # Create histogram of our sample    
         hist_sample, _ = np.histogram((hist_bin_width/2)+np.floor(np.log10(plot_stelmass)/hist_bin_width)*hist_bin_width , bins=np.arange(np.log10(mod_lower_mass_limit)+(hist_bin_width/2), np.log10(upper_mass_limit), hist_bin_width))
@@ -347,12 +349,12 @@ def _plot_stellar_mass_function(csv_sample = 'L100_27_all_sample_misalignment_9.
         
         #-----------
         # Axis formatting
-        plt.xlim(7, 12.5)
+        plt.xlim(8, 12.5)
         plt.ylim(-5, -0.5)
         plt.yticks(np.arange(-5, 0, 0.5))
         plt.xlabel(r'log$_{10}$ M$_{*}$ [M$_{\odot}$]')
         plt.ylabel(r'log$_{10}$ dn/dlog$_{10}$(M$_{*}$) [cMpc$^{-3}$]')
-        plt.xticks(np.arange(7, 12.5, 1))
+        plt.xticks(np.arange(8, 12.5, 1))
           
         #-----------  
         # Annotations
@@ -392,7 +394,9 @@ def _plot_stellar_mass_function(csv_sample = 'L100_27_all_sample_misalignment_9.
     #------------------------
 
 #===========================
-_plot_stellar_mass_function()
+#_plot_stellar_mass_function()
+_plot_stellar_mass_function(use_angle = 'stars_gas_sf')
+_plot_stellar_mass_function(use_angle = 'stars_dm')
 #===========================
 
 

@@ -470,7 +470,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                 # Create other
                 for hmr_i in output_input['spin_hmr']:
                     # if this hmr_i not available
-                    if hmr_i not in all_counts['%s' %GalaxyID]['hmr']:
+                    if hmr_i not in all_totmass['%s' %GalaxyID]['hmr']:
                         # Updating
                         galaxy_tree['%s' %ID_dict]['other'].update({'%s_hmr' %hmr_i: {'tot_mass': [math.nan],
                                                                                       'vcirc': [math.nan],
@@ -481,10 +481,31 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                         mask_masses = np.where(np.array(all_totmass['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                         mask_disc   = np.where(np.array(all_totmass['%s' %GalaxyID]['hmr']) == float(disc_edge))[0][0]
                         
-                        R = min(float(all_general['%s' %GalaxyID]['halfmass_rad_sf']), hmr_i*float(all_general['%s' %GalaxyID]['halfmass_rad']))
+                        R = min(disc_edge*float(all_general['%s' %GalaxyID]['halfmass_rad_sf']), hmr_i*float(all_general['%s' %GalaxyID]['halfmass_rad']))
                         
                         # if SF disc contained within spin radius, use SF disc radius as R and M. Else, use spin radius
-                        if float(all_general['%s' %GalaxyID]['halfmass_rad_sf']) < hmr_i*float(all_general['%s' %GalaxyID]['halfmass_rad']):
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        if disc_edge*float(all_general['%s' %GalaxyID]['halfmass_rad_sf']) < hmr_i*float(all_general['%s' %GalaxyID]['halfmass_rad']):
                             M = float(all_totmass['%s' %GalaxyID]['mass_disc'][mask_disc])      # [0] corresponds to 1*r_50 SF
                         else:
                             M = float(all_totmass['%s' %GalaxyID]['mass'][mask_masses])
@@ -739,7 +760,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                 # Updating other
                 for hmr_i in output_input['spin_hmr']:
                     # if this hmr_i not available
-                    if hmr_i not in all_counts['%s' %GalaxyID]['hmr']:
+                    if hmr_i not in all_totmass['%s' %GalaxyID]['hmr']:
                         # Updating
                         galaxy_tree['%s' %ID_dict]['other']['%s_hmr' %hmr_i]['tot_mass'].append(math.nan)
                         galaxy_tree['%s' %ID_dict]['other']['%s_hmr' %hmr_i]['vcirc'].append(math.nan)
@@ -1408,7 +1429,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                   #-----------------------
                   # Individual galaxies
                   force_all_snaps = True,                # KEEP TRUE. force us to use galaxies in which we have all snaps.
-                    GalaxyID_list = None,             # [ None / ID_list ]
+                    GalaxyID_list = ID_list,             # [ None / ID_list ]
                   #====================================================================================================
                   # Misalignment must take place in range   
                     max_z = 1.0,                  
@@ -1462,7 +1483,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                   #------------------------------------------------------------
                   # Misalignment angles                
                     use_hmr_angle        = 1.0,           # [ 1.0 / 2.0 ]                Used for misangle, inc angle, com, counts
-                    abs_or_proj          = 'abs',         # [ 'abs' / 'proj' ]
+                    abs_or_proj          = 'proj',         # [ 'abs' / 'proj' ]
                     min_inclination      = 0,              # [ 0 / degrees]
                     use_angle            = 'stars_gas_sf',
                     misangle_threshold   = 30,            # [ 20 / 30 / 45 ]  Must meet this angle (or 180-misangle_threshold) to be considered misaligned
@@ -1506,23 +1527,24 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                     whisker_morphs          = ['LTG-LTG', 'ETG-ETG'],           # Can be either relaxation_morph or misalignment_morph
                   #-----------------------------
                   # Plot scatter and extract spearman from it
-                  plot_spearman         = True,
-                    plot_spearman_x     = 'inflow_rate',       # [ array name ]
-                    plot_spearman_y     = 'relaxation_time',       # [ array name ]
-                    plot_spearman_c     = 'stelmass',       # [ None / array name]
-                    plot_spearman_type  = True,     # [ True / False ] whether to use different markers for different relaxation types
-                      inflow_skip       = 0.2,      # [ Gyr ] time to ignore inflow, after which to sample. Relaxations below this time are automatically filetred out
-                      spearman_errors   = True,     # Whether to plot uncertainties with errors
-                  
-                  
-                  
+                  plot_spearman         = False,                     # Available variables: halomass, stelmass, gasmass, sfmass, nsfmass, dmmass,   sfr, ssfr,   stars_Z, gas_Z, inflow_Z, outflow_Z
+                                                                    #                      kappa_stars, kappa_gas, kappa_sf,   ellip, triax,   rad, radproj, rad_sf
+                                                                    #                      inflow_rate, outflow_rate, stelmassloss_rate,   s_inflow_rate, s_outflow_rate,   inflow_cum, outflow_cum, 
+                                                                    #                      angle_peak,   number_of_mergers,  relaxation_time
+                    plot_spearman_x     = 'stelmass',        # [ array name ]
+                    plot_spearman_y     = 'sfmass',            # [ array name ]
+                    plot_spearman_c     = 'kappa_stars',               # [ None / array name]
+                      inflow_skip       = 0.5,                      # [ Gyr ] time to ignore inflow, after which to sample. Relaxations below this time are automatically filetred out
+                  #-----------------------------
+                  # Same as spearman but more specific and has errors
                   plot_delta_timescale  = False,                # Plot time spent misaligned as a function of misalignment angle. Will plot the 'peak_misangle' with time
                     plot_delta_color    = 'inflow_rate',        # averaged over misalignment duration, pick from misalignment_tree{}
-                    
-                    
-                    
-                    
-                    
+                  #-----------------------------
+                  # Plots trelax - tdyn, which should be proportional
+                  plot_trelax_tdyn      = False,
+                  #-----------------------------
+                  # Plots log(ellip) - log(trelax/tdyn), which should have a (rough) gradient of -1 
+                  plot_ellip_trelaxtdyn = False,
                   #-----------------------------
                   # Plot stacked misalignments based on current sample
                   plot_stacked           = False,
@@ -1562,7 +1584,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
     f = h5py.File(tree_dir + 'Snip100_MainProgenitorTrees.hdf5', 'r')
     Redshift_tree     = np.array(f['Snapnum_Index']['Redshift'])
     Lookbacktime_tree = np.array(f['Snapnum_Index']['LookbackTime'])
-    f.close()
+    f.close()all_general['%s' %GalaxyID]['ap_sfr']
     
     # Load galaxy_tree
     dict_tree = json.load(open('%s/%s.csv' %(output_dir, csv_tree), 'r'))
@@ -1666,6 +1688,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
         # Test if any misalignments even present in z range, else move on
         mask_test_z = np.where((np.array(galaxy_tree['%s' %GalaxyID]['Redshift']) >= (-1 if min_z == None else min_z)) & (np.array(galaxy_tree['%s' %GalaxyID]['Redshift']) <= (999 if max_z == None else max_z)))[0]
+        if len(mask_test_z) == 0:
+            continue
         mask_test_z = np.arange(mask_test_z[0], mask_test_z[-1]+1)
         mask_test_z_misangle = np.where(np.array(galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj])[mask_test_z] > misangle_threshold)
         
@@ -2867,11 +2891,12 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                                                     #'ttorque': galaxy_tree['%s' %GalaxyID]['other']['%s_hmr' %use_hmr_angle]['ttorque'][index_start:index_stop],
                                                                                                                  
                                                     'inflow_rate': galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_angle]['inflow_rate'][index_start:index_stop],
-                                                    's_inflow_rate': np.divide(np.array(galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_angle]['inflow_rate'][index_start:index_stop]), np.array(galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_angle]['mass'][index_start:index_stop])),
-                                                    'inflow_Z': galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_angle]['inflow_Z'][index_start:index_stop],
                                                     'outflow_rate': galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_angle]['outflow_rate'][index_start:index_stop],
-                                                    'outflow_Z': galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_angle]['outflow_Z'][index_start:index_stop],
                                                     'stelmassloss_rate': galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_angle]['stelmassloss_rate'][index_start:index_stop],
+                                                    's_inflow_rate': np.divide(np.array(galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_angle]['inflow_rate'][index_start:index_stop]), np.array(galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_angle]['mass'][index_start:index_stop])),
+                                                    's_outflow_rate': np.divide(np.array(galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_angle]['outflow_rate'][index_start:index_stop]), np.array(galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_angle]['mass'][index_start:index_stop])),
+                                                    'inflow_Z': galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_angle]['inflow_Z'][index_start:index_stop],
+                                                    'outflow_Z': galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_angle]['outflow_Z'][index_start:index_stop],
                                                     'insitu_Z': galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_angle]['insitu_Z'][index_start:index_stop],
                                                                                                                  
                                                     'bh_mass': galaxy_tree['%s' %GalaxyID]['bh']['mass'][index_start:index_stop],
@@ -3087,15 +3112,27 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
     'kappa_gas'				-
     'kappa_sf'				-
     #'kappa_nsf'			-
+    #'ellip'					-
+    #'triax'					-
+    #'disp_ani'				-
+    #'disc_to_total'			-
+    #'rot_to_disp_ratio'		-
 
     'rad'					- [ pkpc ]
     'radproj'				- [ pkpc ]
+    #'rad_sf'				- [ pkpc ]
+
+    #'vcirc'				- [ km/s ]
+    #'tdyn'					- [ Gyr ]
+    #'ttorque'				- [ Gyr ] 
 
     'inflow_rate'			- [ Msun/yr ]
-    'inflow_Z'				-
     'outflow_rate'			- [ Msun/yr ]
-    'outflow_Z'				-
     'stelmassloss_rate'		- [ Msun/yr ]
+    's_inflow_rate'			- [ /yr ]
+    's_outflow_rate'		- [ /yr ]
+    'inflow_Z'				-
+    'outflow_Z'				-
     'insitu_Z'				-
 
     'bh_mass'				- [ Msun ]
@@ -3112,10 +3149,16 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
     'merger_ratio_stars'	- Includes ALL mergers in window
     'merger_ratio_gas'		- ^
 
+    # single values:
     'index_m'				- Last before misaligned, adjusted for current window
     'index_r'				- First to be relaxed
     'index_merger' 			- Index of mergers that met locations. Use this to sample 'merger_ratio_stars'
     'relaxation_time' 		- [ Gyr ] Time between index_m and index_r
+    'relaxation_type'		- co-co, counter-counter, co-counter, counter-co
+    'relaxation_morph'		- ETG-ETG, LTG-LTG, ETG-LTG, LTG-ETG, other					BASED OFF MORPH_LIMITS
+    'misalignment_morph'	- ETG, LTG, other
+    'angle_peak'			- peak misalignment angle from where it relaxes to (-co, -counter)
+    'index_peak'			- index of the above w.r.t array
     """
     
     if csv_file: 
@@ -3568,11 +3611,6 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         x_array = []
         y_array = []
         c_array = []
-        err_plot_l  = []
-        err_plot_u  = []
-        relaxationtype_plot  = []
-        relaxationmorph_plot = []
-        
         for ID_i in misalignment_tree.keys():
             
             #--------------
@@ -3581,43 +3619,49 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 if misalignment_tree['%s' %ID_i]['relaxation_time'] < inflow_skip:
                     continue
             
-            relaxationtype_plot.append(misalignment_tree['%s' %ID_i]['relaxation_type'])
-            relaxationmorph_plot.append(misalignment_tree['%s' %ID_i]['relaxation_morph'])
-            
             #--------------
             # Isolate inflow_rate, inflow_cum, s_inflow_rate, s_inflow_cum, outflow_rate, peak_angle, number_of_mergers
-            if (plot_spearman_x not in misalignment_tree['%s' %ID_i].keys()) or (plot_spearman_x == 'inflow_rate') or (plot_spearman_x == 'outflow_rate') or (plot_spearman_x == 's_inflow_rate'):
-                
+            if (plot_spearman_x not in misalignment_tree['%s' %ID_i].keys()) or (plot_spearman_x == 'inflow_rate') or (plot_spearman_x == 'outflow_rate') or (plot_spearman_x == 's_inflow_rate') or (plot_spearman_x == 's_outflow_rate'):
+            
                 if plot_spearman_x == 'inflow_rate':
                     # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] < -inflow_skip)[0][0]
+                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
                     index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
 
                     x_array.append(np.mean(misalignment_tree['%s' %ID_i]['inflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
-                elif plot_spearman_x == 'inflow_cum':
-                    # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] < -inflow_skip)[0][0]
-                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
-
-                    x_array.append(np.sum(misalignment_tree['%s' %ID_i]['inflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
-                elif plot_spearman_x == 's_inflow_rate':
-                    # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] < -inflow_skip)[0][0]
-                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
-
-                    x_array.append(np.mean(misalignment_tree['%s' %ID_i]['s_inflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
-                elif plot_spearman_x == 's_inflow_cum':
-                    # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] < -inflow_skip)[0][0]
-                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
-
-                    x_array.append(np.sum(misalignment_tree['%s' %ID_i]['s_inflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
                 elif plot_spearman_x == 'outflow_rate':
                     # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] < -inflow_skip)[0][0]
+                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
                     index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
 
                     x_array.append(np.mean(misalignment_tree['%s' %ID_i]['outflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                
+                elif plot_spearman_x == 'inflow_cum':
+                    # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
+                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+
+                    x_array.append(np.sum(misalignment_tree['%s' %ID_i]['inflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                elif plot_spearman_x == 'outflow_cum':
+                    # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
+                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+
+                    x_array.append(np.sum(misalignment_tree['%s' %ID_i]['outflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                
+                elif plot_spearman_x == 's_inflow_rate':
+                    # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
+                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+
+                    x_array.append(np.mean(misalignment_tree['%s' %ID_i]['s_inflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                elif plot_spearman_x == 's_outflow_rate':
+                    # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
+                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+
+                    x_array.append(np.mean(misalignment_tree['%s' %ID_i]['s_outflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                
                 elif plot_spearman_x == 'number_of_mergers':
                     # count mergers during relaxation
                     check = 0
@@ -3625,49 +3669,55 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                         if len(merger_i) > 0:
                             if max(merger_i) > 0.1:
                                 check += 1
-                    
+                
                     x_array.append(check)
             else:
                 if plot_spearman_x in ['angle_peak', 'relaxation_time', 'relaxation_type', 'relaxation_morph', 'misalignment_morph']:
                     x_array.append(misalignment_tree['%s' %ID_i]['%s' %plot_spearman_x]) 
-                    if plot_spearman_x == 'angle_peak':
-                        err_plot_l.append(misalignment_tree['%s' %ID_i]['%s_err' %use_angle][misalignment_tree['%s' %ID_i]['index_peak']][0] - misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_peak']])
-                        err_plot_u.append(misalignment_tree['%s' %ID_i]['%s_err' %use_angle][misalignment_tree['%s' %ID_i]['index_peak']][1] - misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_peak']])
                 else:
                     x_array.append(np.mean(misalignment_tree['%s' %ID_i]['%s' %plot_spearman_x][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
                 
-            if (plot_spearman_y not in misalignment_tree['%s' %ID_i].keys()) or (plot_spearman_y == 'inflow_rate') or (plot_spearman_y == 'outflow_rate') or (plot_spearman_y == 's_inflow_rate'):
-                
+            if (plot_spearman_y not in misalignment_tree['%s' %ID_i].keys()) or (plot_spearman_y == 'inflow_rate') or (plot_spearman_y == 'outflow_rate') or (plot_spearman_y == 's_inflow_rate') or (plot_spearman_x == 's_outflow_rate'):
+            
                 if plot_spearman_y == 'inflow_rate':
                     # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] < -inflow_skip)[0][0]
+                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
                     index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
 
                     y_array.append(np.mean(misalignment_tree['%s' %ID_i]['inflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
-                elif plot_spearman_y == 'inflow_cum':
-                    # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] < -inflow_skip)[0][0]
-                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
-
-                    y_array.append(np.sum(misalignment_tree['%s' %ID_i]['inflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
-                elif plot_spearman_y == 's_inflow_rate':
-                    # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] < -inflow_skip)[0][0]
-                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
-
-                    y_array.append(np.mean(misalignment_tree['%s' %ID_i]['s_inflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
-                elif plot_spearman_y == 's_inflow_cum':
-                    # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] < -inflow_skip)[0][0]
-                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
-
-                    y_array.append(np.sum(misalignment_tree['%s' %ID_i]['s_inflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
                 elif plot_spearman_y == 'outflow_rate':
                     # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] < -inflow_skip)[0][0]
+                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
                     index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
 
                     y_array.append(np.mean(misalignment_tree['%s' %ID_i]['outflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                
+                elif plot_spearman_y == 'inflow_cum':
+                    # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
+                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+
+                    y_array.append(np.sum(misalignment_tree['%s' %ID_i]['inflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                elif plot_spearman_y == 'outflow_cum':
+                    # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
+                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+
+                    y_array.append(np.sum(misalignment_tree['%s' %ID_i]['outflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                
+                elif plot_spearman_y == 's_inflow_rate':
+                    # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
+                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+
+                    y_array.append(np.mean(misalignment_tree['%s' %ID_i]['s_inflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                elif plot_spearman_y == 's_outflow_rate':
+                    # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
+                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+
+                    y_array.append(np.mean(misalignment_tree['%s' %ID_i]['s_outflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                
                 elif plot_spearman_y == 'number_of_mergers':
                     # count mergers during relaxation
                     check = 0
@@ -3675,68 +3725,56 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                         if len(merger_i) > 0:
                             if max(merger_i) > 0.1:
                                 check += 1
-                    
-                    y_array.append(check)  
+                
+                    y_array.append(check)
             else:
                 if plot_spearman_y in ['angle_peak', 'relaxation_time', 'relaxation_type', 'relaxation_morph', 'misalignment_morph']:
                     y_array.append(misalignment_tree['%s' %ID_i]['%s' %plot_spearman_y]) 
-                    if plot_spearman_y == 'angle_peak':
-                        err_plot_l.append(misalignment_tree['%s' %ID_i]['%s_err' %use_angle][misalignment_tree['%s' %ID_i]['index_peak']][0] - misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_peak']])
-                        err_plot_u.append(misalignment_tree['%s' %ID_i]['%s_err' %use_angle][misalignment_tree['%s' %ID_i]['index_peak']][1] - misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_peak']])
                 else:
                     y_array.append(np.mean(misalignment_tree['%s' %ID_i]['%s' %plot_spearman_y][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
-                
-            
-                
-                
-                    
-
-
-                misalignment_tree['%s' %ID_i][' '][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]
-                misalignment_tree['%s' %ID_i][' '][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]
-                
-                
-                
-                #
-                    
-
-            
-                    
-                    # add errors
                     
             if plot_spearman_c != None:
-                if (plot_spearman_c not in misalignment_tree['%s' %ID_i].keys()) or (plot_spearman_c == 'inflow_rate') or (plot_spearman_c == 'outflow_rate') or (plot_spearman_c == 's_inflow_rate'):
+                if (plot_spearman_c not in misalignment_tree['%s' %ID_i].keys()) or (plot_spearman_c == 'inflow_rate') or (plot_spearman_c == 'outflow_rate') or (plot_spearman_c == 's_inflow_rate') or (plot_spearman_x == 's_outflow_rate'):
                 
                     if plot_spearman_c == 'inflow_rate':
                         # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                        index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] < -inflow_skip)[0][0]
+                        index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
                         index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
 
                         c_array.append(np.mean(misalignment_tree['%s' %ID_i]['inflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
-                    elif plot_spearman_c == 'inflow_cum':
-                        # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                        index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] < -inflow_skip)[0][0]
-                        index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
-
-                        c_array.append(np.sum(misalignment_tree['%s' %ID_i]['inflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
-                    elif plot_spearman_c == 's_inflow_rate':
-                        # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                        index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] < -inflow_skip)[0][0]
-                        index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
-
-                        c_array.append(np.mean(misalignment_tree['%s' %ID_i]['s_inflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
-                    elif plot_spearman_c == 's_inflow_cum':
-                        # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                        index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] < -inflow_skip)[0][0]
-                        index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
-
-                        c_array.append(np.sum(misalignment_tree['%s' %ID_i]['s_inflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
                     elif plot_spearman_c == 'outflow_rate':
                         # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                        index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] < -inflow_skip)[0][0]
+                        index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
                         index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
 
                         c_array.append(np.mean(misalignment_tree['%s' %ID_i]['outflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                    
+                    elif plot_spearman_c == 'inflow_cum':
+                        # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
+                        index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                        index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+
+                        c_array.append(np.sum(misalignment_tree['%s' %ID_i]['inflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                    elif plot_spearman_c == 'outflow_cum':
+                        # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
+                        index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                        index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+
+                        c_array.append(np.sum(misalignment_tree['%s' %ID_i]['outflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                    
+                    elif plot_spearman_c == 's_inflow_rate':
+                        # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
+                        index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                        index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+
+                        c_array.append(np.mean(misalignment_tree['%s' %ID_i]['s_inflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                    elif plot_spearman_c == 's_outflow_rate':
+                        # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
+                        index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                        index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+
+                        c_array.append(np.mean(misalignment_tree['%s' %ID_i]['s_outflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                    
                     elif plot_spearman_c == 'number_of_mergers':
                         # count mergers during relaxation
                         check = 0
@@ -3749,43 +3787,22 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 else:
                     if plot_spearman_c in ['angle_peak', 'relaxation_time', 'relaxation_type', 'relaxation_morph', 'misalignment_morph']:
                         c_array.append(misalignment_tree['%s' %ID_i]['%s' %plot_spearman_c]) 
-                        if plot_spearman_c == 'angle_peak':
-                            err_plot_l.append(misalignment_tree['%s' %ID_i]['%s_err' %use_angle][misalignment_tree['%s' %ID_i]['index_peak']][0] - misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_peak']])
-                            err_plot_u.append(misalignment_tree['%s' %ID_i]['%s_err' %use_angle][misalignment_tree['%s' %ID_i]['index_peak']][1] - misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_peak']])
                     else:
                         c_array.append(np.mean(misalignment_tree['%s' %ID_i]['%s' %plot_spearman_c][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
-                
-            
-                
-                
-                    
-
-
-                    misalignment_tree['%s' %ID_i][' '][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]
-                    misalignment_tree['%s' %ID_i][' '][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]
-                
-                
-                
-                    #
-                    
-
-            
-                    
-                        # add errors
                 
         
         #-------------
         # Making logs of values that need them
-        if plot_spearman_x in ['halomass', 'stelmass', 'gasmass', 'sfmass', 'nsfmass', 'dmmass', 'sfr', 'ssfr']:
+        if plot_spearman_x in ['halomass', 'stelmass', 'gasmass', 'sfmass', 'nsfmass', 'dmmass', 'sfr', 'ssfr', 'inflow_rate', 'outflow_rate', 's_inflow_rate', 's_outflow_cum', 's_inflow_rate', 's_outflow_rate', 'stelmassloss_rate']:
             x_array = np.log10(np.array(x_array))
-        if plot_spearman_y in ['halomass', 'stelmass', 'gasmass', 'sfmass', 'nsfmass', 'dmmass', 'sfr', 'ssfr']:
+        if plot_spearman_y in ['halomass', 'stelmass', 'gasmass', 'sfmass', 'nsfmass', 'dmmass', 'sfr', 'ssfr', 'inflow_rate', 'outflow_rate', 's_inflow_rate', 's_outflow_cum', 's_inflow_rate', 's_outflow_rate', 'stelmassloss_rate']:
             y_array = np.log10(np.array(y_array))
         if plot_spearman_c != None:
-            if plot_spearman_c in ['halomass', 'stelmass', 'gasmass', 'sfmass', 'nsfmass', 'dmmass', 'sfr', 'ssfr']:
+            if plot_spearman_c in ['halomass', 'stelmass', 'gasmass', 'sfmass', 'nsfmass', 'dmmass', 'sfr', 'ssfr', 'inflow_rate', 'outflow_rate', 's_inflow_rate', 's_outflow_cum', 's_inflow_rate', 's_outflow_rate', 'stelmassloss_rate']:
                 c_array = np.log10(np.array(c_array))
         
         
-        #-------------
+        #------------
         # Stats
         res = stats.spearmanr(x_array, y_array)
         print('\n--------------------------------------')
@@ -3800,78 +3817,431 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         fig, axs = plt.subplots(1, 1, figsize=[5.0, 4.2], sharex=True, sharey=False)
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
     
+         #-----------
         # Colormap
         if plot_spearman_c != None:
             
             if plot_spearman_c == 'halomass':
                 vmin = 11
                 vmax = 15
-            elif plot_spearman_c in ['stelmass', 'gasmass', 'sfmass', 'nsfmass', 'dmmass']:
+                label = 'log$_{10}$ M$_{\mathrm{halo}}$ (M$_{\odot}$)'
+            elif plot_spearman_c == 'stelmass':
+                vmin = 8
+                vmax = 12.5
+                label = 'log$_{10}$ M$_{\mathrm{*}}$ (M$_{\odot}$)'
+            elif plot_spearman_c == 'gasmass':
+                vmin = 7.5
+                vmax = 11
+                label = 'log$_{10}$ M$_{\mathrm{gas}}$ (M$_{\odot}$)'
+            elif plot_spearman_c == 'sfmass':
+                vmin = 7.5
+                vmax = 11
+                label = 'log$_{10}$ M$_{\mathrm{SF}}$ (M$_{\odot}$)'
+            elif plot_spearman_c == 'nsfmass':
+                vmin = 7
+                vmax = 11
+                label = 'log$_{10}$ M$_{\mathrm{NSF}}$ (M$_{\odot}$)'
+            elif plot_spearman_c == 'dmmass':
                 vmin = 8
                 vmax = 13.5
+                label = 'log$_{10}$ M$_{\mathrm{DM}}$ (M$_{\odot}$)'
             elif plot_spearman_c == 'sfr':
                 vmin = -5
                 vmax = 2
+                label = 'log$_{10}$ SFR $(\mathrm{M}_{\odot} \mathrm{yr}^{-1})$'
             elif plot_spearman_c == 'ssfr':
-                vmin = -11
-                vmax = -6
-            elif plot_spearman_c in ['kappa_stars', 'kappa_gas', 'kappa_sf', 'kappa_nsf', 'ellip', 'triax', 'disp_ani', 'disc_to_total', 'rot_to_disp_ratio']:
+                vmin = -12
+                vmax = -8
+                label = 'log$_{10}$ sSFR $(\mathrm{yr}^{-1})$'
+            elif plot_spearman_c == 'stars_Z':
+                vmin = 0
+                vmax = max(c_array)
+                label = '$Z_{\mathrm{*}}$'
+            elif plot_spearman_c == 'gas_Z':
+                vmin = 0
+                vmax = max(c_array)
+                label = '$Z_{\mathrm{gas}}$'
+            elif plot_spearman_c == 'inflow_Z':
+                vmin = 0
+                vmax = max(c_array)
+                label = '$Z_{\mathrm{inflow}}$'
+            elif plot_spearman_c == 'outflow_Z':
+                vmin = 0
+                vmax = max(c_array)
+                label = '$Z_{\mathrm{outflow}}$'
+            elif plot_spearman_c == 'kappa_stars':
+                vmin = 0.2
+                vmax = 0.8
+                label = '$\kappa_{\mathrm{co}}^{\mathrm{*}}$'
+            elif plot_spearman_c == 'kappa_gas':
                 vmin = 0
                 vmax = 1
-            elif plot_spearman_c in ['rad', 'radproj', 'rad_sf']:
+                label = '$\kappa_{\mathrm{co}}^{\mathrm{gas}}$'
+            elif plot_spearman_c == 'kappa_sf':
+                vmin = 0
+                vmax = 1
+                label = '$\kappa_{\mathrm{co}}^{\mathrm{SF}}$'
+            elif plot_spearman_c == 'kappa_nsf':
+                vmin = 0
+                vmax = 1
+                label = '$\kappa_{\mathrm{co}}^{\mathrm{NSF}}$'
+            elif plot_spearman_c == 'ellip':
+                vmin = 0
+                vmax = 1
+                label = '$\epsilon$'
+            elif plot_spearman_c == 'triax':
+                vmin = 0
+                vmax = 1
+                label = '$T$'
+            elif plot_spearman_c == 'rad':
                 vmin = 0
                 vmax = 15
-            elif plot_spearman_c in ['inflow_rate', 'outflow_rate']:
+                label = '$r_{1/2}$ (pkpc)'
+            elif plot_spearman_c == 'radproj':
                 vmin = 0
-                vmax = 20
-            elif plot_spearman_c in ['s_inflow_rate', 's_outflow_rate']:
+                vmax = 15
+                label = '$r_{1/2,\mathrm{z}}$ (pkpc)'
+            elif plot_spearman_c == 'rad_sf':
                 vmin = 0
-                vmax = max(c_array)
-            elif plot_spearman_c in ['inflow_cum', 'outflow_cum']:
-                vmin = 0
-                vmax = max(c_array)
-            elif plot_spearman_c in ['s_inflow_cum', 's_outflow_cum']:
-                vmin = 0
-                vmax = max(c_array)
-            elif plot_spearman_c == 'stelmassloss_rate':
-                vmin = 0
-                vmax = max(c_array)
-            elif plot_spearman_c == 'angle_peak':
-                vmin = 0
-                vmax = max(c_array)
-            
-            
-            
-            
-            #vmin, vmax
-            if plot_spearman_c in ['halomass', 'stelmass', 'gasmass', 'sfmass', 'nsfmass', 'dmmass']:
+                vmax = 15
+                label = '$r_{1/2,\mathrm{SF}}$ (pkpc)'
+            elif plot_spearman_c == 'inflow_rate':
                 vmin = min(c_array)
                 vmax = max(c_array)
-                
+                label = 'log$_{10}$ time-averaged gas inflow\n$(\mathrm{M}_{\odot} \mathrm{yr}^{-1})$'
+            elif plot_spearman_c == 'outflow_rate':
+                vmin = min(c_array)
+                vmax = max(c_array)
+                label = 'log$_{10}$ time-averaged gas outflow\n$(\mathrm{M}_{\odot} \mathrm{yr}^{-1})$'
+            elif plot_spearman_c == 'stelmassloss_rate':
+                vmin = min(c_array)
+                vmax = max(c_array)
+                label = 'log$_{10}$ time-averaged stellar mass-loss\n$(\mathrm{M}_{\odot} \mathrm{yr}^{-1})$'
+            elif plot_spearman_c == 's_inflow_rate':
+                vmin = min(c_array)
+                vmax = max(c_array)
+                label = 'log$_{10}$ time-averaged specific gas\ninflow $\mathrm{yr}^{-1})$'
+            elif plot_spearman_c == 's_outflow_rate':
+                vmin = min(c_array)
+                vmax = max(c_array)
+                label = 'log$_{10}$ time-averaged specific gas\noutflow $\mathrm{yr}^{-1})$'
+            elif plot_spearman_c == 'inflow_cum':
+                vmin = min(c_array)
+                vmax = max(c_array)
+                label = 'log$_{10}$ cumulative gas inflow\n$(\mathrm{M}_{\odot})$'
+            elif plot_spearman_c == 'outflow_cum':
+                vmin = min(c_array)
+                vmax = max(c_array)
+                label = 'log$_{10}$ cumulative gas outflow\n$(\mathrm{M}_{\odot})$'
+            elif plot_spearman_c == 'angle_peak':
+                vmin = 0
+                vmax = 180
+                label = 'Peak misalignment angle'
+            elif plot_spearman_c == 'number_of_mergers':
+                vmin = 0
+                vmax = max(c_array)
+                label = 'Number of mergers'
+            elif plot_spearman_c == 'relaxation_time':
+                vmin = 0
+                vmax = 4
+                label = 'Relaxation time (Gyr)'
             
-            
-            
-            ['halomass', 'stelmass', 'gasmass', 'sfmass', 'nsfmass', 'dmmass', 'sfr', 'ssfr']
-            
+            #-------------
             # Normalise colormap
             norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax, clip=True)
             mapper = cm.ScalarMappable(norm=norm, cmap='viridis')         #cmap=cm.coolwarm), cmap='sauron'
+            
+            #-------------
+            # Colorbar
+            #cax = plt.axes([0.98, 0.20, 0.03, 0.71])
+            cax = plt.axes([0.90, 0.20, 0.03, 0.71])
+            plt.colorbar(mapper, cax=cax, label=label, extend='max')
     
+         #-----------
+        # Plot scatter
+        if plot_spearman_c != None:
+            axs.scatter(x_array, y_array, c=c_array, s=10, norm=norm, cmap='viridis', zorder=99, edgecolors='k', linewidths=0.3, alpha=0.5)
+        else:
+            axs.scatter(x_array, y_array, c=c_array, s=10, zorder=99, edgecolors='k', linewidths=0.3, alpha=0.5)
     
-    
-    
-            # annotate ssfr with SFR lines
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+        
+        #-----------
+        ### General formatting
+        if plot_spearman_x != None and plot_spearman_y != None:
+            
+            # x-axis labels
+            if plot_spearman_x == 'halomass':
+                axs.set_xticks(np.arange(11, 15.1, 1))
+                axs.set_xlim(11, 15)
+                axs.set_xlabel('log$_{10}$ M$_{\mathrm{halo}}$ (M$_{\odot}$)')
+            elif plot_spearman_x == 'stelmass':
+                axs.set_xticks(np.arange(9, 12.5, 1))
+                axs.set_xlim(9, 12.5)
+                axs.set_xlabel('log$_{10}$ M$_{\mathrm{*}}$ (M$_{\odot}$)')
+            elif plot_spearman_x == 'gasmass':
+                axs.set_xticks(np.arange(7, 11.1, 1))
+                axs.set_xlim(7.5, 11)
+                axs.set_xlabel('log$_{10}$ M$_{\mathrm{gas}}$ (M$_{\odot}$)')
+            elif plot_spearman_x == 'sfmass':
+                axs.set_xticks(np.arange(7.5, 11.1, 1))
+                axs.set_xlim(7.5, 12)
+                axs.set_xlabel('log$_{10}$ M$_{\mathrm{SF}}$ (M$_{\odot}$)')
+            elif plot_spearman_x == 'nsfmass':
+                axs.set_xticks(np.arange(7, 11.1, 1))
+                axs.set_xlim(7, 11)
+                axs.set_xlabel('log$_{10}$ M$_{\mathrm{NSF}}$ (M$_{\odot}$)')
+            elif plot_spearman_x == 'dmmass':
+                axs.set_xticks(np.arange(8, 13.5, 1))
+                axs.set_xlim(8, 13.5)
+                axs.set_xlabel('log$_{10}$ M$_{\mathrm{DM}}$ (M$_{\odot}$)')
+            elif plot_spearman_x == 'sfr':
+                axs.set_xticks(np.arange(-2, 3.1, 1))
+                axs.set_xlim(-2, 3)
+                axs.set_xlabel('log$_{10}$ SFR $(\mathrm{M}_{\odot} \mathrm{yr}^{-1})$')
+            elif plot_spearman_x == 'ssfr':
+                axs.set_xticks(np.arange(-12, -7.9, 1))
+                axs.set_xlim(-12, -8)
+                axs.set_xlabel('log$_{10}$ sSFR $(\mathrm{yr}^{-1})$')
+            elif plot_spearman_x == 'stars_Z':
+                #axs.set_xticks(np.arange(0, max(x_array), 0.02))
+                #axs.set_xlim(0, max(x_array))
+                axs.set_xlabel('$Z_{\mathrm{*}}$')
+            elif plot_spearman_x == 'gas_Z':
+                #axs.set_xticks(np.arange(0, max(x_array), 0.02))
+                #axs.set_xlim(0, max(x_array))
+                axs.set_xlabel('$Z_{\mathrm{gas}}$')
+            elif plot_spearman_x == 'inflow_Z':
+                #axs.set_xticks(np.arange(0, max(x_array), 0.02))
+                #axs.set_xlim(0, max(x_array))
+                axs.set_xlabel('$Z_{\mathrm{inflow}}$')
+            elif plot_spearman_x == 'outflow_Z':
+                #axs.set_xticks(np.arange(0, max(x_array), 0.02))
+                #axs.set_xlim(0, max(x_array))
+                axs.set_xlabel('$Z_{\mathrm{outflow}}$')
+            elif plot_spearman_x == 'kappa_stars':
+                axs.set_xticks(np.arange(0, 1.1, 0.2))
+                axs.set_xlim(0, 1)
+                axs.set_xlabel('$\kappa_{\mathrm{co}}^{\mathrm{*}}$')
+            elif plot_spearman_x == 'kappa_gas':
+                axs.set_xticks(np.arange(0, 1.1, 0.2))
+                axs.set_xlim(0, 1)
+                axs.set_xlabel('$\kappa_{\mathrm{co}}^{\mathrm{gas}}$')
+            elif plot_spearman_x == 'kappa_sf':
+                axs.set_xticks(np.arange(0, 1.1, 0.2))
+                axs.set_xlim(0, 1)
+                axs.set_xlabel('$\kappa_{\mathrm{co}}^{\mathrm{SF}}$')
+            elif plot_spearman_x == 'kappa_stars':
+                axs.set_xticks(np.arange(0, 1.1, 0.2))
+                axs.set_xlim(0, 1)
+                axs.set_xlabel('$\kappa_{\mathrm{co}}^{\mathrm{NSF}}$')
+            elif plot_spearman_x == 'ellip':
+                axs.set_xticks(np.arange(0, 1.1, 0.2))
+                axs.set_xlim(0, 1)
+                axs.set_xlabel('$\epsilon$')
+            elif plot_spearman_x == 'triax':
+                axs.set_xticks(np.arange(0, 1.1, 0.2))
+                axs.set_xlim(0, 1)
+                axs.set_xlabel('$T$')
+            elif plot_spearman_x == 'rad':
+                axs.set_xticks(np.arange(0, 15.1, 3))
+                axs.set_xlim(0, 15)
+                axs.set_xlabel('$r_{1/2}$ (pkpc)')
+            elif plot_spearman_x == 'radproj':
+                axs.set_xticks(np.arange(0, 15.1, 3))
+                axs.set_xlim(0, 15)
+                axs.set_xlabel('$r_{1/2,\mathrm{z}}$ (pkpc)')
+            elif plot_spearman_x == 'rad_sf':
+                axs.set_xticks(np.arange(0, 15.1, 3))
+                axs.set_xlim(0, 15)
+                axs.set_xlabel('$r_{1/2,\mathrm{SF}}$ (pkpc)')
+            elif plot_spearman_x == 'inflow_rate':
+                #axs.set_xticks(np.arange(0, 15.1, 3))
+                #axs.set_xlim(0, 15)
+                axs.set_xlabel('log$_{10}$ time-averaged gas inflow\n$(\mathrm{M}_{\odot} \mathrm{yr}^{-1})$')
+            elif plot_spearman_x == 'outflow_rate':
+                #axs.set_xticks(np.arange(0, 15.1, 3))
+                #axs.set_xlim(0, 15)
+                axs.set_xlabel('log$_{10}$ time-averaged gas outflow\n$(\mathrm{M}_{\odot} \mathrm{yr}^{-1})$')
+            elif plot_spearman_x == 'stelmassloss_rate':
+                #axs.set_xticks(np.arange(0, 15.1, 3))
+                #axs.set_xlim(0, 15)
+                axs.set_xlabel('log$_{10}$ time-averaged stellar mass-loss\n$(\mathrm{M}_{\odot} \mathrm{yr}^{-1})$')
+            elif plot_spearman_x == 's_inflow_rate':
+                #axs.set_xticks(np.arange(0, 15.1, 3))
+                #axs.set_xlim(0, 15)
+                axs.set_xlabel('log$_{10}$ time-averaged specific\ngas inflow $\mathrm{yr}^{-1})$')
+            elif plot_spearman_x == 's_outflow_rate':
+                #axs.set_xticks(np.arange(0, 15.1, 3))
+                #axs.set_xlim(0, 15)
+                axs.set_xlabel('log$_{10}$ time-averaged specific\ngas outflow $\mathrm{yr}^{-1})$')
+            elif plot_spearman_x == 'inflow_cum':
+                #axs.set_xticks(np.arange(0, 15.1, 3))
+                #axs.set_xlim(0, 15)
+                axs.set_xlabel('log$_{10}$ cumulative gas inflow\n$(\mathrm{M}_{\odot})$')
+            elif plot_spearman_x == 'outflow_cum':
+                #axs.set_xticks(np.arange(0, 15.1, 3))
+                #axs.set_xlim(0, 15)
+                axs.set_xlabel('log$_{10}$ cumulative gas outflow\n$(\mathrm{M}_{\odot})$')
+            elif plot_spearman_x == 'angle_peak':
+                axs.set_xticks(np.arange(0, 181, 30))
+                axs.set_xlim(0, 180)
+                axs.set_xlabel('Peak misalignment angle')
+            elif plot_spearman_x == 'number_of_mergers':
+                #axs.set_xticks(np.arange(0, max(c_array)+0.1, 1))
+                #axs.set_xlim(0, max(c_array))
+                axs.set_xlabel('Number of mergers')
+            elif plot_spearman_x == 'relaxation_time':
+                axs.set_xticks(np.arange(0, 4.1, 0.5))
+                axs.set_xlim(0, 4)
+                axs.set_xlabel('Relaxation time (Gyr)')
+                
+            # y-axis labels
+            if plot_spearman_y == 'halomass':
+                axs.set_yticks(np.arange(11, 15.1, 1))
+                axs.set_ylim(11, 15)
+                axs.set_ylabel('log$_{10}$ M$_{\mathrm{halo}}$ (M$_{\odot}$)')
+            elif plot_spearman_y == 'stelmass':
+                axs.set_yticks(np.arange(9, 12.5, 1))
+                axs.set_ylim(9, 12.5)
+                axs.set_ylabel('log$_{10}$ M$_{\mathrm{*}}$ (M$_{\odot}$)')
+            elif plot_spearman_y == 'gasmass':
+                axs.set_yticks(np.arange(7, 11.1, 1))
+                axs.set_ylim(7.5, 11)
+                axs.set_ylabel('log$_{10}$ M$_{\mathrm{gas}}$ (M$_{\odot}$)')
+            elif plot_spearman_y == 'sfmass':
+                axs.set_yticks(np.arange(7, 11.1, 1))
+                axs.set_ylim(7.5, 11)
+                axs.set_ylabel('log$_{10}$ M$_{\mathrm{SF}}$ (M$_{\odot}$)')
+            elif plot_spearman_y == 'nsfmass':
+                axs.set_yticks(np.arange(7.5, 11.1, 1))
+                axs.set_ylim(7.5, 11)
+                axs.set_ylabel('log$_{10}$ M$_{\mathrm{NSF}}$ (M$_{\odot}$)')
+            elif plot_spearman_y == 'dmmass':
+                axs.set_yticks(np.arange(8, 13.5, 1))
+                axs.set_ylim(8, 13.5)
+                axs.set_ylabel('log$_{10}$ M$_{\mathrm{DM}}$ (M$_{\odot}$)')
+            elif plot_spearman_y == 'sfr':
+                axs.set_yticks(np.arange(-2, 3.1, 1))
+                axs.set_ylim(-2, 3)
+                axs.set_ylabel('log$_{10}$ SFR $(\mathrm{M}_{\odot} \mathrm{yr}^{-1})$')
+            elif plot_spearman_y == 'ssfr':
+                axs.set_yticks(np.arange(-12, -7.9, 1))
+                axs.set_ylim(-12, -8)
+                axs.set_ylabel('log$_{10}$ sSFR $(\mathrm{yr}^{-1})$')
+            elif plot_spearman_y == 'stars_Z':
+                #axs.set_yticks(np.arange(0, max(x_array), 0.02))
+                #axs.set_ylim(0, max(x_array))
+                axs.set_ylabel('$Z_{\mathrm{*}}$')
+            elif plot_spearman_y == 'gas_Z':
+                #axs.set_yticks(np.arange(0, max(x_array), 0.02))
+                #axs.set_ylim(0, max(x_array))
+                axs.set_ylabel('$Z_{\mathrm{gas}}$')
+            elif plot_spearman_y == 'inflow_Z':
+                #axs.set_yticks(np.arange(0, max(x_array), 0.02))
+                #axs.set_ylim(0, max(x_array))
+                axs.set_ylabel('$Z_{\mathrm{inflow}}$')
+            elif plot_spearman_y == 'outflow_Z':
+                #axs.set_yticks(np.arange(0, max(x_array), 0.02))
+                #axs.set_ylim(0, max(x_array))
+                axs.set_ylabel('$Z_{\mathrm{outflow}}$')
+            elif plot_spearman_y == 'kappa_stars':
+                axs.set_yticks(np.arange(0, 1.1, 0.2))
+                axs.set_ylim(0, 1)
+                axs.set_ylabel('$\kappa_{\mathrm{co}}^{\mathrm{*}}$')
+            elif plot_spearman_y == 'kappa_gas':
+                axs.set_yticks(np.arange(0, 1.1, 0.2))
+                axs.set_ylim(0, 1)
+                axs.set_ylabel('$\kappa_{\mathrm{co}}^{\mathrm{gas}}$')
+            elif plot_spearman_y == 'kappa_sf':
+                axs.set_yticks(np.arange(0, 1.1, 0.2))
+                axs.set_ylim(0, 1)
+                axs.set_ylabel('$\kappa_{\mathrm{co}}^{\mathrm{SF}}$')
+            elif plot_spearman_y == 'kappa_stars':
+                axs.set_yticks(np.arange(0, 1.1, 0.2))
+                axs.set_ylim(0, 1)
+                axs.set_ylabel('$\kappa_{\mathrm{co}}^{\mathrm{NSF}}$')
+            elif plot_spearman_y == 'ellip':
+                axs.set_yticks(np.arange(0, 1.1, 0.2))
+                axs.set_ylim(0, 1)
+                axs.set_ylabel('$\epsilon$')
+            elif plot_spearman_y == 'triax':
+                axs.set_yticks(np.arange(0, 1.1, 0.2))
+                axs.set_ylim(0, 1)
+                axs.set_ylabel('$T$')
+            elif plot_spearman_y == 'rad':
+                axs.set_yticks(np.arange(0, 15.1, 3))
+                axs.set_ylim(0, 15)
+                axs.set_ylabel('$r_{1/2}$ (pkpc)')
+            elif plot_spearman_y == 'radproj':
+                axs.set_yticks(np.arange(0, 15.1, 3))
+                axs.set_ylim(0, 15)
+                axs.set_ylabel('$r_{1/2,\mathrm{z}}$ (pkpc)')
+            elif plot_spearman_y == 'rad_sf':
+                axs.set_yticks(np.arange(0, 15.1, 3))
+                axs.set_ylim(0, 15)
+                axs.set_ylabel('$r_{1/2,\mathrm{SF}}$ (pkpc)')
+            elif plot_spearman_y == 'inflow_rate':
+                #axs.set_yticks(np.arange(0, 15.1, 3))
+                #axs.set_ylim(0, 15)
+                axs.set_ylabel('log$_{10}$ time-averaged gas inflow\n$(\mathrm{M}_{\odot} \mathrm{yr}^{-1})$')
+            elif plot_spearman_y == 'outflow_rate':
+                #axs.set_yticks(np.arange(0, 15.1, 3))
+                #axs.set_ylim(0, 15)
+                axs.set_ylabel('log$_{10}$ time-averaged gas outflow\n$(\mathrm{M}_{\odot} \mathrm{yr}^{-1})$')
+            elif plot_spearman_y == 'stelmassloss_rate':
+                #axs.set_yticks(np.arange(0, 15.1, 3))
+                #axs.set_ylim(0, 15)
+                axs.set_ylabel('log$_{10}$ time-averaged stellar mass-loss\n$(\mathrm{M}_{\odot} \mathrm{yr}^{-1})$')
+            elif plot_spearman_y == 's_inflow_rate':
+                #axs.set_yticks(np.arange(0, 15.1, 3))
+                #axs.set_ylim(0, 15)
+                axs.set_ylabel('log$_{10}$ time-averaged specific gas\ninflow $\mathrm{yr}^{-1})$')
+            elif plot_spearman_y == 's_outflow_rate':
+                #axs.set_yticks(np.arange(0, 15.1, 3))
+                #axs.set_ylim(0, 15)
+                axs.set_ylabel('log$_{10}$ time-averaged specific gas\noutflow $\mathrm{yr}^{-1})$')
+            elif plot_spearman_y == 'inflow_cum':
+                #axs.set_yticks(np.arange(0, 15.1, 3))
+                #axs.set_ylim(0, 15)
+                axs.set_ylabel('log$_{10}$ cumulative gas inflow\n$(\mathrm{M}_{\odot}$)')
+            elif plot_spearman_y == 'outflow_cum':
+                #axs.set_yticks(np.arange(0, 15.1, 3))
+                #axs.set_ylim(0, 15)
+                axs.set_ylabel('log$_{10}$ cumulative gas outflow\n$(\mathrm{M}_{\odot}$()')
+            elif plot_spearman_y == 'angle_peak':
+                axs.set_yticks(np.arange(0, 181, 30))
+                axs.set_ylim(0, 180)
+                axs.set_ylabel('Peak misalignment angle')
+            elif plot_spearman_y == 'number_of_mergers':
+                #axs.set_yticks(np.arange(0, max(c_array)+0.1, 1))
+                #axs.set_ylim(0, max(c_array))
+                axs.set_ylabel('Number of mergers')
+            elif plot_spearman_y == 'relaxation_time':
+                axs.set_yticks(np.arange(0, 4.1, 0.5))
+                axs.set_ylim(0, 4)
+                axs.set_ylabel('Relaxation time (Gyr)')
+            
+
+        #-----------
+        ### other
+        axs.minorticks_on()
+        axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
+        axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
+        plt.tight_layout()
+        
+        #-----------
+        #### Savefig
+        metadata_plot = {'Title': '%s, %s\nThreshold: %s\nMin delta:%s\nLatency time: %s\nMin ratio: %s\nUSE MERGERS: %s\nMax closest merger: %s-%s\nTime extra: %s\nTime no misangle: %s\nStelmass: %s/%s\n kappa*: %s/%s\n outflow: %s/%s' %(abs_or_proj, use_angle, misangle_threshold, min_delta_angle, latency_time, min_stellar_ratio, use_merger_criteria, max_merger_pre, max_merger_post, time_extra, time_no_misangle, min_stelmass, max_stelmass, min_kappa_stars, max_kappa_stars, min_inflow, max_inflow),
+                         'Author': 'Min particles: %s\nMax CoM: %s\nMin inc: %s\nPlot ratio limit: %s\n\nrho: %.2f\np-value %.2e\n\n# MISALIGNMENTS: %s\nco-co: %s\ncnt-cnt: %s\nco-cnt: %s\ncnt-co: %s\nETG-ETG: %s\nLTG-LTG: %s\nETG-LTG: %s\nLTG-ETG: %s\nMean: %.2f Gyr\nMedian: %.2f Gyr\nstd: %.2f Gyr' %(min_particles, max_com, min_inclination, plot_merger_limit, res.correlation, res.pvalue, len(misalignment_tree.keys()), len(co_co_array), len(counter_counter_array), len(co_counter_array), len(counter_co_array), len(ETG_ETG_array), len(LTG_LTG_array), len(ETG_LTG_array), len(LTG_ETG_array), mean_timescale, median_timescale, std_timescale)}
+                         
+        if savefig:
+            if savefig_txt == 'manual':
+                savefig_txt = input('\n  -> Enter savefig_txt:   ')
+            plt.savefig("%s/spearman_plots/%s%s-%s_%s_%s.%s" %(fig_dir, tree_input['csv_sample1'], plot_spearman_x, plot_spearman_y, len(misalignment_tree.keys()), savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/spearman_plots/%s%s-%sdelta_misangle_%s_%s.%s" %(fig_dir, tree_input['csv_sample1'], plot_spearman_x, plot_spearman_y, len(misalignment_tree.keys()), savefig_txt, file_format)) 
+        if showfig:
+            plt.show()
+        plt.close()
     
     
     #-------------------------
@@ -3924,7 +4294,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         #-------------
         # Colorbar
         cax = plt.axes([0.98, 0.20, 0.03, 0.71])
-        plt.colorbar(mapper, cax=cax, label='time-averaged gas inflow $(\mathrm{M}_{\odot} \mathrm{yr}^{-1})$', extend='max')
+        plt.colorbar(mapper, cax=cax, label='time-averaged gas inflow\n$(\mathrm{M}_{\odot} \mathrm{yr}^{-1})$', extend='max')
         
         
         #-----------
@@ -3934,7 +4304,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         axs.set_ylim(0, 180)
         axs.set_xlim(0, bin_limit)
         axs.set_xlabel('Relaxation time (Gyr)')
-        axs.set_ylabel('$\Delta_{\mathrm{max}}(\phi - \phi_{\mathrm{relax}})$')
+        axs.set_ylabel('Peak misalignment angle')
         axs.minorticks_on()
         axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
         axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
@@ -3959,6 +4329,162 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 savefig_txt = input('\n  -> Enter savefig_txt:   ')
             plt.savefig("%s/delta_misangle_t_relax/%sdelta_misangle_%s_%s.%s" %(fig_dir, tree_input['csv_sample1'], len(misalignment_tree.keys()), savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
             print("\n  SAVED: %s/delta_misangle_t_relax/%sdelta_misangle_%s_%s.%s" %(fig_dir, tree_input['csv_sample1'], len(misalignment_tree.keys()), savefig_txt, file_format)) 
+        if showfig:
+            plt.show()
+        plt.close()
+    
+    
+    #-------------------------
+    # Plots trelax - tdyn, which should be proportional
+    if plot_trelax_tdyn:  
+        relaxationtime_plot = []
+        dyntime_plot        = []
+        ID_plot             = []
+        for ID_i in misalignment_tree.keys():
+            # Actual relaxation time
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            
+            # Average the dynamical time and ellip
+            dyntime_plot.append(np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])))
+            
+            ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
+            
+
+        #-------------
+        # Stats
+        res = stats.spearmanr(relaxationtime_plot, dyntime_plot)
+        print('\n--------------------------------------')
+        print('SPEARMAN:  trelax/tdyn - ellip')
+        print('   ρ:       %.2f' %res.correlation)
+        print('   p-value: %s' %res.pvalue)
+        print('--------------------------------------') 
+        
+        
+        #-------------
+        # Plotting
+        fig, axs = plt.subplots(1, 1, figsize=[5.0, 4.2], sharex=True, sharey=False)
+        plt.subplots_adjust(wspace=0.4, hspace=0.4)
+        
+        axs.scatter(relaxationtime_plot, dyntime_plot, s=10, zorder=99, c='k', edgecolors='k', linewidths=0.3, alpha=0.7)
+        
+        #------------
+        # Annotation (gradient line of -1)
+        print('\n   add bestfit?')
+        
+        #-----------
+        ### General formatting
+        # Axis labels
+        axs.set_xlim(0, 5)
+        axs.set_xlabel('Relaxation time (Gyr)')
+        axs.set_yticks(np.arange(0, 2, 0.2))
+        axs.set_ylim(0, 2)
+        axs.set_ylabel('Dynamical time (Gyr)')
+        axs.minorticks_on()
+        axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
+        axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
+        
+        #-----------
+        ### Annotations
+        #if plot_GalaxyIDs:
+        #    for ID_plot_i, x_i, y_i in zip(ID_plot, angles_plot, relaxationtime_plot):
+        #        axs.text(x_i+5, y_i+0.1, '%s' %ID_plot_i, fontsize=7)
+        
+        #-----------
+        ### other
+        plt.tight_layout()
+        
+        #-----------
+        #### Savefig
+        metadata_plot = {'Title': '%s, %s\nThreshold: %s\nMin delta:%s\nLatency time: %s\nMin ratio: %s\nUSE MERGERS: %s\nMax closest merger: %s-%s\nTime extra: %s\nTime no misangle: %s\nStelmass: %s/%s\n kappa*: %s/%s\n outflow: %s/%s' %(abs_or_proj, use_angle, misangle_threshold, min_delta_angle, latency_time, min_stellar_ratio, use_merger_criteria, max_merger_pre, max_merger_post, time_extra, time_no_misangle, min_stelmass, max_stelmass, min_kappa_stars, max_kappa_stars, min_inflow, max_inflow),
+                         'Author': 'Min particles: %s\nMax CoM: %s\nMin inc: %s\nPlot ratio limit: %s\n\nrho: %.2f\np-value %.2e\n\n# MISALIGNMENTS: %s\nco-co: %s\ncnt-cnt: %s\nco-cnt: %s\ncnt-co: %s\nETG-ETG: %s\nLTG-LTG: %s\nETG-LTG: %s\nLTG-ETG: %s\nMean: %.2f Gyr\nMedian: %.2f Gyr\nstd: %.2f Gyr' %(min_particles, max_com, min_inclination, plot_merger_limit, res.correlation, res.pvalue, len(misalignment_tree.keys()), len(co_co_array), len(counter_counter_array), len(co_counter_array), len(counter_co_array), len(ETG_ETG_array), len(LTG_LTG_array), len(ETG_LTG_array), len(LTG_ETG_array), mean_timescale, median_timescale, std_timescale)}
+                         
+        if savefig:
+            if savefig_txt == 'manual':
+                savefig_txt = input('\n  -> Enter savefig_txt:   ')
+            plt.savefig("%s/tdyn_plots/%stdyn_trelax_%s_%s.%s" %(fig_dir, tree_input['csv_sample1'], len(misalignment_tree.keys()), savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/tdyn_plots/%stdyn_trelax_%s_%s.%s" %(fig_dir, tree_input['csv_sample1'], len(misalignment_tree.keys()), savefig_txt, file_format)) 
+        if showfig:
+            plt.show()
+        plt.close()
+        
+        
+    #------------------------- 
+    # Plots log(ellip) - log(trelax/tdyn), which should have a (rough) gradient of -1 
+    if plot_ellip_trelaxtdyn:
+        relaxationtime_plot = []
+        dyntime_plot        = []
+        ellip_plot          = []
+        ID_plot             = []
+        for ID_i in misalignment_tree.keys():
+            # Actual relaxation time
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            
+            # Average the dynamical time and ellip
+            dyntime_plot.append(np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])))
+            ellip_plot.append(np.mean(np.array(misalignment_tree['%s' %ID_i]['ellip'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])))
+            
+            ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
+            
+        #-------------
+        # Log values
+        y_array = np.log10(np.divide(np.array(relaxationtime_plot), np.array(dyntime_plot)))
+        ellip_plot = np.log10(np.array(ellip_plot))
+
+        #-------------
+        # Stats
+        res = stats.spearmanr(ellip_plot, y_array)
+        print('\n--------------------------------------')
+        print('SPEARMAN:  trelax/tdyn - ellip')
+        print('   ρ:       %.2f' %res.correlation)
+        print('   p-value: %s' %res.pvalue)
+        print('--------------------------------------') 
+        
+        
+        #-------------
+        # Plotting
+        fig, axs = plt.subplots(1, 1, figsize=[5.0, 4.2], sharex=True, sharey=False)
+        plt.subplots_adjust(wspace=0.4, hspace=0.4)
+        
+        axs.scatter(ellip_plot, y_array, s=10, zorder=99, c='k', edgecolors='k', linewidths=0.3, alpha=0.7)
+        
+        #------------
+        # Annotation (gradient line of -1)
+        print('\n   CHECK ANNOTATION')
+        axs.plot([-1, 0], [0, -1], c='grey', alpha=0.5, ls='-')
+        axs.text(0.5, -0.5, 'gradient = -1', rotation=45, c='grey')
+        
+        #-----------
+        ### General formatting
+        # Axis labels
+        axs.set_xlim(-1, 0)
+        axs.set_xlabel('log$_{10}$ $\epsilon$')
+        #axs.set_yticks(np.arange(0, 181, 30))
+        #axs.set_ylim(0, 180)
+        axs.set_ylabel('log$_{10}$ $t_{\mathrm{relax}}/t_{\mathrm{dyn}}$')
+        axs.minorticks_on()
+        axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
+        axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
+        
+        #-----------
+        ### Annotations
+        #if plot_GalaxyIDs:
+        #    for ID_plot_i, x_i, y_i in zip(ID_plot, angles_plot, relaxationtime_plot):
+        #        axs.text(x_i+5, y_i+0.1, '%s' %ID_plot_i, fontsize=7)
+        
+        #-----------
+        ### other
+        plt.tight_layout()
+        
+        #-----------
+        #### Savefig
+        metadata_plot = {'Title': '%s, %s\nThreshold: %s\nMin delta:%s\nLatency time: %s\nMin ratio: %s\nUSE MERGERS: %s\nMax closest merger: %s-%s\nTime extra: %s\nTime no misangle: %s\nStelmass: %s/%s\n kappa*: %s/%s\n outflow: %s/%s' %(abs_or_proj, use_angle, misangle_threshold, min_delta_angle, latency_time, min_stellar_ratio, use_merger_criteria, max_merger_pre, max_merger_post, time_extra, time_no_misangle, min_stelmass, max_stelmass, min_kappa_stars, max_kappa_stars, min_inflow, max_inflow),
+                         'Author': 'Min particles: %s\nMax CoM: %s\nMin inc: %s\nPlot ratio limit: %s\n\nrho: %.2f\np-value %.2e\n\n# MISALIGNMENTS: %s\nco-co: %s\ncnt-cnt: %s\nco-cnt: %s\ncnt-co: %s\nETG-ETG: %s\nLTG-LTG: %s\nETG-LTG: %s\nLTG-ETG: %s\nMean: %.2f Gyr\nMedian: %.2f Gyr\nstd: %.2f Gyr' %(min_particles, max_com, min_inclination, plot_merger_limit, res.correlation, res.pvalue, len(misalignment_tree.keys()), len(co_co_array), len(counter_counter_array), len(co_counter_array), len(counter_co_array), len(ETG_ETG_array), len(LTG_LTG_array), len(ETG_LTG_array), len(LTG_ETG_array), mean_timescale, median_timescale, std_timescale)}
+                         
+        if savefig:
+            if savefig_txt == 'manual':
+                savefig_txt = input('\n  -> Enter savefig_txt:   ')
+            plt.savefig("%s/tdyn_plots/%sellip_trelax_%s_%s.%s" %(fig_dir, tree_input['csv_sample1'], len(misalignment_tree.keys()), savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/tdyn_plots/%sellip_trelax_%s_%s.%s" %(fig_dir, tree_input['csv_sample1'], len(misalignment_tree.keys()), savefig_txt, file_format)) 
         if showfig:
             plt.show()
         plt.close()

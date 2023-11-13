@@ -510,7 +510,6 @@ class Subhalo_Extract:
             # Assign to self
             self.MorphoKinem = [ellip, triax, kappa, delta, discfrac, vrotsig]
             
-            
         #---------------------------
         # Find main BH after all coords have been centred based on CoP
         #bh = self._find_main_bh(bh)
@@ -749,9 +748,18 @@ class Subhalo_Extract:
                 
                 # Find dominant gn within 0.5 kpc region specified
                 tmp_GroupNumber = [int(i) for i in tmp_GroupNumber]
+                
+                if len(tmp_GroupNumber) == 0:
+                    # Compute distance to centre and mask all within Radius in pkpc
+                    r  = np.linalg.norm(tmp_coords, axis=1)
+                    mask = np.where(r <= 1)
+                    tmp_GroupNumber = data['GroupNumber'][mask]    
+                
+                    # Find dominant gn within 0.5 kpc region specified
+                    tmp_GroupNumber = [int(i) for i in tmp_GroupNumber]
+                
                 if debug:
                     print(np.bincount(tmp_GroupNumber).argmax())
-                
                 gn = np.bincount(tmp_GroupNumber).argmax()
                 
                 if debug:
@@ -946,10 +954,11 @@ angle_selection:
     Will speed up process to find only specific angles' uncertainties. 
     Automated process.   
         ['stars_gas',            # stars_gas     stars_gas_sf    stars_gas_nsf
-         'stars_gas_sf',         # gas_dm        gas_sf_dm       gas_nsf_dm
+         'stars_gas_sf',         # stars_dm      gas_dm        gas_sf_dm       gas_nsf_dm
          'stars_gas_nsf',        # gas_sf_gas_nsf
          'gas_sf_gas_nsf',
-         'stars_dm']
+         'stars_dm',
+         'gas_sf_dm']
 spin_rad:    array [pkpc] 
     When given a list of values, for example:
     galaxy.halfmass_rad*np.arange(0.5, 10.5, 0.5)
@@ -1031,7 +1040,16 @@ Output Parameters
     if trim_hmr_in has a value, coordinates lying outside
     these values will be trimmed in final output, but still
     used in calculations.
-        
+
+.l:   dictionary
+    Specific l, in units of [pkpc/kms-1]. 109 M have roughly log(l) of 1.5, 1010.5 have roughly log(l) of 2.5
+        ['rad']     - [pkpc]
+        ['hmr']     - multiples of halfmass_rad
+        ['stars']   - [unit vector]
+        ['gas']     - [unit vector]
+        ['gas_sf']  - [unit vector]
+        ['gas_nsf'] - [unit vector]
+        ['dm']      - [unit vector]
 .spins:   dictionary
     Has aligned/rotated spin vectors within spin_rad_in's:
         ['rad']     - [pkpc]
@@ -1203,8 +1221,8 @@ class Subhalo_Analysis:
             trimmed_data = self._trim_data(data_nil, align_rad)
             
             # Finding star unit vector within align_rad_in, finding angle between it and z and returning matrix for this
-            stars_spin_align    = self._find_spin(trimmed_data['stars'])
-            _ , matrix          = self._orientate('z', stars_spin_align)
+            stars_spin_align, _     = self._find_spin(trimmed_data['stars'])
+            _ , matrix              = self._orientate('z', stars_spin_align)
             
             # Orientate entire galaxy according to matrix above
             for parttype_name in data_nil.keys():
@@ -1251,6 +1269,7 @@ class Subhalo_Analysis:
         self.tot_mass           = {}
         self.sfr                = {}
         self.Z                  = {}
+        self.l                  = {}   
         self.coms               = {}
         self.coms_proj          = {}
         self.inc_angles         = {}
@@ -1433,7 +1452,7 @@ class Subhalo_Analysis:
                 
             # Create dictionary arrays    
             self.coms['adjust'] = []
-            for dict_list in [self.spins, self.counts, self.masses, self.coms]:
+            for dict_list in [self.spins, self.counts, self.masses, self.coms, self.l]:
                 dict_list['rad'] = spin_rad   
                 dict_list['hmr'] = spin_hmr
                 
@@ -1552,11 +1571,13 @@ class Subhalo_Analysis:
                     #---------------------------------------------
                     # Find unit vector spins (append math.nan for no particles)
                     if particle_count > 1:
-                        particle_spin = self._find_spin(trimmed_data[parttype_name])
+                        particle_spin, L = self._find_spin(trimmed_data[parttype_name])
                         self.spins[parttype_name].append(particle_spin)
+                        self.l[parttype_name].append(L)
                     else:
                         particle_spin = np.array([math.nan, math.nan, math.nan])
                         self.spins[parttype_name].append(particle_spin)
+                        self.l[parttype_name].append(math.nan)
                     
                     #---------------------------------------------
                     # Flag for minimum particles, but do nothing
@@ -1607,7 +1628,7 @@ class Subhalo_Analysis:
                         # Create random array of spins if min_particles met
                         if len(trimmed_data[parttype_name]['Mass']) >= min_particles:
                             for j in range(iterations):
-                                spin_i = self._find_spin(trimmed_data[parttype_name], random_sample=True)
+                                spin_i, _ = self._find_spin(trimmed_data[parttype_name], random_sample=True)
                                 tmp_spins.append(spin_i)
                         # Else create [[nan, nan, nan], [nan, nan, nan], [nan, nan, nan]]
                         else:
@@ -2234,8 +2255,8 @@ class Subhalo_Analysis:
                 # If particles of type exist within aperture_rad... find kappas
                 if len(trimmed_data[parttype_name]['Mass']) > 0:
                     # Finding spin vector within aperture_rad for current kappa
-                    spin_kappa = self._find_spin(trimmed_data[parttype_name])
-                    _ , matrix = self._orientate(orientate_to_axis, spin_kappa)
+                    spin_kappa, _ = self._find_spin(trimmed_data[parttype_name])
+                    _ , matrix    = self._orientate(orientate_to_axis, spin_kappa)
                 
                     # Orientate entire galaxy according to matrix above, use this to find kappa
                     aligned_data_part = self._rotate_galaxy(matrix, trimmed_data[parttype_name])
@@ -2512,14 +2533,14 @@ class Subhalo_Analysis:
                 print(arr['Mass'][:, None])
                 print(np.sum(arr['Mass']))
             
-            # Summing for total angular momentum and dividing by mass to get the spin vectors
+            # Summing for total angular momentum and dividing by mass to get the spin vectors -> Lagos 2017
             spin = np.sum(L, axis=0)/np.sum(arr['Mass'])
                 
         # Expressing as unit vector
         spin_unit = spin / np.linalg.norm(spin)
         
         
-        return spin_unit
+        return spin_unit, np.linalg.norm(spin)
         
     def _misalignment_angle(self, angle1, angle2, debug=False):
         # Find the misalignment angle
@@ -3546,7 +3567,6 @@ def ConvertID_snip(tree_dir, galID, sim, debug=False):
     f.close()
         
     return myData['GroupNumber'], myData['SubGroupNumber'], myData['SnapNum'], myData['Redshift'], myData['halo_mass'], np.array([myData['x'], myData['y'], myData['z']]), np.array([myData['ellip'], myData['triax'], myData['kappa_stars'], myData['disp_ani'], myData['disc_to_total'], myData['rot_to_disp_ratio']])
-
 
 
 #================================

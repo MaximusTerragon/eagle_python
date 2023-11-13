@@ -567,7 +567,7 @@ def _analysis_evolution(csv_sample = False,              # Whether to read in ex
             print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E M*\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_limit'], sample_input['use_satellites']))
             print('  SAMPLE LENGTH: ', len(GroupNum_List))
             print('\nOUTPUT LOADED:\n  Viewing axis: %s\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s\n  COM min distance: %s\n  Min. particles: %s\n  Min. inclination: %s' %(output_input['viewing_axis'], output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected'], output_input['com_min_distance'], output_input['min_particles'], output_input['min_inclination']))
-            print('\nPLOT:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %s\n  Upper mass limit: %s\n  ETG or LTG: %s\n  Group or field: %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field))
+            print('\nPLOT:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %s\n  Upper mass limit: %s\n  ETG or LTG: %s\n  Group or field: %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, cluster_or_field))
             print('===================')
             """
 
@@ -1218,11 +1218,13 @@ ID_list = [108988077, 479647060, 21721896, 390595970, 401467650, 182125463, 1922
 ID_list = [1361598, 1403994, 10421872, 17879310, 21200847, 21532243, 21659372, 24053428, 182125501, 274449295]
 # tim:
 ID_list = [182125516, 21200847, 462956130]
+# casanueva:
+ID_list = [198707313]
 
 def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                          #--------------------------
                          # Individual galaxies
-                         GalaxyID_list = [21200847],             # [ None / ID_list ]
+                         GalaxyID_list = ID_list,             # [ None / ID_list ]
                          #==================================================================================
                          # Highlight criteria settings
                          highlight_criteria    = False,       # NOT WORKING whether to indicate when criteria not met (but still plot)
@@ -1234,8 +1236,8 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                          #-------------------------------------------
                          # Misalignment angles                
                            use_hmr_general     = 'aperture',    # [ 1.0 / 2.0 / aperture]      Used for stelmass | APERTURE NOT AVAILABLE FOR sfr ssfr
-                           use_hmr_angle       = 2.0,           # [ 1.0 / 2.0 ]                Used for misangle, inc angle, com, counts
-                           abs_or_proj         = 'abs',             # [ 'both' / 'abs' / 'proj' ]
+                           use_hmr_angle       = 1.0,           # [ 1.0 / 2.0 ]                Used for misangle, inc angle, com, counts
+                           abs_or_proj         = 'proj',             # [ 'both' / 'abs' / 'proj' ]
                            use_angle           = 'stars_gas_sf',
                            misangle_threshold  = 30,                # [ 30 / 45 ]  
                            use_uncertainties   = True,              # Whether to plot uncertainties or not
@@ -1824,7 +1826,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                 if plot_tdyn:
                     axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['other']['%s_hmr' %use_hmr_angle]['tdyn'], alpha=1.0, lw=1, c='k', label='$t_{\mathrm{dyn}}$')
                 if plot_ttorque:
-                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['other']['%s_hmr' %use_hmr_angle]['ttorque']), alpha=1.0, lw=1, c='g', label='$t_{\mathrm{torque}}$')
+                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['other']['%s_hmr' %use_hmr_angle]['ttorque'], alpha=1.0, lw=1, c='g', label='$t_{\mathrm{torque}}$')
                 
                 #---------------------
                 ### Formatting

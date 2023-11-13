@@ -30,7 +30,7 @@ EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_dir
 #--------------------------------
 # Plots singular graphs by reading in existing csv file
 # SAVED: /plots/misalignment_distributions/
-def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+def _plot_misalignment(csv_sample = 'L100_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                        csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                        #--------------------------
                        # Galaxy plotting
@@ -44,16 +44,16 @@ def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_9.0',     #
                            max_uncertainty  = 30,            # [ None / 30 / 45 ]                  Degrees
                          lower_mass_limit   = 10**9.5,            # Whether to plot only certain masses 10**15
                          upper_mass_limit   = 10**15,         
-                         ETG_or_LTG         = 'both',           # Whether to plot only ETG/LTG
-                         group_or_field     = 'both',           # Whether to plot only field/group
-                         use_satellites     = False,             # Whether to include SubGroupNum =/ 0
+                         ETG_or_LTG         = 'LTG',           # Whether to plot only ETG/LTG/both
+                         cluster_or_field   = 'both',           # Whether to plot only field/cluster/both
+                         use_satellites     = True,             # Whether to include SubGroupNum =/ 0
                        #--------------------------
-                       add_observational  = True,
+                       add_observational  = 'Bryant',       # [ False / Bryant / Raimundo ]
                        misangle_threshold = 30,             # what we classify as misaligned
                        #--------------------------
                        use_alternative_format = True,          # COMPACT/Poster formatting
                        #--------------------------
-                       showfig       = False,
+                       showfig       = True,
                        savefig       = False,
                          file_format = 'pdf',
                          savefig_txt = '',
@@ -111,7 +111,7 @@ def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_9.0',     #
     print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Min mass: %.2E M*\n  Max mass: %.2E M*\n  Satellites: %s' %(output_input['mySims'][0][0], output_input['snapNum'], output_input['Redshift'], output_input['galaxy_mass_min'], output_input['galaxy_mass_max'], use_satellites))
     print('  SAMPLE LENGTH: ', len(GroupNum_List))
     print('\nOUTPUT LOADED:\n  Viewing axis: %s\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s\n  COM min distance: %s\n  Min. particles: %s\n  Min. inclination: %s' %(output_input['viewing_axis'], output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected'], output_input['com_min_distance'], output_input['min_particles'], output_input['min_inclination']))
-    print('\nPLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Min. inclination: %s\n  Min particles: %s\n  Min COM: %.1f pkpc\n  Min Mass: %.2E M*\n  Max limit: %.2E M*\n  ETG or LTG: %s\n  Group or field: %s\n  Use satellites:  %s' %(use_angle, use_hmr, use_proj_angle, min_inc_angle, min_particles, min_com, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field, use_satellites))
+    print('\nPLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Min. inclination: %s\n  Min particles: %s\n  Min COM: %.1f pkpc\n  Min Mass: %.2E M*\n  Max limit: %.2E M*\n  ETG or LTG: %s\n  Cluster or field: %s\n  Use satellites:  %s' %(use_angle, use_hmr, use_proj_angle, min_inc_angle, min_particles, min_com, lower_mass_limit, upper_mass_limit, ETG_or_LTG, cluster_or_field, use_satellites))
     print('===================')
     
     #------------------------------
@@ -187,7 +187,7 @@ def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_9.0',     #
         
     #-----------------------------
     # Set definitions
-    group_threshold     = 10**13.8
+    cluster_threshold     = 1e14
     LTG_threshold       = 0.4
     
     # Setting morphology lower and upper boundaries based on inputs
@@ -201,16 +201,16 @@ def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_9.0',     #
         lower_morph = LTG_threshold
         upper_morph = 1
         
-    # Setting group lower and upper boundaries based on inputs
-    if group_or_field == 'both':
+    # Setting cluster lower and upper boundaries based on inputs
+    if cluster_or_field == 'both':
         lower_halo = 0
         upper_halo = 10**16
-    elif group_or_field == 'group':
-        lower_halo = group_threshold
+    elif cluster_or_field == 'cluster':
+        lower_halo = cluster_threshold
         upper_halo = 10**16
-    elif group_or_field == 'field':
+    elif cluster_or_field == 'field':
         lower_halo = 0
-        upper_halo = group_threshold
+        upper_halo = cluster_threshold
     
     # Setting satellite criteria
     if use_satellites:
@@ -231,8 +231,8 @@ def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_9.0',     #
                      'sample': {},         # Sample of galaxies that meet particle count, COM, inclination angle, regardless of morphology, environment, or satellite status
                      'plot': {}}           # Sub-sample that is plotted (environment/morphology/satellite)
         for key in catalogue.keys():
-            catalogue[key] = {'all': 0,        # Size of group
-                              'group': 0,      # number of group galaxies
+            catalogue[key] = {'all': 0,        # Size of cluster
+                              'cluster': 0,      # number of cluster galaxies
                               'field': 0,      # number of field galaxies
                               'ETG': 0,        # number of ETGs
                               'LTG': 0}        # number of LTGs
@@ -267,10 +267,10 @@ def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_9.0',     #
         for GalaxyID in GalaxyID_List:
             
             #-----------------------------
-            # Determine if group or field, and morphology
-            if all_general['%s' %GalaxyID]['halo_mass'] > group_threshold:
-                catalogue['total']['group'] += 1
-            elif all_general['%s' %GalaxyID]['halo_mass'] <= group_threshold:
+            # Determine if cluster or field, and morphology
+            if all_general['%s' %GalaxyID]['halo_mass'] > cluster_threshold:
+                catalogue['total']['cluster'] += 1
+            elif all_general['%s' %GalaxyID]['halo_mass'] <= cluster_threshold:
                 catalogue['total']['field'] += 1
             if all_general['%s' %GalaxyID]['kappa_stars'] > LTG_threshold:
                 catalogue['total']['LTG'] += 1
@@ -309,36 +309,36 @@ def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_9.0',     #
                 else:
                     com_abs  = _evaluate_com(all_coms['%s' %GalaxyID][use_particles[0]][mask_angles], all_coms['%s' %GalaxyID][use_particles[1]], 'abs')
                 
+                #--------------
+                # Determine if this is a galaxy we want to plot and meets the remaining criteria (stellar mass, halo mass, kappa, uncertainty, satellite)
+                max_error = max(np.abs((np.array(all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle_err' %use_angle][mask_angles]) - all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle' %use_angle][mask_angles])))
+                
                 
                 # applying selection criteria for min_inc_angle, min_com, min_particles
-                if (count_1 >= min_particles) and (count_2 >= min_particles) and (com_abs <= min_com) and (inc_angle_1 >= min_inc_angle) and (inc_angle_1 <= max_inc_angle) and (inc_angle_2 >= min_inc_angle) and (inc_angle_2 <= max_inc_angle):
+                if (count_1 >= min_particles) and (count_2 >= min_particles) and (com_abs <= min_com) and (inc_angle_1 >= min_inc_angle) and (inc_angle_1 <= max_inc_angle) and (inc_angle_2 >= min_inc_angle) and (inc_angle_2 <= max_inc_angle) and (max_error <= (999 if max_uncertainty == None else max_uncertainty)):
                     
                     #--------------
                     catalogue['sample']['all'] += 1
                     
-                    # Determine if group or field, and morphology
-                    if all_general['%s' %GalaxyID]['halo_mass'] > group_threshold:
-                        catalogue['sample']['group'] += 1
-                    elif all_general['%s' %GalaxyID]['halo_mass'] <= group_threshold:
+                    # Determine if cluster or field, and morphology
+                    if all_general['%s' %GalaxyID]['halo_mass'] > cluster_threshold:
+                        catalogue['sample']['cluster'] += 1
+                    elif all_general['%s' %GalaxyID]['halo_mass'] <= cluster_threshold:
                         catalogue['sample']['field'] += 1
                     if all_general['%s' %GalaxyID]['kappa_stars'] > LTG_threshold:
                         catalogue['sample']['LTG'] += 1
                     elif all_general['%s' %GalaxyID]['kappa_stars'] <= LTG_threshold:
                         catalogue['sample']['ETG'] += 1
                     
-                    #--------------
-                    # Determine if this is a galaxy we want to plot and meets the remaining criteria (stellar mass, halo mass, kappa, uncertainty, satellite)
-                    max_error = max(np.abs((np.array(all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle_err' %use_angle][mask_angles]) - all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle' %use_angle][mask_angles])))
-                    
-                    if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph) and (all_general['%s' %GalaxyID]['SubGroupNum'] <= satellite_criteria) and (max_error <= (999 if max_uncertainty == None else max_uncertainty)):
+                    if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph) and (all_general['%s' %GalaxyID]['SubGroupNum'] <= satellite_criteria):
                         
                         #--------------
                         catalogue['plot']['all'] += 1
                         
-                        # Determine if group or field, and morphology
-                        if all_general['%s' %GalaxyID]['halo_mass'] > group_threshold:
-                            catalogue['plot']['group'] += 1
-                        elif all_general['%s' %GalaxyID]['halo_mass'] <= group_threshold:
+                        # Determine if cluster or field, and morphology
+                        if all_general['%s' %GalaxyID]['halo_mass'] > cluster_threshold:
+                            catalogue['plot']['cluster'] += 1
+                        elif all_general['%s' %GalaxyID]['halo_mass'] <= cluster_threshold:
                             catalogue['plot']['field'] += 1
                         if all_general['%s' %GalaxyID]['kappa_stars'] > LTG_threshold:
                             catalogue['plot']['LTG'] += 1
@@ -386,6 +386,14 @@ def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_9.0',     #
         if 'dm' in use_particles:
             plot_color = 'r'
         
+        if ETG_or_LTG == 'ETG':
+            plot_color = 'darkorange'
+        elif ETG_or_LTG == 'LTG':
+            plot_color = 'dodgerblue'
+        elif ETG_or_LTG == 'both':
+            plot_color = 'indigo'
+        
+        
         """ Some useful quantities:
         catalogue['sample']['all']  = number of galaxies that meet criteria
         catalogue['plot']['all']    = number of galaxies in this particular plot
@@ -395,35 +403,75 @@ def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_9.0',     #
         ### Creating graphs
         
         # Add raimundo observational data
-        if add_observational and ETG_or_LTG != 'both':
+        if add_observational:
                 
             # Define percentages
-            obs_percent = {'ETG': [0.480, 0.180, 0.048, 0.016, 0.020, 0.016, 0.028, 0.016, 0.016, 0.028, 0.008, 0.005, 0.010, 0.004, 0.012, 0.018, 0.020, 0.065],
-                           'LTG': [0.660, 0.192, 0.072, 0.016, 0.010, 0.006, 0.010, 0.001, 0.001, 0.001, 0.001, 0.001, 0.002, 0.001, 0.003, 0.001, 0.003, 0.007]}
+            obs_percent = {'Raimundo': {},
+                           'Bryant': {}}
             
-            obs_data = {'ETG': [],
-                        'LTG': []}
-            for obs_type_i in obs_percent.keys():
+            # Add raimundo results:
+            obs_percent['Raimundo'] = {'ETG_both':   [0.480, 0.180, 0.048, 0.016, 0.020, 0.016, 0.028, 0.016, 0.016, 0.028, 0.008, 0.005, 0.010, 0.004, 0.012, 0.018, 0.020, 0.065],
+                                       'LTG_both':   [0.660, 0.192, 0.072, 0.016, 0.010, 0.006, 0.010, 0.001, 0.001, 0.001, 0.001, 0.001, 0.002, 0.001, 0.003, 0.001, 0.003, 0.007]}
+            
+            # Add Bryant results:
+            obs_percent['Bryant'] = {'both_both':    [0.593, 0.214, 0.082, 0.032, 0.017, 0.005, 0.003, 0.003, 0.003, 0.002, 0.008, 0.005, 0.000, 0.000, 0.002, 0.003, 0.010, 0.021],
+                                     'both_field':   [0.593, 0.214, 0.082, 0.027, 0.019, 0.004, 0.004, 0.004, 0.004, 0.002, 0.008, 0.004, 0.000, 0.000, 0.002, 0.002, 0.010, 0.023],
+                                     'both_cluster': [0.596, 0.213, 0.081, 0.044, 0.015, 0.007, 0.000, 0.000, 0.000, 0.000, 0.007, 0.007, 0.000, 0.000, 0.000, 0.007, 0.007, 0.015],
+                                     'ETG_both':     [0.383, 0.159, 0.131, 0.065, 0.037, 0.019, 0.010, 0.019, 0.010, 0.010, 0.047, 0.028, 0.000, 0.000, 0.000, 0.010, 0.019, 0.056],
+                                     'ETG_field':    [0.339, 0.145, 0.065, 0.065, 0.065, 0.000, 0.016, 0.032, 0.016, 0.016, 0.081, 0.048, 0.000, 0.000, 0.000, 0.016, 0.032, 0.081],
+                                     'ETG_cluster':  [0.444, 0.178, 0.222, 0.067, 0.000, 0.022, 0.000, 0.000, 0.000, 0.000, 0.022, 0.022, 0.000, 0.000, 0.000, 0.000, 0.000, 0.022],
+                                     'LTG_both':     [0.647, 0.223, 0.075, 0.021, 0.014, 0.000, 0.002, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.002, 0.002, 0.007, 0.002],
+                                     'LTG_field':    [0.643, 0.216, 0.089, 0.019, 0.014, 0.000, 0.003, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.003, 0.000, 0.008, 0.003],
+                                     'LTG_cluster':  [0.677, 0.262, 0.000, 0.031, 0.015, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.015, 0.000, 0.000]}
+                                     
+            obs_number = {'Bryant': {'both_both': 36+26+45+69+133+72+221,
+                                     'both_field': 17+16+29+48+102+57+202,
+                                     'both_cluster': 19+10+16+21+31+15+19,
+                                     'ETG_both': 36+26+45,
+                                     'ETG_field': 17+16+29,
+                                     'ETG_cluster': 19+10+16,
+                                     'LTG_both': 133+72+221,
+                                     'LTG_field': 102+57+202,
+                                     'LTG_cluster': 31+15+19}}
+                                     
+                                     
+            obs_data = {'Raimundo': {'ETG_both': [],
+                                     'LTG_both': []},
+                        'Bryant':   {'both_both': [],
+                                     'both_field': [],
+                                     'both_cluster': [],
+                                     'ETG_both': [],
+                                     'ETG_field': [],
+                                     'ETG_cluster': [],
+                                     'LTG_both': [],
+                                     'LTG_field': [],
+                                     'LTG_cluster': []}}
+            
+            for author_i in obs_percent.keys():
+                for obs_type_i in obs_percent['%s' %author_i].keys():
                 
-                obs_count = 1000*np.array(obs_percent[obs_type_i])
+                    obs_count = 1000*np.array(obs_percent['%s' %author_i][obs_type_i])
                 
-                # Append number of galaxies for each angle histogram
-                for obs_count_i, obs_angle_i in zip(obs_count, [5, 15, 25, 35, 45, 55, 65, 75, 85, 95, 105, 115, 125, 135, 145, 155, 165, 175]):
-                    i = 0
-                    while i < obs_count_i:
-                        obs_data[obs_type_i].append(obs_angle_i)
-                        i += 1 
-                        
+                    # Append number of galaxies for each angle histogram
+                    for obs_count_i, obs_angle_i in zip(obs_count, [5, 15, 25, 35, 45, 55, 65, 75, 85, 95, 105, 115, 125, 135, 145, 155, 165, 175]):
+                        i = 0
+                        while i < obs_count_i:
+                            obs_data['%s' %author_i][obs_type_i].append(obs_angle_i)
+                            i += 1
+                
+                    
             # Plot
-            axs.hist(obs_data[ETG_or_LTG], weights=np.ones(len(obs_data[ETG_or_LTG]))/len(obs_data[ETG_or_LTG]), bins=np.arange(0, 181, 10), histtype='bar', edgecolor='k', facecolor=None, hatch='/', fill=False, linestyle='--', alpha=0.5)
+            axs.hist(obs_data['%s' %add_observational]['%s_%s' %(ETG_or_LTG, cluster_or_field)], weights=np.ones(len(obs_data['%s' %add_observational]['%s_%s' %(ETG_or_LTG, cluster_or_field)]))/len(obs_data['%s' %add_observational]['%s_%s' %(ETG_or_LTG, cluster_or_field)]), bins=np.arange(0, 181, 10), histtype='bar', edgecolor='grey', facecolor=None, fill=False, linestyle='-', linewidth=1, alpha=1)
+            axs.errorbar(np.arange(5, 181, 10), obs_percent['%s' %author_i]['%s_%s' %(ETG_or_LTG, cluster_or_field)], xerr=None, yerr=np.sqrt(np.array(obs_percent['%s' %author_i]['%s_%s' %(ETG_or_LTG, cluster_or_field)]) * obs_number['%s' %author_i]['%s_%s' %(ETG_or_LTG, cluster_or_field)]) / obs_number['%s' %author_i]['%s_%s' %(ETG_or_LTG, cluster_or_field)], ecolor='grey', ls='none', capsize=3, elinewidth=1, markeredgewidth=1, alpha=0.9)
+        
         
         # Plot histogram
-        axs.hist(plot_angles, weights=np.ones(catalogue['plot']['all'])/catalogue['plot']['all'], bins=np.arange(0, 181, 10), histtype='bar', edgecolor='none', facecolor=plot_color, alpha=0.1)
-        bin_count, _, _ = axs.hist(plot_angles, weights=np.ones(catalogue['plot']['all'])/catalogue['plot']['all'], bins=np.arange(0, 181, 10), histtype='bar', edgecolor=plot_color, facecolor='none', alpha=1.0)
+        axs.hist(plot_angles, weights=np.ones(catalogue['plot']['all'])/catalogue['plot']['all'], bins=np.arange(0, 181, 10), histtype='bar', edgecolor='none', facecolor=plot_color, linewidth=1.5, alpha=0.1)
+        bin_count, _, _ = axs.hist(plot_angles, weights=np.ones(catalogue['plot']['all'])/catalogue['plot']['all'], bins=np.arange(0, 181, 10), histtype='bar', edgecolor=plot_color, facecolor='none', linewidth=1.5, alpha=0.8)
         
         # Add poisson errors to each bin (sqrt N)
         hist_n, _ = np.histogram(plot_angles, bins=np.arange(0, 181, 10), range=(0, 180))
-        axs.errorbar(np.arange(5, 181, 10), hist_n/catalogue['plot']['all'], xerr=None, yerr=np.sqrt(hist_n)/catalogue['plot']['all'], ecolor=plot_color, ls='none', capsize=4, elinewidth=1, markeredgewidth=1)
+        axs.errorbar(np.arange(5, 181, 10), hist_n/catalogue['plot']['all'], xerr=None, yerr=np.sqrt(hist_n)/catalogue['plot']['all'], ecolor=plot_color, ls='none', capsize=3, elinewidth=1.5, markeredgewidth=1, alpha=0.9)
         
         
         #-----------
@@ -431,6 +479,7 @@ def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_9.0',     #
         # Axis labels
         axs.yaxis.set_major_formatter(PercentFormatter(1, symbol=''))
         axs.set_xlim(0, 180)
+        axs.set_ylim(bottom=0)
         axs.set_xticks(np.arange(0, 181, step=30))
         if use_proj_angle:
             axs.set_xlabel('Misalignment angle, $\psi_{z}$')
@@ -449,22 +498,20 @@ def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_9.0',     #
         # NEW LEGEND
         if use_alternative_format:
             legend_elements = [Line2D([0], [0], marker=' ', color='w')]
-            legend_labels = [ETG_or_LTG + ' sample']
+            if (cluster_or_field != 'both') & (ETG_or_LTG != 'both'):
+                legend_labels = ['%s'%('field/group' if cluster_or_field == 'field' else cluster_or_field) + ' ' + ETG_or_LTG]
+            elif (cluster_or_field == 'both') & (ETG_or_LTG != 'both'):
+                legend_labels = [ETG_or_LTG]
+            elif (cluster_or_field != 'both') & (ETG_or_LTG == 'both'):
+                legend_labels = ['%s'%('field/group' if cluster_or_field == 'field' else cluster_or_field)]
+            else:
+                legend_labels = ['EAGLE sample']
             legend_colors = [plot_color]
         
             if add_observational:
                 legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-                legend_labels.append('Raimundo et al. (2023)')
+                legend_labels.append('%s+%s' %(add_observational, '19' if add_observational == 'Bryant' else '23'))
                 legend_colors.append('grey')
-        
-            legend1 = axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
-            axs.add_artist(legend1)
-        
-        
-            ### Legend 2
-            legend_elements = []
-            legend_labels = []
-            legend_colors = []
         
             # Add mass range
             if (lower_mass_limit != 10**9.5) and (upper_mass_limit != 10**15):
@@ -479,11 +526,6 @@ def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_9.0',     #
                 legend_labels.append('$< 10 ^{%.1f}$ M$_{\odot}$' %(np.log10(upper_mass_limit)))    
                 legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
                 legend_colors.append('grey')
-        
-            if group_or_field != 'both':
-                legend_labels.append('%s-galaxies' %group_or_field)
-                legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-                legend_colors.append('grey')
                 
             if not add_observational:
                 legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
@@ -491,12 +533,14 @@ def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_9.0',     #
                 legend_colors.append('w')
         
             # Add redshift
-            legend_labels.append('${z=%.2f}$' %sample_input['Redshift'])
+            legend_labels.append('${z\sim%.1f}$' %sample_input['Redshift'])
             legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
             legend_colors.append('k')
         
-            legend2 = axs.legend(handles=legend_elements, labels=legend_labels, loc='best', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
-            axs.add_artist(legend2)
+            legend1 = axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
+            axs.add_artist(legend1)
+            #legend2 = axs.legend(handles=legend_elements, labels=legend_labels, loc='best', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
+            #axs.add_artist(legend2)
         
         # OLD LEGEND
         if not use_alternative_format:
@@ -524,8 +568,8 @@ def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_9.0',     #
                 legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
                 legend_colors.append('grey')
         
-            if group_or_field != 'both':
-                legend_labels.append('%s-galaxies' %group_or_field)
+            if cluster_or_field != 'both':
+                legend_labels.append('%s-galaxies' %cluster_or_field)
                 legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
                 legend_colors.append('grey')
         
@@ -547,9 +591,9 @@ def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_9.0',     #
         
         if print_summary:
             print('CATALOGUE:')
-            print(catalogue['total'])
-            print(catalogue['sample'])
-            print(catalogue['plot'])
+            print('Total: ',  catalogue['total'])
+            print('Sample:', catalogue['sample'])
+            print('Plot:  ',  catalogue['plot'])
             print('\nRAW BIN VALUES:')      
         aligned_tally           = 0
         aligned_err_tally       = 0
@@ -606,8 +650,8 @@ def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_9.0',     #
             obs_txt = ''
        
         if savefig:
-            plt.savefig("%s/misalignment_distributions/L%s_%s_%s_misalignment_%s_%s_HMR%s_proj%s_inc%s_m%sm%s_morph%s_env%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], output_input['snapNum'], sat_str, np.log10(float(output_input['galaxy_mass_min'])), use_angle, str(use_hmr), use_proj_angle, min_inc_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, obs_txt, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print("\n  SAVED: %s/misalignment_distributions/L%s_%s_%s_misalignment_%s_%s_HMR%s_proj%s_inc%s_m%sm%s_morph%s_env%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], output_input['snapNum'], sat_str, np.log10(float(output_input['galaxy_mass_min'])), use_angle, str(use_hmr), use_proj_angle, min_inc_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, obs_txt, savefig_txt, file_format))
+            plt.savefig("%s/misalignment_distributions/L%s_%s_%s_misalignment_%s_%s_HMR%s_proj%s_inc%s_m%sm%s_morph%s_env%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], output_input['snapNum'], sat_str, np.log10(float(output_input['galaxy_mass_min'])), use_angle, str(use_hmr), use_proj_angle, min_inc_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, cluster_or_field, obs_txt, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/misalignment_distributions/L%s_%s_%s_misalignment_%s_%s_HMR%s_proj%s_inc%s_m%sm%s_morph%s_env%s_%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], output_input['snapNum'], sat_str, np.log10(float(output_input['galaxy_mass_min'])), use_angle, str(use_hmr), use_proj_angle, min_inc_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, cluster_or_field, obs_txt, savefig_txt, file_format))
         if showfig:
             plt.show()
         plt.close()
@@ -654,8 +698,8 @@ def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_9.0',     #
 # Manually plots a graph tracking share of aligned, misaligned, and counter-rotating systems with z
 # SAVED: /plots/misalignment_distributions_z/
 def _plot_misalignment_z(csv_sample1 = 'L100_',                                 # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
-                         csv_sample_range = np.arange(147, 201, 1),   # snapnums
-                         csv_sample2 = '_all_sample_misalignment_10.0',
+                         csv_sample_range = np.arange(19, 29, 1),   # snapnums
+                         csv_sample2 = '_all_sample_misalignment_9.0',
                          csv_output_in = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                          #--------------------------
                          # Galaxy plotting
@@ -667,11 +711,11 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
                              min_particles    = 20,               # [ 20 ] number of particles
                              min_com          = 2.0,              # [ 2.0 ] pkpc
                              max_uncertainty  = 30,               # [ None / 30 / 45 ] max uncertainty 
-                           lower_mass_limit   = 10**10,            # Whether to plot only certain masses 10**15
+                           lower_mass_limit   = 10**9.5,            # Whether to plot only certain masses 10**15
                            upper_mass_limit   = 10**15,         
-                           ETG_or_LTG         = 'LTG',           # Whether to plot only ETG/LTG
-                           group_or_field     = 'both',           # Whether to plot only field/group
-                           use_satellites     = False,             # Whether to include SubGroupNum =/ 0
+                           ETG_or_LTG         = 'both',           # Whether to plot only ETG/LTG
+                           cluster_or_field   = 'both',           # Whether to plot only field/cluster
+                           use_satellites     = True,             # Whether to include SubGroupNum =/ 0
                          #--------------------------
                          # Misalignment criteria
                          misangle_threshold   = 30,             # what we classify as misaligned
@@ -692,7 +736,7 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
         time_start = time.time()
     
     print('===================')
-    print('PLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Min. inclination: %s\n  Min particles: %s\n  Min CoM: %s pkpc\n  Min mass: %.2E M*\n  Max mass: %.2E M*\n  ETG or LTG: %s\n  Group or field: %s\n  Use satellites:  %s' %(use_angle, use_hmr, use_proj_angle, min_inc_angle, min_particles, min_com, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field, use_satellites))
+    print('PLOT CRITERIA:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Min. inclination: %s\n  Min particles: %s\n  Min CoM: %s pkpc\n  Min mass: %.2E M*\n  Max mass: %.2E M*\n  ETG or LTG: %s\n  Cluster or field: %s\n  Use satellites:  %s' %(use_angle, use_hmr, use_proj_angle, min_inc_angle, min_particles, min_com, lower_mass_limit, upper_mass_limit, ETG_or_LTG, cluster_or_field, use_satellites))
     print('===================\n')
     
     #--------------------------------
@@ -839,7 +883,7 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
         
         #-----------------------------
         # Set definitions
-        group_threshold     = 10**14
+        cluster_threshold     = 10**14
         LTG_threshold       = 0.4
     
         # Setting morphology lower and upper boundaries based on inputs
@@ -853,16 +897,16 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
             lower_morph = LTG_threshold
             upper_morph = 1
         
-        # Setting group lower and upper boundaries based on inputs
-        if group_or_field == 'both':
+        # Setting cluster lower and upper boundaries based on inputs
+        if cluster_or_field == 'both':
             lower_halo = 0
             upper_halo = 10**16
-        elif group_or_field == 'group':
-            lower_halo = group_threshold
+        elif cluster_or_field == 'cluster':
+            lower_halo = cluster_threshold
             upper_halo = 10**16
-        elif group_or_field == 'field':
+        elif cluster_or_field == 'field':
             lower_halo = 0
-            upper_halo = group_threshold
+            upper_halo = cluster_threshold
     
         # Setting satellite criteria
         if use_satellites:
@@ -883,8 +927,8 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
                          'sample': {},         # Sample of galaxies
                          'plot': {}}           # Sub-sample that is plotted
             for key in catalogue.keys():
-                catalogue[key] = {'all': 0,        # Size of group
-                                  'group': 0,      # number of group galaxies
+                catalogue[key] = {'all': 0,        # Size of cluster
+                                  'cluster': 0,      # number of cluster galaxies
                                   'field': 0,      # number of field galaxies
                                   'ETG': 0,        # number of ETGs
                                   'LTG': 0}        # number of LTGs
@@ -926,10 +970,10 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
             for GalaxyID in GalaxyID_List:
             
                 #-----------------------------
-                # Determine if group or field, and morphology
-                if all_general['%s' %GalaxyID]['halo_mass'] > group_threshold:
-                    catalogue['total']['group'] += 1
-                elif all_general['%s' %GalaxyID]['halo_mass'] <= group_threshold:
+                # Determine if cluster or field, and morphology
+                if all_general['%s' %GalaxyID]['halo_mass'] > cluster_threshold:
+                    catalogue['total']['cluster'] += 1
+                elif all_general['%s' %GalaxyID]['halo_mass'] <= cluster_threshold:
                     catalogue['total']['field'] += 1
                 if all_general['%s' %GalaxyID]['kappa_stars'] > LTG_threshold:
                     catalogue['total']['LTG'] += 1
@@ -975,10 +1019,10 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
                         #--------------
                         catalogue['sample']['all'] += 1
                     
-                        # Determine if group or field, and morphology
-                        if all_general['%s' %GalaxyID]['halo_mass'] > group_threshold:
-                            catalogue['sample']['group'] += 1
-                        elif all_general['%s' %GalaxyID]['halo_mass'] <= group_threshold:
+                        # Determine if cluster or field, and morphology
+                        if all_general['%s' %GalaxyID]['halo_mass'] > cluster_threshold:
+                            catalogue['sample']['cluster'] += 1
+                        elif all_general['%s' %GalaxyID]['halo_mass'] <= cluster_threshold:
                             catalogue['sample']['field'] += 1
                         if all_general['%s' %GalaxyID]['kappa_stars'] > LTG_threshold:
                             catalogue['sample']['LTG'] += 1
@@ -994,10 +1038,10 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
                             #--------------
                             catalogue['plot']['all'] += 1
                         
-                            # Determine if group or field, and morphology
-                            if all_general['%s' %GalaxyID]['halo_mass'] > group_threshold:
-                                catalogue['plot']['group'] += 1
-                            elif all_general['%s' %GalaxyID]['halo_mass'] <= group_threshold:
+                            # Determine if cluster or field, and morphology
+                            if all_general['%s' %GalaxyID]['halo_mass'] > cluster_threshold:
+                                catalogue['plot']['cluster'] += 1
+                            elif all_general['%s' %GalaxyID]['halo_mass'] <= cluster_threshold:
                                 catalogue['plot']['field'] += 1
                             if all_general['%s' %GalaxyID]['kappa_stars'] > LTG_threshold:
                                 catalogue['plot']['LTG'] += 1
@@ -1145,36 +1189,36 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
         
         #-----------
         ### Legend
-        
         legend_elements = []
-        legend_labels = []
-        legend_colors = []
+        legend_labels   = []
+        legend_colors   = []
+        
+        legend_elements.append(Line2D([-10], [-10], marker=' ', color='w'))
+        if (cluster_or_field != 'both') & (ETG_or_LTG != 'both'):
+            legend_labels = ['%s'%('field/group' if cluster_or_field == 'field' else cluster_or_field) + ' ' + ETG_or_LTG]
+        elif (cluster_or_field == 'both') & (ETG_or_LTG != 'both'):
+            legend_labels = [ETG_or_LTG]
+        elif (cluster_or_field != 'both') & (ETG_or_LTG == 'both'):
+            legend_labels = ['%s'%('field/group' if cluster_or_field == 'field' else cluster_or_field)]
+        else:
+            legend_labels = ['EAGLE sample']
+        legend_colors = ['k']
         for line_name, line_color in zip(['Aligned', 'Misaligned', 'Counter-rotating'], ['b', 'r', 'indigo']):
             legend_elements.append(Line2D([-10], [-10], marker=' ', color='w'))
             legend_labels.append(line_name)
             legend_colors.append(line_color)
         
         # Add mass range
-        if (lower_mass_limit != 10**9) and (upper_mass_limit != 10**15):
+        if (lower_mass_limit != 10**9.5) and (upper_mass_limit != 10**15):
             legend_labels.append('$10 ^{%.1f} - 10 ^{%.1f}$ M$_{\odot}$' %(np.log10(lower_mass_limit), np.log10(upper_mass_limit)))    
             legend_elements.append(Line2D([-10], [-10], marker=' ', color='w'))
             legend_colors.append('grey')
-        elif (lower_mass_limit != 10**9):
+        elif (lower_mass_limit != 10**9.5):
             legend_labels.append('$> 10 ^{%.1f}$ M$_{\odot}$' %(np.log10(lower_mass_limit)))    
             legend_elements.append(Line2D([-10], [-10], marker=' ', color='w'))
             legend_colors.append('grey')
         elif (upper_mass_limit != 10**15):
             legend_labels.append('$< 10 ^{%.1f}$ M$_{\odot}$' %(np.log10(upper_mass_limit)))    
-            legend_elements.append(Line2D([-10], [-10], marker=' ', color='w'))
-            legend_colors.append('grey')
-        
-        # Add LTG/ETG if specified
-        if ETG_or_LTG != 'both':
-            legend_labels.append('%s' %ETG_or_LTG)
-            legend_elements.append(Line2D([-10], [-10], marker=' ', color='w'))
-            legend_colors.append('grey')
-        if group_or_field != 'both':
-            legend_labels.append('%s-galaxies' %group_or_field)
             legend_elements.append(Line2D([-10], [-10], marker=' ', color='w'))
             legend_colors.append('grey')
         
@@ -1211,8 +1255,8 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
             sat_str = 'cent'
        
         if savefig:
-            plt.savefig("%s/misalignment_distributions_z/L%s_ALL_%s_misalignment_summary_%s_%s_HMR%s_proj%s_inc%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], sat_str, misangle_threshold, use_angle, str(use_hmr), use_proj_angle, min_inc_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print("\n  SAVED: %s/misalignment_distributions_z/L%s_ALL_%s_misalignment_summary_%s_%s_HMR%s_proj%s_inc%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], sat_str, misangle_threshold, use_angle, str(use_hmr), use_proj_angle, min_inc_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, group_or_field, savefig_txt, file_format))
+            plt.savefig("%s/misalignment_distributions_z/L%s_ALL_%s_misalignment_summary_%s_%s_HMR%s_proj%s_inc%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], sat_str, misangle_threshold, use_angle, str(use_hmr), use_proj_angle, min_inc_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, cluster_or_field, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/misalignment_distributions_z/L%s_ALL_%s_misalignment_summary_%s_%s_HMR%s_proj%s_inc%s_m%sm%s_morph%s_env%s_%s.%s" %(fig_dir, output_input['mySims'][0][1], sat_str, misangle_threshold, use_angle, str(use_hmr), use_proj_angle, min_inc_angle, np.log10(lower_mass_limit), np.log10(upper_mass_limit), ETG_or_LTG, cluster_or_field, savefig_txt, file_format))
         if showfig:
             plt.show()
         plt.close()
@@ -1228,11 +1272,36 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
 
 #===========================    
 #_plot_misalignment()
-_plot_misalignment(csv_sample = 'L100_193_all_sample_misalignment_10.0', csv_output = '_Rad_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_')
+#_plot_misalignment_z()
 
-#_plot_misalignment_z(ETG_or_LTG = 'LTG')
-#_plot_misalignment_z(ETG_or_LTG = 'ETG')
-#_plot_misalignment_z(ETG_or_LTG = 'both')
+
+
+
+#_plot_misalignment(use_angle = 'stars_gas_sf', ETG_or_LTG = 'ETG', cluster_or_field   = 'both',     add_observational  = 'Bryant')
+#_plot_misalignment(use_angle = 'stars_gas_sf', ETG_or_LTG = 'ETG', cluster_or_field   = 'cluster',  add_observational  = 'Bryant')
+#_plot_misalignment(use_angle = 'stars_gas_sf', ETG_or_LTG = 'ETG', cluster_or_field   = 'field',    add_observational  = 'Bryant')
+#_plot_misalignment(use_angle = 'stars_gas_sf', ETG_or_LTG = 'LTG', cluster_or_field   = 'both',     add_observational  = 'Bryant')
+#_plot_misalignment(use_angle = 'stars_gas_sf', ETG_or_LTG = 'LTG', cluster_or_field   = 'cluster',  add_observational  = 'Bryant')
+#_plot_misalignment(use_angle = 'stars_gas_sf', ETG_or_LTG = 'LTG', cluster_or_field   = 'field',    add_observational  = 'Bryant')
+#_plot_misalignment(use_angle = 'stars_gas_sf', ETG_or_LTG = 'both', cluster_or_field   = 'both',    add_observational  = 'Bryant')
+#_plot_misalignment(use_angle = 'stars_gas_sf', ETG_or_LTG = 'both', cluster_or_field   = 'cluster', add_observational  = 'Bryant')
+#_plot_misalignment(use_angle = 'stars_gas_sf', ETG_or_LTG = 'both', cluster_or_field   = 'field',   add_observational  = 'Bryant')
+#_plot_misalignment(use_angle = 'stars_dm', ETG_or_LTG = 'ETG', cluster_or_field   = 'both', add_observational  = False)
+#_plot_misalignment(use_angle = 'stars_dm', ETG_or_LTG = 'LTG', cluster_or_field   = 'both', add_observational  = False)
+
+#_plot_misalignment(csv_sample = 'L100_193_all_sample_misalignment_10.0', csv_output = '_Rad_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_')
+
+
+
+#_plot_misalignment_z(use_angle = 'stars_gas_sf', ETG_or_LTG = 'ETG', cluster_or_field   = 'both', lower_mass_limit   = 10**9.5, upper_mass_limit   = 10**15)
+#_plot_misalignment_z(use_angle = 'stars_gas_sf', ETG_or_LTG = 'LTG', cluster_or_field   = 'both', lower_mass_limit   = 10**9.5, upper_mass_limit   = 10**15)
+#_plot_misalignment_z(use_angle = 'stars_gas_sf', ETG_or_LTG = 'ETG', cluster_or_field   = 'field', lower_mass_limit   = 10**9.5, upper_mass_limit   = 10**15)
+#_plot_misalignment_z(use_angle = 'stars_gas_sf', ETG_or_LTG = 'LTG', cluster_or_field   = 'field', lower_mass_limit   = 10**9.5, upper_mass_limit   = 10**15)
+#_plot_misalignment_z(use_angle = 'stars_gas_sf', ETG_or_LTG = 'both', cluster_or_field   = 'both', lower_mass_limit   = 10**9.5, upper_mass_limit   = 10**15)
+#_plot_misalignment_z(use_angle = 'stars_gas_sf', ETG_or_LTG = 'both', cluster_or_field   = 'cluster', lower_mass_limit   = 10**9.5, upper_mass_limit   = 10**15)
+#_plot_misalignment_z(use_angle = 'stars_gas_sf', ETG_or_LTG = 'both', cluster_or_field   = 'field', lower_mass_limit   = 10**9.5, upper_mass_limit   = 10**15)
+#_plot_misalignment_z(use_angle = 'stars_gas_sf', ETG_or_LTG = 'both', cluster_or_field   = 'both', lower_mass_limit   = 10**9.5, upper_mass_limit   = 10**10)
+#_plot_misalignment_z(use_angle = 'stars_gas_sf', ETG_or_LTG = 'both', cluster_or_field   = 'both', lower_mass_limit   = 10**10, upper_mass_limit   = 10**15)
 
 #===========================
 

@@ -34,16 +34,16 @@ EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_dir
 # 151
 def _sample_misalignment(mySims = [('RefL0100N1504', 100)],
                          #--------------------------
-                         galaxy_mass_min    = 10**(9.5),            # Lower mass limit within 30pkpc
+                         galaxy_mass_min    = 10**(9),            # Lower mass limit within 30pkpc
                          galaxy_mass_max    = 10**(15),           # Lower mass limit within 30pkpc
                          snapNum            = 28,               # Target snapshot
-                         use_satellites     = True,             # Whether to include SubGroupNum =/ 0
+                         use_satellites     = False,             # Whether to include SubGroupNum =/ 0
                          print_sample       = False,             # Print list of IDs
                          #--------------------------   
                          plot_sample        = False,
                          plot_coords        = False,
                          #-------------------------- 
-                         csv_file = True,                       # Will write sample to csv file in sapmle_dir
+                         csv_file = False,                       # Will write sample to csv file in sapmle_dir
                             csv_name = '',
                          #--------------------------     
                          print_progress = False,
@@ -482,18 +482,19 @@ def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misali
                                         viewing_angle = 0,                          # Keep as 0
                                         #-----------------------------------------------------
                                         # Misalignments we want extracted and at which radii
-                                        angle_selection     = ['stars_gas',            # stars_gas     stars_gas_sf    stars_gas_nsf
-                                                               'stars_gas_sf',         # gas_dm        gas_sf_dm       gas_nsf_dm
-                                                               'stars_gas_nsf',        # gas_sf_gas_nsf
-                                                               'gas_sf_gas_nsf',
-                                                               'stars_dm'],           
-                                        spin_hmr            = np.array([1.0, 1.5, 2.0]),          # multiples of hmr for which to find spin
+                                        angle_selection     = ['stars_gas',            # stars_gas     stars_gas_sf
+                                                               'stars_gas_sf',         # stars_dm      gas_dm        gas_sf_dm       gas_nsf_dm        
+                                                               'gas_sf_gas_nsf',       # gas_sf_gas_nsf
+                                                               'stars_dm',
+                                                               'gas_dm',
+                                                               'gas_sf_dm'],           
+                                        spin_hmr            = np.array([1.0, 2.0]),          # multiples of hmr for which to find spin
                                         find_uncertainties  = True,                    # whether to find 2D and 3D uncertainties
                                         rad_projected       = False,                     # whether to use rad in projection or 3D
                                         #--------------------------
                                         # Selection criteria
                                         com_min_distance    = 2.0,         # [pkpc] min distance between sfgas and stars.  DEFAULT 2.0 
-                                        min_particles       = 10,          # Minimum particles to find spin.  DEFAULT 10
+                                        min_particles       = 20,          # Minimum particles to find spin.  DEFAULT 10
                                         min_inclination     = 0,           # Minimum inclination toward viewing axis [deg] DEFAULT 0
                                         #--------------------------   
                                         csv_file       = True,             # Will write sample to csv file in sample_dir
@@ -568,6 +569,7 @@ def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misali
     all_general       = {}          # has total masses, kappa, halfmassrad, etc.
     all_coms          = {}          # has all C.o.Ms
     all_spins         = {}          # has all spins
+    all_l             = {}          # has all specific l
     all_counts        = {}          # has all the particle count within rad
     all_masses        = {}          # has all the particle mass within rad
     all_totmass       = {}          # has total masses at hmr
@@ -672,7 +674,6 @@ def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misali
         #print(subhalo.Z['gas_sf'])
         
         
-        
         """ FLAGS
         ------------
         #print(subhalo.flags['total_particles'])            # will flag if there are missing particles within aperture_rad
@@ -686,6 +687,7 @@ def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misali
         # Collecting all relevant particle info for galaxy
         all_flags['%s' %str(subhalo.GalaxyID)]          = subhalo.flags
         all_general['%s' %str(subhalo.GalaxyID)]        = subhalo.general
+        all_l['%s' %str(subhalo.GalaxyID)]              = subhalo.l
         all_spins['%s' %str(subhalo.GalaxyID)]          = subhalo.spins
         all_coms['%s' %str(subhalo.GalaxyID)]           = subhalo.coms
         all_counts['%s' %str(subhalo.GalaxyID)]         = subhalo.counts
@@ -726,6 +728,7 @@ def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misali
         
         # Combining all dictionaries
         csv_dict = {'all_general': all_general,
+                    'all_l': all_l,
                     'all_spins': all_spins,
                     'all_coms': all_coms,
                     'all_counts': all_counts,
@@ -978,15 +981,16 @@ def _analysis_misalignment_minor(csv_sample = 'L100_19_minor_sample_misalignment
 
 
 #===========================    
-#_sample_misalignment(snapNum = 151)
+_sample_misalignment(snapNum = 190)
 #_sample_misalignment_minor(snapNum = int(snap_i))
 
 #_sample_modify()
 
 #_analysis_misalignment_minor()
 #_analysis_misalignment_distribution()
-#_analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misalignment_10.040602340114074TEST')
-
+for snap_i in np.arange(19, 29, 1):
+    _analysis_misalignment_distribution(csv_sample = 'L12_%s_all_sample_misalignment_9.0' %snap_i)
+    
 #===========================
 
 #for snap_i in np.arange(134, 140, 1):

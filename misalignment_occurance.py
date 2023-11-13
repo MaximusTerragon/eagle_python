@@ -40,7 +40,7 @@ def _find_misalignment_occurance(csv_sample1 = 'L100_',                         
                                  # Galaxy plotting
                                  print_summary = True,
                                    use_angle          = 'stars_gas_sf',         # Which angles to plot
-                                   use_hmr            = 2.0,                    # Which HMR to use
+                                   use_hmr            = 1.0,                    # Which HMR to use
                                    use_proj_angle     = False,                   # Whether to use projected or absolute angle 10**9
                                      min_inc_angle    = 10,                     # min. degrees of either spin vector to z-axis, if use_proj_angle
                                    lower_mass_limit   = 10**9,             # Whether to plot only certain masses 10**15

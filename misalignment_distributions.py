@@ -30,21 +30,21 @@ EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_dir
 #--------------------------------
 # Plots singular graphs by reading in existing csv file
 # SAVED: /plots/misalignment_distributions/
-def _plot_misalignment(csv_sample = 'L100_28_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
-                       csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
+def _plot_misalignment(csv_sample = 'L100_28_all_sample_misalignment_9.5',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+                       csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_',
                        #--------------------------
                        # Galaxy plotting
                        print_summary = True,
                          use_angle          = 'stars_gas_sf',         # Which angles to plot
                          use_hmr            = 1.0,                    # Which HMR to use
                          use_proj_angle     = True,                   # Whether to use projected or absolute angle 10**9
-                           min_inc_angle    = 10,                     # min. degrees of either spin vector to z-axis, if use_proj_angle
-                           min_particles    = 20,               # [ 20 ] number of particles
+                           min_inc_angle    = 0,                     # min. degrees of either spin vector to z-axis, if use_proj_angle
+                           min_particles    = 50,               # [ 20 ] number of particles
                            min_com          = 2.0,              # [ 2.0 ] pkpc
                            max_uncertainty  = 30,            # [ None / 30 / 45 ]                  Degrees
                          lower_mass_limit   = 10**9.5,            # Whether to plot only certain masses 10**15
                          upper_mass_limit   = 10**15,         
-                         ETG_or_LTG         = 'LTG',           # Whether to plot only ETG/LTG/both
+                         ETG_or_LTG         = 'ETG',           # Whether to plot only ETG/LTG/both
                          cluster_or_field   = 'both',           # Whether to plot only field/cluster/both
                          use_satellites     = True,             # Whether to include SubGroupNum =/ 0
                        #--------------------------
@@ -217,6 +217,8 @@ def _plot_misalignment(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
         satellite_criteria = 99999999
     if not use_satellites:
         satellite_criteria = 0
+    
+    collect_ID = []
     #------------------------------
     def _plot_misalignment_distributions(debug=False):
         # We have use_angle = 'stars_gas_sf', and use_particles = ['stars', 'gas_sf'] 
@@ -346,6 +348,10 @@ def _plot_misalignment(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
                             catalogue['plot']['ETG'] += 1
                         #--------------
                         
+                        if all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle' %use_angle][mask_angles] > 170:
+                            collect_ID.append(GalaxyID)
+                        
+                        
                         # Collect misangle or misangleproj
                         if use_proj_angle:
                             plot_angles.append(all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle' %use_angle][mask_angles])
@@ -359,6 +365,10 @@ def _plot_misalignment(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
             print(catalogue['sample'])
             print(catalogue['plot'])
         
+        
+        #print('\tcollect_ID of counter-rotatos:')
+        #print(collect_ID)
+        #print(len(collect_ID))
         
         
         #================================
@@ -625,7 +635,7 @@ def _plot_misalignment(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
         if print_summary:    
             print('\n')     # total population includes galaxies that failed sample, so can add to less than 100% (ei. remaining % is galaxies that make up non-sample)
             print('OF TOTAL POPULATION: \t(all galaxies in mass range)\n  Aligned:          %.1f ± %.1f %%\n  Misaligned:       %.1f ± %.1f %%\n  Counter-rotating: %.1f ± %.1f %%' %(aligned_tally*100/catalogue['total']['all'], aligned_err_tally*100/catalogue['total']['all'], misaligned_tally*100/catalogue['total']['all'], misaligned_err_tally*100/catalogue['total']['all'], counter_tally*100/catalogue['total']['all'], counter_err_tally*100/catalogue['total']['all']))
-            print('OF TOTAL SAMPLE: \t(meeting CoM, inc angle, particle counts):\n  Aligned:          %.1f ± %.1f %%\n  Misaligned:       %.1f ± %.1f %%\n  Counter-rotating: %.1f ± %.1f %%' %(aligned_tally*100/catalogue['sample']['all'], aligned_err_tally*100/catalogue['sample']['all'], misaligned_tally*100/catalogue['sample']['all'], misaligned_err_tally*100/catalogue['sample']['all'], counter_tally*100/catalogue['sample']['all'], counter_err_tally*100/catalogue['sample']['all']))
+            print('OF TOTAL SAMPLE: \t(meeting CoM, inc angle, particle counts, error):\n  Aligned:          %.1f ± %.1f %%\n  Misaligned:       %.1f ± %.1f %%\n  Counter-rotating: %.1f ± %.1f %%' %(aligned_tally*100/catalogue['sample']['all'], aligned_err_tally*100/catalogue['sample']['all'], misaligned_tally*100/catalogue['sample']['all'], misaligned_err_tally*100/catalogue['sample']['all'], counter_tally*100/catalogue['sample']['all'], counter_err_tally*100/catalogue['sample']['all']))
             print('OF PLOT SAMPLE: \t(specific plot criteria - morph, environ, satellite)\n  Aligned:          %.1f ± %.1f %%\n  Misaligned:       %.1f ± %.1f %%\n  Counter-rotating: %.1f ± %.1f %%' %(aligned_tally*100/catalogue['plot']['all'], aligned_err_tally*100/catalogue['plot']['all'], misaligned_tally*100/catalogue['plot']['all'], misaligned_err_tally*100/catalogue['plot']['all'], counter_tally*100/catalogue['plot']['all'], counter_err_tally*100/catalogue['plot']['all']))       
         
         #-----------
@@ -699,8 +709,8 @@ def _plot_misalignment(csv_sample = 'L100_28_all_sample_misalignment_9.0',     #
 # SAVED: /plots/misalignment_distributions_z/
 def _plot_misalignment_z(csv_sample1 = 'L100_',                                 # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                          csv_sample_range = np.arange(19, 29, 1),   # snapnums
-                         csv_sample2 = '_all_sample_misalignment_9.0',
-                         csv_output_in = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
+                         csv_sample2 = '_all_sample_misalignment_9.5',
+                         csv_output_in = '_RadProj_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_',
                          #--------------------------
                          # Galaxy plotting
                          print_summary = True,
@@ -720,8 +730,8 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
                          # Misalignment criteria
                          misangle_threshold   = 30,             # what we classify as misaligned
                          #--------------------------
-                         showfig       = False,
-                         savefig       = True,
+                         showfig       = True,
+                         savefig       = False,
                            file_format = 'pdf',
                            savefig_txt = '',
                          #--------------------------
@@ -1271,25 +1281,15 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
 
 
 #===========================    
-#_plot_misalignment()
+_plot_misalignment()
 #_plot_misalignment_z()
 
 
 
 
-#_plot_misalignment(use_angle = 'stars_gas_sf', ETG_or_LTG = 'ETG', cluster_or_field   = 'both',     add_observational  = 'Bryant')
-#_plot_misalignment(use_angle = 'stars_gas_sf', ETG_or_LTG = 'ETG', cluster_or_field   = 'cluster',  add_observational  = 'Bryant')
-#_plot_misalignment(use_angle = 'stars_gas_sf', ETG_or_LTG = 'ETG', cluster_or_field   = 'field',    add_observational  = 'Bryant')
-#_plot_misalignment(use_angle = 'stars_gas_sf', ETG_or_LTG = 'LTG', cluster_or_field   = 'both',     add_observational  = 'Bryant')
-#_plot_misalignment(use_angle = 'stars_gas_sf', ETG_or_LTG = 'LTG', cluster_or_field   = 'cluster',  add_observational  = 'Bryant')
-#_plot_misalignment(use_angle = 'stars_gas_sf', ETG_or_LTG = 'LTG', cluster_or_field   = 'field',    add_observational  = 'Bryant')
-#_plot_misalignment(use_angle = 'stars_gas_sf', ETG_or_LTG = 'both', cluster_or_field   = 'both',    add_observational  = 'Bryant')
-#_plot_misalignment(use_angle = 'stars_gas_sf', ETG_or_LTG = 'both', cluster_or_field   = 'cluster', add_observational  = 'Bryant')
-#_plot_misalignment(use_angle = 'stars_gas_sf', ETG_or_LTG = 'both', cluster_or_field   = 'field',   add_observational  = 'Bryant')
-#_plot_misalignment(use_angle = 'stars_dm', ETG_or_LTG = 'ETG', cluster_or_field   = 'both', add_observational  = False)
-#_plot_misalignment(use_angle = 'stars_dm', ETG_or_LTG = 'LTG', cluster_or_field   = 'both', add_observational  = False)
 
-#_plot_misalignment(csv_sample = 'L100_193_all_sample_misalignment_10.0', csv_output = '_Rad_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_')
+
+#_plot_misalignment(csv_sample = 'L100_188_all_sample_misalignment_10.0', csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_')
 
 
 

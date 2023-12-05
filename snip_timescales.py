@@ -215,8 +215,8 @@ gasdata_old             - gets updated and replaced with math.nan
 # Goes through all csv samples given and creates giant merger tree, no criteria used
 # SAVED: /outputs_snips/%sgalaxy_tree_
 def _create_galaxy_tree(csv_sample1 = 'L100_',                                 # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
-                        csv_sample2 = '_all_sample_misalignment_10.0',
-                        csv_sample_range = np.arange(191, 194, 1),   # snapnums
+                        csv_sample2 = '_all_sample_misalignment_9.5',
+                        csv_sample_range = np.arange(134, 201, 1),   # snapnums
                         csv_output_in = '_Rad_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                         #--------------------------
                         # Galaxy analysis
@@ -430,7 +430,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                                                'Lookbacktime': [Lookbacktime],
                                                # total mass of halo from mergertree
                                                'halomass': [all_general['%s' %GalaxyID]['halo_mass']],
-                                               'ap_sfr': [(3.154e+7*all_general['%s' %GalaxyID]['sfr'])],       
+                                               'ap_sfr': [(3.154e+7*all_general['%s' %GalaxyID]['ap_sfr'])],       
                                                # radii
                                                'rad': [all_general['%s' %GalaxyID]['halfmass_rad']],
                                                'radproj': [all_general['%s' %GalaxyID]['halfmass_rad_proj']],
@@ -470,45 +470,25 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                 # Create other
                 for hmr_i in output_input['spin_hmr']:
                     # if this hmr_i not available
-                    if hmr_i not in all_totmass['%s' %GalaxyID]['hmr']:
+                    if (hmr_i not in all_totmass['%s' %GalaxyID]['hmr']) or (disc_edge not in all_totmass['%s' %GalaxyID]['hmr']):
                         # Updating
                         galaxy_tree['%s' %ID_dict]['other'].update({'%s_hmr' %hmr_i: {'tot_mass': [math.nan],
                                                                                       'vcirc': [math.nan],
                                                                                       'tdyn': [math.nan],
                                                                                       'ttorque': [math.nan]}})                        
                     else:
-                        # Creating masks
-                        mask_masses = np.where(np.array(all_totmass['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
-                        mask_disc   = np.where(np.array(all_totmass['%s' %GalaxyID]['hmr']) == float(disc_edge))[0][0]
+                        # Creating masks. mask_disc = disc definition, mask_masses = simply the currnet 
+                        mask_disc = np.where(np.array(all_totmass['%s' %GalaxyID]['hmr']) == float(disc_edge))[0][0]
+                        mask_masses  = np.where(np.array(all_totmass['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                         
-                        R = min(disc_edge*float(all_general['%s' %GalaxyID]['halfmass_rad_sf']), hmr_i*float(all_general['%s' %GalaxyID]['halfmass_rad']))
-                        
-                        # if SF disc contained within spin radius, use SF disc radius as R and M. Else, use spin radius
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        if disc_edge*float(all_general['%s' %GalaxyID]['halfmass_rad_sf']) < hmr_i*float(all_general['%s' %GalaxyID]['halfmass_rad']):
-                            M = float(all_totmass['%s' %GalaxyID]['mass_disc'][mask_disc])      # [0] corresponds to 1*r_50 SF
+                        # if edge of SF disk larger than current hmr, we use R and M of current hmr. Else we use R and M of SF disk
+                        if (disc_edge*float(all_general['%s' %GalaxyID]['halfmass_rad_sf'])) > (hmr_i*float(all_general['%s' %GalaxyID]['halfmass_rad'])):
+                            R = hmr_i*float(all_general['%s' %GalaxyID]['halfmass_rad'])
+                            M = float(all_totmass['%s' %GalaxyID]['mass'][mask_masses])             # totmass at hmr edge
                         else:
-                            M = float(all_totmass['%s' %GalaxyID]['mass'][mask_masses])
+                            R = disc_edge*float(all_general['%s' %GalaxyID]['halfmass_rad_sf'])
+                            M = float(all_totmass['%s' %GalaxyID]['mass_disc'][mask_disc])          # totmass at disk edge
+                        
                         
                         # finding vcirc in [kms/s], tdyn in [Gyr]
                         vcirc = (1/1000 * np.sqrt(np.divide(np.array(M) * 2e30 * 6.67e-11, R * 3.09e19)))
@@ -737,7 +717,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                 galaxy_tree['%s' %ID_dict]['Lookbacktime'].append(Lookbacktime)
                 # total mass of halo from mergertree
                 galaxy_tree['%s' %ID_dict]['halomass'].append(all_general['%s' %GalaxyID]['halo_mass'])
-                galaxy_tree['%s' %ID_dict]['ap_sfr'].append((3.154e+7*all_general['%s' %GalaxyID]['sfr']))
+                galaxy_tree['%s' %ID_dict]['ap_sfr'].append((3.154e+7*all_general['%s' %GalaxyID]['ap_sfr']))
                 # radii
                 galaxy_tree['%s' %ID_dict]['rad'].append(all_general['%s' %GalaxyID]['halfmass_rad'])
                 galaxy_tree['%s' %ID_dict]['radproj'].append(all_general['%s' %GalaxyID]['halfmass_rad_proj'])
@@ -760,7 +740,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                 # Updating other
                 for hmr_i in output_input['spin_hmr']:
                     # if this hmr_i not available
-                    if hmr_i not in all_totmass['%s' %GalaxyID]['hmr']:
+                    if (hmr_i not in all_totmass['%s' %GalaxyID]['hmr']) or (disc_edge not in all_totmass['%s' %GalaxyID]['hmr']):
                         # Updating
                         galaxy_tree['%s' %ID_dict]['other']['%s_hmr' %hmr_i]['tot_mass'].append(math.nan)
                         galaxy_tree['%s' %ID_dict]['other']['%s_hmr' %hmr_i]['vcirc'].append(math.nan)
@@ -769,17 +749,18 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                         
                         
                     else:
-                        # Creating masks
-                        mask_masses = np.where(np.array(all_totmass['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
-                        mask_disc   = np.where(np.array(all_totmass['%s' %GalaxyID]['hmr']) == float(disc_edge))[0][0]
+                        # Creating masks. mask_disc = disc definition, mask_masses = simply the currnet 
+                        mask_disc = np.where(np.array(all_totmass['%s' %GalaxyID]['hmr']) == float(disc_edge))[0][0]
+                        mask_masses  = np.where(np.array(all_totmass['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                         
-                        R = min(float(all_general['%s' %GalaxyID]['halfmass_rad_sf']), hmr_i*float(all_general['%s' %GalaxyID]['halfmass_rad']))
-                        
-                        # if SF disc contained within spin radius, use SF disc radius as R and M. Else, use spin radius
-                        if float(all_general['%s' %GalaxyID]['halfmass_rad_sf']) < hmr_i*float(all_general['%s' %GalaxyID]['halfmass_rad']):
-                            M = float(all_totmass['%s' %GalaxyID]['mass_disc'][mask_disc])      # [0] corresponds to 1*r_50 SF
+                        # if edge of SF disk larger than current hmr, we use R and M of current hmr. Else we use R and M of SF disk
+                        if (disc_edge*float(all_general['%s' %GalaxyID]['halfmass_rad_sf'])) > (hmr_i*float(all_general['%s' %GalaxyID]['halfmass_rad'])):
+                            R = hmr_i*float(all_general['%s' %GalaxyID]['halfmass_rad'])
+                            M = float(all_totmass['%s' %GalaxyID]['mass'][mask_masses])             # totmass at hmr edge
                         else:
-                            M = float(all_totmass['%s' %GalaxyID]['mass'][mask_masses])
+                            R = disc_edge*float(all_general['%s' %GalaxyID]['halfmass_rad_sf'])
+                            M = float(all_totmass['%s' %GalaxyID]['mass_disc'][mask_disc])          # totmass at disk edge
+                        
                         
                         # finding vcirc in [kms/s], tdyn in [Gyr]
                         vcirc = (1/1000 * np.sqrt(np.divide(np.array(M) * 2e30 * 6.67e-11, R * 3.09e19)))
@@ -790,7 +771,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                         galaxy_tree['%s' %ID_dict]['other']['%s_hmr' %hmr_i]['vcirc'].append(vcirc)
                         galaxy_tree['%s' %ID_dict]['other']['%s_hmr' %hmr_i]['tdyn'].append(tdyn)
                         galaxy_tree['%s' %ID_dict]['other']['%s_hmr' %hmr_i]['ttorque'].append(tdyn/all_general['%s' %GalaxyID]['ellip'])
-                
+                        
                 
                 #------------------                       
                 # Updating stars
@@ -1584,7 +1565,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
     f = h5py.File(tree_dir + 'Snip100_MainProgenitorTrees.hdf5', 'r')
     Redshift_tree     = np.array(f['Snapnum_Index']['Redshift'])
     Lookbacktime_tree = np.array(f['Snapnum_Index']['LookbackTime'])
-    f.close()all_general['%s' %GalaxyID]['ap_sfr']
+    f.close()
     
     # Load galaxy_tree
     dict_tree = json.load(open('%s/%s.csv' %(output_dir, csv_tree), 'r'))
@@ -4658,7 +4639,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
 
 #=============================
-#_create_galaxy_tree()  
-_analyse_tree()
+_create_galaxy_tree()  
+#_analyse_tree()
 #=============================
     

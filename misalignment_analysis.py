@@ -34,16 +34,16 @@ EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_dir
 # 151
 def _sample_misalignment(mySims = [('RefL0100N1504', 100)],
                          #--------------------------
-                         galaxy_mass_min    = 10**(9),            # Lower mass limit within 30pkpc
+                         galaxy_mass_min    = 10**(9.5),            # Lower mass limit within 30pkpc
                          galaxy_mass_max    = 10**(15),           # Lower mass limit within 30pkpc
                          snapNum            = 28,               # Target snapshot
-                         use_satellites     = False,             # Whether to include SubGroupNum =/ 0
+                         use_satellites     = True,             # Whether to include SubGroupNum =/ 0
                          print_sample       = False,             # Print list of IDs
                          #--------------------------   
                          plot_sample        = False,
                          plot_coords        = False,
                          #-------------------------- 
-                         csv_file = False,                       # Will write sample to csv file in sapmle_dir
+                         csv_file = True,                       # Will write sample to csv file in sapmle_dir
                             csv_name = '',
                          #--------------------------     
                          print_progress = False,
@@ -470,7 +470,7 @@ def _sample_modify(csv_sample = 'L12_28_all_sample_misalignment_9.0',     # CSV 
 #--------------------------------
 # Reads in a sample file, and does all relevant calculations, and exports as csv file
 # SAVED: /outputs/%s_%s_%s_%s...
-def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misalignment_10.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misalignment_9.5',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                                         #--------------------------
                                         # Galaxy extraction properties
                                         viewing_axis        = 'z',                  # Which axis to view galaxy from.  DEFAULT 'z'
@@ -981,39 +981,36 @@ def _analysis_misalignment_minor(csv_sample = 'L100_19_minor_sample_misalignment
 
 
 #===========================    
-_sample_misalignment(snapNum = 190)
+#_sample_misalignment(snapNum = 190)
 #_sample_misalignment_minor(snapNum = int(snap_i))
 
 #_sample_modify()
 
 #_analysis_misalignment_minor()
 #_analysis_misalignment_distribution()
-for snap_i in np.arange(19, 29, 1):
-    _analysis_misalignment_distribution(csv_sample = 'L12_%s_all_sample_misalignment_9.0' %snap_i)
+
+
+#for snap_i in np.arange(26, 29, 1):
+#for snap_i in np.arange(23, 26, 1):
+#for snap_i in np.arange(19, 23, 1):
+#    _analysis_misalignment_distribution(csv_sample = 'L100_%s_all_sample_misalignment_9.5' %snap_i)
+#for snap_i in np.arange(19, 29, 1):
+#    _sample_misalignment(snapNum = snap_i)
+
+
     
 #===========================
 
-#for snap_i in np.arange(134, 140, 1):
-#for snap_i in np.arange(140, 145, 1):
-#for snap_i in np.arange(145, 150, 1):
-#for snap_i in np.arange(150, 155, 1):
-#for snap_i in np.arange(155, 160, 1): 
-#for snap_i in np.arange(160, 165, 1):
 
-#for snap_i in np.arange(165, 170, 1):
-#for snap_i in np.arange(170, 175, 1):
-#for snap_i in np.arange(175, 180, 1):
-#for snap_i in np.arange(180, 185, 1):
-#for snap_i in np.arange(185, 190, 1):
-#for snap_i in np.arange(190, 195, 1):
+#for snap_i in np.arange(134, 145, 1):
+#for snap_i in np.arange(145, 155, 1):
+#for snap_i in np.arange(155, 165, 1):
+#for snap_i in np.arange(165, 175, 1):
+#for snap_i in np.arange(175, 185, 1):
+#for snap_i in np.arange(185, 195, 1):
 #for snap_i in np.arange(195, 201, 1):
-
-#for snap_i in np.arange(134, 201, 1):
-#    _sample_misalignment(snapNum = int(snap_i), galaxy_mass_min    = 10**(10), galaxy_mass_max    = 10**(15))
-#    _analysis_misalignment_distribution(csv_sample = 'L100_' + str(int(snap_i)) + '_all_sample_misalignment_10.0')
-#    _sample_misalignment(snapNum = int(snap_i), galaxy_mass_min    = 10**(9.5), galaxy_mass_max    = 10**(10))
+#    _sample_misalignment(snapNum = int(snap_i), galaxy_mass_min    = 10**(9.5), galaxy_mass_max    = 10**(15))
 #    _analysis_misalignment_distribution(csv_sample = 'L100_' + str(int(snap_i)) + '_all_sample_misalignment_9.5')
-    
     
 
 #===========================

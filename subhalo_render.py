@@ -54,18 +54,18 @@ ID_list = [3748, 20455, 37445, 30494, 43163, 40124, 44545, 48383, 57647, 55343, 
 def galaxy_render(csv_sample = False,              # False, Whether to read in existing list of galaxies  
                     #--------------------------
                     mySims = [('RefL0012N0188', 12)],
-                    GalaxyID_List = [3748],
+                    GalaxyID_List = [37445],
                     #--------------------------
                     # Galaxy extraction properties
                     kappa_rad            = 30,          # calculate kappa for this radius [pkpc]
                     viewing_angle        = 0,           # Keep as 0
                     #--------------------------
                     # Visualisation properties
-                    boxradius           = 80,                           # size of box of render [kpc], 'rad', 'tworad'
+                    boxradius           = 30,                           # size of box of render [kpc], 'rad', 'tworad'
                     particles           = 5000,                         # number of random particles to plot
                     viewing_axis        = 'z',                          # Which axis to view galaxy from.  DEFAULT 'z'
                     aperture_rad        = 30,                           # calculations radius limit [pkpc]
-                    trim_rad            = np.array([80]),           # largest radius in pkpc to plot | 2.0_hmr, rad_projected=True
+                    trim_rad            = np.array([30]),           # largest radius in pkpc to plot | 2.0_hmr, rad_projected=True
                     align_rad           = False,                          # 2hmr, 1hmr, False/Value
                     mask_sgn            = True,                        # False = plot all nearby subhalos too
                     #=====================================================
@@ -820,7 +820,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         
         if savefig:
             plt.savefig("%s/individual_render/L%s_render_ID%s_sgn%s_%s_%s_%s.%s" %(fig_dir, mySims[0][1], GalaxyID, mask_sgn, SnapNum, particle_txt, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print('\n  SAVED:%s/individual_render/L%s_render_ID%s_sgn%_%s_%s_%s.%s' %(fig_dir, mySims[0][1], GalaxyID, mask_sgn, SnapNum, particle_txt, savefig_txt, file_format))
+            print('\n  SAVED:%s/individual_render/L%s_render_ID%s_sgn%s_%s_%s_%s.%s' %(fig_dir, mySims[0][1], GalaxyID, mask_sgn, SnapNum, particle_txt, savefig_txt, file_format))
         if showfig:
             plt.show()
         plt.close()
@@ -828,23 +828,23 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
 
 
 #====================================
-# Will visualise all particles belonging to a SINGLE galaxy/subhalo
+# Will color particles based on line of sight velocity 
 # SAVED:%s/individual_render/
-def galaxy_render(csv_sample = False,              # False, Whether to read in existing list of galaxies  
+def galaxy_map(csv_sample = False,              # False, Whether to read in existing list of galaxies  
                     #--------------------------
                     mySims = [('RefL0012N0188', 12)],
-                    GalaxyID_List = [3748],
+                    GalaxyID_List = [37445],
                     #--------------------------
                     # Galaxy extraction properties
                     kappa_rad            = 30,          # calculate kappa for this radius [pkpc]
                     viewing_angle        = 0,           # Keep as 0
                     #--------------------------
                     # Visualisation properties
-                    boxradius           = 80,                           # size of box of render [kpc], 'rad', 'tworad'
-                    particles           = 5000,                         # number of random particles to plot
+                    boxradius           = 15,                           # size of box of render [kpc], 'rad', 'tworad'
+                    particles           = 100000,                         # number of random particles to plot
                     viewing_axis        = 'z',                          # Which axis to view galaxy from.  DEFAULT 'z'
                     aperture_rad        = 30,                           # calculations radius limit [pkpc]
-                    trim_rad            = np.array([80]),           # largest radius in pkpc to plot | 2.0_hmr, rad_projected=True
+                    trim_rad            = np.array(['1.0_hmr']),           # largest radius in pkpc to plot | 2.0_hmr, rad_projected=True
                     align_rad           = False,                          # 2hmr, 1hmr, False/Value
                     mask_sgn            = True,                        # False = plot all nearby subhalos too
                     #=====================================================
@@ -854,27 +854,25 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                                            'stars_gas_nsf',                 # gas_sf_gas_nsf
                                            'gas_sf_gas_nsf',
                                            'stars_dm'],           
-                    spin_hmr            = np.array([1.0, 2.0]),                  # multiples of hmr for which to find spin. Will plot lowest value
-                    rad_projected       = False,                             # whether to use rad in projection or 3D
+                    spin_hmr            = np.array([1.0]),                  # multiples of hmr for which to find spin. Will plot lowest value
+                    rad_projected       = False,                            # whether to use rad in projection or 3D
                     #--------------------------
                     # Plot options
                     plot_spin_vectors   = True,
-                    centre_of_pot       = True,                             # Plot most bound object 
+                    centre_of_pot       = False,                             # Plot most bound object 
                     centre_of_mass      = False,                            # Plot total centre of mass
-                    axis                = True,                             # Plot small axis below galaxy
+                    axis                = False,                             # Plot small axis below galaxy
                     #--------------------------
                     # Particle properties
-                    stars               = True,
+                    stars               = False,
                     gas                 = False,
-                    gas_sf              = True,
+                    gas_sf              = False,
                     gas_nsf             = False,    
                     dark_matter         = False,
                     black_holes         = True,
-                    #--------------------------
-                    color_metallicity   = False,
                     #=====================================================
-                    showfig       = True,
-                    savefig       = False,
+                    showfig       = False,
+                    savefig       = True,
                       savefig_txt = '',                # added txt to append to end of savefile
                       file_format = 'pdf',
                     #--------------------------
@@ -1129,7 +1127,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         fig.add_axes(ax, computed_zorder=False)
         
         
-        def plot_rand_scatter(dict_name, part_type, color, metallicity=color_metallicity, debug=False):
+        def plot_rand_scatter(dict_name, part_type, input_axis, debug=False):
             # Plot formatting
             ax.set_facecolor('xkcd:black')
             ax.w_xaxis.pane.fill = False
@@ -1146,34 +1144,34 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
             # Selecting N (particles) sets of coordinates
             if dict_name[part_type]['Coordinates'].shape[0] <= particles:
                 coords = dict_name[part_type]['Coordinates']
-                if (part_type == 'gas') | (part_type == 'gas_sf') | (part_type == 'gas_nsf') | (part_type == 'stars'):
-                    metals = dict_name[part_type]['Metallicity']
+                vels   = dict_name[part_type]['Velocity']
             else:
                 coords = dict_name[part_type]['Coordinates'][np.random.choice(dict_name[part_type]['Coordinates'].shape[0], particles, replace=False), :]
-                if (part_type == 'gas') | (part_type == 'gas_sf') | (part_type == 'gas_nsf') | (part_type == 'stars'):
-                    metals = dict_name[part_type]['Metallicity'][np.random.choice(dict_name[part_type]['Coordinates'].shape[0], particles, replace=False)]
+                vels   = dict_name[part_type]['Velocity'][np.random.choice(dict_name[part_type]['Coordinates'].shape[0], particles, replace=False), :]
             
             # Plot scatter
+            colormap = plt.cm.bwr
+            if part_type == 'stars':
+                norm = colors.Normalize(vmin=-100, vmax=100)
+            else:
+                norm = colors.Normalize(vmin=-100, vmax=100)
             if part_type == 'bh':
                 bh_size = dict_name[part_type]['Mass']
-                ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=(bh_size/8e5)**(1/3), alpha=1, c=color, zorder=4)
+                ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=(bh_size/8e5)**(1/3), alpha=1, c='blueviolet', zorder=4)
             else:
-                if (part_type == 'gas') | (part_type == 'gas_sf') | (part_type == 'gas_nsf') | (part_type == 'stars'):
-                    if metallicity:
-                        if part_type == 'gas':
-                            ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=0.02, alpha=0.9, c=metals, zorder=4, cmap='YlGn_r')
-                        if part_type == 'gas_sf':
-                            ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=0.02, alpha=0.9, c=metals, zorder=4, cmap='Blues_r')
-                        if part_type == 'gas_nsf':
-                            ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=0.02, alpha=0.9, c=metals, zorder=4, cmap='Purples_r')
-                        if part_type == 'stars':
-                            ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=0.02, alpha=0.9, c=metals, zorder=4, cmap='YlOrRd_r')
-                        
-                    else:
-                        ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=0.02, alpha=0.9, c=color, zorder=4)
+                if input_axis == 'x':
+                    vels_axis = -1*vels[:,0]
+                elif input_axis == 'y':
+                    vels_axis = -1*vels[:,1]
+                elif input_axis == 'z':
+                    vels_axis = -1*vels[:,2]    
+                
+                if part_type == 'stars':
+                    alpha = 0.25
                 else:
-                    ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=0.02, alpha=0.9, c=color, zorder=4)
-           
+                    alpha = 0.5
+                ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=1, alpha=alpha, c=vels_axis, zorder=4, cmap=colormap, norm=norm)
+          
         def plot_spin_vector(dict_name, part_type, rad, color, debug=False):
             # Plot formatting
             ax.set_facecolor('xkcd:black')
@@ -1192,7 +1190,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
             point = subhalo.coms['adjust'][int(min(mask))]
         
             # Plot original stars spin vector
-            ax.quiver(point[0], point[1], point[2], arrow[0]*boxradius*0.6, arrow[1]*boxradius*0.6, arrow[2]*boxradius*0.6, color=color, alpha=1, linewidth=1, zorder=50)
+            ax.quiver(point[0], point[1], point[2], arrow[0]*boxradius*1, arrow[1]*boxradius*1, arrow[2]*boxradius*1, color=color, alpha=1, linewidth=2, zorder=50)
 
         def plot_coms(dict_name, part_type, rad, color, debug=False):
             # Plot formatting
@@ -1239,37 +1237,37 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                 ax.set_zlabel('z-pos [pkpc]')
                 fig.canvas.draw_idle()
             def stars_button(self, event):
-                plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'stars', 'lightyellow')
+                plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'stars', viewing_axis)
                 fig.canvas.draw_idle()
             def stars_v_button(self, event):
                 plot_spin_vector(subhalo.spins, 'stars', spin_vector_rad, 'r')
                 fig.canvas.draw_idle()
             def gas_button(self, event):
-                plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'gas', 'lime')
+                plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'gas', viewing_axis)
                 fig.canvas.draw_idle()    
             def gas_v_button(self, event):
                 plot_spin_vector(subhalo.spins, 'gas', spin_vector_rad, 'forestgreen')
                 fig.canvas.draw_idle()
             def gas_sf_button(self, event):
-                plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'gas_sf', 'cyan')
+                plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'gas_sf', viewing_axis)
                 fig.canvas.draw_idle()
             def gas_sf_v_button(self, event):
                 plot_spin_vector(subhalo.spins, 'gas_sf', spin_vector_rad, 'darkturquoise')
                 fig.canvas.draw_idle()
             def gas_nsf_button(self, event):
-                plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'gas_nsf', 'royalblue')
+                plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'gas_nsf', viewing_axis)
                 fig.canvas.draw_idle()
             def gas_nsf_v_button(self, event):
                 plot_spin_vector(subhalo.spins, 'gas_nsf', spin_vector_rad, 'blue')   
                 fig.canvas.draw_idle()
             def dm_button(self, event):
-                plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'dm', 'saddlebrown')
+                plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'dm', viewing_axis)
                 fig.canvas.draw_idle()
             def dm_v_button(self, event):
                 plot_spin_vector(subhalo.spins, 'dm', spin_vector_rad, 'maroon') 
                 fig.canvas.draw_idle()
             def bh_button(self, event):
-                plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'bh', 'blueviolet')
+                plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'bh', viewing_axis)
                 fig.canvas.draw_idle()
             def com_button(self, event):
                 plot_coms(subhalo.coms, 'stars', spin_vector_rad, 'r')
@@ -1443,37 +1441,37 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         #--------------------------------------------
         # Plot scatters and spin vectors, COMs 
         if stars:
-            plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'stars', 'lightyellow')
+            plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'stars', viewing_axis)
             if plot_spin_vectors:
                 plot_spin_vector(subhalo.spins, 'stars', spin_vector_rad, 'r')
             if centre_of_mass:
                 plot_coms(subhalo.coms, 'stars', spin_vector_rad, 'r')
         if gas:
-            plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'gas', 'lime')
+            plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'gas', viewing_axis)
             if plot_spin_vectors:
                 plot_spin_vector(subhalo.spins, 'gas', spin_vector_rad, 'forestgreen')
             if centre_of_mass:
                 plot_coms(subhalo.coms, 'gas', spin_vector_rad, 'forestgreen')
         if gas_sf:
-            plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'gas_sf', 'cyan')
+            plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'gas_sf', viewing_axis)
             if plot_spin_vectors:
                 plot_spin_vector(subhalo.spins, 'gas_sf', spin_vector_rad, 'darkturquoise')
             if centre_of_mass:
                 plot_coms(subhalo.coms, 'gas_sf', spin_vector_rad, 'darkturquoise')
         if gas_nsf:
-            plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'gas_nsf', 'royalblue')
+            plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'gas_nsf', viewing_axis)
             if plot_spin_vectors:
                 plot_spin_vector(subhalo.spins, 'gas_nsf', spin_vector_rad, 'blue')  
             if centre_of_mass:
                 plot_coms(subhalo.coms, 'gas_nsf', spin_vector_rad, 'blue')
         if dark_matter:
-            plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'dm', 'saddlebrown')
+            plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'dm', viewing_axis)
             if plot_spin_vectors:
                 plot_spin_vector(subhalo.spins, 'dm', aperture_rad, 'maroon') 
             if centre_of_mass:
                 plot_coms(subhalo.coms, 'dm', spin_vector_rad, 'maroon')
         if black_holes:
-            plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'bh', 'blueviolet')
+            plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'bh', viewing_axis)
             
         # Plot axis
         if axis == True:
@@ -1528,13 +1526,16 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         
         if savefig:
             plt.savefig("%s/individual_render/L%s_velocitymap_ID%s_sgn%s_%s_%s_%s.%s" %(fig_dir, mySims[0][1], GalaxyID, mask_sgn, SnapNum, particle_txt, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print('\n  SAVED:%s/individual_render/L%s_velocitymap_ID%s_sgn%_%s_%s_%s.%s' %(fig_dir, mySims[0][1], GalaxyID, mask_sgn, SnapNum, particle_txt, savefig_txt, file_format))
+            print('\n  SAVED:%s/individual_render/L%s_velocitymap_ID%s_sgn%s_%s_%s_%s.%s' %(fig_dir, mySims[0][1], GalaxyID, mask_sgn, SnapNum, particle_txt, savefig_txt, file_format))
         if showfig:
             plt.show()
         plt.close()
 
 
 #--------------      
-galaxy_render()
-galaxy_map()
+#galaxy_render()
+
+
+galaxy_map(stars=True)
+galaxy_map(gas_sf=True)
 #--------------

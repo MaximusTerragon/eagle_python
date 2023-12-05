@@ -1082,6 +1082,7 @@ Output Parameters
         ['rad']          - [pkpc]
         ['hmr']          - multiples of halfmass_rad
         ['mass']         - [Msun]
+        ['mass_disc']    - [Msun]   mass found within sf hmr multiples
 .Z:   dictionary        
         ['rad']          - [pkpc]
         ['hmr']          - multiples of halfmass_rad

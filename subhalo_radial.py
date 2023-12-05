@@ -68,11 +68,12 @@ def _radial_analysis(csv_sample = False,              # Whether to read in exist
                        viewing_angle = 0,                          # Keep as 0
                        #-----------------------------------------------------
                        # Misalignments we want extracted and at which radii
-                       angle_selection     = ['stars_gas',            # stars_gas     stars_gas_sf    stars_gas_nsf
-                                              'stars_gas_sf',         # gas_dm        gas_sf_dm       gas_nsf_dm
-                                              'stars_gas_nsf',        # gas_sf_gas_nsf
-                                              'gas_sf_gas_nsf',
-                                              'stars_dm'],           
+                       angle_selection     = ['stars_gas',            # stars_gas     stars_gas_sf
+                                              'stars_gas_sf',         # stars_dm      gas_dm        gas_sf_dm       gas_nsf_dm        
+                                              'gas_sf_gas_nsf',       # gas_sf_gas_nsf
+                                              'stars_dm',
+                                              'gas_dm',
+                                              'gas_sf_dm'],      
                        spin_hmr            = np.arange(0.5, 10.1, 0.5),          # multiples of hmr for which to find spin
                        find_uncertainties  = True,                    # whether to find 2D and 3D uncertainties
                        rad_projected       = True,                     # whether to use rad in projection or 3D

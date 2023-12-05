@@ -31,15 +31,15 @@ EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_dir
 #================================
 # Will plot sample selection given criteria
 # SAVED: /outputs/sample_stellar_mass_function/
-def _plot_stellar_mass_function(csv_sample = 'L100_27_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
-                                csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
+def _plot_stellar_mass_function(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+                                csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_',
                                  #--------------------------
                                  # What determines our final sample
                                  print_summary = True,
                                    use_angle           = 'stars_gas_sf',   # Which angles to ensure we have
                                    use_hmr             = 1.0,              # Which HMR ^
                                    use_proj_angle      = True,                   # Whether to use projected or absolute angle 10**9
-                                     min_inc_angle     = 10,                     # min. degrees of either spin vector to z-axis, if use_proj_angle
+                                     min_inc_angle     = 0,                     # min. degrees of either spin vector to z-axis, if use_proj_angle
                                      min_particles     = 20,               # [ 20 ] number of particles
                                      min_com           = 2.0,              # [ 2.0 ] pkpc
                                      max_uncertainty   = 30,            # [ None / 30 / 45 ]                  Degrees
@@ -50,8 +50,8 @@ def _plot_stellar_mass_function(csv_sample = 'L100_27_all_sample_misalignment_9.
                                  #--------------------------
                                  hist_bin_width = 0.2,
                                  #--------------------------
-                                 showfig       = False,
-                                 savefig       = True,
+                                 showfig       = True,
+                                 savefig       = False,
                                    file_format = 'pdf',
                                    savefig_txt = '',
                                  #--------------------------

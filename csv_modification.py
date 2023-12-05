@@ -26,7 +26,7 @@ EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_dir
 #====================================
  
 
-
+#------------------------------
 # Modifies existing csv output file by adding or removing relevant fields
 def _modify_sample_csv(csv_sample = '#L12_20_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                        #--------------------------   
@@ -100,7 +100,6 @@ def _modify_sample_csv(csv_sample = '#L12_20_all_sample_misalignment_9.0',     #
          raise Exception('Terminated')
     else:
          raise Exception('Terminated')
-    
     
 # Modifies existing csv output file by adding or removing relevant fields
 def _modify_misalignment_csv(csv_sample = 'L100_27_all_sample_misalignment_9.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
@@ -339,9 +338,7 @@ def _modify_misalignment_csv(csv_sample = 'L100_27_all_sample_misalignment_9.0',
          raise Exception('Terminated')
     
 
-
-
-
+#------------------------------
 # Merges two output files
 def _merge_misalignment_csv(csv_sample1    = 'L100_198_all_sample_misalignment_10.0',     ##### USE 9-10
                             csv_output1_in = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
@@ -490,16 +487,7 @@ def _merge_misalignment_csv(csv_sample1    = 'L100_198_all_sample_misalignment_1
          raise Exception('Terminated')
     
     
-    
-    
-    
-    
-    
-    
-    
-    
-
-
+#------------------------------
 # Modifies existing csv output file by adding or removing relevant fields
 def _modify_radial_csv(csv_output = '#L12_radial_ID37445_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
                        #--------------------------   
@@ -646,6 +634,7 @@ def _modify_radial_csv(csv_output = '#L12_radial_ID37445_RadProj_Err__stars_gas_
         """
     
 
+#------------------------------
 # Test read
 def _test_read(csv_sample = 'MOD_L100_199_all_sample_misalignment_10.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                csv_output = 'MOD_L100_199_all_sample_misalignment_10.0_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',

@@ -58,13 +58,14 @@ SubGroupNum             -
 SnapNum                 -
 Redshift                -
 Lookbacktime            -
+
 halomass                - total per subfind
-#ap_sfr					- [Msun/yr] in aperture
+ap_sfr					- [Msun/yr] in aperture
 rad                     - [pkpc]
 radproj                 - [pkpc]
-# rad_sf				- [pkpc]
-ellip					- For spherical, e=0. Typically 0.2-0.3 for ETG, 0.6-0.8 for LTG
-triax					- low and high values of T correspond to oblate and prolate ellipsoids, respectively
+rad_sf  				- [pkpc]
+ellip					- 1 is flat, 0 is sphere Typically 0.2-0.3 for ETG, 0.6-0.8 for LTG
+triax					- Low values are oblate, high are prolate
 disp_ani				- Values of δ > 0 indicate that the velocity dispersion is primarily contributed by disordered motion in the disc plane
 disc_to_total			- The mass fraction of stars that are rotationally-supported (which can be considered the ‘disc’ mass fraction) is a simple and intuitive kinematic diagnostic.
 rot_to_disp_ratio		- the ratio of rotation and dispersion velocities
@@ -72,19 +73,14 @@ merger_ID               - merger stuff
 merger_ratio_stars      - peak stellar ratios in past 2 Gyr ish
 merger_ratio_gas        - gas ratios at time of peak stellar ratios
 gasdata_old             - gets updated and replaced with math.nan
-# ellip					- 1 is flat, 0 is sphere
-# triax					- Low values are oblate, high are prolate
-# disp_ani				-
-# disc_to_total			-
-# rot_to_disp_ratio		- 
 
-#'other'
-#    '1.0_hmr'
-#    '2.0_hmr'
-#        tot_mass        - [Msun] total mass of all masses
-#        vcirc           - [km/s] circular velocity according to virial theorem
-#        tdyn            - [Gyr] relaxation time at this radius
-#        ttorque           	- [Gyr] torquing time at this radius = tdyn/ellip
+'other'
+    '1.0_hmr'
+    '2.0_hmr'
+        tot_mass        - [Msun] total mass of all masses
+        vcirc           - [km/s] circular velocity according to virial theorem
+        tdyn            - [Gyr] relaxation time at this radius
+        ttorque           	- [Gyr] torquing time at this radius = tdyn/ellip
 		
 'stars'
     tot_mass            - total subfind mass
@@ -95,6 +91,7 @@ gasdata_old             - gets updated and replaced with math.nan
         mass            - mass in radius
         count           - counts in radius
         Z               - metallicity in radius
+		l				- specific angular momentum (spin) in units of [pkpc/kms-1]. 109 M have roughly log(l) of 1.5, 1010.5 have roughly log(l) of 2.5
         proj_angle      - angle to viewing axis
 
 'gas'
@@ -107,6 +104,7 @@ gasdata_old             - gets updated and replaced with math.nan
         count           - counts in radius
         sfr             - sfr in radius [Msun/yr]
         Z               - metallicity in radius
+		l				- specific angular momentum (spin) in units of [pkpc/kms-1]
         proj_angle      - angle to viewing axis
         inflow_rate     - inflow rate at radius [Msun/yr]
         inflow_Z        - inflow metallicity (mass-weighted, but Z is fine)
@@ -124,6 +122,7 @@ gasdata_old             - gets updated and replaced with math.nan
         count           - counts in radius
         sfr             - sfr in radius [Msun/yr]
         Z               - metallicity in radius
+		l				- specific angular momentum (spin) in units of [pkpc/kms-1]
         proj_angle      - angle to viewing axis
         inflow_rate     - inflow rate at radius [Msun/yr]
         inflow_Z        - inflow metallicity (mass-weighted, but Z is fine)
@@ -134,12 +133,13 @@ gasdata_old             - gets updated and replaced with math.nan
 
 'gas_nsf'
     ap_mass             - total aperture mass
-    #kappa               - kappa
+    kappa               - kappa
     '1.0_hmr'
     '2.0_hmr'
         mass            - mass in radius
         count           - counts in radius
         Z               - metallicity in radius
+		l				- specific angular momentum (spin) in units of [pkpc/kms-1]
         proj_angle      - angle to viewing axis
         inflow_rate     - inflow rate at radius [Msun/yr]
         inflow_Z        - inflow metallicity (mass-weighted, but Z is fine)
@@ -152,6 +152,7 @@ gasdata_old             - gets updated and replaced with math.nan
     ap_mass             - total aperture mass
     count               - total count in aperture
     proj_angle          - angle to viewing axis
+	l					- specific angular momentum (spin) in units of [pkpc/kms-1] in maximum hmr available
 
 'bh'
     mass                - bh mass of central BH (not particle mass)
@@ -289,6 +290,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
         all_totmass         = dict_output['all_totmass']
         all_sfr             = dict_output['all_sfr']
         all_Z               = dict_output['all_Z']
+        all_l               = dict_output['all_l']
         all_misangles       = dict_output['all_misangles']
         all_misanglesproj   = dict_output['all_misanglesproj']
         all_gasdata         = dict_output['all_gasdata']
@@ -382,8 +384,8 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
             merger_gas_array   = []
             if len(merger_mask) > 0:
                 for mask_i in merger_mask:
-                    # Find largest stellar mass of this satellite.
-                    mass_mask = np.argmax(StellarMass_tree[mask_i][int(SnapNum-10):int(SnapNum)]) + (SnapNum-10)
+                    # Find largest stellar mass of this satellite, per method of Rodriguez-Gomez et al. 2015, Qu et al. 2017 (see crain2017)
+                    mass_mask = np.argmax(StellarMass_tree[mask_i][int(SnapNum-100):int(SnapNum)]) + (SnapNum-100)
                     
                     # Extract secondary properties
                     primary_stelmass   = StellarMass_tree[row_mask][mass_mask]
@@ -512,6 +514,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                         galaxy_tree['%s' %ID_dict]['stars'].update({'%s_hmr' %hmr_i: {'mass': [math.nan],
                                                                                       'count': [math.nan],                     
                                                                                       'Z': [math.nan],  
+                                                                                      'l': [math.nan],
                                                                                       'proj_angle': [math.nan]}})
                     else:
                         # Creating masks
@@ -519,11 +522,13 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                         mask_counts = np.where(np.array(all_counts['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                         mask_spins  = np.where(np.array(all_spins['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                         mask_Z      = np.where(np.array(all_Z['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
+                        mask_l      = np.where(np.array(all_l['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                     
                         # Updating
                         galaxy_tree['%s' %ID_dict]['stars'].update({'%s_hmr' %hmr_i: {'mass': [all_masses['%s' %GalaxyID]['stars'][mask_masses]],
                                                                                       'count': [all_counts['%s' %GalaxyID]['stars'][mask_counts]],                     
-                                                                                      'Z': [all_Z['%s' %GalaxyID]['stars'][mask_Z]],  
+                                                                                      'Z': [all_Z['%s' %GalaxyID]['stars'][mask_Z]],                      
+                                                                                      'l': [all_l['%s' %GalaxyID]['stars'][mask_l]],  
                                                                                       'proj_angle': [_find_angle(all_spins['%s' %GalaxyID]['stars'][mask_spins], viewing_vector)]}})
                                                                                                                           
                 #------------------                       
@@ -539,6 +544,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                                                                                     'count': [math.nan],    
                                                                                     'sfr': [math.nan],                      
                                                                                     'Z': [math.nan],  
+                                                                                    'l': [math.nan],
                                                                                     'proj_angle': [math.nan],
                                                                                     # inflow/outflow and metallicity flow
                                                                                     'inflow_rate': [math.nan],
@@ -554,11 +560,13 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                         mask_spins  = np.where(np.array(all_spins['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                         mask_sfr    = np.where(np.array(all_sfr['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                         mask_Z      = np.where(np.array(all_Z['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
+                        mask_l      = np.where(np.array(all_l['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                     
                         # Updating
                         galaxy_tree['%s' %ID_dict]['gas'].update({'%s_hmr' %hmr_i: {'mass': [all_masses['%s' %GalaxyID]['gas'][mask_masses]],
                                                                                     'count': [all_counts['%s' %GalaxyID]['gas'][mask_counts]],                     
-                                                                                    'Z': [all_Z['%s' %GalaxyID]['gas'][mask_Z]],  
+                                                                                    'Z': [all_Z['%s' %GalaxyID]['gas'][mask_Z]],                       
+                                                                                    'l': [all_l['%s' %GalaxyID]['gas'][mask_l]], 
                                                                                     'sfr': [(3.154e+7*all_sfr['%s' %GalaxyID]['gas_sf'][mask_sfr])], 
                                                                                     'proj_angle': [_find_angle(all_spins['%s' %GalaxyID]['gas'][mask_spins], viewing_vector)],
                                                                                     # inflow/outflow and metallicity flow
@@ -580,7 +588,8 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                         galaxy_tree['%s' %ID_dict]['gas_sf'].update({'%s_hmr' %hmr_i: {'mass': [math.nan],
                                                                                        'count': [math.nan],   
                                                                                        'sfr': [math.nan],                  
-                                                                                       'Z': [math.nan],  
+                                                                                       'Z': [math.nan],   
+                                                                                       'l': [math.nan],
                                                                                        'proj_angle': [math.nan],
                                                                                         # inflow/outflow and metallicity flow
                                                                                         'inflow_rate': [math.nan],
@@ -596,11 +605,13 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                         mask_spins  = np.where(np.array(all_spins['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                         mask_sfr    = np.where(np.array(all_sfr['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                         mask_Z      = np.where(np.array(all_Z['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
+                        mask_l      = np.where(np.array(all_l['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                     
                         # Updating
                         galaxy_tree['%s' %ID_dict]['gas_sf'].update({'%s_hmr' %hmr_i: {'mass': [all_masses['%s' %GalaxyID]['gas_sf'][mask_masses]],
                                                                                        'count': [all_counts['%s' %GalaxyID]['gas_sf'][mask_counts]],                     
-                                                                                       'Z': [all_Z['%s' %GalaxyID]['gas_sf'][mask_Z]],  
+                                                                                       'Z': [all_Z['%s' %GalaxyID]['gas_sf'][mask_Z]],                       
+                                                                                       'l': [all_l['%s' %GalaxyID]['gas_sf'][mask_l]], 
                                                                                        'sfr': [3.154e+7*(all_sfr['%s' %GalaxyID]['gas_sf'][mask_sfr])],                 
                                                                                        'proj_angle': [_find_angle(all_spins['%s' %GalaxyID]['gas_sf'][mask_spins], viewing_vector)],
                                                                                         # inflow/outflow and metallicity flow
@@ -621,7 +632,8 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                         # Updating
                         galaxy_tree['%s' %ID_dict]['gas_nsf'].update({'%s_hmr' %hmr_i: {'mass': [math.nan],
                                                                                         'count': [math.nan],                 
-                                                                                        'Z': [math.nan],  
+                                                                                        'Z': [math.nan],   
+                                                                                        'l': [math.nan],
                                                                                         'proj_angle': [math.nan],
                                                                                         # inflow/outflow and metallicity flow
                                                                                         'inflow_rate': [math.nan],
@@ -636,11 +648,13 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                         mask_counts = np.where(np.array(all_counts['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                         mask_spins  = np.where(np.array(all_spins['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                         mask_Z      = np.where(np.array(all_Z['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
+                        mask_l      = np.where(np.array(all_l['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                     
                         # Updating
                         galaxy_tree['%s' %ID_dict]['gas_nsf'].update({'%s_hmr' %hmr_i: {'mass': [all_masses['%s' %GalaxyID]['gas_nsf'][mask_masses]],
                                                                                         'count': [all_counts['%s' %GalaxyID]['gas_nsf'][mask_counts]],                     
-                                                                                        'Z': [all_Z['%s' %GalaxyID]['gas_nsf'][mask_Z]],                  
+                                                                                        'Z': [all_Z['%s' %GalaxyID]['gas_nsf'][mask_Z]],                        
+                                                                                        'l': [all_l['%s' %GalaxyID]['gas_nsf'][mask_l]],                 
                                                                                         'proj_angle': [_find_angle(all_spins['%s' %GalaxyID]['gas_nsf'][mask_spins], viewing_vector)],
                                                                                         # inflow/outflow and metallicity flow
                                                                                         'inflow_rate': [math.nan],
@@ -654,7 +668,8 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                 # Create dm
                 galaxy_tree['%s' %ID_dict]['dm']   = {'ap_mass': [all_general['%s' %GalaxyID]['dmmass']],
                                                       'count': [all_counts['%s' %GalaxyID]['dm']],
-                                                      'proj_angle': [_find_angle(all_spins['%s' %GalaxyID]['dm'][-1], viewing_vector)]}
+                                                      'proj_angle': [_find_angle(all_spins['%s' %GalaxyID]['dm'][-1], viewing_vector)],
+                                                      'l': [all_l['%s' %GalaxyID]['dm'][-1]]}
                                                       
                     
                 #------------------                       
@@ -749,7 +764,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                         
                         
                     else:
-                        # Creating masks. mask_disc = disc definition, mask_masses = simply the currnet 
+                        # Creating masks. mask_disc = disc definition, mask_masses (SHOULD BE mask_rad IDEALLY) = simply the currnet rad
                         mask_disc = np.where(np.array(all_totmass['%s' %GalaxyID]['hmr']) == float(disc_edge))[0][0]
                         mask_masses  = np.where(np.array(all_totmass['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                         
@@ -785,6 +800,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                         galaxy_tree['%s' %ID_dict]['stars']['%s_hmr' %hmr_i]['mass'].append(math.nan)
                         galaxy_tree['%s' %ID_dict]['stars']['%s_hmr' %hmr_i]['count'].append(math.nan)
                         galaxy_tree['%s' %ID_dict]['stars']['%s_hmr' %hmr_i]['Z'].append(math.nan)
+                        galaxy_tree['%s' %ID_dict]['stars']['%s_hmr' %hmr_i]['l'].append(math.nan)
                         galaxy_tree['%s' %ID_dict]['stars']['%s_hmr' %hmr_i]['proj_angle'].append(math.nan)
                     else:
                         # Creating masks
@@ -792,11 +808,13 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                         mask_counts = np.where(np.array(all_counts['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                         mask_spins  = np.where(np.array(all_spins['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                         mask_Z      = np.where(np.array(all_Z['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
+                        mask_l      = np.where(np.array(all_l['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                     
                         # Updating
                         galaxy_tree['%s' %ID_dict]['stars']['%s_hmr' %hmr_i]['mass'].append(all_masses['%s' %GalaxyID]['stars'][mask_masses])
                         galaxy_tree['%s' %ID_dict]['stars']['%s_hmr' %hmr_i]['count'].append(all_counts['%s' %GalaxyID]['stars'][mask_counts])
                         galaxy_tree['%s' %ID_dict]['stars']['%s_hmr' %hmr_i]['Z'].append(all_Z['%s' %GalaxyID]['stars'][mask_Z])
+                        galaxy_tree['%s' %ID_dict]['stars']['%s_hmr' %hmr_i]['l'].append(all_l['%s' %GalaxyID]['stars'][mask_l])
                         galaxy_tree['%s' %ID_dict]['stars']['%s_hmr' %hmr_i]['proj_angle'].append(_find_angle(all_spins['%s' %GalaxyID]['stars'][mask_spins], viewing_vector))
                         
                 #------------------                       
@@ -812,6 +830,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                         galaxy_tree['%s' %ID_dict]['gas']['%s_hmr' %hmr_i]['count'].append(math.nan)
                         galaxy_tree['%s' %ID_dict]['gas']['%s_hmr' %hmr_i]['sfr'].append(math.nan)
                         galaxy_tree['%s' %ID_dict]['gas']['%s_hmr' %hmr_i]['Z'].append(math.nan)
+                        galaxy_tree['%s' %ID_dict]['gas']['%s_hmr' %hmr_i]['l'].append(math.nan)
                         galaxy_tree['%s' %ID_dict]['gas']['%s_hmr' %hmr_i]['proj_angle'].append(math.nan)
                         galaxy_tree['%s' %ID_dict]['gas']['%s_hmr' %hmr_i]['inflow_rate'].append(math.nan)
                         galaxy_tree['%s' %ID_dict]['gas']['%s_hmr' %hmr_i]['inflow_Z'].append(math.nan)
@@ -826,12 +845,14 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                         mask_spins  = np.where(np.array(all_spins['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                         mask_sfr    = np.where(np.array(all_sfr['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                         mask_Z      = np.where(np.array(all_Z['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
+                        mask_l      = np.where(np.array(all_l['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                         
                         # Updating
                         galaxy_tree['%s' %ID_dict]['gas']['%s_hmr' %hmr_i]['mass'].append(all_masses['%s' %GalaxyID]['gas'][mask_masses])
                         galaxy_tree['%s' %ID_dict]['gas']['%s_hmr' %hmr_i]['count'].append(all_counts['%s' %GalaxyID]['gas'][mask_counts])
                         galaxy_tree['%s' %ID_dict]['gas']['%s_hmr' %hmr_i]['sfr'].append((3.154e+7*all_sfr['%s' %GalaxyID]['gas_sf'][mask_sfr]))
                         galaxy_tree['%s' %ID_dict]['gas']['%s_hmr' %hmr_i]['Z'].append(all_Z['%s' %GalaxyID]['gas'][mask_Z])
+                        galaxy_tree['%s' %ID_dict]['gas']['%s_hmr' %hmr_i]['l'].append(all_l['%s' %GalaxyID]['gas'][mask_l])
                         galaxy_tree['%s' %ID_dict]['gas']['%s_hmr' %hmr_i]['proj_angle'].append(_find_angle(all_spins['%s' %GalaxyID]['gas'][mask_spins], viewing_vector))
                         
                         
@@ -915,21 +936,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                             galaxy_tree['%s' %ID_dict]['gas']['%s_hmr' %hmr_i]['outflow_Z'].append(outflow_Z)
                             galaxy_tree['%s' %ID_dict]['gas']['%s_hmr' %hmr_i]['stelmassloss_rate'].append(stellarmassloss / time_step)
                             galaxy_tree['%s' %ID_dict]['gas']['%s_hmr' %hmr_i]['insitu_Z'].append(insitu_Z)
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        # Update inflow
-                        
+                              
                 #------------------                       
                 # Updating gas_sf
                 galaxy_tree['%s' %ID_dict]['gas_sf']['ap_mass'].append(all_general['%s' %GalaxyID]['gasmass_sf'])
@@ -942,6 +949,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                         galaxy_tree['%s' %ID_dict]['gas_sf']['%s_hmr' %hmr_i]['count'].append(math.nan)
                         galaxy_tree['%s' %ID_dict]['gas_sf']['%s_hmr' %hmr_i]['sfr'].append(math.nan)
                         galaxy_tree['%s' %ID_dict]['gas_sf']['%s_hmr' %hmr_i]['Z'].append(math.nan)
+                        galaxy_tree['%s' %ID_dict]['gas_sf']['%s_hmr' %hmr_i]['l'].append(math.nan)
                         galaxy_tree['%s' %ID_dict]['gas_sf']['%s_hmr' %hmr_i]['proj_angle'].append(math.nan)
                         galaxy_tree['%s' %ID_dict]['gas_sf']['%s_hmr' %hmr_i]['inflow_rate'].append(math.nan)
                         galaxy_tree['%s' %ID_dict]['gas_sf']['%s_hmr' %hmr_i]['inflow_Z'].append(math.nan)
@@ -956,12 +964,14 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                         mask_spins  = np.where(np.array(all_spins['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                         mask_sfr    = np.where(np.array(all_sfr['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                         mask_Z      = np.where(np.array(all_Z['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
+                        mask_l      = np.where(np.array(all_l['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                         
                         # Updating
                         galaxy_tree['%s' %ID_dict]['gas_sf']['%s_hmr' %hmr_i]['mass'].append(all_masses['%s' %GalaxyID]['gas_sf'][mask_masses])
                         galaxy_tree['%s' %ID_dict]['gas_sf']['%s_hmr' %hmr_i]['count'].append(all_counts['%s' %GalaxyID]['gas_sf'][mask_counts])
                         galaxy_tree['%s' %ID_dict]['gas_sf']['%s_hmr' %hmr_i]['sfr'].append((3.154e+7*all_sfr['%s' %GalaxyID]['gas_sf'][mask_sfr]))
                         galaxy_tree['%s' %ID_dict]['gas_sf']['%s_hmr' %hmr_i]['Z'].append(all_Z['%s' %GalaxyID]['gas_sf'][mask_Z])
+                        galaxy_tree['%s' %ID_dict]['gas_sf']['%s_hmr' %hmr_i]['l'].append(all_l['%s' %GalaxyID]['gas_sf'][mask_l])
                         galaxy_tree['%s' %ID_dict]['gas_sf']['%s_hmr' %hmr_i]['proj_angle'].append(_find_angle(all_spins['%s' %GalaxyID]['gas_sf'][mask_spins], viewing_vector))
                         
                         
@@ -1057,6 +1067,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                         galaxy_tree['%s' %ID_dict]['gas_nsf']['%s_hmr' %hmr_i]['mass'].append(math.nan)
                         galaxy_tree['%s' %ID_dict]['gas_nsf']['%s_hmr' %hmr_i]['count'].append(math.nan)
                         galaxy_tree['%s' %ID_dict]['gas_nsf']['%s_hmr' %hmr_i]['Z'].append(math.nan)
+                        galaxy_tree['%s' %ID_dict]['gas_nsf']['%s_hmr' %hmr_i]['l'].append(math.nan)
                         galaxy_tree['%s' %ID_dict]['gas_nsf']['%s_hmr' %hmr_i]['proj_angle'].append(math.nan)
                         galaxy_tree['%s' %ID_dict]['gas_nsf']['%s_hmr' %hmr_i]['inflow_rate'].append(math.nan)
                         galaxy_tree['%s' %ID_dict]['gas_nsf']['%s_hmr' %hmr_i]['inflow_Z'].append(math.nan)
@@ -1070,11 +1081,13 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                         mask_counts = np.where(np.array(all_counts['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                         mask_spins  = np.where(np.array(all_spins['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                         mask_Z      = np.where(np.array(all_Z['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
+                        mask_l      = np.where(np.array(all_l['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                         
                         # Updating
                         galaxy_tree['%s' %ID_dict]['gas_nsf']['%s_hmr' %hmr_i]['mass'].append(all_masses['%s' %GalaxyID]['gas_nsf'][mask_masses])
                         galaxy_tree['%s' %ID_dict]['gas_nsf']['%s_hmr' %hmr_i]['count'].append(all_counts['%s' %GalaxyID]['gas_nsf'][mask_counts])
                         galaxy_tree['%s' %ID_dict]['gas_nsf']['%s_hmr' %hmr_i]['Z'].append(all_Z['%s' %GalaxyID]['gas_nsf'][mask_Z])
+                        galaxy_tree['%s' %ID_dict]['gas_nsf']['%s_hmr' %hmr_i]['l'].append(all_l['%s' %GalaxyID]['gas_nsf'][mask_l])
                         galaxy_tree['%s' %ID_dict]['gas_nsf']['%s_hmr' %hmr_i]['proj_angle'].append(_find_angle(all_spins['%s' %GalaxyID]['gas_nsf'][mask_spins], viewing_vector))
                         
                         
@@ -1164,6 +1177,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                 galaxy_tree['%s' %ID_dict]['dm']['ap_mass'].append(all_general['%s' %GalaxyID]['dmmass'])
                 galaxy_tree['%s' %ID_dict]['dm']['count'].append(all_counts['%s' %GalaxyID]['dm'])
                 galaxy_tree['%s' %ID_dict]['dm']['proj_angle'].append(_find_angle(all_spins['%s' %GalaxyID]['dm'][-1], viewing_vector))
+                galaxy_tree['%s' %ID_dict]['dm']['l'].append(all_l['%s' %GalaxyID]['dm'][-1])
                 
                 #------------------                       
                 # Updating bh                                                                 
@@ -1271,6 +1285,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                 galaxy_tree['%s' %ID_dict]['stars']['%s_hmr' %hmr_i]['mass'].insert(index, math.nan)
                 galaxy_tree['%s' %ID_dict]['stars']['%s_hmr' %hmr_i]['count'].insert(index, math.nan)
                 galaxy_tree['%s' %ID_dict]['stars']['%s_hmr' %hmr_i]['Z'].insert(index, math.nan)
+                galaxy_tree['%s' %ID_dict]['stars']['%s_hmr' %hmr_i]['l'].insert(index, math.nan)
                 galaxy_tree['%s' %ID_dict]['stars']['%s_hmr' %hmr_i]['proj_angle'].insert(index, math.nan)
                 
             #------------------                       
@@ -1283,6 +1298,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                 galaxy_tree['%s' %ID_dict]['gas']['%s_hmr' %hmr_i]['count'].insert(index, math.nan)
                 galaxy_tree['%s' %ID_dict]['gas']['%s_hmr' %hmr_i]['sfr'].insert(index, math.nan)
                 galaxy_tree['%s' %ID_dict]['gas']['%s_hmr' %hmr_i]['Z'].insert(index, math.nan)
+                galaxy_tree['%s' %ID_dict]['gas']['%s_hmr' %hmr_i]['l'].insert(index, math.nan)
                 galaxy_tree['%s' %ID_dict]['gas']['%s_hmr' %hmr_i]['proj_angle'].insert(index, math.nan)
                 galaxy_tree['%s' %ID_dict]['gas']['%s_hmr' %hmr_i]['inflow_rate'].insert(index, math.nan)
                 galaxy_tree['%s' %ID_dict]['gas']['%s_hmr' %hmr_i]['inflow_Z'].insert(index, math.nan)
@@ -1300,6 +1316,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                 galaxy_tree['%s' %ID_dict]['gas_sf']['%s_hmr' %hmr_i]['count'].insert(index, math.nan)
                 galaxy_tree['%s' %ID_dict]['gas_sf']['%s_hmr' %hmr_i]['sfr'].insert(index, math.nan)
                 galaxy_tree['%s' %ID_dict]['gas_sf']['%s_hmr' %hmr_i]['Z'].insert(index, math.nan)
+                galaxy_tree['%s' %ID_dict]['gas_sf']['%s_hmr' %hmr_i]['l'].insert(index, math.nan)
                 galaxy_tree['%s' %ID_dict]['gas_sf']['%s_hmr' %hmr_i]['proj_angle'].insert(index, math.nan)
                 galaxy_tree['%s' %ID_dict]['gas_sf']['%s_hmr' %hmr_i]['inflow_rate'].insert(index, math.nan)
                 galaxy_tree['%s' %ID_dict]['gas_sf']['%s_hmr' %hmr_i]['inflow_Z'].insert(index, math.nan)
@@ -1316,6 +1333,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                 galaxy_tree['%s' %ID_dict]['gas_nsf']['%s_hmr' %hmr_i]['mass'].insert(index, math.nan)
                 galaxy_tree['%s' %ID_dict]['gas_nsf']['%s_hmr' %hmr_i]['count'].insert(index, math.nan)
                 galaxy_tree['%s' %ID_dict]['gas_nsf']['%s_hmr' %hmr_i]['Z'].insert(index, math.nan)
+                galaxy_tree['%s' %ID_dict]['gas_nsf']['%s_hmr' %hmr_i]['l'].insert(index, math.nan)
                 galaxy_tree['%s' %ID_dict]['gas_nsf']['%s_hmr' %hmr_i]['proj_angle'].insert(index, math.nan)
                 galaxy_tree['%s' %ID_dict]['gas_nsf']['%s_hmr' %hmr_i]['inflow_rate'].insert(index, math.nan)
                 galaxy_tree['%s' %ID_dict]['gas_nsf']['%s_hmr' %hmr_i]['inflow_Z'].insert(index, math.nan)
@@ -1329,6 +1347,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
             galaxy_tree['%s' %ID_dict]['dm']['ap_mass'].insert(index, math.nan)
             galaxy_tree['%s' %ID_dict]['dm']['count'].insert(index, math.nan)
             galaxy_tree['%s' %ID_dict]['dm']['proj_angle'].insert(index, math.nan)
+            galaxy_tree['%s' %ID_dict]['dm']['l'].insert(index, math.nan)
             
             #------------------                       
             # Updating bh                                                                         
@@ -1446,6 +1465,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                   # Radius limits                        [ None / value ]
                     min_rad             = None,     max_rad             = None,   
                     min_rad_sf          = None,     max_rad_sf          = None,   
+                  # l not added
+                    # l of stars not added yet = None
                   # Inflow (gas) | 7.0 is pretty high    [ None / value ]
                     min_inflow          = None,     max_inflow          = None,
                   # Metallicity of inflowing gas         [ None / value ]
@@ -1678,7 +1699,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             plt.close()
             
             ### Create figure
-            fig, axs = plt.subplots(1, 1, figsize=[7.0, 4.2], sharex=True, sharey=False)
+            fig, axs = plt.subplots(1, 1, figsize=[10/3, 1.8], sharex=True, sharey=False)
             plt.subplots_adjust(wspace=0.4, hspace=0.4)
             
             # Plot mergers
@@ -2535,15 +2556,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             # Check sfr
             check = []
             if use_hmr_general == 'aperture':
-                
-                
-                ##### WHEN RUN FINISHES 
-                #check_array = np.array(galaxy_tree['%s' %GalaxyID]['ap_sfr'][index_start:index_stop])
-                #window_sfr = galaxy_tree['%s' %GalaxyID]['ap_sfr'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
-                
-                
-                check_array = np.array(galaxy_tree['%s' %GalaxyID]['gas']['2.0_hmr']['sfr'][index_start:index_stop])
-                window_sfr = galaxy_tree['%s' %GalaxyID]['gas']['2.0_hmr']['sfr'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
+                check_array = np.array(galaxy_tree['%s' %GalaxyID]['ap_sfr'][index_start:index_stop])
+                window_sfr = galaxy_tree['%s' %GalaxyID]['ap_sfr'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
             else:
                 check_array = np.array(galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_general]['sfr'][index_start:index_stop])
                 window_sfr = galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_general]['sfr'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
@@ -2615,44 +2629,42 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 print('    MET KAPPA SF:\t %.2f / %.2f, for limits %s / %s' %(np.min(check_array), np.max(check_array), min_kappa_sf, max_kappa_sf))
             
             
-
-            ##### WHEN RUN FINISHES:
             # Check kappa msf
-            #check = []
-            #check_array = np.array(galaxy_tree['%s' %GalaxyID]['gas_nsf']['kappa'][index_start:index_stop])
-            #check.append(np.average(check_array, weights=time_weight) <= (1.0 if max_kappa_nsf == None else max_kappa_nsf))
-            #check.append(np.average(check_array, weights=time_weight) >= (0.0 if min_kappa_nsf == None else min_kappa_nsf))
-            #if np.array(check).all() == False:
-            #    if print_checks:
-            #        print('    x FAILED KAPPA NSF:\t %.2f / %.2f, for limits %s / %s' %(np.min(check_array), np.max(check_array), min_kappa_nsf, max_kappa_nsf))
-            #    continue
-            #if print_checks:
-            #    print('    MET KAPPA NSF:\t %.2f / %.2f, for limits %s / %s' %(np.min(check_array), np.max(check_array), min_kappa_nsf, max_kappa_nsf))
+            check = []
+            check_array = np.array(galaxy_tree['%s' %GalaxyID]['gas_nsf']['kappa'][index_start:index_stop])
+            check.append(np.average(check_array, weights=time_weight) <= (1.0 if max_kappa_nsf == None else max_kappa_nsf))
+            check.append(np.average(check_array, weights=time_weight) >= (0.0 if min_kappa_nsf == None else min_kappa_nsf))
+            if np.array(check).all() == False:
+                if print_checks:
+                    print('    x FAILED KAPPA NSF:\t %.2f / %.2f, for limits %s / %s' %(np.min(check_array), np.max(check_array), min_kappa_nsf, max_kappa_nsf))
+                continue
+            if print_checks:
+                print('    MET KAPPA NSF:\t %.2f / %.2f, for limits %s / %s' %(np.min(check_array), np.max(check_array), min_kappa_nsf, max_kappa_nsf))
             
             
             # Check ellipticity
-            #check = []
-            #check_array = np.array(galaxy_tree['%s' %GalaxyID]['ellip'][index_start:index_stop])
-            #check.append(np.average(check_array, weights=time_weight) <= (1.0 if max_ellip == None else max_ellip))
-            #check.append(np.average(check_array, weights=time_weight) >= (0.0 if min_ellip == None else min_ellip))
-            #if np.array(check).all() == False:
-            #    if print_checks:
-            #        print('    x FAILED ELLIPTICITY:\t %.2f / %.2f, for limits %s / %s' %(np.min(check_array), np.max(check_array), min_ellip, max_ellip))
-            #    continue
-            #if print_checks:
-            #    print('    MET ELLIPTICITY:\t %.2f / %.2f, for limits %s / %s' %(np.min(check_array), np.max(check_array), min_ellip, max_ellip))
+            check = []
+            check_array = np.array(galaxy_tree['%s' %GalaxyID]['ellip'][index_start:index_stop])
+            check.append(np.average(check_array, weights=time_weight) <= (1.0 if max_ellip == None else max_ellip))
+            check.append(np.average(check_array, weights=time_weight) >= (0.0 if min_ellip == None else min_ellip))
+            if np.array(check).all() == False:
+                if print_checks:
+                    print('    x FAILED ELLIPTICITY:\t %.2f / %.2f, for limits %s / %s' %(np.min(check_array), np.max(check_array), min_ellip, max_ellip))
+                continue
+            if print_checks:
+                print('    MET ELLIPTICITY:\t %.2f / %.2f, for limits %s / %s' %(np.min(check_array), np.max(check_array), min_ellip, max_ellip))
             
             # Check triaxiality
-            #check = []
-            #check_array = np.array(galaxy_tree['%s' %GalaxyID]['triax'][index_start:index_stop])
-            #check.append(np.average(check_array, weights=time_weight) <= (1.0 if max_triax == None else max_triax))
-            #check.append(np.average(check_array, weights=time_weight) >= (0.0 if min_triax == None else min_triax))
-            #if np.array(check).all() == False:
-            #    if print_checks:
-            #        print('    x FAILED TRIAXIALITY:\t %.2f / %.2f, for limits %s / %s' %(np.min(check_array), np.max(check_array), min_triax, max_triax))
-            #    continue
-            #if print_checks:
-            #    print('    MET TRIAXIALITY:\t %.2f / %.2f, for limits %s / %s' %(np.min(check_array), np.max(check_array), min_triax, max_triax))
+            check = []
+            check_array = np.array(galaxy_tree['%s' %GalaxyID]['triax'][index_start:index_stop])
+            check.append(np.average(check_array, weights=time_weight) <= (1.0 if max_triax == None else max_triax))
+            check.append(np.average(check_array, weights=time_weight) >= (0.0 if min_triax == None else min_triax))
+            if np.array(check).all() == False:
+                if print_checks:
+                    print('    x FAILED TRIAXIALITY:\t %.2f / %.2f, for limits %s / %s' %(np.min(check_array), np.max(check_array), min_triax, max_triax))
+                continue
+            if print_checks:
+                print('    MET TRIAXIALITY:\t %.2f / %.2f, for limits %s / %s' %(np.min(check_array), np.max(check_array), min_triax, max_triax))
             
             
             # Check rad
@@ -2671,18 +2683,17 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 print('    MET RAD:\t\t %.2f / %.2f kpc, for limits %s %s / %s [kpc]' %(np.min(check_array), np.max(check_array), abs_or_proj, min_rad, max_rad))
             
             
-            ##### WHEN RUN FINISHES:
             # Check SF gas radius
-            #check = []
-            #check_array = np.array(galaxy_tree['%s' %GalaxyID]['rad_sf'][index_start:index_stop])
-            #check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_rad_sf == None else max_rad_sf))
-            #check.append(np.average(check_array, weights=time_weight) >= (0.0 if min_rad_sf == None else min_rad_sf))
-            #if np.array(check).all() == False:
-            #    if print_checks:
-            #        print('    x FAILED RAD SF:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_rad_sf, max_rad_sf))
-            #    continue
-            #if print_checks:
-            #    print('    MET RAD SF:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_rad_sf, max_rad_sf))
+            check = []
+            check_array = np.array(galaxy_tree['%s' %GalaxyID]['rad_sf'][index_start:index_stop])
+            check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_rad_sf == None else max_rad_sf))
+            check.append(np.average(check_array, weights=time_weight) >= (0.0 if min_rad_sf == None else min_rad_sf))
+            if np.array(check).all() == False:
+                if print_checks:
+                    print('    x FAILED RAD SF:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_rad_sf, max_rad_sf))
+                continue
+            if print_checks:
+                print('    MET RAD SF:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_rad_sf, max_rad_sf))
             
             
             # Check inflow of gas
@@ -2767,7 +2778,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             
             # Check BH luminosity (instantaneous) |     using L = e Mdot c2 -> converting Mdot from [Msun/yr] -> [kg/s] -> [erg/s]
             check = []
-            check_array = np.array(galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant'][index_start:index_stop]) * (2e30 / 3.154e+7) * (0.1 * (3e8)**2) * (1e7)
+            check_array = np.array(galaxy_tree['%s' %GalaxyID]['bh']['lbol'][index_start:index_stop])
             check.append(np.average(check_array, weights=time_weight) <= (1e60 if max_lbol == None else max_lbol))
             check.append(np.average(check_array, weights=time_weight) >= (0 if min_lbol == None else min_lbol))
             if np.array(check).all() == False:
@@ -2779,46 +2790,44 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             
             
             #------------------------------------------------------------------------------------------------
-
-            ##### WHEN RUN FINISHES:
             
             # Check vcirc
-            #check = []
-            #check_array = np.array(galaxy_tree['%s' %GalaxyID]['other']['%s_hmr' %use_hmr_general]['vcirc'][index_start:index_stop])
-            #check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_vcirc == None else max_vcirc))
-            #check.append(np.average(check_array, weights=time_weight) >= (0.0 if min_vcirc == None else min_vcirc))
-            #if np.array(check).all() == False:
-            #    if print_checks:
-            #        print('    x FAILED v_circ:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_vcirc, max_vcirc))
-            #    continue
-            #if print_checks:
-            #    print('    MET v_circ:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_vcirc, max_vcirc))
+            check = []
+            check_array = np.array(galaxy_tree['%s' %GalaxyID]['other']['%s_hmr' %use_hmr_general]['vcirc'][index_start:index_stop])
+            check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_vcirc == None else max_vcirc))
+            check.append(np.average(check_array, weights=time_weight) >= (0.0 if min_vcirc == None else min_vcirc))
+            if np.array(check).all() == False:
+                if print_checks:
+                    print('    x FAILED v_circ:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_vcirc, max_vcirc))
+                continue
+            if print_checks:
+                print('    MET v_circ:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_vcirc, max_vcirc))
             
             
             # Check dynamical time
-            #check = []
-            #check_array = np.array(galaxy_tree['%s' %GalaxyID]['other']['%s_hmr' %use_hmr_general]['tdyn'][index_start:index_stop])
-            #check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_tdyn == None else max_tdyn))
-            #check.append(np.average(check_array, weights=time_weight) >= (0.0 if min_tdyn == None else min_tdyn))
-            #if np.array(check).all() == False:
-            #    if print_checks:
-            #        print('    x FAILED t_dyn:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_tdyn, max_tdyn))
-            #    continue
-            #if print_checks:
-            #    print('    MET t_dyn:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_tdyn, max_tdyn))
+            check = []
+            check_array = np.array(galaxy_tree['%s' %GalaxyID]['other']['%s_hmr' %use_hmr_general]['tdyn'][index_start:index_stop])
+            check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_tdyn == None else max_tdyn))
+            check.append(np.average(check_array, weights=time_weight) >= (0.0 if min_tdyn == None else min_tdyn))
+            if np.array(check).all() == False:
+                if print_checks:
+                    print('    x FAILED t_dyn:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_tdyn, max_tdyn))
+                continue
+            if print_checks:
+                print('    MET t_dyn:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_tdyn, max_tdyn))
             
             
             # Check torquing time
-            #check = []
-            #check_array = np.array(galaxy_tree['%s' %GalaxyID]['other']['%s_hmr' %use_hmr_general]['ttorque'][index_start:index_stop])
-            #check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_ttorque == None else max_ttorque))
-            #check.append(np.average(check_array, weights=time_weight) >= (0.0 if min_ttorque == None else min_ttorque))
-            #if np.array(check).all() == False:
-            #    if print_checks:
-            #        print('    x FAILED t_torque:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_ttorque, max_ttorque))
-            #    continue
-            #if print_checks:
-            #    print('    MET t_torque:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_ttorque, max_ttorque))
+            check = []
+            check_array = np.array(galaxy_tree['%s' %GalaxyID]['other']['%s_hmr' %use_hmr_general]['ttorque'][index_start:index_stop])
+            check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_ttorque == None else max_ttorque))
+            check.append(np.average(check_array, weights=time_weight) >= (0.0 if min_ttorque == None else min_ttorque))
+            if np.array(check).all() == False:
+                if print_checks:
+                    print('    x FAILED t_torque:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_ttorque, max_ttorque))
+                continue
+            if print_checks:
+                print('    MET t_torque:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_ttorque, max_ttorque))
             
             
             
@@ -2854,22 +2863,20 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                                                     'kappa_stars': galaxy_tree['%s' %GalaxyID]['stars']['kappa'][index_start:index_stop],
                                                     'kappa_gas': galaxy_tree['%s' %GalaxyID]['gas']['kappa'][index_start:index_stop],
                                                     'kappa_sf': galaxy_tree['%s' %GalaxyID]['gas_sf']['kappa'][index_start:index_stop],
-                                                    ##### WHEN RUN FINISHES:
-                                                    #'kappa_nsf': galaxy_tree['%s' %GalaxyID]['gas_nsf']['kappa'][index_start:index_stop],
-                                                    #'ellip': galaxy_tree['%s' %GalaxyID]['ellip'][index_start:index_stop],
-                                                    #'triax': galaxy_tree['%s' %GalaxyID]['triax'][index_start:index_stop],
-                                                    #'disp_ani': galaxy_tree['%s' %GalaxyID]['disp_ani'][index_start:index_stop],
-                                                    #'disc_to_total': galaxy_tree['%s' %GalaxyID]['disc_to_total'][index_start:index_stop],
-                                                    #'rot_to_disp_ratio': galaxy_tree['%s' %GalaxyID]['rot_to_disp_ratio'][index_start:index_stop],
+                                                    'kappa_nsf': galaxy_tree['%s' %GalaxyID]['gas_nsf']['kappa'][index_start:index_stop],
+                                                    'ellip': galaxy_tree['%s' %GalaxyID]['ellip'][index_start:index_stop],
+                                                    'triax': galaxy_tree['%s' %GalaxyID]['triax'][index_start:index_stop],
+                                                    'disp_ani': galaxy_tree['%s' %GalaxyID]['disp_ani'][index_start:index_stop],
+                                                    'disc_to_total': galaxy_tree['%s' %GalaxyID]['disc_to_total'][index_start:index_stop],
+                                                    'rot_to_disp_ratio': galaxy_tree['%s' %GalaxyID]['rot_to_disp_ratio'][index_start:index_stop],
                                                                                                                  
                                                     'rad': galaxy_tree['%s' %GalaxyID]['rad'][index_start:index_stop],
                                                     'radproj': galaxy_tree['%s' %GalaxyID]['radproj'][index_start:index_stop],
-                                                    #'rad_sf': galaxy_tree['%s' %GalaxyID]['rad_sf'][index_start:index_stop],
+                                                    'rad_sf': galaxy_tree['%s' %GalaxyID]['rad_sf'][index_start:index_stop],
                                                     
-                                                    ##### WHEN RUN FINISHES:
-                                                    #'vcirc': galaxy_tree['%s' %GalaxyID]['other']['%s_hmr' %use_hmr_angle]['vcirc'][index_start:index_stop],
-                                                    #'tdyn': galaxy_tree['%s' %GalaxyID]['other']['%s_hmr' %use_hmr_angle]['tdyn'][index_start:index_stop],
-                                                    #'ttorque': galaxy_tree['%s' %GalaxyID]['other']['%s_hmr' %use_hmr_angle]['ttorque'][index_start:index_stop],
+                                                    'vcirc': galaxy_tree['%s' %GalaxyID]['other']['%s_hmr' %use_hmr_angle]['vcirc'][index_start:index_stop],
+                                                    'tdyn': galaxy_tree['%s' %GalaxyID]['other']['%s_hmr' %use_hmr_angle]['tdyn'][index_start:index_stop],
+                                                    'ttorque': galaxy_tree['%s' %GalaxyID]['other']['%s_hmr' %use_hmr_angle]['ttorque'][index_start:index_stop],
                                                                                                                  
                                                     'inflow_rate': galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_angle]['inflow_rate'][index_start:index_stop],
                                                     'outflow_rate': galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_angle]['outflow_rate'][index_start:index_stop],
@@ -3250,7 +3257,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
         #-------------
         ### Plotting
-        fig, axs = plt.subplots(1, 1, figsize=[5.0, 4.2], sharex=True, sharey=False)
+        fig, axs = plt.subplots(1, 1, figsize=[10/3, 1.8], sharex=True, sharey=False)
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
         
         axs.hist(stelmass_plot, bins=np.arange(9.0, 12+bin_width_mass, bin_width_mass), histtype='bar', edgecolor='none', facecolor='b', alpha=0.1)
@@ -3306,7 +3313,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
         #-------------
         ### Plotting
-        fig, axs = plt.subplots(1, 1, figsize=[5.0, 4.2], sharex=True, sharey=False)
+        fig, axs = plt.subplots(1, 1, figsize=[10/3, 1.8], sharex=True, sharey=False)
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
         
         if bin_limit == None:
@@ -3543,7 +3550,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
         #-------------
         ### Plotting
-        fig, axs = plt.subplots(1, 1, figsize=[5.0, 4.2], sharex=True, sharey=False)
+        fig, axs = plt.subplots(1, 1, figsize=[10/3, 1.8], sharex=True, sharey=False)
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
         
 
@@ -3795,7 +3802,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
         #-------------
         # Plotting
-        fig, axs = plt.subplots(1, 1, figsize=[5.0, 4.2], sharex=True, sharey=False)
+        fig, axs = plt.subplots(1, 1, figsize=[10/3, 1.8], sharex=True, sharey=False)
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
     
          #-----------
@@ -3935,8 +3942,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             #-------------
             # Colorbar
             #cax = plt.axes([0.98, 0.20, 0.03, 0.71])
-            cax = plt.axes([0.90, 0.20, 0.03, 0.71])
-            plt.colorbar(mapper, cax=cax, label=label, extend='max')
+            plt.colorbar(mapper, ax=axs, label=label, extend='max')
     
          #-----------
         # Plot scatter
@@ -4262,7 +4268,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
         #-------------
         # Plotting
-        fig, axs = plt.subplots(1, 1, figsize=[5.0, 4.2], sharex=True, sharey=False)
+        fig, axs = plt.subplots(1, 1, figsize=[10/3, 1.8], sharex=True, sharey=False)
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
         
         # Normalise colormap
@@ -4343,7 +4349,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
         #-------------
         # Plotting
-        fig, axs = plt.subplots(1, 1, figsize=[5.0, 4.2], sharex=True, sharey=False)
+        fig, axs = plt.subplots(1, 1, figsize=[10/3, 1.8], sharex=True, sharey=False)
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
         
         axs.scatter(relaxationtime_plot, dyntime_plot, s=10, zorder=99, c='k', edgecolors='k', linewidths=0.3, alpha=0.7)
@@ -4423,7 +4429,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
         #-------------
         # Plotting
-        fig, axs = plt.subplots(1, 1, figsize=[5.0, 4.2], sharex=True, sharey=False)
+        fig, axs = plt.subplots(1, 1, figsize=[10/3, 1.8], sharex=True, sharey=False)
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
         
         axs.scatter(ellip_plot, y_array, s=10, zorder=99, c='k', edgecolors='k', linewidths=0.3, alpha=0.7)
@@ -4457,7 +4463,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         plt.tight_layout()
         
         #-----------
-        #### Savefig
+        0 Savefig
         metadata_plot = {'Title': '%s, %s\nThreshold: %s\nMin delta:%s\nLatency time: %s\nMin ratio: %s\nUSE MERGERS: %s\nMax closest merger: %s-%s\nTime extra: %s\nTime no misangle: %s\nStelmass: %s/%s\n kappa*: %s/%s\n outflow: %s/%s' %(abs_or_proj, use_angle, misangle_threshold, min_delta_angle, latency_time, min_stellar_ratio, use_merger_criteria, max_merger_pre, max_merger_post, time_extra, time_no_misangle, min_stelmass, max_stelmass, min_kappa_stars, max_kappa_stars, min_inflow, max_inflow),
                          'Author': 'Min particles: %s\nMax CoM: %s\nMin inc: %s\nPlot ratio limit: %s\n\nrho: %.2f\np-value %.2e\n\n# MISALIGNMENTS: %s\nco-co: %s\ncnt-cnt: %s\nco-cnt: %s\ncnt-co: %s\nETG-ETG: %s\nLTG-LTG: %s\nETG-LTG: %s\nLTG-ETG: %s\nMean: %.2f Gyr\nMedian: %.2f Gyr\nstd: %.2f Gyr' %(min_particles, max_com, min_inclination, plot_merger_limit, res.correlation, res.pvalue, len(misalignment_tree.keys()), len(co_co_array), len(counter_counter_array), len(co_counter_array), len(counter_co_array), len(ETG_ETG_array), len(LTG_LTG_array), len(ETG_LTG_array), len(LTG_ETG_array), mean_timescale, median_timescale, std_timescale)}
                          
@@ -4476,7 +4482,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
     if plot_stacked:
         
         # Graph initialising and base formatting
-        fig, axs = plt.subplots(1, 1, figsize=[7.0, 4.2], sharex=True, sharey=False)
+        fig, axs = plt.subplots(1, 1, figsize=[10/3, 1.8], sharex=True, sharey=False)
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
         
         # Creating colormaps to mark mergers

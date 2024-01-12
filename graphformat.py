@@ -1,6 +1,56 @@
 import matplotlib as plt
 
-def set_rc_params(mult=1):
+
+def set_rc_params():
+    # in points - start with the body text size and play around
+    
+    # Add font
+    plt.rcParams['text.usetex'] = True
+    plt.rcParams["font.family"] = "DeJavu Serif"
+    plt.rcParams['font.serif'] = ['Times New Roman']
+    
+    plt.rcParams['font.family'] = 'Latin Modern Roman'
+    #plt.rcParams["font.family"] = "DeJavu Serif"
+    #plt.rcParams['font.serif'] = 'Times New Roman'
+    #plt.rcParams['font.serif'] = ['Times New Roman']
+    
+    
+    TEXT_SIZE = 7
+    SMALL_SIZE = 8
+    MEDIUM_SIZE = 9
+    BIGGER_SIZE = 11
+    
+    plt.rcParams.update({'font.size': MEDIUM_SIZE})
+    plt.rcParams['legend.fontsize'] = TEXT_SIZE
+    plt.rcParams['axes.linewidth'] = 1
+    plt.rcParams['axes.labelsize'] = MEDIUM_SIZE
+    plt.rcParams['xtick.labelsize'] = SMALL_SIZE
+    plt.rcParams['ytick.labelsize'] = SMALL_SIZE
+    plt.rcParams['xtick.major.size'] = 4
+    plt.rcParams['ytick.major.size'] = 4
+    plt.rcParams['xtick.major.width'] = 1
+    plt.rcParams['ytick.major.width'] = 1
+    plt.rcParams['xtick.minor.size'] = 2.5
+    plt.rcParams['ytick.minor.size'] = 2.5
+    plt.rcParams['xtick.minor.width'] = 0.8
+    plt.rcParams['ytick.minor.width'] = 0.8
+    plt.rcParams['xtick.direction'] = 'in'
+    plt.rcParams['ytick.direction'] = 'in'
+    plt.rcParams['xtick.bottom'] = True
+    plt.rcParams['ytick.left'] = True
+    plt.rcParams['xtick.top'] = True
+    plt.rcParams['ytick.right'] = True
+    #plt.rcParams['ytick.right'] = True
+    plt.rcParams["xtick.minor.visible"] = False
+    plt.rcParams["ytick.minor.visible"] = False
+    #params = {'mathtext.default': 'regular'}
+    #plt.rcParams.update(params)
+    
+set_rc_params() 
+
+
+"""
+def set_rc_params(mult=0.5):
     
     # Add font
     plt.rcParams['text.usetex'] = True
@@ -39,7 +89,7 @@ def set_rc_params(mult=1):
     plt.rcParams['axes.labelsize'] = 20*mult
     
 set_rc_params(0.9) 
-
+"""
 
 
 

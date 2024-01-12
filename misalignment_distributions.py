@@ -39,7 +39,7 @@ def _plot_misalignment(csv_sample = 'L100_28_all_sample_misalignment_9.5',     #
                          use_hmr            = 1.0,                    # Which HMR to use
                          use_proj_angle     = True,                   # Whether to use projected or absolute angle 10**9
                            min_inc_angle    = 0,                     # min. degrees of either spin vector to z-axis, if use_proj_angle
-                           min_particles    = 50,               # [ 20 ] number of particles
+                           min_particles    = 20,               # [ 20 ] number of particles
                            min_com          = 2.0,              # [ 2.0 ] pkpc
                            max_uncertainty  = 30,            # [ None / 30 / 45 ]                  Degrees
                          lower_mass_limit   = 10**9.5,            # Whether to plot only certain masses 10**15
@@ -313,7 +313,10 @@ def _plot_misalignment(csv_sample = 'L100_28_all_sample_misalignment_9.5',     #
                 
                 #--------------
                 # Determine if this is a galaxy we want to plot and meets the remaining criteria (stellar mass, halo mass, kappa, uncertainty, satellite)
-                max_error = max(np.abs((np.array(all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle_err' %use_angle][mask_angles]) - all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle' %use_angle][mask_angles])))
+                if use_proj_angle:
+                    max_error = max(np.abs((np.array(all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle_err' %use_angle][mask_angles]) - all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle' %use_angle][mask_angles])))
+                else:
+                    max_error = max(np.abs((np.array(all_misangles['%s' %GalaxyID]['%s_angle_err' %use_angle][mask_angles]) - all_misangles['%s' %GalaxyID]['%s_angle' %use_angle][mask_angles])))
                 
                 
                 # applying selection criteria for min_inc_angle, min_com, min_particles
@@ -380,9 +383,9 @@ def _plot_misalignment(csv_sample = 'L100_28_all_sample_misalignment_9.5',     #
         
         # Graph initialising and base formatting
         if use_alternative_format:
-            fig, axs = plt.subplots(1, 1, figsize=[5.0, 4.2], sharex=True, sharey=False)
+            fig, axs = plt.subplots(1, 1, figsize=[10/3, 1.8], sharex=True, sharey=False)
         else:
-            fig, axs = plt.subplots(1, 1, figsize=[7.0, 4.2], sharex=True, sharey=False) 
+            fig, axs = plt.subplots(1, 1, figsize=[10/3, 1.8], sharex=True, sharey=False) 
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
         
         
@@ -668,7 +671,7 @@ def _plot_misalignment(csv_sample = 'L100_28_all_sample_misalignment_9.5',     #
         
             
         # Check what is plotted
-        """fig, axs = plt.subplots(1, 1, figsize=[7.0, 2.2], sharex=True, sharey=False)
+        """fig, axs = plt.subplots(1, 1, figsize=[10/3, 1.8], sharex=True, sharey=False)
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
         masses = []
         hmr_rad = []    
@@ -1041,7 +1044,10 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
 
                         #--------------
                         # Determine if this is a galaxy we want to plot and meets the remaining criteria (stellar mass, halo mass, kappa, satellite, uncertainty)
-                        max_error = max(np.abs((np.array(all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle_err' %use_angle][mask_angles]) - all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle' %use_angle][mask_angles])))
+                        if use_proj_angle:
+                            max_error = max(np.abs((np.array(all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle_err' %use_angle][mask_angles]) - all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle' %use_angle][mask_angles])))
+                        else:
+                            max_error = max(np.abs((np.array(all_misangles['%s' %GalaxyID]['%s_angle_err' %use_angle][mask_angles]) - all_misangles['%s' %GalaxyID]['%s_angle' %use_angle][mask_angles])))
                         
                         if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph) and (all_general['%s' %GalaxyID]['SubGroupNum'] <= satellite_criteria) and (all_general['%s' %GalaxyID]['SubGroupNum'] <= satellite_criteria) and (max_error <= (999 if max_uncertainty == None else max_uncertainty)):
                         
@@ -1152,7 +1158,7 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
     #-----------------------------------------------
     def _plot_misalignment_z(debug=False):
         # Graph initialising and base formatting
-        fig, axs = plt.subplots(1, 1, figsize=[6, 5.5], sharex=True, sharey=False)
+        fig, axs = plt.subplots(1, 1, figsize=[10/3, 1.8], sharex=True, sharey=False)
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
         
         #-----------
@@ -1281,12 +1287,8 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
 
 
 #===========================    
-_plot_misalignment()
+#_plot_misalignment()
 #_plot_misalignment_z()
-
-
-
-
 
 
 #_plot_misalignment(csv_sample = 'L100_188_all_sample_misalignment_10.0', csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_')

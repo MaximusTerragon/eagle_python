@@ -194,7 +194,7 @@ def _plot_stellar_mass_function(csv_sample = 'L100_27_all_sample_misalignment_9.
     def _plot_stellar_mass_func(debug=False):
         
         # Graph initialising and base formatting
-        fig, axs = plt.subplots(1, 1, figsize=[6, 5.5], sharex=True, sharey=False)
+        fig, axs = plt.subplots(1, 1, figsize=[10/3, 1.8], sharex=True, sharey=False)
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
     
     

@@ -1090,7 +1090,7 @@ Output Parameters
         ['gas']          - mass-weighted metallicity
         ['gas_sf']       - mass-weighted metallicity
         ['gas_nsf']      - mass-weighted metallicity
-.sfr:       dictionary
+.sfr:       dictionary      [Msun/s]
         ['rad']          - [pkpc]
         ['hmr']          - multiples of halfmass_rad
         ['gas_sf']       - total SFR
@@ -2235,7 +2235,7 @@ class Subhalo_Analysis:
                         print(len(trimmed_data['gas_sf']['Mass']))
                 else:
                     # Trim data to kappa radius
-                    trimmed_data = self._trim_data(data_nil, 2*halfmass_rad)
+                    trimmed_data = self._trim_data(data_nil, self.halfmass_rad)
             
                     # Find peculiar velocity of trimmed data
                     pec_vel_rad = self._peculiar_velocity(trimmed_data)
@@ -2261,8 +2261,8 @@ class Subhalo_Analysis:
                 
                     # Orientate entire galaxy according to matrix above, use this to find kappa
                     aligned_data_part = self._rotate_galaxy(matrix, trimmed_data[parttype_name])
-                    kappa = self._kappa_co(aligned_data_part, kappa_rad)
-                
+                    kappa = self._kappa_co(aligned_data_part)
+                    
                     self.general.update({'kappa_%s' %parttype_name: kappa})
                 # If no particles of type exist within aperture_rad, assign math.nan
                 else:

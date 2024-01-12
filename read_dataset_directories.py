@@ -63,7 +63,7 @@ def _assign_directories(file_type):
         treeDir_main    = ''
         
         # Other directories
-        sample_dir      = EAGLE_dir + '/samples'
+        sample_dir      = '/home/cosmos_c22048063/samples'
         output_dir      = '/home/cosmos_c22048063/outputs'
         fig_dir         = EAGLE_dir + '/plots'
         
@@ -100,7 +100,7 @@ def _assign_directories(file_type):
         treeDir_main    = '/home/cosmos/c22048063/EAGLE_mergertree/'
         
         # Other directories
-        sample_dir      = EAGLE_dir + '/samples_snips'
+        sample_dir      = '/home/cosmos_c22048063/samples_snips'
         output_dir      = '/home/cosmos_c22048063/outputs_snips'
         fig_dir         = EAGLE_dir + '/plots_snips'
         

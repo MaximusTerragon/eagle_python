@@ -990,12 +990,11 @@ def _analysis_misalignment_minor(csv_sample = 'L100_19_minor_sample_misalignment
 #_analysis_misalignment_distribution()
 
 
-#for snap_i in np.arange(26, 29, 1):
-#for snap_i in np.arange(23, 26, 1):
-#for snap_i in np.arange(19, 23, 1):
-#    _analysis_misalignment_distribution(csv_sample = 'L100_%s_all_sample_misalignment_9.5' %snap_i)
-#for snap_i in np.arange(19, 29, 1):
+#for snap_i in np.arange(19, 28, 1):
 #    _sample_misalignment(snapNum = snap_i)
+#    _analysis_misalignment_distribution(csv_sample = 'L100_%s_all_sample_misalignment_9.5' %snap_i)
+  
+
 
 
     

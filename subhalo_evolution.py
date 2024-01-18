@@ -1704,15 +1704,13 @@ def _plot_evolution_old(csv_output = 'L100_evolution_ID401467650_RadProj_Err__st
 # Will plot evolution of single galaxy but with improved formatting for poster/presentation and with outflows/inflows
 # SAVED: /plots/individual_evolution/
 # All:
-ID_list = [108988077, 479647060, 21721896, 390595970, 401467650, 182125463, 192213531, 24276812, 116404995, 239808134, 215988755, 86715463, 6972011, 475772617, 374037507, 429352532, 441434976]
+ID_list = [108988077, 479647060, 21721896, 390595970, 401467650, 182125463, 192213531, 24276812, 116404995, 239808134, 215988755, 86715463, 6972011, 475772617, 374037507, 429352532, 441434976, 1361598, 1403994, 10421872, 17879310, 21200847, 21532243, 21659372, 24053428, 182125501, 274449295, 462956130, 462956130]
 # interesting:
-ID_list = [1361598, 1403994, 10421872, 17879310, 21200847, 21532243, 21659372, 24053428, 182125501, 274449295]
+#ID_list = [1361598, 1403994, 10421872, 17879310, 21200847, 21532243, 21659372, 24053428, 182125501, 274449295, 462956130, 462956130]
 # tim:
-ID_list = [182125516, 21200847, 462956130]
-ID_list = [462956130]
-# casanueva:
-#ID_list = [198707313]
-def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW',
+#ID_list = [182125516, 21200847, 462956130]
+#ID_list = [462956130]
+def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                          #--------------------------
                          # Individual galaxies
                          GalaxyID_list = ID_list,             # [ None / ID_list ]
@@ -1726,12 +1724,14 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW',
                            redshift_axis       = False,      # Whether to add the redshift axis
                          #-------------------------------------------
                          # Misalignment angles                
-                           use_hmr_general     = '2.0',    # [ 1.0 / 2.0 / aperture]      Used for stelmass | APERTURE NOT AVAILABLE FOR sfr ssfr
-                           use_hmr_angle       = 1.0,           # [ 1.0 / 2.0 ]                Used for misangle, inc angle, com, counts
-                           abs_or_proj         = 'abs',             # [ 'both' / 'abs' / 'proj' ]
-                           use_angle           = 'stars_gas_sf',
-                           misangle_threshold  = 30,                # [ 30 / 45 ]  
-                           use_uncertainties   = True,              # Whether to plot uncertainties or not
+                           use_hmr_general          = '2.0',    # [ 1.0 / 2.0 / aperture]      Used for stelmass | APERTURE NOT AVAILABLE FOR sfr ssfr
+                           use_hmr_angle            = 1.0,           # [ 1.0 / 2.0 ]                Used for misangle, inc angle, com, counts
+                           abs_or_proj              = 'abs',             # [ 'both' / 'abs' / 'proj' ]
+                           use_angle                = 'stars_gas_sf',
+                           plot_dm_angles           = False,            # Whether to add DM-stars, DM-gas_sf
+                             use_dm_uncertainties   = False,              # Whether to plot uncertainties or not
+                           misangle_threshold       = 30,                # [ 30 / 45 ]  
+                           use_uncertainties        = True,              # Whether to plot uncertainties or not
                          #-------------------------------------------
                          # Merger settings
                            min_merger_ratio   = 0.1,
@@ -1742,9 +1742,9 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW',
                          # Inflow (gas) [ Msun/yr ]
                            plot_inflow          = True,
                            plot_outflow         = True,
-                           plot_stelmassloss    = True,
+                           plot_stelmassloss    = False,
                            plot_bh_acc          = False,
-                           plot_bh_acc_instant  = True,
+                           plot_bh_acc_instant  = False,
                            plot_sfr             = True,
                          # Masses   [ Msun ]
                            plot_halomass        = False,
@@ -1754,7 +1754,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW',
                            plot_nsfmass         = False,
                            plot_bhmass          = False,
                          # sSFR     [ /yr ]
-                           plot_ssfr            = True,
+                           plot_ssfr            = False,
                          # l of stars (specific angular momentum or spin) [ pkpc/kms-1 ]
                            plot_l               = False,
                          # Radius   [ pkpc]
@@ -1786,7 +1786,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW',
                          showfig        = False,
                          savefig        = True,
                            file_format  = 'pdf',
-                           savefig_txt  = 'testnew',
+                           savefig_txt  = '',
                          #--------------------------
                          print_progress = False,
                          debug = False):
@@ -1904,6 +1904,9 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW',
         if plot_angles or plot_inclination:
             plot_height_ratios.append(3)
             plot_names.append('angles')
+        if plot_tdyn or plot_ttorque:
+            plot_height_ratios.append(2)
+            plot_names.append('time')
         if plot_inflow or plot_outflow or plot_stelmassloss or plot_bh_acc or plot_bh_acc_instant or plot_sfr:
             plot_height_ratios.append(2)
             plot_names.append('massrate')
@@ -1934,14 +1937,12 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW',
         if plot_vcirc:
             plot_height_ratios.append(2)
             plot_names.append('vcirc')
-        if plot_tdyn or plot_ttorque:
-            plot_height_ratios.append(2)
-            plot_names.append('time')
         
         #------------------------
         # Graph initialising and base formatting
         #fig, axs = plt.subplots(nrows=len(plot_height_ratios), ncols=1, gridspec_kw={'height_ratios': plot_height_ratios}, figsize=[5.5, 1*np.sum(np.array(plot_height_ratios))], sharex=True, sharey=False)
         fig, axs = plt.subplots(nrows=len(plot_height_ratios), ncols=1, gridspec_kw={'height_ratios': plot_height_ratios}, figsize=[10/3, 0.5*np.sum(np.array(plot_height_ratios))], sharex=True, sharey=False)
+        
         
         #------------------------
         # Create each graph separately
@@ -1962,17 +1963,45 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW',
             if plot_names_i == 'angles':
                 # Plot data in galaxy_tree():
                 if plot_angles:
+                    
+                    if use_angle == 'stars_gas':
+                        angle_label = 'stars$-$gas'
+                    elif use_angle == 'stars_gas_sf':
+                        angle_label = 'stars$-$gas$_{\mathrm{SF}}$'
+                    elif use_angle == 'gas_sf_gas_nsf':
+                        angle_label = 'gas$_{\mathrm{SF}}$$-$gas$_{\mathrm{NSF}}$'
+                    elif use_angle == 'stars_dm':
+                        angle_label = 'DM$-$stars'
+                    elif use_angle == 'gas_dm':
+                        angle_label = 'DM$-$gas'
+                    elif use_angle == 'gas$_{\mathrm{SF}}$_dm':
+                        angle_label = 'DM$-$gas$_{\mathrm{SF}}$'
+                    
                     if abs_or_proj == 'abs':
-                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj], alpha=1.0, ms=2, ls='-', lw=0.7, zorder=10, label='%.0f $r_{1/2}$'%use_hmr_angle)
+                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj], alpha=1.0, ms=2, ls='-', lw=0.5, zorder=10, label='%s'%angle_label, color='k')
                         if use_uncertainties:
-                            axs[0].fill_between(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.array(galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[:,0], np.array(galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[:,1], alpha=0.25, lw=0, zorder=5)
+                            axs[0].fill_between(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.array(galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[:,0], np.array(galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[:,1], alpha=0.25, lw=0, zorder=5, color='k')
+                        
+                        if plot_dm_angles:
+                            axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['stars_dm']['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj], alpha=1.0, ms=2, ls='dashdot', lw=0.5, zorder=10, label='DM$-$stars', color='r')
+                            axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['gas_sf_dm']['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj], alpha=1.0, ms=2, ls=':', lw=0.5, zorder=10, label='DM$-$gas$_{\mathrm{SF}}$', color='b')
+                            if use_dm_uncertainties:
+                                axs[0].fill_between(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.array(galaxy_tree['%s' %GalaxyID]['stars_dm']['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[:,0], np.array(galaxy_tree['%s' %GalaxyID]['stars_dm']['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[:,1], alpha=0.25, lw=0, zorder=5, facecolor='r')
+                                axs[0].fill_between(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.array(galaxy_tree['%s' %GalaxyID]['gas_sf_dm']['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[:,0], np.array(galaxy_tree['%s' %GalaxyID]['gas_sf_dm']['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[:,1], alpha=0.25, lw=0, zorder=5, facecolor='b')
                     if abs_or_proj == 'proj':
-                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj], alpha=1.0, ms=2, ls=':', lw=0.7, zorder=10, label='%.0f $r_{1/2}$ (projected)'%use_hmr_angle)
+                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj], alpha=1.0, ms=2, ls=':', lw=0.5, zorder=10, label='%s (projected)'%angle_label)
                         if use_uncertainties:
                             axs[0].fill_between(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.array(galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[:,0], np.array(galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[:,1], alpha=0.25, lw=0, zorder=5)
+                        
+                        if plot_dm_angles:
+                            axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['stars_dm']['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj], alpha=1.0, ms=2, ls='dashdot', lw=0.5, zorder=10, label='DM$-$stars', color='r')
+                            axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['gas_sf_dm']['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj], alpha=1.0, ms=2, ls=':', lw=0.5, zorder=10, label='DM$-$gas$_{\mathrm{SF}}$', color='b')
+                            if use_dm_uncertainties:
+                                axs[0].fill_between(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.array(galaxy_tree['%s' %GalaxyID]['stars_dm']['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[:,0], np.array(galaxy_tree['%s' %GalaxyID]['stars_dm']['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[:,1], alpha=0.25, lw=0, zorder=5, facecolor='r')
+                                axs[0].fill_between(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.array(galaxy_tree['%s' %GalaxyID]['gas_sf_dm']['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[:,0], np.array(galaxy_tree['%s' %GalaxyID]['gas_sf_dm']['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[:,1], alpha=0.25, lw=0, zorder=5, facecolor='b')
                     if abs_or_proj == 'both':
-                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['angle_abs'], alpha=1.0, ms=2, ls='-', lw=0.7, zorder=10, label='%.0f $r_{1/2}$'%use_hmr_angle)
-                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['angle_proj'], alpha=1.0, ms=2, ls=':', lw=0.7, zorder=10, label='%.0f $r_{1/2}$ (projected)'%use_hmr_angle)
+                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['angle_abs'], alpha=1.0, ms=2, ls='-', lw=0.5, zorder=10, label='%s'%angle_label)
+                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['angle_proj'], alpha=1.0, ms=2, ls=':', lw=0.5, zorder=10, label='%s (projected)'%angle_label)
                         if use_uncertainties:
                             axs[0].fill_between(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.array(galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['err_abs'])[:,0], np.array(galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['err_abs'])[:,1], alpha=0.25, lw=0, zorder=5)
                             axs[0].fill_between(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.array(galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['err_proj'])[:,0], np.array(galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['err_proj'])[:,1], alpha=0.25, lw=0, zorder=5)     
@@ -1998,7 +2027,8 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW',
                 
                 #---------------------
                 ### Annotation
-                axs[i].text(8, 185, 'GalaxyID: %s' %str(GalaxyID), fontsize=8)
+                axs[i].set_title('GalaxyID: %s' %str(GalaxyID), size=7, loc='left', pad=3)
+                #axs[i].text(8, 185, 'GalaxyID: %s' %str(GalaxyID), fontsize=8)
                 axs[i].axhspan(0, misangle_threshold, alpha=0.15, ec=None, fc='grey')
                 axs[i].axhspan(180-misangle_threshold, 180, alpha=0.15, ec=None, fc='grey')
                 #axs[0].grid(lw=0.3)
@@ -2006,7 +2036,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW',
                 
                 #---------------------
                 ### Legend
-                axs[0].legend(loc='upper right', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1)
+                axs[0].legend(loc='best', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1)
                 
                 #---------------------
                 ### Plot mergers
@@ -2017,14 +2047,41 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW',
                             axs[i].axvline(time_i, c='grey', ls='-', lw=3, alpha=0.5, zorder=1)
                             axs[i].text(time_i-0.1, 163, '%.2f' %max(ratio_i), color='grey', fontsize=7, zorder=999)
                             axs[i].text(time_i-0.1, 153, '%.2f' %gas_i[np.argmax(ratio_i)], color='blue', fontsize=7, zorder=999)
+            
+            # Plot 11
+            if plot_names_i == 'time':
+                # Plot data in galaxy_tree():
+                if plot_tdyn:
+                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['other']['%s_hmr' %use_hmr_angle]['tdyn'], alpha=1.0, lw=0.5, c='k', label='$t_{\mathrm{dyn}}$')
+                if plot_ttorque:
+                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['other']['%s_hmr' %use_hmr_angle]['ttorque'], alpha=1.0, lw=0.5, c='g', label='$t_{\mathrm{torque}}$')
                 
+                #---------------------
+                ### Formatting
+                axs[i].set_ylabel('Time (Gyr)')
+                axs[i].set_ylim(bottom=0)
+                ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major', labelbottom=False, labeltop=False)
+                ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='minor')
+                
+                #---------------------
+                ### Legend
+                axs[i].legend(loc='best', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.2)
+                
+                #---------------------
+                ### Plot mergers
+                for time_i, ratio_i, gas_i in zip(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['merger_ratio_stars'], galaxy_tree['%s' %GalaxyID]['merger_ratio_gas']):
+                    #print('%.1f\t%.2f' %(time_i, max(ratio_i, default=math.nan)))
+                    if len(ratio_i) > 0:
+                        if max(ratio_i) > min_merger_ratio:
+                            axs[i].axvline(time_i, c='grey', ls='-', lw=3, alpha=0.5, zorder=1)
+             
             # Plot 1 - use_hmr_angle
             if plot_names_i == 'massrate':
                 # Plot data in galaxy_tree():
                 if plot_inflow:
-                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_angle]['inflow_rate'], alpha=1.0, lw=0.7, c='g', ls='-', label='inflow')
+                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_angle]['inflow_rate'], alpha=1.0, lw=0.5, c='g', ls='-', label='inflow')
                 if plot_outflow:
-                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_angle]['outflow_rate'], alpha=1.0, lw=0.7, c='r', ls='--', label='outflow')
+                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_angle]['outflow_rate'], alpha=1.0, lw=0.5, c='r', ls='--', label='outflow')
                 if plot_stelmassloss:
                     axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_angle]['stelmassloss_rate'], alpha=1.0, lw=0.8, ls='dashdot', label='stellar mass loss')
                 if plot_bh_acc:
@@ -2034,9 +2091,9 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW',
                 if plot_sfr:
                     # Plot data in galaxy_tree():
                     if use_hmr_general == 'aperture:':
-                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['ap_sfr'])), alpha=1.0, lw=0.7, c='orange', ls='dashdot', label='SFR')
+                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['ap_sfr'])), alpha=1.0, lw=0.5, c='orange', ls='dashdot', label='SFR')
                     else:
-                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_general]['sfr'])), alpha=1.0, lw=0.7, c='orange', ls='dashdot', label='SFR')
+                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(10*np.array(galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_general]['sfr'])), alpha=1.0, lw=0.5, c='orange', ls='dashdot', label='SFR(×$10$)')
                 
                 #---------------------    
                 ### Formatting
@@ -2062,29 +2119,29 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW',
             if plot_names_i == 'mass':
                 # Plot data in galaxy_tree():
                 if plot_halomass:
-                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['halomass'])), alpha=1.0, lw=0.7, c='brown', ls='-', label='halo')
+                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['halomass'])), alpha=1.0, lw=0.5, c='brown', ls='-', label='halo')
                 if plot_stelmass:
                     if use_hmr_general == 'aperture':
-                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['stars']['ap_mass'])), alpha=1.0, lw=0.7, c='r', ls='-', label='star')
+                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['stars']['ap_mass'])), alpha=1.0, lw=0.5, c='r', ls='-', label='star')
                     else:
-                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['stars']['%s_hmr' %use_hmr_general]['mass'])), alpha=1.0, lw=0.7, c='r', ls='-', label='star')
+                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['stars']['%s_hmr' %use_hmr_general]['mass'])), alpha=1.0, lw=0.5, c='r', ls='-', label='star')
                 if plot_gasmass:
                     if use_hmr_general == 'aperture':
-                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['gas']['ap_mass'])), alpha=1.0, lw=0.7, c='g', ls='--', label='gas')
+                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['gas']['ap_mass'])), alpha=1.0, lw=0.5, c='g', ls='--', label='gas')
                     else:
-                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_general]['mass'])), alpha=1.0, lw=0.7, c='g', ls='--', label='gas') 
+                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_general]['mass'])), alpha=1.0, lw=0.5, c='g', ls='--', label='gas') 
                 if plot_sfmass:
                     if use_hmr_general == 'aperture':
-                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['gas_sf']['ap_mass'])), alpha=1.0, lw=0.7, c='b', ls='dashdot', label='gas$_{\mathrm{SF}}$')
+                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['gas_sf']['ap_mass'])), alpha=1.0, lw=0.5, c='b', ls='dashdot', label='gas$_{\mathrm{SF}}$')
                     else:
-                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['gas_sf']['%s_hmr' %use_hmr_general]['mass'])), alpha=1.0, lw=0.7, c='b', ls=':', label='gas$_{\mathrm{SF}}$')
+                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['gas_sf']['%s_hmr' %use_hmr_general]['mass'])), alpha=1.0, lw=0.5, c='b', ls=':', label='gas$_{\mathrm{SF}}$')
                 if plot_nsfmass:
                     if use_hmr_general == 'aperture':
-                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['gas_nsf']['ap_mass'])), alpha=1.0, lw=0.7, c='b', ls=':', label='gas$_{\mathrm{NSF}}$')
+                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['gas_nsf']['ap_mass'])), alpha=1.0, lw=0.5, c='b', ls=':', label='gas$_{\mathrm{NSF}}$')
                     else:
-                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['gas_nsf']['%s_hmr' %use_hmr_general]['mass'])), alpha=1.0, lw=0.7, c='b', ls=':', label='gas$_{\mathrm{NSF}}$')
+                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['gas_nsf']['%s_hmr' %use_hmr_general]['mass'])), alpha=1.0, lw=0.5, c='b', ls=':', label='gas$_{\mathrm{NSF}}$')
                 if plot_bhmass:
-                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['bh']['mass'])), alpha=1.0, lw=0.7, c='purple', ls='dashdot', label='BH')
+                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['bh']['mass'])), alpha=1.0, lw=0.5, c='purple', ls='dashdot', label='BH')
 
                 
                 #---------------------
@@ -2097,7 +2154,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW',
                 
                 #---------------------
                 ### Legend
-                axs[i].legend(loc='upper right', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.2)
+                axs[i].legend(loc='best', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.2)
                 
                 #---------------------
                 ### Plot mergers
@@ -2111,9 +2168,9 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW',
             if plot_names_i == 'ssfr':
                 # Plot data in galaxy_tree():
                 if use_hmr_general == 'aperture:':
-                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.divide(np.array(galaxy_tree['%s' %GalaxyID]['ap_sfr']), np.array(galaxy_tree['%s' %GalaxyID]['stars']['ap_mass']))), alpha=1.0, lw=0.7, c='orange')
+                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.divide(np.array(galaxy_tree['%s' %GalaxyID]['ap_sfr']), np.array(galaxy_tree['%s' %GalaxyID]['stars']['ap_mass']))), alpha=1.0, lw=0.5, c='orange')
                 else:
-                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.divide(np.array(galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_general]['sfr']), np.array(galaxy_tree['%s' %GalaxyID]['stars']['%s_hmr' %use_hmr_general]['mass']))), alpha=1.0, lw=0.7, c='orange')
+                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.divide(np.array(galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_general]['sfr']), np.array(galaxy_tree['%s' %GalaxyID]['stars']['%s_hmr' %use_hmr_general]['mass']))), alpha=1.0, lw=0.5, c='orange')
                     
                 #---------------------
                 ### Formatting
@@ -2133,12 +2190,12 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW',
             # Plot 4 - use_hmr_angle
             if plot_names_i == 'l':
                 # Plot data in galaxy_tree():
-                axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['stars']['%s_hmr' %use_hmr_angle]['l'])), alpha=1.0, lw=0.7, c='r', ls='-', label='stars')
+                axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['stars']['%s_hmr' %use_hmr_angle]['l'])), alpha=1.0, lw=0.5, c='r', ls='-', label='stars')
                 
                 #---------------------
                 ### Formatting
-                axs[i].set_ylabel('$l$ $(\mathrm{pkpc} / \mathrm{km s}^{-1})$')
-                axs[i].set_ylim(-12, -7)
+                axs[i].set_ylabel('$\mathrm{log_{10}}j_{\mathrm{stars}}$ $(\mathrm{pkpc} / \mathrm{km s}^{-1})$')
+                axs[i].set_ylim(0, 4)
                 ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major', labelbottom=False, labeltop=False)
                 ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='minor')
                 
@@ -2154,9 +2211,9 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW',
             if plot_names_i == 'radius':
                 # Plot data in galaxy_tree():
                 if plot_radius:
-                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['rad'], alpha=1.0, lw=0.7, c='k', label='$r_{\mathrm{1/2}}$')
+                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['rad'], alpha=1.0, lw=0.5, c='k', label='$r_{\mathrm{1/2}}$')
                 if plot_radius_sf:
-                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['rad_sf'], alpha=1.0, lw=0.7, c='b', label='$r_{\mathrm{1/2}^{\mathrm{SF}}}$')
+                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['rad_sf'], alpha=1.0, lw=0.5, c='b', label='$r_{\mathrm{1/2}^{\mathrm{SF}}}$')
                     
                 
                 #---------------------
@@ -2182,17 +2239,17 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW',
             if plot_names_i == 'morphology':
                 # Plot data in galaxy_tree():
                 if plot_kappa_stars:
-                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['stars']['kappa'], alpha=1.0, lw=0.7, c='r', ls='-', label='$\kappa_{\mathrm{co}}^{\mathrm{*}}$')
+                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['stars']['kappa'], alpha=1.0, lw=0.5, c='r', ls='-', label='$\kappa_{\mathrm{co}}^{\mathrm{*}}$')
                 if plot_kappa_gas:
-                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['gas']['kappa'], alpha=1.0, lw=0.7, c='g', ls='-', label='$\kappa_{\mathrm{co}}^{\mathrm{gas}}$')
+                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['gas']['kappa'], alpha=1.0, lw=0.5, c='g', ls='-', label='$\kappa_{\mathrm{co}}^{\mathrm{gas}}$')
                 if plot_kappa_sf:
-                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['gas_sf']['kappa'], alpha=1.0, lw=0.7, c='b', ls='dashdot', label='$\kappa_{\mathrm{co}}^{\mathrm{SF}}$')
+                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['gas_sf']['kappa'], alpha=1.0, lw=0.5, c='b', ls='dashdot', label='$\kappa_{\mathrm{co}}^{\mathrm{SF}}$')
                 if plot_kappa_nsf:
-                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['gas_nsf']['kappa'], alpha=1.0, lw=0.7, c='b', ls='-', label='$\kappa_{\mathrm{co}}^{\mathrm{NSF}}$')
+                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['gas_nsf']['kappa'], alpha=1.0, lw=0.5, c='b', ls='-', label='$\kappa_{\mathrm{co}}^{\mathrm{NSF}}$')
                 if plot_ellip:
-                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['ellip'], alpha=1.0, lw=0.7, c='purple', ls='--', label='$\epsilon$')
+                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['ellip'], alpha=1.0, lw=0.5, c='purple', ls='--', label='$\epsilon$')
                 if plot_triax:
-                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['triax'], alpha=1.0, lw=0.7, c='orange', ls=':', label='$T$')
+                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['triax'], alpha=1.0, lw=0.5, c='orange', ls=':', label='$T$')
                     
                 
                 
@@ -2217,7 +2274,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW',
                 ### Annotate
                 axs[i].axhline(0.4, lw=0.5, ls=':', c='k', alpha=0.9, zorder=1)
                 axs[i].text(7.95, 0.42, 'LTG', color='grey', fontsize=7, alpha=0.9)
-                axs[i].text(7.95, 0.32, 'ETG', color='grey', fontsize=7, alpha=0.9)
+                axs[i].text(7.95, 0.30, 'ETG', color='grey', fontsize=7, alpha=0.9)
                 
                 #---------------------
                 ### Formatting
@@ -2232,7 +2289,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW',
                 
                 #---------------------
                 ### Legend
-                axs[i].legend(loc='upper right', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.2)
+                axs[i].legend(loc='best', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.2)
                 
                 #---------------------
                 ### Plot mergers
@@ -2353,31 +2410,6 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW',
                         if max(ratio_i) > min_merger_ratio:
                             axs[i].axvline(time_i, c='grey', ls='-', lw=3, alpha=0.5, zorder=1)
             
-            # Plot 11
-            if plot_names_i == 'time':
-                # Plot data in galaxy_tree():
-                if plot_tdyn:
-                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['other']['%s_hmr' %use_hmr_angle]['tdyn'], alpha=1.0, lw=1, c='k', label='$t_{\mathrm{dyn}}$')
-                if plot_ttorque:
-                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['other']['%s_hmr' %use_hmr_angle]['ttorque'], alpha=1.0, lw=1, c='g', label='$t_{\mathrm{torque}}$')
-                
-                #---------------------
-                ### Formatting
-                axs[i].set_ylabel('Time (Gyr)')
-                ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major', labelbottom=False, labeltop=False)
-                ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='minor')
-                
-                #---------------------
-                ### Legend
-                axs[i].legend(loc='best', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.2)
-                
-                #---------------------
-                ### Plot mergers
-                for time_i, ratio_i, gas_i in zip(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['merger_ratio_stars'], galaxy_tree['%s' %GalaxyID]['merger_ratio_gas']):
-                    #print('%.1f\t%.2f' %(time_i, max(ratio_i, default=math.nan)))
-                    if len(ratio_i) > 0:
-                        if max(ratio_i) > min_merger_ratio:
-                            axs[i].axvline(time_i, c='grey', ls='-', lw=3, alpha=0.5, zorder=1)
             
             
             #---------------------

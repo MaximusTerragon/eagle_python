@@ -315,7 +315,7 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
                        csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_',
                        #--------------------------
                        use_hmr_values = '2.0',            # [ 1.0 / 2.0 / 'aperture' ] value to extract general values from
-                       # CTRL+F -> 'INPUT VALUES HERE'
+                       # CTRL+F -> 'INPUT VALUES HERE' ... and change teh axis
                        #--------------------------
                        # Selection criteria
                        print_summary = True,
@@ -337,7 +337,7 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
                        showfig       = True,
                        savefig       = True,
                          file_format = 'pdf',
-                         savefig_txt = '',
+                         savefig_txt = '_fraction',
                        #--------------------------
                        print_progress = False,
                        debug = False):
@@ -513,6 +513,11 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
         value_c = []
         value_s = []
         
+        array_ETG = []
+        array_LTG = []
+        array_ETG_mass = []
+        array_LTG_mass = []
+        
         # Find angle galaxy makes with viewing axis
         def _find_angle(vector1, vector2):
             return np.rad2deg(np.arccos(np.clip(np.dot(vector1/np.linalg.norm(vector1), vector2/np.linalg.norm(vector2)), -1.0, 1.0)))     # [deg]
@@ -638,19 +643,25 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
                             # INPUT VALUES HERE     value_x.append(np.log10(np.array(all_masses['%s' %GalaxyID]['stars'][value_mask_masses])))
                             #value_x.append(np.log10(np.array(all_masses['%s' %GalaxyID]['stars'][value_mask_masses])))
                             
-                            legend_label = 'in 2.0\nz=%.1f' %output_input['Redshift']
+                            legend_label = 'in %.1f\nz=%.1f' %(float(use_hmr_values), output_input['Redshift'])
                             
-                            xlabel = 'kappa gas_sf'
-                            value_x.append(all_general['%s' %GalaxyID]['kappa_gas_sf'])
+                            xlabel = 'stellar mass'
+                            value_x.append(np.log10(np.array(all_masses['%s' %GalaxyID]['stars'][value_mask_masses])))
                             
-                            ylabel = 'upper error'
-                            value_y.append(np.max(np.absolute(np.array(all_misangles['%s' %GalaxyID]['stars_gas_sf_angle_err'][value_mask_angles]) - all_misangles['%s' %GalaxyID]['stars_gas_sf_angle'][value_mask_angles])))
-                                                        
-                            clabel = 'kappa stars'
-                            value_c.append(all_general['%s' %GalaxyID]['kappa_stars'])
+                            ylabel = 'ETG fraction in bin'
+                            value_y.append(all_general['%s' %GalaxyID]['kappa_stars'])
+                            
+                            #clabel = 'kappa'
+                            #value_c.append(all_general['%s' %GalaxyID]['kappa_stars'])
                             
                             #value_s.append(math.nan)
                             #========================================================
+                        
+                        
+                        if all_general['%s' %GalaxyID]['kappa_stars'] > 0.5:
+                            array_LTG.append(all_general['%s' %GalaxyID]['halfmass_rad_sf'])
+                        if all_general['%s' %GalaxyID]['kappa_stars'] < 0.3:
+                            array_ETG.append(all_general['%s' %GalaxyID]['halfmass_rad_sf'])
                             
                         
                         
@@ -658,7 +669,9 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
         #============================================    
         # END OF ALL GALAXIES + PLOTTING
         print('Final sample length: ', len(value_x))
-        
+        #print(np.median(array_LTG))
+        #print(np.median(array_ETG))
+                
         # COLLECT ID -> CTRL+F 'COLLECT ID OF INTERESTED GALAXIES aaa'
         #print('\tcollect_ID of counter-rotatos:')
         #print(collect_ID)
@@ -677,11 +690,20 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
         # no colourmap
         if len(value_c) == 0:
             axs.scatter(value_x, value_y, s=1, c='k', alpha=0.5)
+            
+            # mask LTGs
+            #mask = np.where(np.array(value_y) < 0.4)[0]            
+                        
+            #hist_tot, _ = np.histogram(np.array(value_x), range=[9, 12], bins=20)
+            #hist_ETG, _ = np.histogram(np.array(value_x)[mask], range=[9, 12], bins=20)
+            
+            #axs.plot(np.linspace(9, 12, 20)+0.1, np.divide(hist_ETG, hist_tot))
+            
         # colourmap
         else:
             #-------------
-            vmin = 0
-            vmax = 1.0
+            vmin = 0.2
+            vmax = 0.6
             
             # Normalise colormap
             norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax, clip=True)
@@ -698,9 +720,9 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
         #-----------
         ### General formatting
         # Axis labels
-        axs.set_xlim(0, 1)
+        axs.set_xlim(9, 11.5)
         #axs.set_xticks(np.arange(0, 181, step=30))
-        axs.set_ylim(0, 80)
+        axs.set_ylim(0, 1)
         #axs.set_yscale('log')
         axs.set_xlabel(xlabel)
         axs.set_ylabel(ylabel)
@@ -716,7 +738,7 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
         legend_elements = [Line2D([0], [0], marker=' ', color='w')]
         legend_labels = [legend_label]
         legend_colors = ['k']
-        legend1 = axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
+        legend1 = axs.legend(handles=legend_elements, labels=legend_labels, loc='best', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
         axs.add_artist(legend1)
         
         #-----------
@@ -745,6 +767,8 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
 
 #===========================    
 _plot_relations()
+#_plot_relations(ETG_or_LTG = 'ETG')
+#_plot_relations(ETG_or_LTG = 'LTG')
 
 #_plot_relations(ETG_or_LTG = 'ETG')
 #_plot_relations(ETG_or_LTG = 'LTG')

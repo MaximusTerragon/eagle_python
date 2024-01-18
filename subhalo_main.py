@@ -990,7 +990,7 @@ Output Parameters
     'GroupNum', 'SubGroupNum', 'GalaxyID', 'SnapNum', 'halo_mass', 
         'stelmass', 'gasmass', 'gasmass_sf', 'gasmass_nsf', 'dmmass', 
         'ap_sfr', 'bh_id', 'bh_mass', 'bh_mdot', 'bh_edd', 'halfmass_rad', 
-        'halfmass_rad_proj', 'viewing_axis',
+        'halfmass_rad_proj', 'halfmass_rad_sf', 'viewing_axis',
         'kappa_stars' - 30 kpc
         'kappa_gas'   - 2.0 hmr
         'kappa_gas_sf'

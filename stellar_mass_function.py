@@ -45,13 +45,13 @@ def _plot_stellar_mass_function(csv_sample = 'L100_27_all_sample_misalignment_9.
                                      max_uncertainty   = 30,            # [ None / 30 / 45 ]                  Degrees
                                      lower_mass_limit  = 10**9.5,            # Lower limit of chosen sample
                                      upper_mass_limit  = 10**15,            # Lower limit of chosen sample
-                                   pop_mass_limit      = 10**8,            # Lower limit of population plot sampled
+                                   pop_mass_limit      = 10**8.5,            # Lower limit of population plot sampled
                                    use_satellites      = True,   
                                  #--------------------------
                                  hist_bin_width = 0.2,
                                  #--------------------------
                                  showfig       = True,
-                                 savefig       = False,
+                                 savefig       = True,
                                    file_format = 'pdf',
                                    savefig_txt = '',
                                  #--------------------------
@@ -194,7 +194,7 @@ def _plot_stellar_mass_function(csv_sample = 'L100_27_all_sample_misalignment_9.
     def _plot_stellar_mass_func(debug=False):
         
         # Graph initialising and base formatting
-        fig, axs = plt.subplots(1, 1, figsize=[10/3, 1.8], sharex=True, sharey=False)
+        fig, axs = plt.subplots(1, 1, figsize=[10/3, 3], sharex=True, sharey=False)
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
     
     
@@ -231,7 +231,7 @@ def _plot_stellar_mass_function(csv_sample = 'L100_27_all_sample_misalignment_9.
             hist = myData['num'][:] / (float(sim_size))**3.
             hist = hist / hist_bin_width
         
-            axs.plot(myData['mass'], np.log10(hist), label=sim_name, linewidth=2, c='indigo')
+            axs.plot(myData['mass'], np.log10(hist), label=sim_name, linewidth=1, c='indigo')
     
         
         #=========================================
@@ -345,16 +345,16 @@ def _plot_stellar_mass_function(csv_sample = 'L100_27_all_sample_misalignment_9.
             print('Plotting')
             time_start = time.time()
             
-        axs.plot(hist_bins, np.log10(hist_sample), label='Sample selection', ls='--', linewidth=2, c='r')
+        axs.plot(hist_bins, np.log10(hist_sample), label='Sample selection', ls='--', linewidth=1, c='r')
         
         #-----------
         # Axis formatting
-        plt.xlim(8, 12.5)
+        plt.xlim(9, 12.5)
         plt.ylim(-5, -0.5)
         plt.yticks(np.arange(-5, 0, 0.5))
         plt.xlabel(r'log$_{10}$ M$_{*}$ [M$_{\odot}$]')
         plt.ylabel(r'log$_{10}$ dn/dlog$_{10}$(M$_{*}$) [cMpc$^{-3}$]')
-        plt.xticks(np.arange(8, 12.5, 1))
+        plt.xticks(np.arange(9, 12.5, 0.5))
           
         #-----------  
         # Annotations
@@ -399,5 +399,15 @@ _plot_stellar_mass_function(use_angle = 'stars_gas_sf')
 _plot_stellar_mass_function(use_angle = 'stars_dm')
 #===========================
 
+
+#_plot_misalignment(use_angle = 'stars_gas_sf', ETG_or_LTG = 'ETG', cluster_or_field   = 'both')
+#_plot_misalignment(use_angle = 'stars_gas_sf', ETG_or_LTG = 'LTG', cluster_or_field   = 'both')
+#_plot_misalignment(use_angle = 'stars_gas_sf', ETG_or_LTG = 'ETG', cluster_or_field   = 'field')
+#_plot_misalignment(use_angle = 'stars_gas_sf', ETG_or_LTG = 'LTG', cluster_or_field   = 'field')
+#_plot_misalignment(use_angle = 'stars_gas_sf', ETG_or_LTG = 'ETG', cluster_or_field   = 'cluster')
+#_plot_misalignment(use_angle = 'stars_gas_sf', ETG_or_LTG = 'LTG', cluster_or_field   = 'cluster')
+#_plot_misalignment(use_angle = 'stars_gas_sf', ETG_or_LTG = 'both', cluster_or_field   = 'both')
+#_plot_misalignment(use_angle = 'stars_gas_sf', ETG_or_LTG = 'both', cluster_or_field   = 'cluster')
+#_plot_misalignment(use_angle = 'stars_gas_sf', ETG_or_LTG = 'both', cluster_or_field   = 'field')
 
 

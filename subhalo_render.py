@@ -244,6 +244,9 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         galaxy = Subhalo_Extract(mySims, dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, Centre_i, HaloMass, aperture_rad, viewing_axis, MorphoKinem, mask_sgn = mask_sgn)
         GroupNum = galaxy.gn
         
+        for i, j in zip(galaxy.data_nil['bh']['Mass'], galaxy.data_nil['bh']['PartMass']):
+            print(i, j)
+        
         
         # Gives: galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh
         # Gives: subhalo.general: GroupNum, SubGroupNum, GalaxyID, stelmass, gasmass, gasmass_sf, gasmass_nsf
@@ -1533,9 +1536,9 @@ def galaxy_map(csv_sample = False,              # False, Whether to read in exis
 
 
 #--------------      
-#galaxy_render()
+galaxy_render()
 
 
-galaxy_map(stars=True)
-galaxy_map(gas_sf=True)
+#galaxy_map(stars=True)
+#galaxy_map(gas_sf=True)
 #--------------

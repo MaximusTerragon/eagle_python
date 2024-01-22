@@ -1710,6 +1710,7 @@ ID_list = [108988077, 479647060, 21721896, 390595970, 401467650, 182125463, 1922
 # tim:
 #ID_list = [182125516, 21200847, 462956130]
 #ID_list = [462956130]
+#ID_list = [182125516]
 def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                          #--------------------------
                          # Individual galaxies
@@ -2027,7 +2028,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                 
                 #---------------------
                 ### Annotation
-                axs[i].set_title('GalaxyID: %s' %str(GalaxyID), size=7, loc='left', pad=3)
+                axs[i].set_title('GalaxyID ($z=0$): %s' %str(galaxy_tree['%s' %GalaxyID]['GalaxyID'][-1]), size=7, loc='left', pad=3)
                 #axs[i].text(8, 185, 'GalaxyID: %s' %str(GalaxyID), fontsize=8)
                 axs[i].axhspan(0, misangle_threshold, alpha=0.15, ec=None, fc='grey')
                 axs[i].axhspan(180-misangle_threshold, 180, alpha=0.15, ec=None, fc='grey')
@@ -2040,13 +2041,18 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                 
                 #---------------------
                 ### Plot mergers
+                metadata_ratios = []
+                metadata_gas_ratios = []
                 for time_i, ratio_i, gas_i in zip(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['merger_ratio_stars'], galaxy_tree['%s' %GalaxyID]['merger_ratio_gas']):
                     #print('%.1f\t%.2f' %(time_i, max(ratio_i, default=math.nan)))
                     if len(ratio_i) > 0:
                         if max(ratio_i) > min_merger_ratio:
-                            axs[i].axvline(time_i, c='grey', ls='-', lw=3, alpha=0.5, zorder=1)
-                            axs[i].text(time_i-0.1, 163, '%.2f' %max(ratio_i), color='grey', fontsize=7, zorder=999)
-                            axs[i].text(time_i-0.1, 153, '%.2f' %gas_i[np.argmax(ratio_i)], color='blue', fontsize=7, zorder=999)
+                            #axs[i].axvline(time_i, c='grey', ls='-', lw=3, alpha=0.5, zorder=1)
+                            axs[i].axvline(time_i, c='grey', ls='--', lw=0.6, alpha=0.9, zorder=1)
+                            metadata_ratios.append(max(ratio_i))
+                            metadata_gas_ratios.append(gas_i[np.argmax(ratio_i)])
+                            #axs[i].text(time_i+0.1, 163, '%.2f' %max(ratio_i), color='grey', fontsize=7, zorder=999)
+                            #axs[i].text(time_i+0.2, 151, '%.2f' %gas_i[np.argmax(ratio_i)], color='blue', fontsize=7, zorder=999)
             
             # Plot 11
             if plot_names_i == 'time':
@@ -2073,7 +2079,8 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                     #print('%.1f\t%.2f' %(time_i, max(ratio_i, default=math.nan)))
                     if len(ratio_i) > 0:
                         if max(ratio_i) > min_merger_ratio:
-                            axs[i].axvline(time_i, c='grey', ls='-', lw=3, alpha=0.5, zorder=1)
+                            #axs[i].axvline(time_i, c='grey', ls='-', lw=3, alpha=0.5, zorder=1)
+                            axs[i].axvline(time_i, c='grey', ls='--', lw=0.6, alpha=0.9, zorder=1)
              
             # Plot 1 - use_hmr_angle
             if plot_names_i == 'massrate':
@@ -2113,7 +2120,8 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                     #print('%.1f\t%.2f' %(time_i, max(ratio_i, default=math.nan)))
                     if len(ratio_i) > 0:
                         if max(ratio_i) > min_merger_ratio:
-                            axs[i].axvline(time_i, c='grey', ls='-', lw=3, alpha=0.5, zorder=1)
+                            #axs[i].axvline(time_i, c='grey', ls='-', lw=3, alpha=0.5, zorder=1)
+                            axs[i].axvline(time_i, c='grey', ls='--', lw=0.6, alpha=0.9, zorder=1)
                             
             # Plot 2 - use_hmr_general 
             if plot_names_i == 'mass':
@@ -2162,7 +2170,8 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                     #print('%.1f\t%.2f' %(time_i, max(ratio_i, default=math.nan)))
                     if len(ratio_i) > 0:
                         if max(ratio_i) > min_merger_ratio:
-                            axs[i].axvline(time_i, c='grey', ls='-', lw=3, alpha=0.5, zorder=1)
+                            #axs[i].axvline(time_i, c='grey', ls='-', lw=3, alpha=0.5, zorder=1)
+                            axs[i].axvline(time_i, c='grey', ls='--', lw=0.6, alpha=0.9, zorder=1)
                             
             # Plot 3 - use_hmr_general 
             if plot_names_i == 'ssfr':
@@ -2185,7 +2194,8 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                     #print('%.1f\t%.2f' %(time_i, max(ratio_i, default=math.nan)))
                     if len(ratio_i) > 0:
                         if max(ratio_i) > min_merger_ratio:
-                            axs[i].axvline(time_i, c='grey', ls='-', lw=3, alpha=0.5, zorder=1)
+                            #axs[i].axvline(time_i, c='grey', ls='-', lw=3, alpha=0.5, zorder=1)
+                            axs[i].axvline(time_i, c='grey', ls='--', lw=0.6, alpha=0.9, zorder=1)
             
             # Plot 4 - use_hmr_angle
             if plot_names_i == 'l':
@@ -2205,7 +2215,8 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                     #print('%.1f\t%.2f' %(time_i, max(ratio_i, default=math.nan)))
                     if len(ratio_i) > 0:
                         if max(ratio_i) > min_merger_ratio:
-                            axs[i].axvline(time_i, c='grey', ls='-', lw=3, alpha=0.5, zorder=1)
+                            #axs[i].axvline(time_i, c='grey', ls='-', lw=3, alpha=0.5, zorder=1)
+                            axs[i].axvline(time_i, c='grey', ls='--', lw=0.6, alpha=0.9, zorder=1)
                             
             # Plot 5
             if plot_names_i == 'radius':
@@ -2233,7 +2244,8 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                     #print('%.1f\t%.2f' %(time_i, max(ratio_i, default=math.nan)))
                     if len(ratio_i) > 0:
                         if max(ratio_i) > min_merger_ratio:
-                            axs[i].axvline(time_i, c='grey', ls='-', lw=3, alpha=0.5, zorder=1)
+                            #axs[i].axvline(time_i, c='grey', ls='-', lw=3, alpha=0.5, zorder=1)
+                            axs[i].axvline(time_i, c='grey', ls='--', lw=0.6, alpha=0.9, zorder=1)
                             
             # Plot 6 - aperture
             if plot_names_i == 'morphology':
@@ -2297,7 +2309,8 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                     #print('%.1f\t%.2f' %(time_i, max(ratio_i, default=math.nan)))
                     if len(ratio_i) > 0:
                         if max(ratio_i) > min_merger_ratio:
-                            axs[i].axvline(time_i, c='grey', ls='-', lw=3, alpha=0.5, zorder=1)
+                            #axs[i].axvline(time_i, c='grey', ls='-', lw=3, alpha=0.5, zorder=1)
+                            axs[i].axvline(time_i, c='grey', ls='--', lw=0.6, alpha=0.9, zorder=1)
                             
             # Plot 7 - use_hmr_angle & use_hmr_general
             if plot_names_i == 'Z':
@@ -2337,7 +2350,8 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                     #print('%.1f\t%.2f' %(time_i, max(ratio_i, default=math.nan)))
                     if len(ratio_i) > 0:
                         if max(ratio_i) > min_merger_ratio:
-                            axs[i].axvline(time_i, c='grey', ls='-', lw=3, alpha=0.5, zorder=1)
+                            #axs[i].axvline(time_i, c='grey', ls='-', lw=3, alpha=0.5, zorder=1)
+                            axs[i].axvline(time_i, c='grey', ls='--', lw=0.6, alpha=0.9, zorder=1)
             
             # Plot 8
             if plot_names_i == 'edd':
@@ -2361,7 +2375,8 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                     #print('%.1f\t%.2f' %(time_i, max(ratio_i, default=math.nan)))
                     if len(ratio_i) > 0:
                         if max(ratio_i) > min_merger_ratio:
-                            axs[i].axvline(time_i, c='grey', ls='-', lw=3, alpha=0.5, zorder=1)
+                            #axs[i].axvline(time_i, c='grey', ls='-', lw=3, alpha=0.5, zorder=1)
+                            axs[i].axvline(time_i, c='grey', ls='--', lw=0.6, alpha=0.9, zorder=1)
             
             # Plot 9
             if plot_names_i == 'lbol':
@@ -2385,7 +2400,8 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                     #print('%.1f\t%.2f' %(time_i, max(ratio_i, default=math.nan)))
                     if len(ratio_i) > 0:
                         if max(ratio_i) > min_merger_ratio:
-                            axs[i].axvline(time_i, c='grey', ls='-', lw=3, alpha=0.5, zorder=1)
+                            #axs[i].axvline(time_i, c='grey', ls='-', lw=3, alpha=0.5, zorder=1)
+                            axs[i].axvline(time_i, c='grey', ls='--', lw=0.6, alpha=0.9, zorder=1)
             
             # Plot 10
             if plot_names_i == 'vcirc':
@@ -2408,7 +2424,8 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                     #print('%.1f\t%.2f' %(time_i, max(ratio_i, default=math.nan)))
                     if len(ratio_i) > 0:
                         if max(ratio_i) > min_merger_ratio:
-                            axs[i].axvline(time_i, c='grey', ls='-', lw=3, alpha=0.5, zorder=1)
+                            #axs[i].axvline(time_i, c='grey', ls='-', lw=3, alpha=0.5, zorder=1)
+                            axs[i].axvline(time_i, c='grey', ls='--', lw=0.6, alpha=0.9, zorder=1)
             
             
             
@@ -2432,12 +2449,12 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
         
         #=====================================
         ### Print summary
-        metadata_plot = {'Title': 'ID: %s\nM*: %.2e\nKappa: %.2f\nM_gas: %.2e\nM_sf: %.2e\nHalo: %.2e\nHMR: %.2f\nHMR_p: %.2f' %(GalaxyID, galaxy_tree['%s' %GalaxyID]['stars']['%s_hmr' %use_hmr_general]['mass'][-1], galaxy_tree['%s' %GalaxyID]['stars']['kappa'][-1], galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_general]['mass'][-1], galaxy_tree['%s' %GalaxyID]['gas_sf']['%s_hmr' %use_hmr_general]['mass'][-1], galaxy_tree['%s' %GalaxyID]['halomass'][-1], galaxy_tree['%s' %GalaxyID]['rad'][-1], galaxy_tree['%s' %GalaxyID]['radproj'][-1]),
+        metadata_plot = {'Title': 'ID: %s\nM*: %.2e\nKappa: %.2f\nM_gas: %.2e\nM_sf: %.2e\nHalo: %.2e\nHMR: %.2f\nHMR_p: %.2f\nMergers: %s\nGasratio: %s' %(GalaxyID, galaxy_tree['%s' %GalaxyID]['stars']['%s_hmr' %use_hmr_general]['mass'][-1], galaxy_tree['%s' %GalaxyID]['stars']['kappa'][-1], galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_general]['mass'][-1], galaxy_tree['%s' %GalaxyID]['gas_sf']['%s_hmr' %use_hmr_general]['mass'][-1], galaxy_tree['%s' %GalaxyID]['halomass'][-1], galaxy_tree['%s' %GalaxyID]['rad'][-1], galaxy_tree['%s' %GalaxyID]['radproj'][-1], metadata_ratios, metadata_gas_ratios),
                          'Author': 'abs_or_proj: %s\nuse_hmr_general: %s\nuse_hmr_angle: %s\nmisangle_threshold: %s\nmin_merger_ratio: %s\n' %(abs_or_proj, use_hmr_general, use_hmr_angle, misangle_threshold, min_merger_ratio)}
         
         if savefig:
-            plt.savefig("%s/individual_evolution/ID%s_evolution_proj%s_%s_%s.%s" %(fig_dir, GalaxyID, abs_or_proj, use_angle, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print("\n  SAVED: %s/individual_evolution/ID%s_evolution_proj%s_%s_%s.%s" %(fig_dir, GalaxyID, abs_or_proj, use_angle, savefig_txt, file_format))
+            plt.savefig("%s/individual_evolution/ID%s_evolution_proj%s_%s_%s.%s" %(fig_dir, str(galaxy_tree['%s' %GalaxyID]['GalaxyID'][-1]), abs_or_proj, use_angle, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/individual_evolution/ID%s_evolution_proj%s_%s_%s.%s" %(fig_dir, str(galaxy_tree['%s' %GalaxyID]['GalaxyID'][-1]), abs_or_proj, use_angle, savefig_txt, file_format))
         if showfig:
             plt.show()
         plt.close()

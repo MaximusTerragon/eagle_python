@@ -705,7 +705,7 @@ class Subhalo_Extract:
             f.close()
         # If bhs
         elif itype == 5:
-            for att in ['GroupNumber', 'SubGroupNumber', 'BH_Mass', 'BH_Mdot', 'Coordinates', 'Velocity', 'ParticleIDs']:
+            for att in ['GroupNumber', 'SubGroupNumber', 'BH_Mass', 'BH_Mdot', 'Coordinates', 'Velocity', 'ParticleIDs', 'Mass']:
                 if (mask_sgn == False) and att == 'SubGroupNumber':
                     continue
                 # Ensure we use 'Mass' as name
@@ -715,6 +715,12 @@ class Subhalo_Extract:
                     aexp = f['PartType%i/%s'%(itype, att)].attrs.get('aexp-scale-exponent')
                     hexp = f['PartType%i/%s'%(itype, att)].attrs.get('h-scale-exponent')
                     data['Mass'] = np.multiply(tmp, cgs * self.a**aexp * self.h**hexp, dtype='f8')
+                if att == 'Mass':
+                    tmp  = eagle_data.read_dataset(itype, att)
+                    cgs  = f['PartType%i/%s'%(itype, att)].attrs.get('CGSConversionFactor')
+                    aexp = f['PartType%i/%s'%(itype, att)].attrs.get('aexp-scale-exponent')
+                    hexp = f['PartType%i/%s'%(itype, att)].attrs.get('h-scale-exponent')
+                    data['PartMass'] = np.multiply(tmp, cgs * self.a**aexp * self.h**hexp, dtype='f8')
                 else:
                     tmp  = eagle_data.read_dataset(itype, att)
                     cgs  = f['PartType%i/%s'%(itype, att)].attrs.get('CGSConversionFactor')
@@ -786,6 +792,7 @@ class Subhalo_Extract:
             data['StarFormationRate'] = data['StarFormationRate'] * u.g.to(u.Msun)  # [Msun/s]
         if itype == 5:
             data['BH_Mdot'] = data['BH_Mdot'] * u.g.to(u.Msun)  # [Msun/s]
+            data['PartMass'] = data['PartMass'] * u.g.to(u.Msun)                   # [Msun]
         
         # Periodic wrap coordinates around centre (in proper units). 
         # boxsize converted from cMpc/h -> pMpc

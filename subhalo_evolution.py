@@ -1708,9 +1708,11 @@ def _plot_evolution_old(csv_output = 'L100_evolution_ID401467650_RadProj_Err__st
 # interesting:
 #ID_list = [1361598, 1403994, 10421872, 17879310, 21200847, 21532243, 21659372, 24053428, 182125501, 274449295, 462956130, 462956130]
 # tim:
-#ID_list = [182125516, 21200847, 462956130]
-# Freeke angles
+#ID_list = [349651696, 462956130, 182125516]
+# co-co relaxations, >135 angles
 ID_list = [443962, 17386687, 37720520, 74948378, 102011598, 236121860, 239192401, 239568811, 303860577, 323164883, 327004290, 349651696, 374037537, 401953578, 390652869, 271560499, 239520114, 65296062, 86568202, 470037125]
+# long trelax >2 GYR
+#ID_list = [115659946, 203653117, 216029810, 251900011, 273987842, 300443124, 453139727, 463220955, 390652869, 137732479, 208235276, 370237257, 239924249, 208272775, 334237852, 350073611, 92395081, 175434605, 264298155, 470037125, 444435190]
 
 def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                          #--------------------------
@@ -1730,7 +1732,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                            use_hmr_angle            = 1.0,           # [ 1.0 / 2.0 ]                Used for misangle, inc angle, com, counts
                            abs_or_proj              = 'abs',             # [ 'both' / 'abs' / 'proj' ]
                            use_angle                = 'stars_gas_sf',
-                           plot_dm_angles           = False,            # Whether to add DM-stars, DM-gas_sf
+                           plot_dm_angles           = True,            # Whether to add DM-stars, DM-gas_sf
                              use_dm_uncertainties   = False,              # Whether to plot uncertainties or not
                            misangle_threshold       = 30,                # [ 30 / 45 ]  
                            use_uncertainties        = True,              # Whether to plot uncertainties or not
@@ -1785,10 +1787,10 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                            plot_tdyn            = True,
                            plot_ttorque         = True,     
                          #==================================================================================
-                         showfig        = False,
+                         showfig        = True,
                          savefig        = True,
                            file_format  = 'pdf',
-                           savefig_txt  = 'co-co-peak135',
+                           savefig_txt  = 'co-co-peak135_DM', 
                          #--------------------------
                          print_progress = False,
                          debug = False):

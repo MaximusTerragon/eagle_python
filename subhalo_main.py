@@ -403,6 +403,7 @@ Output Parameters
     ['Coordinates']         - [pkpc]
     ['Velocity']            - [pkm/s]
     ['Mass']                - [Msun]
+    ['BH_Mass']             = [Msun/s]
     ['BH_Mdot']             = [Msun/s]
     ['GroupNumber']         - int array 
     ['SubGroupNumber']      - int array 
@@ -714,13 +715,13 @@ class Subhalo_Extract:
                     cgs  = f['PartType%i/%s'%(itype, att)].attrs.get('CGSConversionFactor')
                     aexp = f['PartType%i/%s'%(itype, att)].attrs.get('aexp-scale-exponent')
                     hexp = f['PartType%i/%s'%(itype, att)].attrs.get('h-scale-exponent')
-                    data['Mass'] = np.multiply(tmp, cgs * self.a**aexp * self.h**hexp, dtype='f8')
+                    data['BH_Mass'] = np.multiply(tmp, cgs * self.a**aexp * self.h**hexp, dtype='f8')
                 if att == 'Mass':
                     tmp  = eagle_data.read_dataset(itype, att)
                     cgs  = f['PartType%i/%s'%(itype, att)].attrs.get('CGSConversionFactor')
                     aexp = f['PartType%i/%s'%(itype, att)].attrs.get('aexp-scale-exponent')
                     hexp = f['PartType%i/%s'%(itype, att)].attrs.get('h-scale-exponent')
-                    data['PartMass'] = np.multiply(tmp, cgs * self.a**aexp * self.h**hexp, dtype='f8')
+                    data['Mass'] = np.multiply(tmp, cgs * self.a**aexp * self.h**hexp, dtype='f8')
                 else:
                     tmp  = eagle_data.read_dataset(itype, att)
                     cgs  = f['PartType%i/%s'%(itype, att)].attrs.get('CGSConversionFactor')
@@ -792,7 +793,7 @@ class Subhalo_Extract:
             data['StarFormationRate'] = data['StarFormationRate'] * u.g.to(u.Msun)  # [Msun/s]
         if itype == 5:
             data['BH_Mdot'] = data['BH_Mdot'] * u.g.to(u.Msun)  # [Msun/s]
-            data['PartMass'] = data['PartMass'] * u.g.to(u.Msun)                   # [Msun]
+            data['BH_Mass'] = data['BH_Mass'] * u.g.to(u.Msun)                   # [Msun]
         
         # Periodic wrap coordinates around centre (in proper units). 
         # boxsize converted from cMpc/h -> pMpc
@@ -1066,6 +1067,15 @@ Output Parameters
         ['gas_sf']  - [unit vector]
         ['gas_nsf'] - [unit vector]
         ['dm']      - [unit vector]
+.spins_halo:   dictionary
+    Has aligned/rotated spin vectors within spin_rad_in's:
+        ['rad']     - [pkpc]
+        ['hmr']     - multiples of halfmass_rad
+        ['stars']   - [unit vector]
+        ['gas']     - [unit vector]
+        ['gas_sf']  - [unit vector]
+        ['gas_nsf'] - [unit vector]
+        ['dm']      - [unit vector]     ALWAYS 0
 .counts:   dictionary
     Has aligned/rotated particle count and mass within spin_rad_in's:
         ['rad']          - [pkpc]
@@ -1133,6 +1143,20 @@ Output Parameters
         ['gas_dm_angle_err']            - [lo, hi] [deg]       .
         ['gas_sf_dm_angle_err']         - [lo, hi] [deg]       .
         ['gas_nsf_dm_angle_err']        - [lo, hi] [deg]       ^
+.mis_angles_halo:     dictionary
+    Has aligned/rotated misalignment angles between stars 
+    and X within spin_rad_in's. Errors given by iterations,
+    which defults to 500.
+        ['rad']            - [pkpc]
+        ['hmr']            - multiples of halfmass_rad         - radius BEYOND which data was trimmed
+        ['stars_gas_angle']             - [deg]                - inner stars to outer gas
+        ['stars_gas_sf_angle']          - [deg]                . inner stars to outer gas_sf
+        ['stars_gas_nsf_angle']         - [deg]                . inner stars to outer gas_nsf
+        ['gas_sf_gas_nsf_angle']        - [deg]                . inner gas_sf to outer gas_nsf
+        ['stars_dm_angle']              - [deg]                . outer stars to DM
+        ['gas_dm_angle']                - [deg]                . outer gas to DM
+        ['gas_sf_dm_angle']             - [deg]                . outer gas_sf to DM
+        ['gas_nsf_dm_angle']            - [deg]                . outer gas_nsf to DM
 .mis_angles_proj                    dictionary
     Has projected misalignment angles. Errors given by iterations,
     which defults to 500.
@@ -1282,8 +1306,10 @@ class Subhalo_Analysis:
         self.coms_proj          = {}
         self.inc_angles         = {}
         self.spins              = {}
+        self.spins_halo         = {}
         self.mis_angles         = {}
         self.mis_angles_proj    = {}
+        self.mis_angles_halo    = {}
         self.gas_data           = {}
         self.mass_flow          = {}
         
@@ -1325,7 +1351,7 @@ class Subhalo_Analysis:
         self.viewing_axis       = viewing_axis                          # 'x', 'y', 'z'
         self.viewing_angle      = viewing_angle                         # [deg]
         
-        self.bh_id, self.bh_mass, self.bh_mdot, self.bh_edd = self._bh_accretion(self.data['bh'], halfmass_rad)     # [Msun]/s of largest BH within 0.5 HMR
+        self.bh_id, self.bh_mass, self.bh_mdot, self.bh_edd = self._bh_accretion(self.data['bh'], halfmass_rad)     # [Msun]/s of largest BH (subgrid) within 0.5 HMR
         
         #----------------------------------------------------
         # Filling self.general
@@ -1460,7 +1486,7 @@ class Subhalo_Analysis:
                 
             # Create dictionary arrays    
             self.coms['adjust'] = []
-            for dict_list in [self.spins, self.counts, self.masses, self.coms, self.l]:
+            for dict_list in [self.spins, self.spins_halo, self.counts, self.masses, self.coms, self.l]:
                 dict_list['rad'] = spin_rad   
                 dict_list['hmr'] = spin_hmr
                 
@@ -1486,6 +1512,7 @@ class Subhalo_Analysis:
             for rad_i, hmr_i in zip(spin_rad, spin_hmr):
                 # Trim data to particular radius
                 trimmed_data = self._trim_data(self.data, rad_i)
+                trimmed_halo = self._trim_data_inner(self.data, rad_i)
                 
                 # Find peculiar velocity of trimmed data
                 #pec_vel_rad = self._peculiar_velocity(trimmed_data)
@@ -1500,12 +1527,22 @@ class Subhalo_Analysis:
                 
                 # Adjust velocity of trimmed_data to account for peculiar velocity
                 for parttype_name in trimmed_data.keys():
+                    # if array empty, it'll just leave the empty array
                     if len(trimmed_data[parttype_name]['Mass']) != 0:
                         trimmed_data[parttype_name]['Velocity']     = trimmed_data[parttype_name]['Velocity'] - pec_vel_rad
                         trimmed_data[parttype_name]['Coordinates']  = trimmed_data[parttype_name]['Coordinates'] - stellar_com 
                         trimmed_data['dm']['Velocity']      = self.data['dm']['Velocity'] - pec_vel_rad
                         trimmed_data['dm']['Coordinates']   = self.data['dm']['Coordinates'] - stellar_com    
-                        trimmed_data['dm']['Mass']          = self.data['dm']['Mass']                 
+                        trimmed_data['dm']['Mass']          = self.data['dm']['Mass']        
+                        
+                    if len(trimmed_halo[parttype_name]['Mass']) != 0:
+                        # trimming halo inner regions, remove DM as we dont care
+                        trimmed_halo[parttype_name]['Velocity']     = trimmed_halo[parttype_name]['Velocity'] - pec_vel_rad
+                        trimmed_halo[parttype_name]['Coordinates']  = trimmed_halo[parttype_name]['Coordinates'] - stellar_com   
+                        trimmed_halo['dm']['Velocity']              = self.data['dm']['Velocity'] - pec_vel_rad
+                        trimmed_halo['dm']['Coordinates']           = self.data['dm']['Coordinates'] - stellar_com          
+                        trimmed_halo['dm']['Mass']                  = self.data['dm']['Mass']       
+                          
                 if debug:
                     print('Stellar peculiar velocity in rad', rad_i)
                     print(pec_vel_rad)
@@ -1527,6 +1564,7 @@ class Subhalo_Analysis:
                     # Find particle counts, masses
                     particle_count  = len(trimmed_data[parttype_name]['Mass'])
                     particle_mass   = np.sum(trimmed_data[parttype_name]['Mass'])
+                    particle_count_halo  = len(trimmed_halo[parttype_name]['Mass'])
                     
                     # For stars and gas, find metallicity
                     if parttype_name != 'dm':
@@ -1582,10 +1620,16 @@ class Subhalo_Analysis:
                         particle_spin, L = self._find_spin(trimmed_data[parttype_name])
                         self.spins[parttype_name].append(particle_spin)
                         self.l[parttype_name].append(L)
+                        
+                        particle_spin_halo, _ = self._find_spin(trimmed_halo[parttype_name])
+                        self.spins_halo[parttype_name].append(particle_spin_halo)
                     else:
                         particle_spin = np.array([math.nan, math.nan, math.nan])
                         self.spins[parttype_name].append(particle_spin)
                         self.l[parttype_name].append(math.nan)
+                        
+                        particle_spin_halo = np.array([math.nan, math.nan, math.nan])
+                        self.spins_halo[parttype_name].append(particle_spin_halo)
                     
                     #---------------------------------------------
                     # Flag for minimum particles, but do nothing
@@ -1808,14 +1852,25 @@ class Subhalo_Analysis:
                 for angle_selection_i in angle_selection:
                     dict_list['%s_angle' %angle_selection_i]        = []
                     dict_list['%s_angle_err' %angle_selection_i]    = []
+            for dict_list in [self.mis_angles_halo]:
+                dict_list['rad'] = spin_rad   
+                dict_list['hmr'] = spin_hmr
+                
+                # Create radial distributions of all components, assume dm = 30 pkpc only
+                for angle_selection_i in angle_selection:
+                    dict_list['%s_angle' %angle_selection_i]        = []
                 
             # DM largely all the same but slight differences
-            for rad_i, hmr_i, spin_star, spin_gas, spin_gas_sf, spin_gas_nsf, spin_dm in zip(self.spins['rad'], self.spins['hmr'], self.spins['stars'], self.spins['gas'], self.spins['gas_sf'], self.spins['gas_nsf'], self.spins['dm']):
+            for rad_i, hmr_i, spin_star, spin_gas, spin_gas_sf, spin_gas_nsf, spin_dm, spin_star_halo, spin_gas_halo, spin_gas_sf_halo, spin_gas_nsf_halo in zip(self.spins['rad'], self.spins['hmr'], self.spins['stars'], self.spins['gas'], self.spins['gas_sf'], self.spins['gas_nsf'], self.spins['dm'], self.spins_halo['stars'], self.spins_halo['gas'], self.spins_halo['gas_sf'], self.spins_halo['gas_nsf']):
                 
                 if 'stars_gas' in angle_selection:
                     # Find 3D angle
                     angle = self._misalignment_angle(spin_star, spin_gas)
                     self.mis_angles['stars_gas_angle'].append(angle)            # Will be NAN if none
+                    
+                    # Find 3D angle of inner stars to outer gas (halo) 
+                    angle_halo = self._misalignment_angle(spin_star, spin_gas_halo)
+                    self.mis_angles_halo['stars_gas_angle'].append(angle_halo)            # Will be NAN if none
                 
                     if find_uncertainties:
                         # uncertainty
@@ -1837,6 +1892,10 @@ class Subhalo_Analysis:
                     # Find 3D angle
                     angle = self._misalignment_angle(spin_star, spin_gas_sf)
                     self.mis_angles['stars_gas_sf_angle'].append(angle)
+                    
+                    # Find 3D angle of inner stars to outer gas (halo) 
+                    angle_halo = self._misalignment_angle(spin_star, spin_gas_sf_halo)
+                    self.mis_angles_halo['stars_gas_sf_angle'].append(angle_halo)            # Will be NAN if none
                 
                     if find_uncertainties:
                         # uncertainty
@@ -1858,6 +1917,10 @@ class Subhalo_Analysis:
                     # Find 3D angle
                     angle = self._misalignment_angle(spin_star, spin_gas_nsf)
                     self.mis_angles['stars_gas_nsf_angle'].append(angle)
+                    
+                    # Find 3D angle of inner stars to outer gas (halo) 
+                    angle_halo = self._misalignment_angle(spin_star, spin_gas_nsf_halo)
+                    self.mis_angles_halo['stars_gas_nsf_angle'].append(angle_halo)            # Will be NAN if none
                 
                     if find_uncertainties:
                         # uncertainty
@@ -1879,6 +1942,10 @@ class Subhalo_Analysis:
                     # Find 3D angle
                     angle = self._misalignment_angle(spin_gas_sf, spin_gas_nsf)
                     self.mis_angles['gas_sf_gas_nsf_angle'].append(angle)
+                    
+                    # Find 3D angle of inner gas_sf to outer gas_nsf (halo) 
+                    angle_halo = self._misalignment_angle(spin_gas_sf, spin_gas_nsf_halo)
+                    self.mis_angles_halo['gas_sf_gas_nsf_angle'].append(angle_halo)            # Will be NAN if none
                 
                     if find_uncertainties:
                         # uncertainty
@@ -1901,6 +1968,10 @@ class Subhalo_Analysis:
                     angle = self._misalignment_angle(spin_star, spin_dm)
                     self.mis_angles['stars_dm_angle'].append(angle)
                     
+                    # Find 3D angle of outer stars to DM (halo) 
+                    angle_halo = self._misalignment_angle(spin_star_halo, spin_dm)
+                    self.mis_angles_halo['stars_dm_angle'].append(angle_halo)            # Will be NAN if none
+                    
                     if find_uncertainties:
                         # uncertainty
                         tmp_errors_array = []
@@ -1921,6 +1992,10 @@ class Subhalo_Analysis:
                     # Find 3D angle
                     angle = self._misalignment_angle(spin_gas, spin_dm)
                     self.mis_angles['gas_dm_angle'].append(angle)
+                    
+                    # Find 3D angle of outer stars to DM (halo) 
+                    angle_halo = self._misalignment_angle(spin_gas_halo, spin_dm)
+                    self.mis_angles_halo['gas_dm_angle'].append(angle_halo)            # Will be NAN if none
                 
                     if find_uncertainties:
                         # uncertainty
@@ -1942,6 +2017,10 @@ class Subhalo_Analysis:
                     # Find 3D angle
                     angle = self._misalignment_angle(spin_gas_sf, spin_dm)
                     self.mis_angles['gas_sf_dm_angle'].append(angle)
+                    
+                    # Find 3D angle of outer stars to DM (halo) 
+                    angle_halo = self._misalignment_angle(spin_gas_sf_halo, spin_dm)
+                    self.mis_angles_halo['gas_sf_dm_angle'].append(angle_halo)            # Will be NAN if none
                 
                     if find_uncertainties:
                         # uncertainty
@@ -1963,6 +2042,10 @@ class Subhalo_Analysis:
                     # Find 3D angle
                     angle = self._misalignment_angle(spin_gas_nsf, spin_dm)
                     self.mis_angles['gas_nsf_dm_angle'].append(angle)
+                    
+                    # Find 3D angle of outer stars to DM (halo) 
+                    angle_halo = self._misalignment_angle(spin_gas_nsf_halo, spin_dm)
+                    self.mis_angles_halo['gas_nsf_dm_angle'].append(angle_halo)            # Will be NAN if none
                 
                     if find_uncertainties:
                         # uncertainty
@@ -2447,6 +2530,23 @@ class Subhalo_Analysis:
             new_dict[parttype_name] = newData
         
         return new_dict
+        
+    def _trim_data_inner(self, data_dict, radius, debug=False):
+        new_dict = {}
+        for parttype_name in data_dict.keys():
+            # Compute distance to centre and mask all within 3D radius in pkpc
+            r  = np.linalg.norm(data_dict[parttype_name]['Coordinates'], axis=1)
+            if debug:
+                print('r, radius', r, radius)
+            mask = np.where(r >= radius)
+            
+            newData = {}
+            for header in data_dict[parttype_name].keys():
+                newData[header] = data_dict[parttype_name][header][mask]
+            
+            new_dict[parttype_name] = newData
+        
+        return new_dict
     
     def _trim_data_proj(self, data_dict, radius, viewing_axis, debug=False):
         new_dict = {}
@@ -2630,18 +2730,19 @@ class Subhalo_Analysis:
                     return math.nan, math.nan, math.nan, math.nan
                     
             # Consider the accretion rate of the most massive BH within given hmr
-            new_mask = data_dict['Mass'][mask].argmax()
+            new_mask = data_dict['BH_Mass'][mask].argmax()
     
             if debug:
                 print('distance', r)
                 print('bh list', data_dict['Mass'])
+                print('bh list', data_dict['BH_Mass'])
                 print('bh mdot', data_dict['BH_Mdot'])
     
     
             # Consider the accretion rate of the closest to the centre to be the BH of this galaxy
             bh_epsilon = 0.1        # efficiency
             accretion_rate = data_dict['BH_Mdot'][mask][new_mask]
-            bh_mass        = data_dict['Mass'][mask][new_mask]             
+            bh_mass        = data_dict['BH_Mass'][mask][new_mask]             
             bh_edd         = accretion_rate / (bh_mass * 7e-17 / bh_epsilon)
             bh_id          = data_dict['ParticleIDs'][mask][new_mask]
             

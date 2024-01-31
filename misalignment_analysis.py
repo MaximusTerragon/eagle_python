@@ -569,6 +569,7 @@ def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misali
     all_general       = {}          # has total masses, kappa, halfmassrad, etc.
     all_coms          = {}          # has all C.o.Ms
     all_spins         = {}          # has all spins
+    all_spinshalo     = {}          # has all spins - outer halo
     all_l             = {}          # has all specific l
     all_counts        = {}          # has all the particle count within rad
     all_masses        = {}          # has all the particle mass within rad
@@ -576,6 +577,7 @@ def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misali
     all_sfr           = {}          # has bulk sfr
     all_Z             = {}          # has bulk metallicity
     all_misangles     = {}          # has all 3D angles
+    all_misangleshalo = {}          # has all 3D angles to outer halo, beyond a certain radius
     all_misanglesproj = {}          # has all 2D projected angles from 3d when given a viewing axis and viewing_angle = 0
     all_gasdata       = {}
     
@@ -689,6 +691,7 @@ def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misali
         all_general['%s' %str(subhalo.GalaxyID)]        = subhalo.general
         all_l['%s' %str(subhalo.GalaxyID)]              = subhalo.l
         all_spins['%s' %str(subhalo.GalaxyID)]          = subhalo.spins
+        all_spinshalo['%s' %str(subhalo.GalaxyID)]          = subhalo.spins_halo
         all_coms['%s' %str(subhalo.GalaxyID)]           = subhalo.coms
         all_counts['%s' %str(subhalo.GalaxyID)]         = subhalo.counts
         all_masses['%s' %str(subhalo.GalaxyID)]         = subhalo.masses
@@ -696,6 +699,7 @@ def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misali
         all_sfr['%s' %str(subhalo.GalaxyID)]            = subhalo.sfr
         all_Z['%s' %str(subhalo.GalaxyID)]              = subhalo.Z
         all_misangles['%s' %str(subhalo.GalaxyID)]      = subhalo.mis_angles
+        all_misangleshalo['%s' %str(subhalo.GalaxyID)]  = subhalo.mis_angles_halo
         all_misanglesproj['%s' %str(subhalo.GalaxyID)]  = subhalo.mis_angles_proj
         all_gasdata['%s' %str(subhalo.GalaxyID)]        = subhalo.gas_data
         #all_massflow... not added as we can't evaluate it here
@@ -730,6 +734,7 @@ def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misali
         csv_dict = {'all_general': all_general,
                     'all_l': all_l,
                     'all_spins': all_spins,
+                    'all_spinshalo': all_spinshalo,
                     'all_coms': all_coms,
                     'all_counts': all_counts,
                     'all_masses': all_masses,
@@ -737,6 +742,7 @@ def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misali
                     'all_sfr': all_sfr,
                     'all_Z': all_Z,
                     'all_misangles': all_misangles,
+                    'all_misangleshalo': all_misangleshalo,
                     'all_misanglesproj': all_misanglesproj, 
                     'all_gasdata': all_gasdata,
                     'all_flags': all_flags,
@@ -990,11 +996,13 @@ def _analysis_misalignment_minor(csv_sample = 'L100_19_minor_sample_misalignment
 #_analysis_misalignment_distribution()
 
 
-#for snap_i in np.arange(19, 28, 1):
+#for snap_i in np.arange(19, 28.1, 1):
 #    _sample_misalignment(snapNum = snap_i)
 #    _analysis_misalignment_distribution(csv_sample = 'L100_%s_all_sample_misalignment_9.5' %snap_i)
   
-
+for snap_i in np.arange(19, 28.1, 1):
+    _sample_misalignment(mySims = [('RefL0012N0188', 12)], galaxy_mass_min    = 10**(9), galaxy_mass_max    = 10**(15), snapNum = snap_i)
+    _analysis_misalignment_distribution(csv_sample = 'L12_%s_all_sample_misalignment_9.0' %snap_i)
 
 
     

@@ -80,6 +80,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                     #--------------------------
                     # Plot options
                     plot_spin_vectors   = True,
+                    plot_spin_vectors_halo   = True,
                     centre_of_pot       = True,                             # Plot most bound object 
                     centre_of_mass      = False,                            # Plot total centre of mass
                     axis                = True,                             # Plot small axis below galaxy
@@ -244,7 +245,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         galaxy = Subhalo_Extract(mySims, dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, Centre_i, HaloMass, aperture_rad, viewing_axis, MorphoKinem, mask_sgn = mask_sgn)
         GroupNum = galaxy.gn
         
-        for i, j in zip(galaxy.data_nil['bh']['Mass'], galaxy.data_nil['bh']['PartMass']):
+        for i, j in zip(galaxy.data_nil['bh']['Mass'], galaxy.data_nil['bh']['BH_Mass']):
             print(i, j)
         
         
@@ -487,6 +488,26 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         
             # Plot original stars spin vector
             ax.quiver(point[0], point[1], point[2], arrow[0]*boxradius*0.6, arrow[1]*boxradius*0.6, arrow[2]*boxradius*0.6, color=color, alpha=1, linewidth=1, zorder=50)
+            
+        def plot_spin_vector_halo(dict_name, part_type, rad, color, debug=False):
+            # Plot formatting
+            ax.set_facecolor('xkcd:black')
+            ax.w_xaxis.pane.fill = False
+            ax.w_yaxis.pane.fill = False
+            ax.w_zaxis.pane.fill = False
+            ax.grid(False)
+            ax.set_xlim(-boxradius, boxradius)
+            ax.set_ylim(-boxradius, boxradius)
+            ax.set_zlim(-boxradius, boxradius)
+            
+
+            mask = np.where(dict_name['hmr'] == rad)
+                    
+            arrow = dict_name[part_type][int(min(mask))]
+            point = subhalo.coms['adjust'][int(min(mask))]
+        
+            # Plot original stars spin vector
+            ax.quiver(point[0], point[1], point[2], arrow[0]*boxradius*0.6, arrow[1]*boxradius*0.6, arrow[2]*boxradius*0.6, color=color, alpha=1, linewidth=0.5, zorder=50)
 
         def plot_coms(dict_name, part_type, rad, color, debug=False):
             # Plot formatting
@@ -537,30 +558,35 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                 fig.canvas.draw_idle()
             def stars_v_button(self, event):
                 plot_spin_vector(subhalo.spins, 'stars', spin_vector_rad, 'r')
+                plot_spin_vector_halo(subhalo.spins_halo, 'stars', spin_vector_rad, 'r')
                 fig.canvas.draw_idle()
             def gas_button(self, event):
                 plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'gas', 'lime')
                 fig.canvas.draw_idle()    
             def gas_v_button(self, event):
                 plot_spin_vector(subhalo.spins, 'gas', spin_vector_rad, 'forestgreen')
+                plot_spin_vector_halo(subhalo.spins_halo, 'gas', spin_vector_rad, 'forestgreen')
                 fig.canvas.draw_idle()
             def gas_sf_button(self, event):
                 plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'gas_sf', 'cyan')
                 fig.canvas.draw_idle()
             def gas_sf_v_button(self, event):
                 plot_spin_vector(subhalo.spins, 'gas_sf', spin_vector_rad, 'darkturquoise')
+                plot_spin_vector_halo(subhalo.spins_halo, 'gas_sf', spin_vector_rad, 'darkturquoise')
                 fig.canvas.draw_idle()
             def gas_nsf_button(self, event):
                 plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'gas_nsf', 'royalblue')
                 fig.canvas.draw_idle()
             def gas_nsf_v_button(self, event):
                 plot_spin_vector(subhalo.spins, 'gas_nsf', spin_vector_rad, 'blue')   
+                plot_spin_vector_halo(subhalo.spins_halo, 'gas_nsf', spin_vector_rad, 'blue')  
                 fig.canvas.draw_idle()
             def dm_button(self, event):
                 plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'dm', 'saddlebrown')
                 fig.canvas.draw_idle()
             def dm_v_button(self, event):
                 plot_spin_vector(subhalo.spins, 'dm', spin_vector_rad, 'maroon') 
+                plot_spin_vector_halo(subhalo.spins_halo, 'dm', spin_vector_rad, 'maroon') 
                 fig.canvas.draw_idle()
             def bh_button(self, event):
                 plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'bh', 'blueviolet')

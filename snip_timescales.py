@@ -294,6 +294,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
         dict_output = json.load(open('%s/%s.csv' %(output_dir, csv_output), 'r'))
         all_general         = dict_output['all_general']
         all_spins           = dict_output['all_spins']
+        all_spinshalo       = dict_output['all_spinshalo']
         all_coms            = dict_output['all_coms']
         all_counts          = dict_output['all_counts']
         all_masses          = dict_output['all_masses']
@@ -302,6 +303,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
         all_Z               = dict_output['all_Z']
         all_l               = dict_output['all_l']
         all_misangles       = dict_output['all_misangles']
+        all_misangleshalo   = dict_output['all_misangleshalo']
         all_misanglesproj   = dict_output['all_misanglesproj']
         all_gasdata         = dict_output['all_gasdata']
         all_flags           = dict_output['all_flags']
@@ -696,7 +698,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                                                       'count': [count_bh]}
                             
                 #------------------                       
-                # Create angles 
+                # Create angles (normal and halo)
                 for angle_name, particle_names in zip(['stars_gas', 'stars_gas_sf', 'stars_dm', 'gas_dm', 'gas_sf_dm'], [['stars', 'gas'], ['stars', 'gas_sf'], ['stars', 'dm'], ['gas', 'dm'], ['gas_sf', 'dm']]):
                     for hmr_i in output_input['spin_hmr']:
                         # if this hmr_i not available
@@ -705,6 +707,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                                                                                              'err_abs': [[math.nan, math.nan]],
                                                                                              'angle_proj': [math.nan],
                                                                                              'err_proj': [[math.nan, math.nan]],
+                                                                                             'angle_halo': [math.nan],
                                                                                              'com_abs': [math.nan],
                                                                                              'com_proj': [math.nan]}})
                         else:
@@ -725,6 +728,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                                                                                              'err_abs': [all_misangles['%s' %GalaxyID]['%s_angle_err' %angle_name][mask_angles]],
                                                                                              'angle_proj': [all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle' %angle_name][mask_angles]],
                                                                                              'err_proj': [all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle_err' %angle_name][mask_angles]],
+                                                                                             'angle_halo': [all_misangleshalo['%s' %GalaxyID]['%s_angle' %angle_name][mask_angles]],
                                                                                              'com_abs': [com_abs],
                                                                                              'com_proj': [com_proj]}})
                             
@@ -1213,6 +1217,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                             galaxy_tree['%s' %ID_dict][angle_name]['%s_hmr' %hmr_i]['err_abs'].append([math.nan, math.nan])
                             galaxy_tree['%s' %ID_dict][angle_name]['%s_hmr' %hmr_i]['angle_proj'].append(math.nan)
                             galaxy_tree['%s' %ID_dict][angle_name]['%s_hmr' %hmr_i]['err_proj'].append([math.nan, math.nan])
+                            galaxy_tree['%s' %ID_dict][angle_name]['%s_hmr' %hmr_i]['angle_halo'].append([math.nan, math.nan])
                             galaxy_tree['%s' %ID_dict][angle_name]['%s_hmr' %hmr_i]['com_abs'].append(math.nan)
                             galaxy_tree['%s' %ID_dict][angle_name]['%s_hmr' %hmr_i]['com_proj'].append(math.nan)
                             
@@ -1234,6 +1239,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                             galaxy_tree['%s' %ID_dict][angle_name]['%s_hmr' %hmr_i]['err_abs'].append(all_misangles['%s' %GalaxyID]['%s_angle_err' %angle_name][mask_angles])
                             galaxy_tree['%s' %ID_dict][angle_name]['%s_hmr' %hmr_i]['angle_proj'].append(all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle' %angle_name][mask_angles])
                             galaxy_tree['%s' %ID_dict][angle_name]['%s_hmr' %hmr_i]['err_proj'].append(all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle_err' %angle_name][mask_angles])
+                            galaxy_tree['%s' %ID_dict][angle_name]['%s_hmr' %hmr_i]['angle_halo'].append(all_misangleshalo['%s' %GalaxyID]['%s_angle' %angle_name][mask_angles])
                             galaxy_tree['%s' %ID_dict][angle_name]['%s_hmr' %hmr_i]['com_abs'].append(com_abs)
                             galaxy_tree['%s' %ID_dict][angle_name]['%s_hmr' %hmr_i]['com_proj'].append(com_proj)
                                                                                                                                                         
@@ -1376,6 +1382,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                     galaxy_tree['%s' %ID_dict][angle_name]['%s_hmr' %hmr_i]['err_abs'].insert(index, [math.nan, math.nan])
                     galaxy_tree['%s' %ID_dict][angle_name]['%s_hmr' %hmr_i]['angle_proj'].insert(index, math.nan)
                     galaxy_tree['%s' %ID_dict][angle_name]['%s_hmr' %hmr_i]['err_proj'].insert(index, [math.nan, math.nan])
+                    galaxy_tree['%s' %ID_dict][angle_name]['%s_hmr' %hmr_i]['angle_halo'].insert(index, math.nan)
                     galaxy_tree['%s' %ID_dict][angle_name]['%s_hmr' %hmr_i]['com_abs'].insert(index, math.nan)
                     galaxy_tree['%s' %ID_dict][angle_name]['%s_hmr' %hmr_i]['com_proj'].insert(index, math.nan)
     
@@ -1505,7 +1512,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                   use_merger_criteria   = False,   # [ True / None / False ] Whether we limit to merger-induced, no mergers, or any misalignments
                     min_stellar_ratio   = 0.1,       max_stellar_ratio   = 999,     # [ value ] -> set to 0 if we dont care
                     min_gas_ratio       = None,      max_gas_ratio       = None,    # [ None / value ]
-                    max_merger_pre      = 0.5,       max_merger_post     = 0.5,    # [Gyr] -/+ max time to closest merger from point of misalignment
+                    max_merger_pre      = 0.2,       max_merger_post     = 0.5,    # [Gyr] -/+ max time to closest merger from point of misalignment
                   #------------------------------------------------------------
                   # Temporal selection
                     latency_time     = 0.1,          # [ None / 0.1 Gyr ]   Consecutive time galaxy must be <30 / >150 to count as finished relaxing
@@ -1529,38 +1536,40 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                   
                   #====================================================================================================
                   # Plot histogram of sample we ended up selecting
-                  plot_sample_hist  = False,
+                  plot_sample_hist  = True,
                     bin_width_mass  = 0.1,
                     
                   #-----------------------------
                   # Plot timescale histogram with current sample
-                  plot_timescale_histogram  = False,   
+                  plot_timescale_histogram  = True,   
                     bin_limit_trelax      = 6,        # [ None / Gyr ]
                     bin_width_trelax      = 0.25,      # [ Gyr ]
                       plot_percentage     = True,
-                      plot_relaxation_type  = True,     # Stack histogram types   
+                      plot_relaxation_type  = True,     # SET TO FALSE IF BELOW TRUE. Stack histogram types   
                       plot_histogram_log    = False,    # set yaxis as log
-                  plot_tdyn_histogram     = False,
+                  plot_tdyn_histogram     = True,
                     bin_limit_tdyn        = 28,        # [ None / multiples ]
                     bin_width_tdyn        = 1,      # [ multiples ]
-                  plot_ttorque_histogram    = False,
+                  plot_ttorque_histogram    = True,
                     bin_limit_ttorque     = 12,        # [ None / multiples ]
                     bin_width_ttorque     = 0.5,      # [ multiples ]
                 
                   #-----------------------------
                   # Plot stacked misalignments based on current sample
-                  plot_stacked_trelax    = True,
-                    plot_type            = 'time',            # 'time', 'snap', 'raw_time', 'raw_snap'
-                    bin_limit_stacked    = 6,                 # [ Gyr ]
-                    plot_stacked_type    = 'misangle',        # 'misangle', 'merger' where to lineup stacks to
-                    plot_extra_time      = False,              # Plot extra time after relaxation
-                    plot_merger_limit    = None,               # [ None / merger ratio ] None will not plot legend or squares
-                    plot_GalaxyIDs       = False,             # Add GalaxyID of entry
+                  plot_stacked_trelax      = False,           # single
+                  plot_stacked_trelax_2x2  = True,           # 2x2 subplot of co-co, co-counter, ...
+                    plot_type          = 'time',            # 'time', 'snap', 'raw_time', 'raw_snap'
+                    plot_stacked_type  = 'misangle',        # 'misangle', 'merger' where to lineup stacks to
+                    plot_extra_time    = False,              # Plot extra time after relaxation
+                    plot_merger_limit  = None,               # [ None / merger ratio ] None will not plot legend or squares
+                    plot_GalaxyIDs     = False,             # Add GalaxyID of entry
                     plot_relaxation_type_stacked = True,     # Stack histogram types
-                    stacked_median       = True,             # Whether to add a median line (will lower transparency of other lines)
-                    stacked_relaxation_type = ['co-co'],          # ['co-co', 'co-counter', 'counter-co', 'counter-counter']
-                  plot_stacked_tdyn      = False,
-                  plot_stacked_ttorque   = False,
+                      stacked_median   = True,             # Whether to add a median line (will lower transparency of other lines)
+                      stacked_relaxation_type = ['co-co', 'co-counter', 'counter-co', 'counter-counter'],          # ['co-co', 'co-counter', 'counter-co', 'counter-counter']
+                  plot_stacked_tdyn        = False,
+                  plot_stacked_tdyn_2x2    = True,
+                  plot_stacked_ttorque     = False,
+                  plot_stacked_ttorque_2x2 = True,
                 
                 
                 
@@ -1591,12 +1600,13 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                   plot_ellip_trelaxtdyn = False,
                   #-----------------------------
                   # General formatting
-                  showfig       = True,
+                  showfig       = False,
                   savefig       = False,    
                     file_format = 'pdf',
-                    savefig_txt = 'manual',     # [ 'manual' / txt ] 'manual' will prompt txt before saving
+                    savefig_txt = 'txt',     # [ 'manual' / txt ] 'manual' will prompt txt before saving
               #====================================================================================================
-              load_csv_file  = 'L100_misalignment_tree__normalLatency_anyMergers_anyMorph',     # [ 'file_name' / False ] load existing misalignment tree
+              load_csv_file  = 'normalLatency_anyMergers_anyMorph',     # [ 'file_name' / False ] load existing misalignment tree
+                                          plot_annotate  = False,    #  r'ETG ($\bar{\kappa}_{\mathrm{co}}^{\mathrm{*}} < 0.35$)'                     # string of text or False / 'ETG' 
               #====================================================================================================
                   print_progress = False,
                   debug = False):
@@ -3041,7 +3051,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
     #===================================================================================================
     # Load previous csv if asked for
     if load_csv_file:
-        dict_tree = json.load(open('%s/%s.csv' %(output_dir, load_csv_file), 'r'))
+        dict_tree = json.load(open('%s/L100_misalignment_tree__%s.csv' %(output_dir, load_csv_file), 'r'))
         misalignment_input = dict_tree['misalignment_input']
         sample_input       = dict_tree['sample_input']
         output_input       = dict_tree['output_input']
@@ -3054,6 +3064,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         peak_misangle      = dict_tree['misalignment_input']['peak_misangle']
         min_trelax         = dict_tree['misalignment_input']['min_trelax']        
         max_trelax         = dict_tree['misalignment_input']['max_trelax']
+        
+        savefig_txt = load_csv_file
     
     
     #------------------------------------------------ 
@@ -3105,7 +3117,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                                          'LTG-LTG': [],
                                          'LTG-ETG': []}}     
         
-    
+
         for ID_i in misalignment_tree.keys():
             summary_dict['trelax']['array'].append(misalignment_tree['%s' %ID_i]['relaxation_time'])
             summary_dict['tdyn']['array'].append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
@@ -3164,7 +3176,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 summary_dict['tdyn']['LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
                 summary_dict['ttorque']['LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
                 summary_dict['ID']['LTG'].append(ID_i)
-            
+        
+
         # Average timescales
         mean_timescale   = np.mean(np.array(summary_dict['trelax']['array']))
         median_timescale = np.median(np.array(summary_dict['trelax']['array']))
@@ -3208,14 +3221,22 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         print('\tnumber of IDs in LTG but not LTG_LTG', len([ID_i for ID_i in summary_dict['ID']['LTG'] if ID_i not in summary_dict['ID']['LTG-LTG']]))
         print('\tnumber of IDs in LTG_LTG but not LTG', len([ID_i for ID_i in summary_dict['ID']['LTG-LTG'] if ID_i not in summary_dict['ID']['LTG']]))
         print('\n\t\tCHECK OVERLAP WITH ETG_ID_array and ETG_ETG_ID_array')
-        
-        
-        
         print('\n======================================')
         print('NUMBER OF MISALIGNMENTS RECORDED: ', len(misalignment_tree.keys()))    
         print('   co-co: %s \tcounter-counter: %s \tco-counter: %s \tcounter-co: %s' %(('n/a' if 'co-co' not in relaxation_type else len(summary_dict['ID']['co-co'])), ('n/a' if 'counter-counter' not in relaxation_type else len(summary_dict['ID']['counter-counter'])), ('n/a' if 'co-counter' not in relaxation_type else len(summary_dict['ID']['co-counter'])), ('n/a' if 'counter-co' not in relaxation_type else len(summary_dict['ID']['counter-co']))))
         print('   ETG-ETG: %s \tLTG-LTG: %s \tETG-LTG: %s \t\tLTG-ETG: %s' %(('n/a' if 'ETG-ETG' not in relaxation_morph else len(summary_dict['ID']['ETG-ETG'])), ('n/a' if 'LTG-LTG' not in relaxation_morph else len(summary_dict['ID']['LTG-LTG'])), ('n/a' if 'ETG-LTG' not in relaxation_morph else len(summary_dict['ID']['ETG-LTG'])), ('n/a' if 'LTG-ETG' not in relaxation_morph else len(summary_dict['ID']['LTG-ETG']))))
         print('   ETG: %s \tLTG: %s' %(('n/a' if 'ETG' not in misalignment_morph else len(summary_dict['ID']['ETG'])), ('n/a' if 'LTG' not in misalignment_morph else len(summary_dict['ID']['LTG']))))
+        print(' ')
+        print('Long relaxations:')
+        print('   trelax > 1 Gyr:\t%i\t%.2f%%   |    trelax > 2 Gyr:\t%i\t%.2f%%' %((np.array(summary_dict['trelax']['array']) > 1).sum(), 100*(np.array(summary_dict['trelax']['array']) > 1).sum()/len(misalignment_tree.keys()), (np.array(summary_dict['trelax']['array']) > 2).sum(), 100*(np.array(summary_dict['trelax']['array']) > 2).sum()/len(misalignment_tree.keys())))
+        print('      ETG: %i   LTG: %i\t        | ETG: %i   LTG: %i\t' %((np.array(summary_dict['trelax']['ETG']) > 1).sum(), (np.array(summary_dict['trelax']['LTG']) > 1).sum(), (np.array(summary_dict['trelax']['ETG']) > 2).sum(), (np.array(summary_dict['trelax']['LTG']) > 2).sum()))
+        print('  ETG-ETG: %i   LTG-LTG: %i\t\t    | ETG-ETG: %i   LTG-LTG: %i\t' %((np.array(summary_dict['trelax']['ETG-ETG']) > 1).sum(), (np.array(summary_dict['trelax']['LTG-LTG']) > 1).sum(), (np.array(summary_dict['trelax']['ETG-ETG']) > 2).sum(), (np.array(summary_dict['trelax']['LTG-LTG']) > 2).sum()))
+        print('   tdyn   > 10   :\t%i\t%.2f%%   |    tdyn   > 20   :\t%i\t%.2f%%' %((np.array(summary_dict['tdyn']['array']) > 10).sum(), 100*(np.array(summary_dict['tdyn']['array']) > 10).sum()/len(misalignment_tree.keys()), (np.array(summary_dict['tdyn']['array']) > 20).sum(), 100*(np.array(summary_dict['tdyn']['array']) > 20).sum()/len(misalignment_tree.keys())))
+        print('      ETG: %i   LTG: %i\t\t\t        | ETG: %i   LTG: %i\t' %((np.array(summary_dict['tdyn']['ETG']) > 10).sum(), (np.array(summary_dict['tdyn']['LTG']) > 10).sum(), (np.array(summary_dict['tdyn']['ETG']) > 20).sum(), (np.array(summary_dict['tdyn']['LTG']) > 20).sum()))
+        print('  ETG-ETG: %i   LTG-LTG: %i\t\t    | ETG-ETG: %i   LTG-LTG: %i\t' %((np.array(summary_dict['tdyn']['ETG-ETG']) > 10).sum(), (np.array(summary_dict['tdyn']['LTG-LTG']) > 10).sum(), (np.array(summary_dict['tdyn']['ETG-ETG']) > 20).sum(), (np.array(summary_dict['tdyn']['LTG-LTG']) > 20).sum()))
+        print('   torque > 5   :\t%i\t%.2f%%    |    torque > 10   :\t%i\t%.2f%%' %((np.array(summary_dict['ttorque']['array']) > 5).sum(), 100*(np.array(summary_dict['ttorque']['array']) > 5).sum()/len(misalignment_tree.keys()), (np.array(summary_dict['ttorque']['array']) > 10).sum(), 100*(np.array(summary_dict['ttorque']['array']) > 10).sum()/len(misalignment_tree.keys())))
+        print('      ETG: %i   LTG: %i\t\t\t        | ETG: %i   LTG: %i\t' %((np.array(summary_dict['ttorque']['ETG']) > 5).sum(), (np.array(summary_dict['ttorque']['LTG']) > 5).sum(), (np.array(summary_dict['ttorque']['ETG']) > 10).sum(), (np.array(summary_dict['ttorque']['LTG']) > 10).sum()))
+        print('  ETG-ETG: %i   LTG-LTG: %i\t\t    | ETG-ETG: %i   LTG-LTG: %i\t' %((np.array(summary_dict['ttorque']['ETG-ETG']) > 5).sum(), (np.array(summary_dict['ttorque']['LTG-LTG']) > 5).sum(), (np.array(summary_dict['ttorque']['ETG-ETG']) > 10).sum(), (np.array(summary_dict['ttorque']['LTG-LTG']) > 10).sum()))
         print(' ')
         print('Relaxation timescales:')
         print('   (Gyr)     all    ETG    LTG  ETG-ETG  LTG-LTG  ETG-LTG  LTG-ETG')
@@ -3437,12 +3458,14 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             json.dump(csv_dict, open('%s/L100_misalignment_tree_%s%s.csv' %(output_dir, csv_answer, csv_name), 'w'), cls=NumpyEncoder)
             print('\n  SAVED: %s/L100_misalignment_tree_%s%s.csv' %(output_dir, csv_answer, csv_name))
     
-    #-------------------
     # clear memory
     galaxy_tree = 0 
     
-    #==================================================================================================
     
+    #==================================================================================================
+    # PLOTS
+    
+    #-------------------------
     # Plot sample histogram of misalignments extracted
     if plot_sample_hist:
         # Gather data
@@ -3514,6 +3537,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 
         if bin_limit_trelax == None:
             bin_limit_trelax = math.ceil(max(relaxationtime_plot))
+        if plot_histogram_log:
+            plot_relaxation_type = False 
         
         #-------------
         ### Plot histogram
@@ -3643,9 +3668,9 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             legend_colors.append('darkgreen')
         
         # add z
-        legend_labels.append('${%.1f<z<%.1f}$' %((0 if min_z == None else min_z), (1.0 if max_z == None else max_z)))
-        legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-        legend_colors.append('k')
+        #legend_labels.append('${%.1f<z<%.1f}$' %((0 if min_z == None else min_z), (1.0 if max_z == None else max_z)))
+        #legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+        #legend_colors.append('k')
         
         if plot_relaxation_type:
             if 'co-co' in relaxation_type:
@@ -3666,6 +3691,12 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 legend_colors.append('C3')
         axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
         
+        
+        #-----------
+        ### title
+        if plot_annotate:
+            axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
+            
         #-----------
         ### other
         plt.tight_layout()
@@ -3716,6 +3747,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 
         if bin_limit_tdyn == None:
             bin_limit_tdyn = math.ceil(max(relaxationtime_plot))
+        if plot_histogram_log:
+            plot_relaxation_type = False 
         
         #-------------
         ### Plot histogram
@@ -3845,10 +3878,10 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             legend_colors.append('darkgreen')
         
         # add z
-        legend_labels.append('${%.1f<z<%.1f}$' %((0 if min_z == None else min_z), (1.0 if max_z == None else max_z)))
-        legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-        legend_colors.append('k')
-        
+        #legend_labels.append('${%.1f<z<%.1f}$' %((0 if min_z == None else min_z), (1.0 if max_z == None else max_z)))
+        #legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+        #legend_colors.append('k')
+                
         if plot_relaxation_type:
             if 'co-co' in relaxation_type:
                 legend_labels.append('     co → co')
@@ -3867,6 +3900,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
                 legend_colors.append('C3')
         axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
+        
+        #-----------
+        ### title
+        if plot_annotate:
+            axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
         
         #-----------
         ### other
@@ -3918,6 +3956,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 
         if bin_limit_ttorque == None:
             bin_limit_ttorque = math.ceil(max(relaxationtime_plot))
+        if plot_histogram_log:
+            plot_relaxation_type = False 
         
         #-------------
         ### Plot histogram
@@ -4047,10 +4087,10 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             legend_colors.append('darkgreen')
         
         # add z
-        legend_labels.append('${%.1f<z<%.1f}$' %((0 if min_z == None else min_z), (1.0 if max_z == None else max_z)))
-        legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-        legend_colors.append('k')
-        
+        #legend_labels.append('${%.1f<z<%.1f}$' %((0 if min_z == None else min_z), (1.0 if max_z == None else max_z)))
+        #legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+        #legend_colors.append('k')
+                
         if plot_relaxation_type:
             if 'co-co' in relaxation_type:
                 legend_labels.append('     co → co')
@@ -4069,6 +4109,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
                 legend_colors.append('C3')
         axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
+        
+        #-----------
+        ### title
+        if plot_annotate:
+            axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
         
         #-----------
         ### other
@@ -4091,17 +4136,10 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             plt.show()
         plt.close()
     
+    
     #-------------------------
     # Plot single stacked of current criteria
-    
-    
-    # format median line a bit more - i dont know if the 0 line is part of the pre-state, and it doesn't look correctly positioned
-    # add 2x2 multistacked option
-    
-    
-    
     if plot_stacked_trelax:
-        
         # Graph initialising and base formatting
         fig, axs = plt.subplots(1, 1, figsize=[10/3, 1.8], sharex=True, sharey=True)
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
@@ -4117,6 +4155,415 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         ### Loop over all windows and plot them
         ID_plot     = []
         ID_collect  = []        # flexible array used to extract weird relaxations
+        time_collect = []
+        diff_co_co           = []
+        diff_co_counter      = []
+        diff_counter_counter = []
+        diff_counter_co      = []
+        scatter_x = []
+        scatter_y = []
+        scatter_c = []
+        scatter_s = []
+        
+        stats_lines = {'co-co': {'time': [],
+                                 'angles': []},
+                       'co-counter': {'time': [],
+                                      'angles': []},
+                       'counter-counter': {'time': [],
+                                           'angles': []},
+                       'counter-co': {'time': [],
+                                      'angles': []}}
+        
+        for ID_i in misalignment_tree.keys():
+            
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] not in stacked_relaxation_type:
+                continue
+            
+            ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
+            time_collect.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            if plot_type == 'time':
+                timeaxis_plot = -1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']])
+            elif plot_type == 'raw_time':
+                timeaxis_plot = np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - (0)
+            elif plot_type == 'snap':
+                timeaxis_plot = np.array(misalignment_tree['%s' %ID_i]['SnapNum']) - misalignment_tree['%s' %ID_i]['SnapNum'][misalignment_tree['%s' %ID_i]['index_m']]
+            elif plot_type == 'raw_snap':
+                timeaxis_plot = np.array(misalignment_tree['%s' %ID_i]['SnapNum']) - (0)
+            
+            
+            #-------------
+            # Plot stacked
+            line_color = 'k'
+            alpha = 0.2
+            if plot_relaxation_type_stacked:
+                alpha = 0.1
+                if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
+                    line_color='C0'
+                    append_angle = 10
+                    diff_co_co.append(timeaxis_plot[1]-timeaxis_plot[0])
+                    
+                    # collect IDs of weird relaxations
+                    #if max(misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)]) > 135:
+                    #    ID_collect.append(ID_i)
+                        
+                elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
+                    line_color='C2'
+                    append_angle = 170
+                    diff_co_counter.append(timeaxis_plot[1]-timeaxis_plot[0])
+                elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
+                    line_color='C3'
+                    append_angle = 10
+                    diff_counter_co.append(timeaxis_plot[1]-timeaxis_plot[0])
+                elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
+                    line_color='C1'
+                    append_angle = 170
+                    diff_counter_counter.append(timeaxis_plot[1]-timeaxis_plot[0])
+            
+            
+            #-------------
+            # append to stats and add extra values of relaxed state until end of bin_limit_trelax
+            timeaxis_stats = timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)]
+            angles_stats   = misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)]                   
+            # Add missing 120Mya time slots until end reached
+            while timeaxis_stats[-1] < bin_limit_trelax:
+                timeaxis_stats = np.append(timeaxis_stats, timeaxis_stats[-1]+0.120)
+                angles_stats   = np.append(angles_stats, append_angle)
+            stats_lines['%s' %misalignment_tree['%s' %ID_i]['relaxation_type']]['time'].extend(timeaxis_stats)
+            stats_lines['%s' %misalignment_tree['%s' %ID_i]['relaxation_type']]['angles'].extend(angles_stats)
+            
+            
+            #-------------
+            # pick out long relaxersß
+            if misalignment_tree['%s' %ID_i]['relaxation_time'] > 2:
+                ID_collect.append(ID_i)
+                            
+            
+            #-------------
+            # format and plot line
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
+                alpha = max(min(0.6, (misalignment_tree['%s' %ID_i]['relaxation_time']**1.5)/10), 0.02)
+                c     = lighten_color(line_color, (misalignment_tree['%s' %ID_i]['relaxation_time'])**(-0.5)) 
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
+                alpha = max(min(0.6, (misalignment_tree['%s' %ID_i]['relaxation_time']**1.5)/10), 0.03)
+                c     = lighten_color(line_color, 0.7*(misalignment_tree['%s' %ID_i]['relaxation_time'])**(-0.5)) 
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
+                alpha = max(min(0.6, (misalignment_tree['%s' %ID_i]['relaxation_time']**1.5)/2), 0.02)
+                c     = lighten_color(line_color, 0.7*(misalignment_tree['%s' %ID_i]['relaxation_time'])**(-0.5)) 
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
+                alpha = max(min(0.6, (misalignment_tree['%s' %ID_i]['relaxation_time']**1.5)/3), 0.02)
+                c     = lighten_color(line_color, 0.7*(misalignment_tree['%s' %ID_i]['relaxation_time'])**(-0.5)) 
+                
+                
+                
+            axs.plot(timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], lw=0.3, c=c, alpha=alpha)
+            
+            ### Annotate
+            if plot_GalaxyIDs:
+                axs.text(timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)][-1]+0.1, misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)][-1]+5, '%s' %misalignment_tree['%s' %ID_i]['GalaxyID'][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)][-1], fontsize=7)
+            
+            # Plot mergers (some may be missing if they are out of window)
+            if plot_merger_limit != None:
+                for time_i, angle_i, ratio_i, ratio_gas_i in zip(timeaxis_plot, misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i]['merger_ratio_stars'][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i]['merger_ratio_gas'][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)]):
+                    if len(ratio_i) > 0:
+                        if max(ratio_i) >= plot_merger_limit:
+                            scatter_x.append(time_i)
+                            scatter_y.append(angle_i)
+                            scatter_c.append(ratio_gas_i[np.argmax(np.array(ratio_i))])
+                            scatter_s.append(50*(ratio_i[np.argmax(np.array(ratio_i))])**0.5)
+        
+        #print('-------------------------------------------------------------')
+        #print('  List of IDs with co-co relax but max(angle) > 135:  ', len(ID_collect))
+        #print('  List of >2 Gyr trelax ', len(ID_collect))
+        #print(ID_collect)
+        
+        #--------------
+        # Find mean/median and 1 sigma behaviour for each relaxation type
+        if stacked_median:
+            if len(stats_lines['co-co']['time']) != 0:
+                line_color='C0'
+                line_color='k'
+                bins = np.arange((-1*np.median(diff_co_co))+0.01, 6.09, np.median(diff_co_co))
+            
+                # Create mask that is essentially the bins
+                digitized = np.digitize(np.array(stats_lines['co-co']['time']), bins=bins)
+                bins_count, _ = np.histogram(np.array(stats_lines['co-co']['time']), bins=bins)
+                
+                # Collect median (50%), and 1sigma around that (16% and 84%)
+                median_array = []
+                median_upper = []
+                median_lower = []
+                use_percentiles = 16        # 1 sigma
+                for bin_i in np.arange(1, len(bins_count)+1, 1):
+                    # extract values in current bin
+                    mask = digitized == bin_i
+                    current_time   = np.array(stats_lines['co-co']['time'])[mask]
+                    current_angles = np.array(stats_lines['co-co']['angles'])[mask]
+                                
+                    median_array.append(np.percentile(current_angles, 50))
+                    median_upper.append(np.percentile(current_angles, 100-use_percentiles))
+                    median_lower.append(np.percentile(current_angles, use_percentiles))
+                
+                #----------
+                # remove 'excess'
+                mask_median = np.where(np.array(median_array) > 30)[0][-1] + 1
+                mask_upper  = np.where(np.array(median_upper) > 30)[0][-1] + 1
+                mask_lower  = np.where(np.array(median_lower) > 30)[0][-1] + 1
+                
+                #----------
+                # plot
+                axs.plot(bins[0:mask_median+1]+np.median(diff_co_co), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
+                axs.plot(bins[0:mask_upper+1]+np.median(diff_co_co), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
+                axs.plot(bins[0:mask_lower+1]+np.median(diff_co_co), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
+                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+            if len(stats_lines['co-counter']['time']) != 0:
+                line_color='C2'
+                line_color='k'
+                bins = np.arange((-1*np.median(diff_co_counter))+0.01, 6.09, np.median(diff_co_counter))
+            
+                # Create mask that is essentially the bins
+                digitized = np.digitize(np.array(stats_lines['co-counter']['time']), bins=bins)
+                bins_count, _ = np.histogram(np.array(stats_lines['co-counter']['time']), bins=bins)
+            
+                # Collect median (50%), and 1sigma around that (16% and 84%)
+                median_array = []
+                median_upper = []
+                median_lower = []
+                use_percentiles = 16        # 1 sigma
+                for bin_i in np.arange(1, len(bins_count)+1, 1):
+                    # extract values in current bin
+                    mask = digitized == bin_i
+                    current_time   = np.array(stats_lines['co-counter']['time'])[mask]
+                    current_angles = np.array(stats_lines['co-counter']['angles'])[mask]
+                                
+                    median_array.append(np.percentile(current_angles, 50))
+                    median_upper.append(np.percentile(current_angles, 100-use_percentiles))
+                    median_lower.append(np.percentile(current_angles, use_percentiles))
+            
+                #----------
+                # remove 'excess'
+                mask_median = np.where(np.array(median_array) < 150)[0][-1] + 1
+                mask_upper  = np.where(np.array(median_upper) < 150)[0][-1] + 1
+                mask_lower  = np.where(np.array(median_lower) < 150)[0][-1] + 1
+                
+                #----------
+                # plot
+                axs.plot(bins[0:mask_median+1]+np.median(diff_co_counter), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
+                axs.plot(bins[0:mask_upper+1]+np.median(diff_co_counter), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
+                axs.plot(bins[0:mask_lower+1]+np.median(diff_co_counter), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
+                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+            if len(stats_lines['counter-counter']['time']) != 0:
+                line_color='C1'
+                line_color='k'
+                bins = np.arange((-1*np.median(diff_counter_counter))+0.01, 6.09, np.median(diff_counter_counter))
+            
+                # Create mask that is essentially the bins
+                digitized = np.digitize(np.array(stats_lines['counter-counter']['time']), bins=bins)
+                bins_count, _ = np.histogram(np.array(stats_lines['counter-counter']['time']), bins=bins)
+            
+                # Collect median (50%), and 1sigma around that (16% and 84%)
+                median_array = []
+                median_upper = []
+                median_lower = []
+                use_percentiles = 16        # 1 sigma
+                for bin_i in np.arange(1, len(bins_count)+1, 1):
+                    # extract values in current bin
+                    mask = digitized == bin_i
+                    current_time   = np.array(stats_lines['counter-counter']['time'])[mask]
+                    current_angles = np.array(stats_lines['counter-counter']['angles'])[mask]
+                                
+                    median_array.append(np.percentile(current_angles, 50))
+                    median_upper.append(np.percentile(current_angles, 100-use_percentiles))
+                    median_lower.append(np.percentile(current_angles, use_percentiles))
+            
+                #----------
+                # remove 'excess'
+                mask_median = np.where(np.array(median_array) < 150)[0][-1] + 1
+                mask_upper  = np.where(np.array(median_upper) < 150)[0][-1] + 1
+                mask_lower  = np.where(np.array(median_lower) < 150)[0][-1] + 1
+                
+                #----------
+                # plot
+                axs.plot(bins[0:mask_median+1]+np.median(diff_counter_counter), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
+                axs.plot(bins[0:mask_upper+1]+np.median(diff_counter_counter), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
+                axs.plot(bins[0:mask_lower+1]+np.median(diff_counter_counter), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
+                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+            if len(stats_lines['counter-co']['time']) != 0:
+                line_color='C3'
+                line_color='k'
+                bins = np.arange((-1*np.median(diff_counter_co))+0.01, 6.09, np.median(diff_counter_co))
+            
+                # Create mask that is essentially the bins
+                digitized = np.digitize(np.array(stats_lines['counter-co']['time']), bins=bins)
+                bins_count, _ = np.histogram(np.array(stats_lines['counter-co']['time']), bins=bins)
+            
+                # Collect median (50%), and 1sigma around that (16% and 84%)
+                median_array = []
+                median_upper = []
+                median_lower = []
+                use_percentiles = 16        # 1 sigma
+                for bin_i in np.arange(1, len(bins_count)+1, 1):
+                    # extract values in current bin
+                    mask = digitized == bin_i
+                    current_time   = np.array(stats_lines['counter-co']['time'])[mask]
+                    current_angles = np.array(stats_lines['counter-co']['angles'])[mask]
+                                
+                    median_array.append(np.percentile(current_angles, 50))
+                    median_upper.append(np.percentile(current_angles, 100-use_percentiles))
+                    median_lower.append(np.percentile(current_angles, use_percentiles))
+            
+                #----------
+                # remove 'excess'
+                mask_median = np.where(np.array(median_array) > 30)[0][-1] + 1
+                mask_upper  = np.where(np.array(median_upper) > 30)[0][-1] + 1
+                mask_lower  = np.where(np.array(median_lower) > 30)[0][-1] + 1
+                
+                #----------
+                # plot
+                axs.plot(bins[0:mask_median+1]+np.median(diff_counter_co), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
+                axs.plot(bins[0:mask_upper+1]+np.median(diff_counter_co), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
+                axs.plot(bins[0:mask_lower+1]+np.median(diff_counter_co), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
+                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+                     
+        #-----------
+        # Add threshold
+        axs.axhspan(0, misangle_threshold, alpha=0.25, ec=None, fc='grey')
+        axs.axhspan(180-misangle_threshold, 180, alpha=0.25, ec=None, fc='grey')
+        
+        
+        #-----------
+        ### Formatting
+        axs.set_ylim(0, 180)
+        axs.set_yticks(np.arange(0, 181, 30))
+        axs.set_ylabel('Misalignment angle')
+        if plot_type == 'time':
+            axs.set_xlim(0-3*time_extra, bin_limit_trelax)
+            axs.set_xticks(np.arange(0, bin_limit_trelax+0.1, 1))
+            axs.set_xlabel('Time since misalignment (Gyr)')
+        elif plot_type == 'raw_time':
+            axs.set_xlim(8, 0)
+            axs.set_xticks(np.arange(8, -0.1, -1))
+            axs.set_xlabel('Lookbacktime (Gyr)')
+        elif plot_type == 'snap':
+            axs.set_xlim(-10, 70)
+            axs.set_xticks(np.arange(-10, 71, 10))
+            axs.set_xlabel('Snapshots since misalignment')
+        elif plot_type == 'raw_snap':
+            axs.set_xlim(140, 200)
+            axs.set_xticks(np.arange(140, 201, 5))
+            axs.set_xlabel('Snapshots')
+        axs.minorticks_on()
+        axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
+        axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
+        
+        
+        #-----------
+        ### Annotations
+        if (plot_type == 'time') or (plot_type == 'snap'):
+            axs.axvline(0, ls='-', lw=1, c='grey')
+          
+        #-----------
+        ### Customise legend labels
+        if plot_merger_limit != None:
+            axs.scatter(scatter_x, scatter_y, c=scatter_c, cmap=merger_colormap, norm=merger_normalize, s=scatter_s, marker='s', edgecolors='grey', zorder=99)
+            
+            plt.scatter(-20, -160, c=0.1, s=50*(0.5**0.5), cmap=merger_colormap, norm=merger_normalize, marker='s', edgecolors='grey', label='$\mu_{\mathrm{gas}}$=0.1')
+            plt.scatter(-20, -150, c=0.3, s=50*(0.5**0.5), cmap=merger_colormap, norm=merger_normalize, marker='s', edgecolors='grey', label='$\mu_{\mathrm{gas}}$=0.3')
+            plt.scatter(-20, -140, c=1.0, s=50*(0.5**0.5), cmap=merger_colormap, norm=merger_normalize, marker='s', edgecolors='grey', label='$\mu_{\mathrm{gas}}$=1.0')
+            plt.scatter(-20, -160, c='w', s=50*(0.1**0.5), marker='s', edgecolors='grey', label='$\mu_{\mathrm{*}}$=0.1')
+            plt.scatter(-20, -150, c='w', s=50*(0.3**0.5), marker='s', edgecolors='grey', label='$\mu_{\mathrm{*}}$=0.3')
+            plt.scatter(-20, -140, c='w', s=50*(1.0**0.5), marker='s', edgecolors='grey', label='$\mu_{\mathrm{*}}$=1.0')
+            
+            legend1 = axs.legend(loc='upper right', frameon=False, labelspacing=0.1, handlelength=0)
+            axs.add_artist(legend1)
+        if plot_relaxation_type_stacked:
+            legend_elements = []
+            legend_labels = []
+            legend_colors = []
+            if 'co-co' in stacked_relaxation_type:
+                legend_labels.append('co → co')
+                legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+                legend_colors.append('C0')
+            if 'counter-counter' in stacked_relaxation_type:
+                legend_labels.append('counter → counter')
+                legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+                legend_colors.append('C1')
+            if 'co-counter' in stacked_relaxation_type:
+                legend_labels.append('     co → counter')
+                legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+                legend_colors.append('C2')
+            if 'counter-co' in stacked_relaxation_type:
+                legend_labels.append('counter → co')
+                legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+                legend_colors.append('C3')
+                
+            if plot_merger_limit != None:
+                loc = [0.62, 0.35]
+            else:
+                loc = 'upper right'
+            legend2 = axs.legend(handles=legend_elements, labels=legend_labels, loc=loc, handletextpad=5, frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
+            axs.add_artist(legend2)
+        
+        #-----------
+        ### title
+        if plot_annotate:
+            axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
+            
+        #-----------
+        ### other
+        plt.tight_layout()
+        
+        #-----------
+        #### Savefig
+        # Average timescales
+        mean_co_co   = np.mean(np.array(summary_dict['trelax']['co-co']))
+        median_co_co = np.median(np.array(summary_dict['trelax']['co-co']))
+        std_co_co    = np.std(np.array(summary_dict['trelax']['co-co']))
+        mean_co_counter   = np.mean(np.array(summary_dict['trelax']['co-counter']))
+        median_co_counter = np.median(np.array(summary_dict['trelax']['co-counter']))
+        std_co_counter    = np.std(np.array(summary_dict['trelax']['co-counter']))
+        mean_counter_counter   = np.mean(np.array(summary_dict['trelax']['counter-counter']))
+        median_counter_counter = np.median(np.array(summary_dict['trelax']['counter-counter']))
+        std_counter_counter    = np.std(np.array(summary_dict['trelax']['counter-counter']))
+        mean_counter_co   = np.mean(np.array(summary_dict['trelax']['counter-co']))
+        median_counter_co = np.median(np.array(summary_dict['trelax']['counter-co']))
+        std_counter_co    = np.std(np.array(summary_dict['trelax']['counter-co']))
+        print('Relaxation timescales:')
+        print('   (Gyr)     all   co-co   co-counter   counter-counter   counter-co')
+        print('   Mean:    %.2f    %.2f      %.2f           %.2f            %.2f' %(mean_timescale, (math.nan if len(summary_dict['trelax']['co-co']) == 0 else mean_co_co), (math.nan if len(summary_dict['trelax']['co-counter']) == 0 else mean_co_counter), (math.nan if len(summary_dict['trelax']['counter-counter']) == 0 else mean_counter_counter), (math.nan if len(summary_dict['trelax']['counter-co']) == 0 else mean_counter_co)))   
+        print('   Median:  %.2f    %.2f      %.2f           %.2f            %.2f' %(median_timescale, (math.nan if len(summary_dict['trelax']['co-co']) == 0 else median_co_co), (math.nan if len(summary_dict['trelax']['co-counter']) == 0 else median_co_counter), (math.nan if len(summary_dict['trelax']['counter-counter']) == 0 else median_counter_counter), (math.nan if len(summary_dict['trelax']['counter-co']) == 0 else median_counter_co)))   
+        print('   std:     %.2f    %.2f      %.2f           %.2f            %.2f' %(std_timescale, (math.nan if len(summary_dict['trelax']['co-co']) == 0 else std_co_co), (math.nan if len(summary_dict['trelax']['co-counter']) == 0 else std_co_counter), (math.nan if len(summary_dict['trelax']['counter-counter']) == 0 else std_counter_counter), (math.nan if len(summary_dict['trelax']['counter-co']) == 0 else std_counter_co)))
+        
+        metadata_plot = {'Title': '%s, %s\nThreshold: %s\nMin delta:%s\nLatency time: %s\nMin ratio: %s\nUSE MERGERS: %s\nMax closest merger: %s-%s\nTime extra: %s\nTime no misangle: %s\nStelmass: %s/%s\n kappa*: %s/%s\n outflow: %s/%s' %(abs_or_proj, use_angle, misangle_threshold, min_delta_angle, latency_time, min_stellar_ratio, use_merger_criteria, max_merger_pre, max_merger_post, time_extra, time_no_misangle, min_stelmass, max_stelmass, min_kappa_stars, max_kappa_stars, min_inflow, max_inflow),
+                         'Author': 'Min particles: %s\nMax CoM: %s\nMin inc: %s\nPlot ratio limit: %s\n\n# MISALIGNMENTS: %s\nco-co: %s\ncnt-cnt: %s\nco-cnt: %s\ncnt-co: %s\nETG-ETG: %s\nLTG-LTG: %s\nETG-LTG: %s\nLTG-ETG: %s\nMean: %.2f Gyr\nMedian: %.2f Gyr\nstd: %.2f Gyr' %(min_particles, max_com, min_inclination, plot_merger_limit, len(misalignment_tree.keys()), len(summary_dict['ID']['co-co']), len(summary_dict['ID']['counter-counter']), len(summary_dict['ID']['co-counter']), len(summary_dict['ID']['counter-co']), len(summary_dict['ID']['ETG-ETG']), len(summary_dict['ID']['LTG-LTG']), len(summary_dict['ID']['ETG-LTG']), len(summary_dict['ID']['LTG-ETG']), mean_timescale, median_timescale, std_timescale)}
+                         
+        if savefig:
+            if savefig_txt == 'manual':
+                savefig_txt = input('\n  -> Enter savefig_txt:   ')
+            plt.savefig("%s/stacked_misalignments/trelax_stacked_misalignments_%s_%s_%s.%s" %(fig_dir, plot_type, len(misalignment_tree.keys()), savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/stacked_misalignments/trelax_stacked_misalignments_%s_%s_%s.%s" %(fig_dir, plot_type, len(misalignment_tree.keys()), savefig_txt, file_format)) 
+        if showfig:
+            plt.show()
+        plt.close()
+    if plot_stacked_trelax_2x2:
+        # Graph initialising and base formatting
+        fig, ((ax_co_co, ax_co_counter), (ax_counter_counter, ax_counter_co)) = plt.subplots(2, 2, figsize=[2*10/3, 2*1.8], sharex=True, sharey=True)
+        plt.subplots_adjust(wspace=0.4, hspace=0.4)
+        
+        # Creating colormaps to mark mergers
+        merger_colormap = plt.get_cmap('Blues', 5)
+        merger_normalize = colors.Normalize(vmin=0, vmax=1)
+        timescale_colormap = plt.get_cmap('inferno')
+        timescale_normalize = colors.Normalize(vmin=0, vmax=6)
+        scalarMap = cm.ScalarMappable(norm=timescale_normalize, cmap=timescale_colormap)
+        
+        #-----------
+        ### Loop over all windows and plot them
+        ID_plot     = []
+        ID_collect  = []        # flexible array used to extract weird relaxations
+        diff_co_co           = []
+        diff_co_counter      = []
+        diff_counter_counter = []
+        diff_counter_co      = []
         scatter_x = []
         scatter_y = []
         scatter_c = []
@@ -4156,6 +4603,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
                     line_color='C0'
                     append_angle = 10
+                    ax = ax_co_co
+                    diff_co_co.append(timeaxis_plot[1]-timeaxis_plot[0])
                     
                     # collect IDs of weird relaxations
                     #if max(misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)]) > 135:
@@ -4164,12 +4613,18 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
                     line_color='C2'
                     append_angle = 170
+                    ax = ax_co_counter
+                    diff_co_counter.append(timeaxis_plot[1]-timeaxis_plot[0])
                 elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
                     line_color='C3'
                     append_angle = 10
+                    ax = ax_counter_co
+                    diff_counter_co.append(timeaxis_plot[1]-timeaxis_plot[0])
                 elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
                     line_color='C1'
                     append_angle = 170
+                    ax = ax_counter_counter
+                    diff_counter_counter.append(timeaxis_plot[1]-timeaxis_plot[0])
             
             
             #-------------
@@ -4191,14 +4646,27 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                             
             
             #-------------
-            if stacked_median:
-                alpha = 0.8
-                line_color = lighten_color(line_color, 0.5)
-            axs.plot(timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], lw=0.1, c=line_color, alpha=alpha)       # c=scalarMap.to_rgba(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            # format and plot line
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
+                alpha = max(min(0.6, (misalignment_tree['%s' %ID_i]['relaxation_time']**1.5)/10), 0.02)
+                c     = lighten_color(line_color, (misalignment_tree['%s' %ID_i]['relaxation_time'])**(-0.5)) 
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
+                alpha = max(min(0.6, (misalignment_tree['%s' %ID_i]['relaxation_time']**1.5)/10), 0.03)
+                c     = lighten_color(line_color, 0.7*(misalignment_tree['%s' %ID_i]['relaxation_time'])**(-0.5)) 
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
+                alpha = max(min(0.6, (misalignment_tree['%s' %ID_i]['relaxation_time']**1.5)/2), 0.02)
+                c     = lighten_color(line_color, 0.7*(misalignment_tree['%s' %ID_i]['relaxation_time'])**(-0.5)) 
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
+                alpha = max(min(0.6, (misalignment_tree['%s' %ID_i]['relaxation_time']**1.5)/3), 0.02)
+                c     = lighten_color(line_color, 0.7*(misalignment_tree['%s' %ID_i]['relaxation_time'])**(-0.5)) 
+                
+                
+                
+            ax.plot(timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], lw=0.3, c=c, alpha=alpha)       # c=scalarMap.to_rgba(misalignment_tree['%s' %ID_i]['relaxation_time'])
             
             ### Annotate
             if plot_GalaxyIDs:
-                axs.text(timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)][-1]+0.1, misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)][-1]+5, '%s' %misalignment_tree['%s' %ID_i]['GalaxyID'][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)][-1], fontsize=7)
+                ax.text(timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)][-1]+0.1, misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)][-1]+5, '%s' %misalignment_tree['%s' %ID_i]['GalaxyID'][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)][-1], fontsize=7)
             
             # Plot mergers (some may be missing if they are out of window)
             if plot_merger_limit != None:
@@ -4220,30 +4688,19 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         if stacked_median:
             if len(stats_lines['co-co']['time']) != 0:
                 line_color='C0'
-            
+                line_color='k'
+                bins = np.arange((-1*np.median(diff_co_co))+0.01, 6.09, np.median(diff_co_co))
+                
                 # Create mask that is essentially the bins
-                digitized = np.digitize(np.array(stats_lines['co-co']['time']), bins=np.arange(-0.249, 6.09, 0.125))
-                bins_count, _ = np.histogram(np.array(stats_lines['co-co']['time']), bins=np.arange(-0.249, 6.09, 0.125))
+                digitized = np.digitize(np.array(stats_lines['co-co']['time']), bins=bins)
+                bins_count, _ = np.histogram(np.array(stats_lines['co-co']['time']), bins=bins)
                 
-                
-                
-                
-                
-                #run as is
-                # seems wrongly placed
-                # check bin counts again
-                # check its correctly aligned
-                
-                
-                
-                
-            
                 # Collect median (50%), and 1sigma around that (16% and 84%)
                 median_array = []
                 median_upper = []
                 median_lower = []
                 use_percentiles = 16        # 1 sigma
-                for bin_i in np.arange(1, 52, 1):
+                for bin_i in np.arange(1, len(bins_count)+1, 1):
                     # extract values in current bin
                     mask = digitized == bin_i
                     current_time   = np.array(stats_lines['co-co']['time'])[mask]
@@ -4261,23 +4718,25 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 
                 #----------
                 # plot
-                axs.plot(np.arange(-0.249, 6.09, 0.125)[0:mask_median+1], np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=0.7, zorder=100)
-                axs.plot(np.arange(-0.249, 6.09, 0.125)[0:mask_upper+1], np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=0.7, zorder=100)
-                axs.plot(np.arange(-0.249, 6.09, 0.125)[0:mask_lower+1], np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=0.7, zorder=100)
-                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+                ax_co_co.plot(bins[0:mask_median+1]+np.median(diff_co_co), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
+                ax_co_co.plot(bins[0:mask_upper+1]+np.median(diff_co_co), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
+                ax_co_co.plot(bins[0:mask_lower+1]+np.median(diff_co_co), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
+                #axs.fill_between(bins+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
             if len(stats_lines['co-counter']['time']) != 0:
                 line_color='C2'
-            
+                line_color='k'
+                bins = np.arange((-1*np.median(diff_co_counter))+0.01, 6.09, np.median(diff_co_counter))
+                
                 # Create mask that is essentially the bins
-                digitized = np.digitize(np.array(stats_lines['co-counter']['time']), bins=np.arange(-0.249, 6.09, 0.125))
-                bins_count, _ = np.histogram(np.array(stats_lines['co-counter']['time']), bins=np.arange(-0.249, 6.09, 0.125))
+                digitized = np.digitize(np.array(stats_lines['co-counter']['time']), bins=bins)
+                bins_count, _ = np.histogram(np.array(stats_lines['co-counter']['time']), bins=bins)
             
                 # Collect median (50%), and 1sigma around that (16% and 84%)
                 median_array = []
                 median_upper = []
                 median_lower = []
                 use_percentiles = 16        # 1 sigma
-                for bin_i in np.arange(1, 52, 1):
+                for bin_i in np.arange(1, len(bins_count)+1, 1):
                     # extract values in current bin
                     mask = digitized == bin_i
                     current_time   = np.array(stats_lines['co-counter']['time'])[mask]
@@ -4295,23 +4754,25 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 
                 #----------
                 # plot
-                axs.plot(np.arange(-0.249, 6.09, 0.125)[0:mask_median+1], np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=0.7, zorder=100)
-                axs.plot(np.arange(-0.249, 6.09, 0.125)[0:mask_upper+1], np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=0.7, zorder=100)
-                axs.plot(np.arange(-0.249, 6.09, 0.125)[0:mask_lower+1], np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=0.7, zorder=100)
-                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+                ax_co_counter.plot(bins[0:mask_median+1]+np.median(diff_co_counter), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
+                ax_co_counter.plot(bins[0:mask_upper+1]+np.median(diff_co_counter), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
+                ax_co_counter.plot(bins[0:mask_lower+1]+np.median(diff_co_counter), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
+                #axs.fill_between(bins+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
             if len(stats_lines['counter-counter']['time']) != 0:
                 line_color='C1'
-            
+                line_color='k'
+                bins = np.arange((-1*np.median(diff_counter_counter))+0.01, 6.09, np.median(diff_counter_counter))
+                
                 # Create mask that is essentially the bins
-                digitized = np.digitize(np.array(stats_lines['counter-counter']['time']), bins=np.arange(-0.249, 6.09, 0.125))
-                bins_count, _ = np.histogram(np.array(stats_lines['counter-counter']['time']), bins=np.arange(-0.249, 6.09, 0.125))
+                digitized = np.digitize(np.array(stats_lines['counter-counter']['time']), bins=bins)
+                bins_count, _ = np.histogram(np.array(stats_lines['counter-counter']['time']), bins=bins)
             
                 # Collect median (50%), and 1sigma around that (16% and 84%)
                 median_array = []
                 median_upper = []
                 median_lower = []
                 use_percentiles = 16        # 1 sigma
-                for bin_i in np.arange(1, 52, 1):
+                for bin_i in np.arange(1, len(bins_count)+1, 1):
                     # extract values in current bin
                     mask = digitized == bin_i
                     current_time   = np.array(stats_lines['counter-counter']['time'])[mask]
@@ -4329,23 +4790,25 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 
                 #----------
                 # plot
-                axs.plot(np.arange(-0.249, 6.09, 0.125)[0:mask_median+1], np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=0.7, zorder=100)
-                axs.plot(np.arange(-0.249, 6.09, 0.125)[0:mask_upper+1], np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=0.7, zorder=100)
-                axs.plot(np.arange(-0.249, 6.09, 0.125)[0:mask_lower+1], np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=0.7, zorder=100)
-                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+                ax_counter_counter.plot(bins[0:mask_median+1]+np.median(diff_counter_counter), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
+                ax_counter_counter.plot(bins[0:mask_upper+1]+np.median(diff_counter_counter), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
+                ax_counter_counter.plot(bins[0:mask_lower+1]+np.median(diff_counter_counter), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
+                #axs.fill_between(bins+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
             if len(stats_lines['counter-co']['time']) != 0:
                 line_color='C3'
-            
+                line_color='k'
+                bins = np.arange((-1*np.median(diff_counter_co))+0.01, 6.09, np.median(diff_counter_co))
+                
                 # Create mask that is essentially the bins
-                digitized = np.digitize(np.array(stats_lines['counter-co']['time']), bins=np.arange(-0.249, 6.09, 0.125))
-                bins_count, _ = np.histogram(np.array(stats_lines['counter-co']['time']), bins=np.arange(-0.249, 6.09, 0.125))
+                digitized = np.digitize(np.array(stats_lines['counter-co']['time']), bins=bins)
+                bins_count, _ = np.histogram(np.array(stats_lines['counter-co']['time']), bins=bins)
             
                 # Collect median (50%), and 1sigma around that (16% and 84%)
                 median_array = []
                 median_upper = []
                 median_lower = []
                 use_percentiles = 16        # 1 sigma
-                for bin_i in np.arange(1, 52, 1):
+                for bin_i in np.arange(1, len(bins_count)+1, 1):
                     # extract values in current bin
                     mask = digitized == bin_i
                     current_time   = np.array(stats_lines['counter-co']['time'])[mask]
@@ -4363,9 +4826,430 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 
                 #----------
                 # plot
-                axs.plot(np.arange(-0.249, 6.09, 0.125)[0:mask_median+1], np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=0.7, zorder=100)
-                axs.plot(np.arange(-0.249, 6.09, 0.125)[0:mask_upper+1], np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=0.7, zorder=100)
-                axs.plot(np.arange(-0.249, 6.09, 0.125)[0:mask_lower+1], np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=0.7, zorder=100)
+                ax_counter_co.plot(bins[0:mask_median+1]+np.median(diff_counter_co), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
+                ax_counter_co.plot(bins[0:mask_upper+1]+np.median(diff_counter_co), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
+                ax_counter_co.plot(bins[0:mask_lower+1]+np.median(diff_counter_co), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
+                #axs.fill_between(bins+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+        
+                 
+        #-----------
+        # Add threshold
+        for ax in [ax_co_co, ax_co_counter, ax_counter_counter, ax_counter_co]:
+            ax.axhspan(0, misangle_threshold, alpha=0.25, ec=None, fc='grey')
+            ax.axhspan(180-misangle_threshold, 180, alpha=0.25, ec=None, fc='grey')
+        
+        
+        #-----------
+        ### Formatting
+        ax_co_co.set_ylim(0, 180)
+        ax_co_co.set_yticks(np.arange(0, 181, 30))
+        ax_co_co.set_ylabel('Misalignment angle')
+        ax_counter_counter.set_ylabel('Misalignment angle')
+        #ax_counter_counter.get_yaxis().set_label_coords(-0.12,1)
+        if plot_type == 'time':
+            ax_counter_counter.set_xlim(0-3*time_extra, bin_limit_trelax)
+            ax_counter_counter.set_xticks(np.arange(0, bin_limit_trelax+0.1, 1))
+            ax_counter_co.set_xlabel('Time since misalignment (Gyr)')
+            ax_counter_counter.set_xlabel('Time since misalignment (Gyr)')
+            #ax_counter_counter.get_xaxis().set_label_coords(1,-0.12)
+        elif plot_type == 'raw_time':
+            ax_counter_counter.set_xlim(8, 0)
+            ax_counter_counter.set_xticks(np.arange(8, -0.1, -1))
+            ax_counter_counter.set_xlabel('Lookbacktime (Gyr)')
+            ax_counter_counter.get_xaxis().set_label_coords(1,-0.12)
+        elif plot_type == 'snap':
+            ax_counter_counter.set_xlim(-10, 70)
+            ax_counter_counter.set_xticks(np.arange(-10, 71, 10))
+            ax_counter_counter.set_xlabel('Snapshots since misalignment')
+            ax_counter_counter.get_xaxis().set_label_coords(1,-0.12)
+        elif plot_type == 'raw_snap':
+            ax_counter_counter.set_xlim(140, 200)
+            ax_counter_counter.set_xticks(np.arange(140, 201, 5))
+            ax_counter_counter.set_xlabel('Snapshots')
+            ax_counter_counter.get_xaxis().set_label_coords(1,-0.12)
+        for ax in [ax_co_co, ax_co_counter, ax_counter_counter, ax_counter_co]:
+            ax.minorticks_on()
+            ax.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
+            ax.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
+        
+        
+        #-----------
+        ### Annotations
+        for ax in [ax_co_co, ax_co_counter, ax_counter_counter, ax_counter_co]:
+            if (plot_type == 'time') or (plot_type == 'snap'):
+                ax.axvline(0, ls='-', lw=1, c='grey', alpha=1)
+          
+        #-----------
+        ### Customise legend labels
+        if plot_merger_limit != None:
+            axs.scatter(scatter_x, scatter_y, c=scatter_c, cmap=merger_colormap, norm=merger_normalize, s=scatter_s, marker='s', edgecolors='grey', zorder=99)
+            
+            plt.scatter(-20, -160, c=0.1, s=50*(0.5**0.5), cmap=merger_colormap, norm=merger_normalize, marker='s', edgecolors='grey', label='$\mu_{\mathrm{gas}}$=0.1')
+            plt.scatter(-20, -150, c=0.3, s=50*(0.5**0.5), cmap=merger_colormap, norm=merger_normalize, marker='s', edgecolors='grey', label='$\mu_{\mathrm{gas}}$=0.3')
+            plt.scatter(-20, -140, c=1.0, s=50*(0.5**0.5), cmap=merger_colormap, norm=merger_normalize, marker='s', edgecolors='grey', label='$\mu_{\mathrm{gas}}$=1.0')
+            plt.scatter(-20, -160, c='w', s=50*(0.1**0.5), marker='s', edgecolors='grey', label='$\mu_{\mathrm{*}}$=0.1')
+            plt.scatter(-20, -150, c='w', s=50*(0.3**0.5), marker='s', edgecolors='grey', label='$\mu_{\mathrm{*}}$=0.3')
+            plt.scatter(-20, -140, c='w', s=50*(1.0**0.5), marker='s', edgecolors='grey', label='$\mu_{\mathrm{*}}$=1.0')
+            
+            legend1 = axs.legend(loc='upper right', frameon=False, labelspacing=0.1, handlelength=0)
+            axs.add_artist(legend1)
+        if plot_relaxation_type_stacked:
+            if plot_merger_limit != None:
+                loc = [0.62, 0.35]
+            else:
+                loc = 'upper right'
+                
+            if 'co-co' in stacked_relaxation_type:
+                legend_labels = ['co → co']
+                legend_elements = [Line2D([0], [0], marker=' ', color='w')]
+                legend_colors = ['C0']
+                legend2 = ax_co_co.legend(handles=legend_elements, labels=legend_labels, loc=loc, handletextpad=5, frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
+                ax_co_co.add_artist(legend2)
+            if 'counter-counter' in stacked_relaxation_type:
+                legend_labels = ['counter → counter']
+                legend_elements = [Line2D([0], [0], marker=' ', color='w')]
+                legend_colors = ['C1']
+                legend2 = ax_counter_counter.legend(handles=legend_elements, labels=legend_labels, loc=loc, handletextpad=5, frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
+                ax_counter_counter.add_artist(legend2)
+            if 'co-counter' in stacked_relaxation_type:
+                legend_labels = ['     co → counter']
+                legend_elements = [Line2D([0], [0], marker=' ', color='w')]
+                legend_colors = ['C2']
+                legend2 = ax_co_counter.legend(handles=legend_elements, labels=legend_labels, loc=loc, handletextpad=5, frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
+                ax_co_counter.add_artist(legend2)
+            if 'counter-co' in stacked_relaxation_type:
+                legend_labels = ['counter → co']
+                legend_elements = [Line2D([0], [0], marker=' ', color='w')]
+                legend_colors = ['C3']
+                legend2 = ax_counter_co.legend(handles=legend_elements, labels=legend_labels, loc=loc, handletextpad=5, frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
+                ax_counter_co.add_artist(legend2)
+                
+        #-----------
+        ### title
+        if plot_annotate:
+            ax_co_co.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
+            
+            
+        #-----------
+        ### other
+        plt.tight_layout()
+        
+        #-----------
+        #### Savefig
+        # Average timescales
+        mean_co_co   = np.mean(np.array(summary_dict['trelax']['co-co']))
+        median_co_co = np.median(np.array(summary_dict['trelax']['co-co']))
+        std_co_co    = np.std(np.array(summary_dict['trelax']['co-co']))
+        mean_co_counter   = np.mean(np.array(summary_dict['trelax']['co-counter']))
+        median_co_counter = np.median(np.array(summary_dict['trelax']['co-counter']))
+        std_co_counter    = np.std(np.array(summary_dict['trelax']['co-counter']))
+        mean_counter_counter   = np.mean(np.array(summary_dict['trelax']['counter-counter']))
+        median_counter_counter = np.median(np.array(summary_dict['trelax']['counter-counter']))
+        std_counter_counter    = np.std(np.array(summary_dict['trelax']['counter-counter']))
+        mean_counter_co   = np.mean(np.array(summary_dict['trelax']['counter-co']))
+        median_counter_co = np.median(np.array(summary_dict['trelax']['counter-co']))
+        std_counter_co    = np.std(np.array(summary_dict['trelax']['counter-co']))
+        print('Relaxation timescales:')
+        print('   (Gyr)     all   co-co   co-counter   counter-counter   counter-co')
+        print('   Mean:    %.2f    %.2f      %.2f           %.2f            %.2f' %(mean_timescale, (math.nan if len(summary_dict['trelax']['co-co']) == 0 else mean_co_co), (math.nan if len(summary_dict['trelax']['co-counter']) == 0 else mean_co_counter), (math.nan if len(summary_dict['trelax']['counter-counter']) == 0 else mean_counter_counter), (math.nan if len(summary_dict['trelax']['counter-co']) == 0 else mean_counter_co)))   
+        print('   Median:  %.2f    %.2f      %.2f           %.2f            %.2f' %(median_timescale, (math.nan if len(summary_dict['trelax']['co-co']) == 0 else median_co_co), (math.nan if len(summary_dict['trelax']['co-counter']) == 0 else median_co_counter), (math.nan if len(summary_dict['trelax']['counter-counter']) == 0 else median_counter_counter), (math.nan if len(summary_dict['trelax']['counter-co']) == 0 else median_counter_co)))   
+        print('   std:     %.2f    %.2f      %.2f           %.2f            %.2f' %(std_timescale, (math.nan if len(summary_dict['trelax']['co-co']) == 0 else std_co_co), (math.nan if len(summary_dict['trelax']['co-counter']) == 0 else std_co_counter), (math.nan if len(summary_dict['trelax']['counter-counter']) == 0 else std_counter_counter), (math.nan if len(summary_dict['trelax']['counter-co']) == 0 else std_counter_co)))
+        
+        
+        metadata_plot = {'Title': '%s, %s\nThreshold: %s\nMin delta:%s\nLatency time: %s\nMin ratio: %s\nUSE MERGERS: %s\nMax closest merger: %s-%s\nTime extra: %s\nTime no misangle: %s\nStelmass: %s/%s\n kappa*: %s/%s\n outflow: %s/%s' %(abs_or_proj, use_angle, misangle_threshold, min_delta_angle, latency_time, min_stellar_ratio, use_merger_criteria, max_merger_pre, max_merger_post, time_extra, time_no_misangle, min_stelmass, max_stelmass, min_kappa_stars, max_kappa_stars, min_inflow, max_inflow),
+                         'Author': 'Min particles: %s\nMax CoM: %s\nMin inc: %s\nPlot ratio limit: %s\n\n# MISALIGNMENTS: %s\nco-co: %s\ncnt-cnt: %s\nco-cnt: %s\ncnt-co: %s\nETG-ETG: %s\nLTG-LTG: %s\nETG-LTG: %s\nLTG-ETG: %s\nMean: %.2f Gyr\nMedian: %.2f Gyr\nstd: %.2f Gyr' %(min_particles, max_com, min_inclination, plot_merger_limit, len(misalignment_tree.keys()), len(summary_dict['ID']['co-co']), len(summary_dict['ID']['counter-counter']), len(summary_dict['ID']['co-counter']), len(summary_dict['ID']['counter-co']), len(summary_dict['ID']['ETG-ETG']), len(summary_dict['ID']['LTG-LTG']), len(summary_dict['ID']['ETG-LTG']), len(summary_dict['ID']['LTG-ETG']), mean_timescale, median_timescale, std_timescale)}
+                         
+        if savefig:
+            if savefig_txt == 'manual':
+                savefig_txt = input('\n  -> Enter savefig_txt:   ')
+            plt.savefig("%s/stacked_misalignments/trelax_2x2_stacked_misalignments_%s_%s_%s.%s" %(fig_dir, plot_type, len(misalignment_tree.keys()), savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/stacked_misalignments/trelax_2x2_stacked_misalignments_%s_%s_%s.%s" %(fig_dir, plot_type, len(misalignment_tree.keys()), savefig_txt, file_format)) 
+        if showfig:
+            plt.show()
+        plt.close()
+    
+    # Plot single stacked of current criteria
+    if plot_stacked_tdyn:
+        # Graph initialising and base formatting
+        fig, axs = plt.subplots(1, 1, figsize=[10/3, 1.8], sharex=True, sharey=True)
+        plt.subplots_adjust(wspace=0.4, hspace=0.4)
+        
+        # Creating colormaps to mark mergers
+        merger_colormap = plt.get_cmap('Blues', 5)
+        merger_normalize = colors.Normalize(vmin=0, vmax=1)
+        timescale_colormap = plt.get_cmap('inferno')
+        timescale_normalize = colors.Normalize(vmin=0, vmax=6)
+        scalarMap = cm.ScalarMappable(norm=timescale_normalize, cmap=timescale_colormap)
+        
+        #-----------
+        ### Loop over all windows and plot them
+        ID_plot     = []
+        ID_collect  = []        # flexible array used to extract weird relaxations
+        time_collect = []
+        diff_co_co           = []
+        diff_co_counter      = []
+        diff_counter_counter = []
+        diff_counter_co      = []
+        scatter_x = []
+        scatter_y = []
+        scatter_c = []
+        scatter_s = []
+        
+        stats_lines = {'co-co': {'time': [],
+                                 'angles': []},
+                       'co-counter': {'time': [],
+                                      'angles': []},
+                       'counter-counter': {'time': [],
+                                           'angles': []},
+                       'counter-co': {'time': [],
+                                      'angles': []}}
+        
+        for ID_i in misalignment_tree.keys():
+            
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] not in stacked_relaxation_type:
+                continue
+            
+            ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
+            time_collect.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+            timeaxis_plot = (-1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']]))/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+            
+            
+            #-------------
+            # Plot stacked
+            line_color = 'k'
+            alpha = 0.2
+            if plot_relaxation_type_stacked:
+                alpha = 0.1
+                if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
+                    line_color='C0'
+                    append_angle = 10
+                    diff_co_co.append(timeaxis_plot[1]-timeaxis_plot[0])
+                    
+                    # collect IDs of weird relaxations
+                    #if max(misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)]) > 135:
+                    #    ID_collect.append(ID_i)
+                        
+                elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
+                    line_color='C2'
+                    append_angle = 170
+                    diff_co_counter.append(timeaxis_plot[1]-timeaxis_plot[0])
+                elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
+                    line_color='C3'
+                    append_angle = 10
+                    diff_counter_co.append(timeaxis_plot[1]-timeaxis_plot[0])
+                elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
+                    line_color='C1'
+                    append_angle = 170
+                    diff_counter_counter.append(timeaxis_plot[1]-timeaxis_plot[0])
+            
+            
+            #-------------
+            # append to stats and add extra values of relaxed state until end of bin_limit_trelax
+            timeaxis_stats = timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)]
+                        
+            angles_stats   = misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)]                   
+            # Add missing 120Mya time slots until end reached
+            while timeaxis_stats[-1] < bin_limit_tdyn:
+                timeaxis_stats = np.append(timeaxis_stats, timeaxis_stats[-1] + (timeaxis_stats[1]-timeaxis_stats[0]))
+                angles_stats   = np.append(angles_stats, append_angle)
+            stats_lines['%s' %misalignment_tree['%s' %ID_i]['relaxation_type']]['time'].extend(timeaxis_stats)
+            stats_lines['%s' %misalignment_tree['%s' %ID_i]['relaxation_type']]['angles'].extend(angles_stats)
+            
+            
+            #-------------
+            # pick out long relaxersß
+            if misalignment_tree['%s' %ID_i]['relaxation_tdyn'] > 20:
+                ID_collect.append(ID_i)
+                            
+            
+            #-------------
+            # format and plot line
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
+                alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6)**1.5)/10), 0.02)
+                c     = lighten_color(line_color, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6))**(-0.5)) 
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
+                alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6)**1.5)/10), 0.03)
+                c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6))**(-0.5)) 
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
+                alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6)**1.5)/2), 0.02)
+                c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6))**(-0.5)) 
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
+                alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6)**1.5)/3), 0.02)
+                c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6))**(-0.5))
+            
+                
+                
+            axs.plot(timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], lw=0.3, c=c, alpha=alpha)
+            
+            ### Annotate
+            if plot_GalaxyIDs:
+                axs.text(timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)][-1]+0.1, misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)][-1]+5, '%s' %misalignment_tree['%s' %ID_i]['GalaxyID'][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)][-1], fontsize=7)
+            
+            # Plot mergers (some may be missing if they are out of window)
+            if plot_merger_limit != None:
+                for time_i, angle_i, ratio_i, ratio_gas_i in zip(timeaxis_plot, misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i]['merger_ratio_stars'][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i]['merger_ratio_gas'][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)]):
+                    if len(ratio_i) > 0:
+                        if max(ratio_i) >= plot_merger_limit:
+                            scatter_x.append(time_i)
+                            scatter_y.append(angle_i)
+                            scatter_c.append(ratio_gas_i[np.argmax(np.array(ratio_i))])
+                            scatter_s.append(50*(ratio_i[np.argmax(np.array(ratio_i))])**0.5)
+        
+        print('-------------------------------------------------------------')
+        #print('  List of IDs with co-co relax but max(angle) > 135:  ', len(ID_collect))
+        print('  List of >20 trelax/tdyn ', len(ID_collect))
+        print(ID_collect)
+        print('asugaigfaiuf')
+        print('median: ', np.median(time_collect))
+        
+        
+        #--------------
+        # Find mean/median and 1 sigma behaviour for each relaxation type
+        if stacked_median:
+            if len(stats_lines['co-co']['time']) != 0:
+                line_color='C0'
+                line_color='k'
+                bins = np.arange((-1*np.median(diff_co_co))+0.01, 28.09, np.median(diff_co_co))
+            
+                # Create mask that is essentially the bins
+                digitized = np.digitize(np.array(stats_lines['co-co']['time']), bins=bins)
+                bins_count, _ = np.histogram(np.array(stats_lines['co-co']['time']), bins=bins)
+                            
+                
+                # Collect median (50%), and 1sigma around that (16% and 84%)
+                median_array = []
+                median_upper = []
+                median_lower = []
+                use_percentiles = 16        # 1 sigma
+                for bin_i in np.arange(1, len(bins_count)+1, 1):
+                    # extract values in current bin
+                    mask = digitized == bin_i
+                    current_time   = np.array(stats_lines['co-co']['time'])[mask]
+                    current_angles = np.array(stats_lines['co-co']['angles'])[mask]
+                                
+                    median_array.append(np.percentile(current_angles, 50))
+                    median_upper.append(np.percentile(current_angles, 100-use_percentiles))
+                    median_lower.append(np.percentile(current_angles, use_percentiles))
+                
+                #----------
+                # remove 'excess'
+                mask_median = np.where(np.array(median_array) > 30)[0][-1] + 1
+                mask_upper  = np.where(np.array(median_upper) > 30)[0][-1] + 1
+                mask_lower  = np.where(np.array(median_lower) > 30)[0][-1] + 1
+                
+                #----------
+                # plot
+                axs.plot(bins[0:mask_median+1]+np.median(diff_co_co), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
+                axs.plot(bins[0:mask_upper+1]+np.median(diff_co_co), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
+                axs.plot(bins[0:mask_lower+1]+np.median(diff_co_co), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
+                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+            if len(stats_lines['co-counter']['time']) != 0:
+                line_color='C2'
+                line_color='k'
+                bins = np.arange((-1*np.median(diff_co_counter))+0.01, 28.09, np.median(diff_co_counter))
+            
+                # Create mask that is essentially the bins
+                digitized = np.digitize(np.array(stats_lines['co-counter']['time']), bins=bins)
+                bins_count, _ = np.histogram(np.array(stats_lines['co-counter']['time']), bins=bins)
+            
+                # Collect median (50%), and 1sigma around that (16% and 84%)
+                median_array = []
+                median_upper = []
+                median_lower = []
+                use_percentiles = 16        # 1 sigma
+                for bin_i in np.arange(1, len(bins_count)+1, 1):
+                    # extract values in current bin
+                    mask = digitized == bin_i
+                    current_time   = np.array(stats_lines['co-counter']['time'])[mask]
+                    current_angles = np.array(stats_lines['co-counter']['angles'])[mask]
+                                
+                    median_array.append(np.percentile(current_angles, 50))
+                    median_upper.append(np.percentile(current_angles, 100-use_percentiles))
+                    median_lower.append(np.percentile(current_angles, use_percentiles))
+            
+                #----------
+                # remove 'excess'
+                mask_median = np.where(np.array(median_array) < 150)[0][-1] + 1
+                mask_upper  = np.where(np.array(median_upper) < 150)[0][-1] + 1
+                mask_lower  = np.where(np.array(median_lower) < 150)[0][-1] + 1
+                
+                #----------
+                # plot
+                axs.plot(bins[0:mask_median+1]+np.median(diff_co_counter), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
+                axs.plot(bins[0:mask_upper+1]+np.median(diff_co_counter), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
+                axs.plot(bins[0:mask_lower+1]+np.median(diff_co_counter), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
+                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+            if len(stats_lines['counter-counter']['time']) != 0:
+                line_color='C1'
+                line_color='k'
+                bins = np.arange((-1*np.median(diff_counter_counter))+0.01, 28.09, np.median(diff_counter_counter))
+            
+                # Create mask that is essentially the bins
+                digitized = np.digitize(np.array(stats_lines['counter-counter']['time']), bins=bins)
+                bins_count, _ = np.histogram(np.array(stats_lines['counter-counter']['time']), bins=bins)
+            
+                # Collect median (50%), and 1sigma around that (16% and 84%)
+                median_array = []
+                median_upper = []
+                median_lower = []
+                use_percentiles = 16        # 1 sigma
+                for bin_i in np.arange(1, len(bins_count)+1, 1):
+                    # extract values in current bin
+                    mask = digitized == bin_i
+                    current_time   = np.array(stats_lines['counter-counter']['time'])[mask]
+                    current_angles = np.array(stats_lines['counter-counter']['angles'])[mask]
+                                
+                    median_array.append(np.percentile(current_angles, 50))
+                    median_upper.append(np.percentile(current_angles, 100-use_percentiles))
+                    median_lower.append(np.percentile(current_angles, use_percentiles))
+            
+                #----------
+                # remove 'excess'
+                mask_median = np.where(np.array(median_array) < 150)[0][-1] + 1
+                mask_upper  = np.where(np.array(median_upper) < 150)[0][-1] + 1
+                mask_lower  = np.where(np.array(median_lower) < 150)[0][-1] + 1
+                
+                #----------
+                # plot
+                axs.plot(bins[0:mask_median+1]+np.median(diff_counter_counter), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
+                axs.plot(bins[0:mask_upper+1]+np.median(diff_counter_counter), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
+                axs.plot(bins[0:mask_lower+1]+np.median(diff_counter_counter), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
+                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+            if len(stats_lines['counter-co']['time']) != 0:
+                line_color='C3'
+                line_color='k'
+                bins = np.arange((-1*np.median(diff_counter_co))+0.01, 28.09, np.median(diff_counter_co))
+            
+                # Create mask that is essentially the bins
+                digitized = np.digitize(np.array(stats_lines['counter-co']['time']), bins=bins)
+                bins_count, _ = np.histogram(np.array(stats_lines['counter-co']['time']), bins=bins)
+            
+                # Collect median (50%), and 1sigma around that (16% and 84%)
+                median_array = []
+                median_upper = []
+                median_lower = []
+                use_percentiles = 16        # 1 sigma
+                for bin_i in np.arange(1, len(bins_count)+1, 1):
+                    # extract values in current bin
+                    mask = digitized == bin_i
+                    current_time   = np.array(stats_lines['counter-co']['time'])[mask]
+                    current_angles = np.array(stats_lines['counter-co']['angles'])[mask]
+                                
+                    median_array.append(np.percentile(current_angles, 50))
+                    median_upper.append(np.percentile(current_angles, 100-use_percentiles))
+                    median_lower.append(np.percentile(current_angles, use_percentiles))
+            
+                #----------
+                # remove 'excess'
+                mask_median = np.where(np.array(median_array) > 30)[0][-1] + 1
+                mask_upper  = np.where(np.array(median_upper) > 30)[0][-1] + 1
+                mask_lower  = np.where(np.array(median_lower) > 30)[0][-1] + 1
+                
+                #----------
+                # plot
+                axs.plot(bins[0:mask_median+1]+np.median(diff_counter_co), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
+                axs.plot(bins[0:mask_upper+1]+np.median(diff_counter_co), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
+                axs.plot(bins[0:mask_lower+1]+np.median(diff_counter_co), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
                 #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
                      
         #-----------
@@ -4379,31 +5263,24 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         axs.set_ylim(0, 180)
         axs.set_yticks(np.arange(0, 181, 30))
         axs.set_ylabel('Misalignment angle')
-        if plot_type == 'time':
-            axs.set_xlim(0-3*time_extra, bin_limit_stacked)
-            axs.set_xticks(np.arange(0, bin_limit_stacked+0.1, 0.5))
-            axs.set_xlabel('Time since misalignment (Gyr)')
-        elif plot_type == 'raw_time':
-            axs.set_xlim(8, 0)
-            axs.set_xticks(np.arange(8, -0.1, -0.5))
-            axs.set_xlabel('Lookbacktime (Gyr)')
-        elif plot_type == 'snap':
-            axs.set_xlim(-10, 70)
-            axs.set_xticks(np.arange(-10, 71, 10))
-            axs.set_xlabel('Snapshots since misalignment')
-        elif plot_type == 'raw_snap':
-            axs.set_xlim(140, 200)
-            axs.set_xticks(np.arange(140, 201, 5))
-            axs.set_xlabel('Snapshots')
+        axs.set_xlim(-1, bin_limit_tdyn)
+        axs.set_xticks(np.arange(0, bin_limit_tdyn+0.1, 2))
+        axs.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{dyn}}$')
         axs.minorticks_on()
         axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
         axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
         
         
         #-----------
+        ### title
+        if plot_annotate:
+            axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
+            
+        
+        #-----------
         ### Annotations
         if (plot_type == 'time') or (plot_type == 'snap'):
-            axs.axvline(0, ls='--', lw=1, c='k')
+            axs.axvline(0, ls='-', lw=1, c='k')
           
         #-----------
         ### Customise legend labels
@@ -4423,19 +5300,19 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             legend_elements = []
             legend_labels = []
             legend_colors = []
-            if 'co-co' in relaxation_type:
-                legend_labels.append('     co → co')
+            if 'co-co' in stacked_relaxation_type:
+                legend_labels.append('co → co')
                 legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
                 legend_colors.append('C0')
-            if 'counter-counter' in relaxation_type:
+            if 'counter-counter' in stacked_relaxation_type:
                 legend_labels.append('counter → counter')
                 legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
                 legend_colors.append('C1')
-            if 'co-counter' in relaxation_type:
+            if 'co-counter' in stacked_relaxation_type:
                 legend_labels.append('     co → counter')
                 legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
                 legend_colors.append('C2')
-            if 'counter-co' in relaxation_type:
+            if 'counter-co' in stacked_relaxation_type:
                 legend_labels.append('counter → co')
                 legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
                 legend_colors.append('C3')
@@ -4454,20 +5331,1238 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
         #-----------
         #### Savefig
+        # Average timescales
+        mean_co_co   = np.mean(np.array(summary_dict['tdyn']['co-co']))
+        median_co_co = np.median(np.array(summary_dict['tdyn']['co-co']))
+        std_co_co    = np.std(np.array(summary_dict['tdyn']['co-co']))
+        mean_co_counter   = np.mean(np.array(summary_dict['tdyn']['co-counter']))
+        median_co_counter = np.median(np.array(summary_dict['tdyn']['co-counter']))
+        std_co_counter    = np.std(np.array(summary_dict['tdyn']['co-counter']))
+        mean_counter_counter   = np.mean(np.array(summary_dict['tdyn']['counter-counter']))
+        median_counter_counter = np.median(np.array(summary_dict['tdyn']['counter-counter']))
+        std_counter_counter    = np.std(np.array(summary_dict['tdyn']['counter-counter']))
+        mean_counter_co   = np.mean(np.array(summary_dict['tdyn']['counter-co']))
+        median_counter_co = np.median(np.array(summary_dict['tdyn']['counter-co']))
+        std_counter_co    = np.std(np.array(summary_dict['tdyn']['counter-co']))
+        print('trelax/tdyn multiples:')
+        print('             all   co-co   co-counter   counter-counter   counter-co')
+        print('   Mean:    %.2f    %.2f      %.2f           %.2f            %.2f' %(mean_tdyn, (math.nan if len(summary_dict['tdyn']['co-co']) == 0 else mean_co_co), (math.nan if len(summary_dict['tdyn']['co-counter']) == 0 else mean_co_counter), (math.nan if len(summary_dict['tdyn']['counter-counter']) == 0 else mean_counter_counter), (math.nan if len(summary_dict['tdyn']['counter-co']) == 0 else mean_counter_co)))   
+        print('   Median:  %.2f    %.2f      %.2f           %.2f            %.2f' %(median_tdyn, (math.nan if len(summary_dict['tdyn']['co-co']) == 0 else median_co_co), (math.nan if len(summary_dict['tdyn']['co-counter']) == 0 else median_co_counter), (math.nan if len(summary_dict['tdyn']['counter-counter']) == 0 else median_counter_counter), (math.nan if len(summary_dict['tdyn']['counter-co']) == 0 else median_counter_co)))   
+        print('   std:     %.2f    %.2f      %.2f           %.2f            %.2f' %(std_ttorque, (math.nan if len(summary_dict['tdyn']['co-co']) == 0 else std_co_co), (math.nan if len(summary_dict['tdyn']['co-counter']) == 0 else std_co_counter), (math.nan if len(summary_dict['tdyn']['counter-counter']) == 0 else std_counter_counter), (math.nan if len(summary_dict['tdyn']['counter-co']) == 0 else std_counter_co)))
+        
         metadata_plot = {'Title': '%s, %s\nThreshold: %s\nMin delta:%s\nLatency time: %s\nMin ratio: %s\nUSE MERGERS: %s\nMax closest merger: %s-%s\nTime extra: %s\nTime no misangle: %s\nStelmass: %s/%s\n kappa*: %s/%s\n outflow: %s/%s' %(abs_or_proj, use_angle, misangle_threshold, min_delta_angle, latency_time, min_stellar_ratio, use_merger_criteria, max_merger_pre, max_merger_post, time_extra, time_no_misangle, min_stelmass, max_stelmass, min_kappa_stars, max_kappa_stars, min_inflow, max_inflow),
-                         'Author': 'Min particles: %s\nMax CoM: %s\nMin inc: %s\nPlot ratio limit: %s\n\n# MISALIGNMENTS: %s\nco-co: %s\ncnt-cnt: %s\nco-cnt: %s\ncnt-co: %s\nETG-ETG: %s\nLTG-LTG: %s\nETG-LTG: %s\nLTG-ETG: %s\nMean: %.2f Gyr\nMedian: %.2f Gyr\nstd: %.2f Gyr' %(min_particles, max_com, min_inclination, plot_merger_limit, len(misalignment_tree.keys()), len(summary_dict['ID']['co-co']), len(summary_dict['ID']['counter-counter']), len(summary_dict['ID']['co-counter']), len(summary_dict['ID']['counter-co']), len(summary_dict['ID']['ETG-ETG']), len(summary_dict['ID']['LTG-LTG']), len(summary_dict['ID']['ETG-LTG']), len(summary_dict['ID']['LTG-ETG']), mean_timescale, median_timescale, std_timescale)}
+                         'Author': 'Min particles: %s\nMax CoM: %s\nMin inc: %s\nPlot ratio limit: %s\n\n# MISALIGNMENTS: %s\nco-co: %s\ncnt-cnt: %s\nco-cnt: %s\ncnt-co: %s\nETG-ETG: %s\nLTG-LTG: %s\nETG-LTG: %s\nLTG-ETG: %s\nMean: %.2f\nMedian: %.2f\nstd: %.2f' %(min_particles, max_com, min_inclination, plot_merger_limit, len(misalignment_tree.keys()), len(summary_dict['ID']['co-co']), len(summary_dict['ID']['counter-counter']), len(summary_dict['ID']['co-counter']), len(summary_dict['ID']['counter-co']), len(summary_dict['ID']['ETG-ETG']), len(summary_dict['ID']['LTG-LTG']), len(summary_dict['ID']['ETG-LTG']), len(summary_dict['ID']['LTG-ETG']), mean_tdyn, median_tdyn, std_tdyn)}
                          
         if savefig:
             if savefig_txt == 'manual':
                 savefig_txt = input('\n  -> Enter savefig_txt:   ')
-            plt.savefig("%s/stacked_misalignments/%sstacked_misalignments_%s_%s_%s.%s" %(fig_dir, 'L100_', plot_type, len(misalignment_tree.keys()), savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print("\n  SAVED: %s/stacked_misalignments/%sstacked_misalignments_%s_%s_%s.%s" %(fig_dir, 'L100_', plot_type, len(misalignment_tree.keys()), savefig_txt, file_format)) 
+            plt.savefig("%s/stacked_misalignments/tdyn_stacked_misalignments_%s_%s_%s.%s" %(fig_dir, plot_type, len(misalignment_tree.keys()), savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/stacked_misalignments/tdyn_stacked_misalignments_%s_%s_%s.%s" %(fig_dir, plot_type, len(misalignment_tree.keys()), savefig_txt, file_format)) 
+        if showfig:
+            plt.show()
+        plt.close()
+    if plot_stacked_tdyn_2x2:
+        # Graph initialising and base formatting
+        fig, ((ax_co_co, ax_co_counter), (ax_counter_counter, ax_counter_co)) = plt.subplots(2, 2, figsize=[2*10/3, 2*1.8], sharex=True, sharey=True)
+        plt.subplots_adjust(wspace=0.0, hspace=0.0)
+        
+        # Creating colormaps to mark mergers
+        merger_colormap = plt.get_cmap('Blues', 5)
+        merger_normalize = colors.Normalize(vmin=0, vmax=1)
+        timescale_colormap = plt.get_cmap('inferno')
+        timescale_normalize = colors.Normalize(vmin=0, vmax=6)
+        scalarMap = cm.ScalarMappable(norm=timescale_normalize, cmap=timescale_colormap)
+        
+        #-----------
+        ### Loop over all windows and plot them
+        ID_plot     = []
+        ID_collect  = []        # flexible array used to extract weird relaxations
+        diff_co_co           = []
+        diff_co_counter      = []
+        diff_counter_counter = []
+        diff_counter_co      = []
+        scatter_x = []
+        scatter_y = []
+        scatter_c = []
+        scatter_s = []
+        
+        stats_lines = {'co-co': {'time': [],
+                                 'angles': []},
+                       'co-counter': {'time': [],
+                                      'angles': []},
+                       'counter-counter': {'time': [],
+                                           'angles': []},
+                       'counter-co': {'time': [],
+                                      'angles': []}}
+        
+        for ID_i in misalignment_tree.keys():
+            
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] not in stacked_relaxation_type:
+                continue
+            
+            ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
+            timeaxis_plot = (-1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']]))/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+            
+            #-------------
+            # Plot stacked
+            line_color = 'k'
+            alpha = 0.2
+            if plot_relaxation_type_stacked:
+                alpha = 0.1
+                if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
+                    line_color='C0'
+                    append_angle = 10
+                    ax = ax_co_co
+                    diff_co_co.append(timeaxis_plot[1]-timeaxis_plot[0])
+                    
+                    # collect IDs of weird relaxations
+                    #if max(misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)]) > 135:
+                    #    ID_collect.append(ID_i)     
+                elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
+                    line_color='C2'
+                    append_angle = 170
+                    ax = ax_co_counter
+                    diff_co_counter.append(timeaxis_plot[1]-timeaxis_plot[0])
+                elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
+                    line_color='C3'
+                    append_angle = 10
+                    ax = ax_counter_co
+                    diff_counter_co.append(timeaxis_plot[1]-timeaxis_plot[0])
+                elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
+                    line_color='C1'
+                    append_angle = 170
+                    ax = ax_counter_counter
+                    diff_counter_counter.append(timeaxis_plot[1]-timeaxis_plot[0])
+            
+            
+            #-------------
+            # append to stats and add extra values of relaxed state until end of bin_limit_trelax
+            timeaxis_stats = timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)]
+            angles_stats   = misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)]                   
+            # Add missing 120Mya time slots until end reached
+            while timeaxis_stats[-1] < bin_limit_tdyn:
+                timeaxis_stats = np.append(timeaxis_stats, timeaxis_stats[-1] + (timeaxis_stats[1]-timeaxis_stats[0]))
+                angles_stats   = np.append(angles_stats, append_angle)
+            stats_lines['%s' %misalignment_tree['%s' %ID_i]['relaxation_type']]['time'].extend(timeaxis_stats)
+            stats_lines['%s' %misalignment_tree['%s' %ID_i]['relaxation_type']]['angles'].extend(angles_stats)
+            
+            
+            #-------------
+            # pick out long relaxersß
+            if misalignment_tree['%s' %ID_i]['relaxation_tdyn'] > 20:
+                ID_collect.append(ID_i)
+                            
+            
+            #-------------
+            # format and plot line
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
+                alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6)**1.5)/10), 0.02)
+                c     = lighten_color(line_color, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6))**(-0.5)) 
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
+                alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6)**1.5)/10), 0.03)
+                c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6))**(-0.5)) 
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
+                alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6)**1.5)/2), 0.02)
+                c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6))**(-0.5)) 
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
+                alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6)**1.5)/3), 0.02)
+                c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6))**(-0.5))
+                
+                
+                
+                
+            ax.plot(timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], lw=0.3, c=c, alpha=alpha)       # c=scalarMap.to_rgba(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            
+            ### Annotate
+            if plot_GalaxyIDs:
+                ax.text(timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)][-1]+0.1, misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)][-1]+5, '%s' %misalignment_tree['%s' %ID_i]['GalaxyID'][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)][-1], fontsize=7)
+            
+            # Plot mergers (some may be missing if they are out of window)
+            if plot_merger_limit != None:
+                for time_i, angle_i, ratio_i, ratio_gas_i in zip(timeaxis_plot, misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i]['merger_ratio_stars'][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i]['merger_ratio_gas'][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)]):
+                    if len(ratio_i) > 0:
+                        if max(ratio_i) >= plot_merger_limit:
+                            scatter_x.append(time_i)
+                            scatter_y.append(angle_i)
+                            scatter_c.append(ratio_gas_i[np.argmax(np.array(ratio_i))])
+                            scatter_s.append(50*(ratio_i[np.argmax(np.array(ratio_i))])**0.5)
+        
+        print('-------------------------------------------------------------')
+        #print('  List of IDs with co-co relax but max(angle) > 135:  ', len(ID_collect))
+        print('  List of >20 trelax/tdyn ', len(ID_collect))
+        print(ID_collect)
+        
+        #--------------
+        # Find mean/median and 1 sigma behaviour for each relaxation type
+        if stacked_median:
+            if len(stats_lines['co-co']['time']) != 0:
+                line_color='C0'
+                line_color='k'
+                bins = np.arange((-1*np.median(diff_co_co))+0.01, 28.09, np.median(diff_co_co))
+            
+                # Create mask that is essentially the bins
+                digitized = np.digitize(np.array(stats_lines['co-co']['time']), bins=bins)
+                bins_count, _ = np.histogram(np.array(stats_lines['co-co']['time']), bins=bins)
+                
+                # Collect median (50%), and 1sigma around that (16% and 84%)
+                median_array = []
+                median_upper = []
+                median_lower = []
+                use_percentiles = 16        # 1 sigma
+                for bin_i in np.arange(1, len(bins_count)+1, 1):
+                    # extract values in current bin
+                    mask = digitized == bin_i
+                    current_time   = np.array(stats_lines['co-co']['time'])[mask]
+                    current_angles = np.array(stats_lines['co-co']['angles'])[mask]
+                                
+                    median_array.append(np.percentile(current_angles, 50))
+                    median_upper.append(np.percentile(current_angles, 100-use_percentiles))
+                    median_lower.append(np.percentile(current_angles, use_percentiles))
+                
+                #----------
+                # remove 'excess'
+                mask_median = np.where(np.array(median_array) > 30)[0][-1] + 1
+                mask_upper  = np.where(np.array(median_upper) > 30)[0][-1] + 1
+                mask_lower  = np.where(np.array(median_lower) > 30)[0][-1] + 1
+                
+                #----------
+                # plot
+                ax_co_co.plot(bins[0:mask_median+1]+np.median(diff_co_co), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
+                ax_co_co.plot(bins[0:mask_upper+1]+np.median(diff_co_co), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
+                ax_co_co.plot(bins[0:mask_lower+1]+np.median(diff_co_co), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
+                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+            if len(stats_lines['co-counter']['time']) != 0:
+                line_color='C2'
+                line_color='k'
+                bins = np.arange((-1*np.median(diff_co_counter))+0.01, 28.09, np.median(diff_co_counter))
+            
+                # Create mask that is essentially the bins
+                digitized = np.digitize(np.array(stats_lines['co-counter']['time']), bins=bins)
+                bins_count, _ = np.histogram(np.array(stats_lines['co-counter']['time']), bins=bins)
+            
+            
+                # Collect median (50%), and 1sigma around that (16% and 84%)
+                median_array = []
+                median_upper = []
+                median_lower = []
+                use_percentiles = 16        # 1 sigma
+                for bin_i in np.arange(1, len(bins_count)+1, 1):
+                    # extract values in current bin
+                    mask = digitized == bin_i
+                    current_time   = np.array(stats_lines['co-counter']['time'])[mask]
+                    current_angles = np.array(stats_lines['co-counter']['angles'])[mask]
+                                
+                    median_array.append(np.percentile(current_angles, 50))
+                    median_upper.append(np.percentile(current_angles, 100-use_percentiles))
+                    median_lower.append(np.percentile(current_angles, use_percentiles))
+            
+                #----------
+                # remove 'excess'
+                mask_median = np.where(np.array(median_array) < 150)[0][-1] + 1
+                mask_upper  = np.where(np.array(median_upper) < 150)[0][-1] + 1
+                mask_lower  = np.where(np.array(median_lower) < 150)[0][-1] + 1
+                
+                #----------
+                # plot
+                ax_co_counter.plot(bins[0:mask_median+1]+np.median(diff_co_counter), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
+                ax_co_counter.plot(bins[0:mask_upper+1]+np.median(diff_co_counter), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
+                ax_co_counter.plot(bins[0:mask_lower+1]+np.median(diff_co_counter), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
+                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+            if len(stats_lines['counter-counter']['time']) != 0:
+                line_color='C1'
+                line_color='k'
+                bins = np.arange((-1*np.median(diff_counter_counter))+0.01, 28.09, np.median(diff_counter_counter))
+            
+                # Create mask that is essentially the bins
+                digitized = np.digitize(np.array(stats_lines['counter-counter']['time']), bins=bins)
+                bins_count, _ = np.histogram(np.array(stats_lines['counter-counter']['time']), bins=bins)
+            
+            
+                # Collect median (50%), and 1sigma around that (16% and 84%)
+                median_array = []
+                median_upper = []
+                median_lower = []
+                use_percentiles = 16        # 1 sigma
+                for bin_i in np.arange(1, len(bins_count)+1, 1):
+                    # extract values in current bin
+                    mask = digitized == bin_i
+                    current_time   = np.array(stats_lines['counter-counter']['time'])[mask]
+                    current_angles = np.array(stats_lines['counter-counter']['angles'])[mask]
+                                
+                    median_array.append(np.percentile(current_angles, 50))
+                    median_upper.append(np.percentile(current_angles, 100-use_percentiles))
+                    median_lower.append(np.percentile(current_angles, use_percentiles))
+            
+                #----------
+                # remove 'excess'
+                mask_median = np.where(np.array(median_array) < 150)[0][-1] + 1
+                mask_upper  = np.where(np.array(median_upper) < 150)[0][-1] + 1
+                mask_lower  = np.where(np.array(median_lower) < 150)[0][-1] + 1
+                
+                #----------
+                # plot
+                ax_counter_counter.plot(bins[0:mask_median+1]+np.median(diff_counter_counter), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
+                ax_counter_counter.plot(bins[0:mask_upper+1]+np.median(diff_counter_counter), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
+                ax_counter_counter.plot(bins[0:mask_lower+1]+np.median(diff_counter_counter), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
+                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+            if len(stats_lines['counter-co']['time']) != 0:
+                line_color='C3'
+                line_color='k'
+                bins = np.arange((-1*np.median(diff_counter_co))+0.01, 28.09, np.median(diff_counter_co))
+            
+                # Create mask that is essentially the bins
+                digitized = np.digitize(np.array(stats_lines['counter-co']['time']), bins=bins)
+                bins_count, _ = np.histogram(np.array(stats_lines['counter-co']['time']), bins=bins)
+            
+                # Collect median (50%), and 1sigma around that (16% and 84%)
+                median_array = []
+                median_upper = []
+                median_lower = []
+                use_percentiles = 16        # 1 sigma
+                for bin_i in np.arange(1, len(bins_count)+1, 1):
+                    # extract values in current bin
+                    mask = digitized == bin_i
+                    current_time   = np.array(stats_lines['counter-co']['time'])[mask]
+                    current_angles = np.array(stats_lines['counter-co']['angles'])[mask]
+                                
+                    median_array.append(np.percentile(current_angles, 50))
+                    median_upper.append(np.percentile(current_angles, 100-use_percentiles))
+                    median_lower.append(np.percentile(current_angles, use_percentiles))
+            
+                #----------
+                # remove 'excess'
+                mask_median = np.where(np.array(median_array) > 30)[0][-1] + 1
+                mask_upper  = np.where(np.array(median_upper) > 30)[0][-1] + 1
+                mask_lower  = np.where(np.array(median_lower) > 30)[0][-1] + 1
+                
+                #----------
+                # plot
+                ax_counter_co.plot(bins[0:mask_median+1]+np.median(diff_counter_co), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
+                ax_counter_co.plot(bins[0:mask_upper+1]+np.median(diff_counter_co), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
+                ax_counter_co.plot(bins[0:mask_lower+1]+np.median(diff_counter_co), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
+                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+                
+        #-----------
+        # Add threshold
+        for ax in [ax_co_co, ax_co_counter, ax_counter_counter, ax_counter_co]:
+            ax.axhspan(0, misangle_threshold, alpha=0.25, ec=None, fc='grey')
+            ax.axhspan(180-misangle_threshold, 180, alpha=0.25, ec=None, fc='grey')
+        
+        
+        #-----------
+        ### Formatting
+        ax_co_co.set_ylim(0, 180)
+        ax_co_co.set_yticks(np.arange(0, 181, 30))
+        ax_co_co.set_ylabel('Misalignment angle')
+        ax_counter_counter.set_ylabel('Misalignment angle')
+        #ax_counter_counter.get_yaxis().set_label_coords(-0.12,1)
+        ax_counter_counter.set_xlim(-1, bin_limit_tdyn)
+        ax_counter_counter.set_xticks(np.arange(0, bin_limit_tdyn+0.1, 2))
+        ax_counter_counter.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{dyn}}$')
+        ax_counter_co.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{dyn}}$')
+        #ax_counter_counter.get_xaxis().set_label_coords(1,-0.12)
+        for ax in [ax_co_co, ax_co_counter, ax_counter_counter, ax_counter_co]:
+            ax.minorticks_on()
+            ax.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
+            ax.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
+        
+        
+        #-----------
+        ### Annotations
+        for ax in [ax_co_co, ax_co_counter, ax_counter_counter, ax_counter_co]:
+            if (plot_type == 'time') or (plot_type == 'snap'):
+                ax.axvline(0, ls='-', lw=1, c='grey', alpha=1)
+        
+        #-----------
+        ### title
+        if plot_annotate:
+            ax_co_co.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
+            
+            
+        #-----------
+        ### Customise legend labels
+        if plot_merger_limit != None:
+            axs.scatter(scatter_x, scatter_y, c=scatter_c, cmap=merger_colormap, norm=merger_normalize, s=scatter_s, marker='s', edgecolors='grey', zorder=99)
+            
+            plt.scatter(-20, -160, c=0.1, s=50*(0.5**0.5), cmap=merger_colormap, norm=merger_normalize, marker='s', edgecolors='grey', label='$\mu_{\mathrm{gas}}$=0.1')
+            plt.scatter(-20, -150, c=0.3, s=50*(0.5**0.5), cmap=merger_colormap, norm=merger_normalize, marker='s', edgecolors='grey', label='$\mu_{\mathrm{gas}}$=0.3')
+            plt.scatter(-20, -140, c=1.0, s=50*(0.5**0.5), cmap=merger_colormap, norm=merger_normalize, marker='s', edgecolors='grey', label='$\mu_{\mathrm{gas}}$=1.0')
+            plt.scatter(-20, -160, c='w', s=50*(0.1**0.5), marker='s', edgecolors='grey', label='$\mu_{\mathrm{*}}$=0.1')
+            plt.scatter(-20, -150, c='w', s=50*(0.3**0.5), marker='s', edgecolors='grey', label='$\mu_{\mathrm{*}}$=0.3')
+            plt.scatter(-20, -140, c='w', s=50*(1.0**0.5), marker='s', edgecolors='grey', label='$\mu_{\mathrm{*}}$=1.0')
+            
+            legend1 = axs.legend(loc='upper right', frameon=False, labelspacing=0.1, handlelength=0)
+            axs.add_artist(legend1)
+        if plot_relaxation_type_stacked:
+            if plot_merger_limit != None:
+                loc = [0.62, 0.35]
+            else:
+                loc = 'upper right'
+                
+            if 'co-co' in stacked_relaxation_type:
+                legend_labels = ['co → co']
+                legend_elements = [Line2D([0], [0], marker=' ', color='w')]
+                legend_colors = ['C0']
+                legend2 = ax_co_co.legend(handles=legend_elements, labels=legend_labels, loc=loc, handletextpad=5, frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
+                ax_co_co.add_artist(legend2)
+            if 'counter-counter' in stacked_relaxation_type:
+                legend_labels = ['counter → counter']
+                legend_elements = [Line2D([0], [0], marker=' ', color='w')]
+                legend_colors = ['C1']
+                legend2 = ax_counter_counter.legend(handles=legend_elements, labels=legend_labels, loc=loc, handletextpad=5, frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
+                ax_counter_counter.add_artist(legend2)
+            if 'co-counter' in stacked_relaxation_type:
+                legend_labels = ['     co → counter']
+                legend_elements = [Line2D([0], [0], marker=' ', color='w')]
+                legend_colors = ['C2']
+                legend2 = ax_co_counter.legend(handles=legend_elements, labels=legend_labels, loc=loc, handletextpad=5, frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
+                ax_co_counter.add_artist(legend2)
+            if 'counter-co' in stacked_relaxation_type:
+                legend_labels = ['counter → co']
+                legend_elements = [Line2D([0], [0], marker=' ', color='w')]
+                legend_colors = ['C3']
+                legend2 = ax_counter_co.legend(handles=legend_elements, labels=legend_labels, loc=loc, handletextpad=5, frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
+                ax_counter_co.add_artist(legend2)
+                
+            
+        #-----------
+        ### other
+        plt.tight_layout()
+        
+        #-----------
+        #### Savefig
+        # Average timescales
+        mean_co_co   = np.mean(np.array(summary_dict['tdyn']['co-co']))
+        median_co_co = np.median(np.array(summary_dict['tdyn']['co-co']))
+        std_co_co    = np.std(np.array(summary_dict['tdyn']['co-co']))
+        mean_co_counter   = np.mean(np.array(summary_dict['tdyn']['co-counter']))
+        median_co_counter = np.median(np.array(summary_dict['tdyn']['co-counter']))
+        std_co_counter    = np.std(np.array(summary_dict['tdyn']['co-counter']))
+        mean_counter_counter   = np.mean(np.array(summary_dict['tdyn']['counter-counter']))
+        median_counter_counter = np.median(np.array(summary_dict['tdyn']['counter-counter']))
+        std_counter_counter    = np.std(np.array(summary_dict['tdyn']['counter-counter']))
+        mean_counter_co   = np.mean(np.array(summary_dict['tdyn']['counter-co']))
+        median_counter_co = np.median(np.array(summary_dict['tdyn']['counter-co']))
+        std_counter_co    = np.std(np.array(summary_dict['tdyn']['counter-co']))
+        print('trelax/tdyn multiples:')
+        print('             all   co-co   co-counter   counter-counter   counter-co')
+        print('   Mean:    %.2f    %.2f      %.2f           %.2f            %.2f' %(mean_tdyn, (math.nan if len(summary_dict['tdyn']['co-co']) == 0 else mean_co_co), (math.nan if len(summary_dict['tdyn']['co-counter']) == 0 else mean_co_counter), (math.nan if len(summary_dict['tdyn']['counter-counter']) == 0 else mean_counter_counter), (math.nan if len(summary_dict['tdyn']['counter-co']) == 0 else mean_counter_co)))   
+        print('   Median:  %.2f    %.2f      %.2f           %.2f            %.2f' %(median_tdyn, (math.nan if len(summary_dict['tdyn']['co-co']) == 0 else median_co_co), (math.nan if len(summary_dict['tdyn']['co-counter']) == 0 else median_co_counter), (math.nan if len(summary_dict['tdyn']['counter-counter']) == 0 else median_counter_counter), (math.nan if len(summary_dict['tdyn']['counter-co']) == 0 else median_counter_co)))   
+        print('   std:     %.2f    %.2f      %.2f           %.2f            %.2f' %(std_tdyn, (math.nan if len(summary_dict['tdyn']['co-co']) == 0 else std_co_co), (math.nan if len(summary_dict['tdyn']['co-counter']) == 0 else std_co_counter), (math.nan if len(summary_dict['tdyn']['counter-counter']) == 0 else std_counter_counter), (math.nan if len(summary_dict['tdyn']['counter-co']) == 0 else std_counter_co)))
+        
+        
+        metadata_plot = {'Title': '%s, %s\nThreshold: %s\nMin delta:%s\nLatency time: %s\nMin ratio: %s\nUSE MERGERS: %s\nMax closest merger: %s-%s\nTime extra: %s\nTime no misangle: %s\nStelmass: %s/%s\n kappa*: %s/%s\n outflow: %s/%s' %(abs_or_proj, use_angle, misangle_threshold, min_delta_angle, latency_time, min_stellar_ratio, use_merger_criteria, max_merger_pre, max_merger_post, time_extra, time_no_misangle, min_stelmass, max_stelmass, min_kappa_stars, max_kappa_stars, min_inflow, max_inflow),
+                         'Author': 'Min particles: %s\nMax CoM: %s\nMin inc: %s\nPlot ratio limit: %s\n\n# MISALIGNMENTS: %s\nco-co: %s\ncnt-cnt: %s\nco-cnt: %s\ncnt-co: %s\nETG-ETG: %s\nLTG-LTG: %s\nETG-LTG: %s\nLTG-ETG: %s\nMean: %.2f\nMedian: %.2f\nstd: %.2f' %(min_particles, max_com, min_inclination, plot_merger_limit, len(misalignment_tree.keys()), len(summary_dict['ID']['co-co']), len(summary_dict['ID']['counter-counter']), len(summary_dict['ID']['co-counter']), len(summary_dict['ID']['counter-co']), len(summary_dict['ID']['ETG-ETG']), len(summary_dict['ID']['LTG-LTG']), len(summary_dict['ID']['ETG-LTG']), len(summary_dict['ID']['LTG-ETG']), mean_tdyn, median_tdyn, std_tdyn)}
+                         
+        if savefig:
+            if savefig_txt == 'manual':
+                savefig_txt = input('\n  -> Enter savefig_txt:   ')
+            plt.savefig("%s/stacked_misalignments/tdyn_2x2_stacked_misalignments_%s_%s_%s.%s" %(fig_dir, plot_type, len(misalignment_tree.keys()), savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/stacked_misalignments/tdyn_2x2_stacked_misalignments_%s_%s_%s.%s" %(fig_dir, plot_type, len(misalignment_tree.keys()), savefig_txt, file_format)) 
+        if showfig:
+            plt.show()
+        plt.close()
+    
+    # Plot single stacked of current criteria
+    if plot_stacked_ttorque:
+        # Graph initialising and base formatting
+        fig, axs = plt.subplots(1, 1, figsize=[10/3, 1.8], sharex=True, sharey=True)
+        plt.subplots_adjust(wspace=0.4, hspace=0.4)
+        
+        # Creating colormaps to mark mergers
+        merger_colormap = plt.get_cmap('Blues', 5)
+        merger_normalize = colors.Normalize(vmin=0, vmax=1)
+        timescale_colormap = plt.get_cmap('inferno')
+        timescale_normalize = colors.Normalize(vmin=0, vmax=6)
+        scalarMap = cm.ScalarMappable(norm=timescale_normalize, cmap=timescale_colormap)
+        
+        #-----------
+        ### Loop over all windows and plot them
+        ID_plot     = []
+        ID_collect  = []        # flexible array used to extract weird relaxations
+        time_collect = []
+        diff_co_co           = []
+        diff_co_counter      = []
+        diff_counter_counter = []
+        diff_counter_co      = []
+        scatter_x = []
+        scatter_y = []
+        scatter_c = []
+        scatter_s = []
+        
+        stats_lines = {'co-co': {'time': [],
+                                 'angles': []},
+                       'co-counter': {'time': [],
+                                      'angles': []},
+                       'counter-counter': {'time': [],
+                                           'angles': []},
+                       'counter-co': {'time': [],
+                                      'angles': []}}
+        
+        for ID_i in misalignment_tree.keys():
+            
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] not in stacked_relaxation_type:
+                continue
+            
+            ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
+            time_collect.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            timeaxis_plot = (-1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']]))/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+            
+            
+            #-------------
+            # Plot stacked
+            line_color = 'k'
+            alpha = 0.2
+            if plot_relaxation_type_stacked:
+                alpha = 0.1
+                if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
+                    line_color='C0'
+                    append_angle = 10
+                    diff_co_co.append(timeaxis_plot[1]-timeaxis_plot[0])
+                    
+                    # collect IDs of weird relaxations
+                    #if max(misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)]) > 135:
+                    #    ID_collect.append(ID_i)
+                        
+                elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
+                    line_color='C2'
+                    append_angle = 170
+                    diff_co_counter.append(timeaxis_plot[1]-timeaxis_plot[0])
+                elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
+                    line_color='C3'
+                    append_angle = 10
+                    diff_counter_co.append(timeaxis_plot[1]-timeaxis_plot[0])
+                elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
+                    line_color='C1'
+                    append_angle = 170
+                    diff_counter_counter.append(timeaxis_plot[1]-timeaxis_plot[0])
+            
+            
+            #-------------
+            # append to stats and add extra values of relaxed state until end of bin_limit_trelax
+            timeaxis_stats = timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)]
+            angles_stats   = misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)]                   
+            # Add missing 120Mya time slots until end reached
+            while timeaxis_stats[-1] < bin_limit_ttorque:
+                timeaxis_stats = np.append(timeaxis_stats, timeaxis_stats[-1] + (timeaxis_stats[1]-timeaxis_stats[0]))
+                angles_stats   = np.append(angles_stats, append_angle)
+            stats_lines['%s' %misalignment_tree['%s' %ID_i]['relaxation_type']]['time'].extend(timeaxis_stats)
+            stats_lines['%s' %misalignment_tree['%s' %ID_i]['relaxation_type']]['angles'].extend(angles_stats)
+            
+            
+            #-------------
+            # pick out long relaxersß
+            if misalignment_tree['%s' %ID_i]['relaxation_ttorque'] > 10:
+                ID_collect.append(ID_i)
+                            
+            
+            #-------------
+            # format and plot line
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
+                alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2)**1.5)/10), 0.02)
+                c     = lighten_color(line_color, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2))**(-0.5)) 
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
+                alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2)**1.5)/10), 0.03)
+                c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2))**(-0.5)) 
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
+                alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2)**1.5)/2), 0.02)
+                c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2))**(-0.5)) 
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
+                alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2)**1.5)/3), 0.02)
+                c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2))**(-0.5))
+            
+                
+                
+            axs.plot(timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], lw=0.3, c=c, alpha=alpha)
+            
+            ### Annotate
+            if plot_GalaxyIDs:
+                axs.text(timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)][-1]+0.1, misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)][-1]+5, '%s' %misalignment_tree['%s' %ID_i]['GalaxyID'][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)][-1], fontsize=7)
+            
+            # Plot mergers (some may be missing if they are out of window)
+            if plot_merger_limit != None:
+                for time_i, angle_i, ratio_i, ratio_gas_i in zip(timeaxis_plot, misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i]['merger_ratio_stars'][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i]['merger_ratio_gas'][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)]):
+                    if len(ratio_i) > 0:
+                        if max(ratio_i) >= plot_merger_limit:
+                            scatter_x.append(time_i)
+                            scatter_y.append(angle_i)
+                            scatter_c.append(ratio_gas_i[np.argmax(np.array(ratio_i))])
+                            scatter_s.append(50*(ratio_i[np.argmax(np.array(ratio_i))])**0.5)
+        
+        #print('-------------------------------------------------------------')
+        #print('  List of IDs with co-co relax but max(angle) > 135:  ', len(ID_collect))
+        print('  List of >10 trelax/ttorque ', len(ID_collect))
+        print(ID_collect)
+        print('asugaigfaiuf')
+        print('median: ', np.median(time_collect))
+        
+        
+        #--------------
+        # Find mean/median and 1 sigma behaviour for each relaxation type
+        if stacked_median:
+            if len(stats_lines['co-co']['time']) != 0:
+                line_color='C0'
+                line_color='k'
+                bins = np.arange((-1*np.median(diff_co_co))+0.01, 12.09, np.median(diff_co_co))
+            
+                # Create mask that is essentially the bins
+                digitized = np.digitize(np.array(stats_lines['co-co']['time']), bins=bins)
+                bins_count, _ = np.histogram(np.array(stats_lines['co-co']['time']), bins=bins)
+                            
+                
+                # Collect median (50%), and 1sigma around that (16% and 84%)
+                median_array = []
+                median_upper = []
+                median_lower = []
+                use_percentiles = 16        # 1 sigma
+                for bin_i in np.arange(1, len(bins_count)+1, 1):
+                    # extract values in current bin
+                    mask = digitized == bin_i
+                    current_time   = np.array(stats_lines['co-co']['time'])[mask]
+                    current_angles = np.array(stats_lines['co-co']['angles'])[mask]
+                                
+                    median_array.append(np.percentile(current_angles, 50))
+                    median_upper.append(np.percentile(current_angles, 100-use_percentiles))
+                    median_lower.append(np.percentile(current_angles, use_percentiles))
+                
+                #----------
+                # remove 'excess'
+                mask_median = np.where(np.array(median_array) > 30)[0][-1] + 1
+                mask_upper  = np.where(np.array(median_upper) > 30)[0][-1] + 1
+                mask_lower  = np.where(np.array(median_lower) > 30)[0][-1] + 1
+                
+                #----------
+                # plot
+                axs.plot(bins[0:mask_median+1]+np.median(diff_co_co), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
+                axs.plot(bins[0:mask_upper+1]+np.median(diff_co_co), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
+                axs.plot(bins[0:mask_lower+1]+np.median(diff_co_co), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
+                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+            if len(stats_lines['co-counter']['time']) != 0:
+                line_color='C2'
+                line_color='k'
+                bins = np.arange((-1*np.median(diff_co_counter))+0.01, 12.09, np.median(diff_co_counter))
+            
+                # Create mask that is essentially the bins
+                digitized = np.digitize(np.array(stats_lines['co-counter']['time']), bins=bins)
+                bins_count, _ = np.histogram(np.array(stats_lines['co-counter']['time']), bins=bins)
+            
+                # Collect median (50%), and 1sigma around that (16% and 84%)
+                median_array = []
+                median_upper = []
+                median_lower = []
+                use_percentiles = 16        # 1 sigma
+                for bin_i in np.arange(1, len(bins_count)+1, 1):
+                    # extract values in current bin
+                    mask = digitized == bin_i
+                    current_time   = np.array(stats_lines['co-counter']['time'])[mask]
+                    current_angles = np.array(stats_lines['co-counter']['angles'])[mask]
+                                
+                    median_array.append(np.percentile(current_angles, 50))
+                    median_upper.append(np.percentile(current_angles, 100-use_percentiles))
+                    median_lower.append(np.percentile(current_angles, use_percentiles))
+            
+                #----------
+                # remove 'excess'
+                mask_median = np.where(np.array(median_array) < 150)[0][-1] + 1
+                mask_upper  = np.where(np.array(median_upper) < 150)[0][-1] + 1
+                mask_lower  = np.where(np.array(median_lower) < 150)[0][-1] + 1
+                
+                #----------
+                # plot
+                axs.plot(bins[0:mask_median+1]+np.median(diff_co_counter), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
+                axs.plot(bins[0:mask_upper+1]+np.median(diff_co_counter), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
+                axs.plot(bins[0:mask_lower+1]+np.median(diff_co_counter), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
+                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+            if len(stats_lines['counter-counter']['time']) != 0:
+                line_color='C1'
+                line_color='k'
+                bins = np.arange((-1*np.median(diff_counter_counter))+0.01, 12.09, np.median(diff_counter_counter))
+            
+                # Create mask that is essentially the bins
+                digitized = np.digitize(np.array(stats_lines['counter-counter']['time']), bins=bins)
+                bins_count, _ = np.histogram(np.array(stats_lines['counter-counter']['time']), bins=bins)
+            
+                # Collect median (50%), and 1sigma around that (16% and 84%)
+                median_array = []
+                median_upper = []
+                median_lower = []
+                use_percentiles = 16        # 1 sigma
+                for bin_i in np.arange(1, len(bins_count)+1, 1):
+                    # extract values in current bin
+                    mask = digitized == bin_i
+                    current_time   = np.array(stats_lines['counter-counter']['time'])[mask]
+                    current_angles = np.array(stats_lines['counter-counter']['angles'])[mask]
+                                
+                    median_array.append(np.percentile(current_angles, 50))
+                    median_upper.append(np.percentile(current_angles, 100-use_percentiles))
+                    median_lower.append(np.percentile(current_angles, use_percentiles))
+            
+                #----------
+                # remove 'excess'
+                mask_median = np.where(np.array(median_array) < 150)[0][-1] + 1
+                mask_upper  = np.where(np.array(median_upper) < 150)[0][-1] + 1
+                mask_lower  = np.where(np.array(median_lower) < 150)[0][-1] + 1
+                
+                #----------
+                # plot
+                axs.plot(bins[0:mask_median+1]+np.median(diff_counter_counter), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
+                axs.plot(bins[0:mask_upper+1]+np.median(diff_counter_counter), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
+                axs.plot(bins[0:mask_lower+1]+np.median(diff_counter_counter), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
+                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+            if len(stats_lines['counter-co']['time']) != 0:
+                line_color='C3'
+                line_color='k'
+                bins = np.arange((-1*np.median(diff_counter_co))+0.01, 12.09, np.median(diff_counter_co))
+            
+                # Create mask that is essentially the bins
+                digitized = np.digitize(np.array(stats_lines['counter-co']['time']), bins=bins)
+                bins_count, _ = np.histogram(np.array(stats_lines['counter-co']['time']), bins=bins)
+            
+                # Collect median (50%), and 1sigma around that (16% and 84%)
+                median_array = []
+                median_upper = []
+                median_lower = []
+                use_percentiles = 16        # 1 sigma
+                for bin_i in np.arange(1, len(bins_count)+1, 1):
+                    # extract values in current bin
+                    mask = digitized == bin_i
+                    current_time   = np.array(stats_lines['counter-co']['time'])[mask]
+                    current_angles = np.array(stats_lines['counter-co']['angles'])[mask]
+                                
+                    median_array.append(np.percentile(current_angles, 50))
+                    median_upper.append(np.percentile(current_angles, 100-use_percentiles))
+                    median_lower.append(np.percentile(current_angles, use_percentiles))
+            
+                #----------
+                # remove 'excess'
+                mask_median = np.where(np.array(median_array) > 30)[0][-1] + 1
+                mask_upper  = np.where(np.array(median_upper) > 30)[0][-1] + 1
+                mask_lower  = np.where(np.array(median_lower) > 30)[0][-1] + 1
+                
+                #----------
+                # plot
+                axs.plot(bins[0:mask_median+1]+np.median(diff_counter_co), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
+                axs.plot(bins[0:mask_upper+1]+np.median(diff_counter_co), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
+                axs.plot(bins[0:mask_lower+1]+np.median(diff_counter_co), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
+                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+                     
+        #-----------
+        # Add threshold
+        axs.axhspan(0, misangle_threshold, alpha=0.25, ec=None, fc='grey')
+        axs.axhspan(180-misangle_threshold, 180, alpha=0.25, ec=None, fc='grey')
+        
+        
+        #-----------
+        ### Formatting
+        axs.set_ylim(0, 180)
+        axs.set_yticks(np.arange(0, 181, 30))
+        axs.set_ylabel('Misalignment angle')
+        axs.set_xlim(-0.5, bin_limit_ttorque)
+        axs.set_xticks(np.arange(0, bin_limit_ttorque+0.1, 1))
+        axs.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{torque}}$')
+        axs.minorticks_on()
+        axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
+        axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
+        
+        
+        #-----------
+        ### title
+        if plot_annotate:
+            axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
+            
+            
+        #-----------
+        ### Annotations
+        if (plot_type == 'time') or (plot_type == 'snap'):
+            axs.axvline(0, ls='-', lw=1, c='k')
+          
+        #-----------
+        ### Customise legend labels
+        if plot_merger_limit != None:
+            axs.scatter(scatter_x, scatter_y, c=scatter_c, cmap=merger_colormap, norm=merger_normalize, s=scatter_s, marker='s', edgecolors='grey', zorder=99)
+            
+            plt.scatter(-20, -160, c=0.1, s=50*(0.5**0.5), cmap=merger_colormap, norm=merger_normalize, marker='s', edgecolors='grey', label='$\mu_{\mathrm{gas}}$=0.1')
+            plt.scatter(-20, -150, c=0.3, s=50*(0.5**0.5), cmap=merger_colormap, norm=merger_normalize, marker='s', edgecolors='grey', label='$\mu_{\mathrm{gas}}$=0.3')
+            plt.scatter(-20, -140, c=1.0, s=50*(0.5**0.5), cmap=merger_colormap, norm=merger_normalize, marker='s', edgecolors='grey', label='$\mu_{\mathrm{gas}}$=1.0')
+            plt.scatter(-20, -160, c='w', s=50*(0.1**0.5), marker='s', edgecolors='grey', label='$\mu_{\mathrm{*}}$=0.1')
+            plt.scatter(-20, -150, c='w', s=50*(0.3**0.5), marker='s', edgecolors='grey', label='$\mu_{\mathrm{*}}$=0.3')
+            plt.scatter(-20, -140, c='w', s=50*(1.0**0.5), marker='s', edgecolors='grey', label='$\mu_{\mathrm{*}}$=1.0')
+            
+            legend1 = axs.legend(loc='upper right', frameon=False, labelspacing=0.1, handlelength=0)
+            axs.add_artist(legend1)
+        if plot_relaxation_type_stacked:
+            legend_elements = []
+            legend_labels = []
+            legend_colors = []
+            if 'co-co' in stacked_relaxation_type:
+                legend_labels.append('co → co')
+                legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+                legend_colors.append('C0')
+            if 'counter-counter' in stacked_relaxation_type:
+                legend_labels.append('counter → counter')
+                legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+                legend_colors.append('C1')
+            if 'co-counter' in stacked_relaxation_type:
+                legend_labels.append('     co → counter')
+                legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+                legend_colors.append('C2')
+            if 'counter-co' in stacked_relaxation_type:
+                legend_labels.append('counter → co')
+                legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+                legend_colors.append('C3')
+                
+            if plot_merger_limit != None:
+                loc = [0.62, 0.35]
+            else:
+                loc = 'upper right'
+            legend2 = axs.legend(handles=legend_elements, labels=legend_labels, loc=loc, handletextpad=5, frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
+            axs.add_artist(legend2)
+        
+        
+        #-----------
+        ### other
+        plt.tight_layout()
+        
+        #-----------
+        #### Savefig
+        # Average timescales
+        mean_co_co   = np.mean(np.array(summary_dict['ttorque']['co-co']))
+        median_co_co = np.median(np.array(summary_dict['ttorque']['co-co']))
+        std_co_co    = np.std(np.array(summary_dict['ttorque']['co-co']))
+        mean_co_counter   = np.mean(np.array(summary_dict['ttorque']['co-counter']))
+        median_co_counter = np.median(np.array(summary_dict['ttorque']['co-counter']))
+        std_co_counter    = np.std(np.array(summary_dict['ttorque']['co-counter']))
+        mean_counter_counter   = np.mean(np.array(summary_dict['ttorque']['counter-counter']))
+        median_counter_counter = np.median(np.array(summary_dict['ttorque']['counter-counter']))
+        std_counter_counter    = np.std(np.array(summary_dict['ttorque']['counter-counter']))
+        mean_counter_co   = np.mean(np.array(summary_dict['ttorque']['counter-co']))
+        median_counter_co = np.median(np.array(summary_dict['ttorque']['counter-co']))
+        std_counter_co    = np.std(np.array(summary_dict['ttorque']['counter-co']))
+        print('trelax/ttorque multiples:')
+        print('             all   co-co   co-counter   counter-counter   counter-co')
+        print('   Mean:    %.2f    %.2f      %.2f           %.2f            %.2f' %(mean_ttorque, (math.nan if len(summary_dict['ttorque']['co-co']) == 0 else mean_co_co), (math.nan if len(summary_dict['ttorque']['co-counter']) == 0 else mean_co_counter), (math.nan if len(summary_dict['ttorque']['counter-counter']) == 0 else mean_counter_counter), (math.nan if len(summary_dict['ttorque']['counter-co']) == 0 else mean_counter_co)))   
+        print('   Median:  %.2f    %.2f      %.2f           %.2f            %.2f' %(median_ttorque, (math.nan if len(summary_dict['ttorque']['co-co']) == 0 else median_co_co), (math.nan if len(summary_dict['ttorque']['co-counter']) == 0 else median_co_counter), (math.nan if len(summary_dict['ttorque']['counter-counter']) == 0 else median_counter_counter), (math.nan if len(summary_dict['ttorque']['counter-co']) == 0 else median_counter_co)))   
+        print('   std:     %.2f    %.2f      %.2f           %.2f            %.2f' %(std_ttorque, (math.nan if len(summary_dict['ttorque']['co-co']) == 0 else std_co_co), (math.nan if len(summary_dict['ttorque']['co-counter']) == 0 else std_co_counter), (math.nan if len(summary_dict['ttorque']['counter-counter']) == 0 else std_counter_counter), (math.nan if len(summary_dict['ttorque']['counter-co']) == 0 else std_counter_co)))
+        
+        metadata_plot = {'Title': '%s, %s\nThreshold: %s\nMin delta:%s\nLatency time: %s\nMin ratio: %s\nUSE MERGERS: %s\nMax closest merger: %s-%s\nTime extra: %s\nTime no misangle: %s\nStelmass: %s/%s\n kappa*: %s/%s\n outflow: %s/%s' %(abs_or_proj, use_angle, misangle_threshold, min_delta_angle, latency_time, min_stellar_ratio, use_merger_criteria, max_merger_pre, max_merger_post, time_extra, time_no_misangle, min_stelmass, max_stelmass, min_kappa_stars, max_kappa_stars, min_inflow, max_inflow),
+                         'Author': 'Min particles: %s\nMax CoM: %s\nMin inc: %s\nPlot ratio limit: %s\n\n# MISALIGNMENTS: %s\nco-co: %s\ncnt-cnt: %s\nco-cnt: %s\ncnt-co: %s\nETG-ETG: %s\nLTG-LTG: %s\nETG-LTG: %s\nLTG-ETG: %s\nMean: %.2f\nMedian: %.2f\nstd: %.2f' %(min_particles, max_com, min_inclination, plot_merger_limit, len(misalignment_tree.keys()), len(summary_dict['ID']['co-co']), len(summary_dict['ID']['counter-counter']), len(summary_dict['ID']['co-counter']), len(summary_dict['ID']['counter-co']), len(summary_dict['ID']['ETG-ETG']), len(summary_dict['ID']['LTG-LTG']), len(summary_dict['ID']['ETG-LTG']), len(summary_dict['ID']['LTG-ETG']), mean_ttorque, median_ttorque, std_ttorque)}
+                         
+        if savefig:
+            if savefig_txt == 'manual':
+                savefig_txt = input('\n  -> Enter savefig_txt:   ')
+            plt.savefig("%s/stacked_misalignments/ttorque_stacked_misalignments_%s_%s_%s.%s" %(fig_dir, plot_type, len(misalignment_tree.keys()), savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/stacked_misalignments/ttorque_stacked_misalignments_%s_%s_%s.%s" %(fig_dir, plot_type, len(misalignment_tree.keys()), savefig_txt, file_format)) 
+        if showfig:
+            plt.show()
+        plt.close()
+    if plot_stacked_ttorque_2x2:
+        # Graph initialising and base formatting
+        fig, ((ax_co_co, ax_co_counter), (ax_counter_counter, ax_counter_co)) = plt.subplots(2, 2, figsize=[2*10/3, 2*1.8], sharex=True, sharey=True)
+        plt.subplots_adjust(wspace=0.0, hspace=0.0)
+        
+        # Creating colormaps to mark mergers
+        merger_colormap = plt.get_cmap('Blues', 5)
+        merger_normalize = colors.Normalize(vmin=0, vmax=1)
+        timescale_colormap = plt.get_cmap('inferno')
+        timescale_normalize = colors.Normalize(vmin=0, vmax=6)
+        scalarMap = cm.ScalarMappable(norm=timescale_normalize, cmap=timescale_colormap)
+        
+        #-----------
+        ### Loop over all windows and plot them
+        ID_plot     = []
+        ID_collect  = []        # flexible array used to extract weird relaxations
+        diff_co_co           = []
+        diff_co_counter      = []
+        diff_counter_counter = []
+        diff_counter_co      = []
+        scatter_x = []
+        scatter_y = []
+        scatter_c = []
+        scatter_s = []
+        
+        stats_lines = {'co-co': {'time': [],
+                                 'angles': []},
+                       'co-counter': {'time': [],
+                                      'angles': []},
+                       'counter-counter': {'time': [],
+                                           'angles': []},
+                       'counter-co': {'time': [],
+                                      'angles': []}}
+        
+        for ID_i in misalignment_tree.keys():
+            
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] not in stacked_relaxation_type:
+                continue
+            
+            ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
+            timeaxis_plot = (-1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']]))/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+            
+            #-------------
+            # Plot stacked
+            line_color = 'k'
+            alpha = 0.2
+            if plot_relaxation_type_stacked:
+                alpha = 0.1
+                if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
+                    line_color='C0'
+                    append_angle = 10
+                    ax = ax_co_co
+                    diff_co_co.append(timeaxis_plot[1]-timeaxis_plot[0])
+                    
+                    # collect IDs of weird relaxations
+                    #if max(misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)]) > 135:
+                    #    ID_collect.append(ID_i)
+                        
+                elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
+                    line_color='C2'
+                    append_angle = 170
+                    ax = ax_co_counter
+                    diff_co_counter.append(timeaxis_plot[1]-timeaxis_plot[0])
+                elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
+                    line_color='C3'
+                    append_angle = 10
+                    ax = ax_counter_co
+                    diff_counter_co.append(timeaxis_plot[1]-timeaxis_plot[0])
+                elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
+                    line_color='C1'
+                    append_angle = 170
+                    ax = ax_counter_counter
+                    diff_counter_counter.append(timeaxis_plot[1]-timeaxis_plot[0])
+            
+            
+            #-------------
+            # append to stats and add extra values of relaxed state until end of bin_limit_trelax
+            timeaxis_stats = timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)]
+            angles_stats   = misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)]                   
+            # Add missing 120Mya time slots until end reached
+            while timeaxis_stats[-1] < bin_limit_tdyn:
+                timeaxis_stats = np.append(timeaxis_stats, timeaxis_stats[-1] + (timeaxis_stats[1]-timeaxis_stats[0]))
+                angles_stats   = np.append(angles_stats, append_angle)
+            stats_lines['%s' %misalignment_tree['%s' %ID_i]['relaxation_type']]['time'].extend(timeaxis_stats)
+            stats_lines['%s' %misalignment_tree['%s' %ID_i]['relaxation_type']]['angles'].extend(angles_stats)
+            
+            
+            #-------------
+            # pick out long relaxersß
+            if misalignment_tree['%s' %ID_i]['relaxation_ttorque'] > 10:
+                ID_collect.append(ID_i)
+                            
+            
+            #-------------
+            # format and plot line
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
+                alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2)**1.5)/10), 0.02)
+                c     = lighten_color(line_color, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2))**(-0.5)) 
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
+                alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2)**1.5)/10), 0.03)
+                c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2))**(-0.5)) 
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
+                alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2)**1.5)/2), 0.02)
+                c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2))**(-0.5)) 
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
+                alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2)**1.5)/3), 0.02)
+                c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2))**(-0.5))
+                
+                
+                
+                
+            ax.plot(timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], lw=0.3, c=c, alpha=alpha)       # c=scalarMap.to_rgba(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            
+            ### Annotate
+            if plot_GalaxyIDs:
+                ax.text(timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)][-1]+0.1, misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)][-1]+5, '%s' %misalignment_tree['%s' %ID_i]['GalaxyID'][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)][-1], fontsize=7)
+            
+            # Plot mergers (some may be missing if they are out of window)
+            if plot_merger_limit != None:
+                for time_i, angle_i, ratio_i, ratio_gas_i in zip(timeaxis_plot, misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i]['merger_ratio_stars'][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i]['merger_ratio_gas'][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)]):
+                    if len(ratio_i) > 0:
+                        if max(ratio_i) >= plot_merger_limit:
+                            scatter_x.append(time_i)
+                            scatter_y.append(angle_i)
+                            scatter_c.append(ratio_gas_i[np.argmax(np.array(ratio_i))])
+                            scatter_s.append(50*(ratio_i[np.argmax(np.array(ratio_i))])**0.5)
+        
+        print('-------------------------------------------------------------')
+        #print('  List of IDs with co-co relax but max(angle) > 135:  ', len(ID_collect))
+        print('  List of >10 trelax/ttorque ', len(ID_collect))
+        print(ID_collect)
+        
+        #--------------
+        # Find mean/median and 1 sigma behaviour for each relaxation type
+        if stacked_median:
+            if len(stats_lines['co-co']['time']) != 0:
+                line_color='C0'
+                line_color='k'
+                bins = np.arange((-1*np.median(diff_co_co))+0.01, 12.09, np.median(diff_co_co))
+            
+                # Create mask that is essentially the bins
+                digitized = np.digitize(np.array(stats_lines['co-co']['time']), bins=bins)
+                bins_count, _ = np.histogram(np.array(stats_lines['co-co']['time']), bins=bins)
+                
+                
+                # Collect median (50%), and 1sigma around that (16% and 84%)
+                median_array = []
+                median_upper = []
+                median_lower = []
+                use_percentiles = 16        # 1 sigma
+                for bin_i in np.arange(1, len(bins_count)+1, 1):
+                    # extract values in current bin
+                    mask = digitized == bin_i
+                    current_time   = np.array(stats_lines['co-co']['time'])[mask]
+                    current_angles = np.array(stats_lines['co-co']['angles'])[mask]
+                                
+                    median_array.append(np.percentile(current_angles, 50))
+                    median_upper.append(np.percentile(current_angles, 100-use_percentiles))
+                    median_lower.append(np.percentile(current_angles, use_percentiles))
+                
+                #----------
+                # remove 'excess'
+                mask_median = np.where(np.array(median_array) > 30)[0][-1] + 1
+                mask_upper  = np.where(np.array(median_upper) > 30)[0][-1] + 1
+                mask_lower  = np.where(np.array(median_lower) > 30)[0][-1] + 1
+                
+                #----------
+                # plot
+                ax_co_co.plot(bins[0:mask_median+1]+np.median(diff_co_co), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
+                ax_co_co.plot(bins[0:mask_upper+1]+np.median(diff_co_co), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
+                ax_co_co.plot(bins[0:mask_lower+1]+np.median(diff_co_co), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
+                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+            if len(stats_lines['co-counter']['time']) != 0:
+                line_color='C2'
+                line_color='k'
+                bins = np.arange((-1*np.median(diff_co_counter))+0.01, 12.09, np.median(diff_co_counter))
+            
+                # Create mask that is essentially the bins
+                digitized = np.digitize(np.array(stats_lines['co-counter']['time']), bins=bins)
+                bins_count, _ = np.histogram(np.array(stats_lines['co-counter']['time']), bins=bins)
+            
+                # Collect median (50%), and 1sigma around that (16% and 84%)
+                median_array = []
+                median_upper = []
+                median_lower = []
+                use_percentiles = 16        # 1 sigma
+                for bin_i in np.arange(1, len(bins_count)+1, 1):
+                    # extract values in current bin
+                    mask = digitized == bin_i
+                    current_time   = np.array(stats_lines['co-counter']['time'])[mask]
+                    current_angles = np.array(stats_lines['co-counter']['angles'])[mask]
+                                
+                    median_array.append(np.percentile(current_angles, 50))
+                    median_upper.append(np.percentile(current_angles, 100-use_percentiles))
+                    median_lower.append(np.percentile(current_angles, use_percentiles))
+            
+                #----------
+                # remove 'excess'
+                mask_median = np.where(np.array(median_array) < 150)[0][-1] + 1
+                mask_upper  = np.where(np.array(median_upper) < 150)[0][-1] + 1
+                mask_lower  = np.where(np.array(median_lower) < 150)[0][-1] + 1
+                
+                #----------
+                # plot
+                ax_co_counter.plot(bins[0:mask_median+1]+np.median(diff_co_counter), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
+                ax_co_counter.plot(bins[0:mask_upper+1]+np.median(diff_co_counter), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
+                ax_co_counter.plot(bins[0:mask_lower+1]+np.median(diff_co_counter), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
+                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+            if len(stats_lines['counter-counter']['time']) != 0:
+                line_color='C1'
+                line_color='k'
+                bins = np.arange((-1*np.median(diff_counter_counter))+0.01, 12.09, np.median(diff_counter_counter))
+            
+                # Create mask that is essentially the bins
+                digitized = np.digitize(np.array(stats_lines['counter-counter']['time']), bins=bins)
+                bins_count, _ = np.histogram(np.array(stats_lines['counter-counter']['time']), bins=bins)
+            
+                # Collect median (50%), and 1sigma around that (16% and 84%)
+                median_array = []
+                median_upper = []
+                median_lower = []
+                use_percentiles = 16        # 1 sigma
+                for bin_i in np.arange(1, len(bins_count)+1, 1):
+                    # extract values in current bin
+                    mask = digitized == bin_i
+                    current_time   = np.array(stats_lines['counter-counter']['time'])[mask]
+                    current_angles = np.array(stats_lines['counter-counter']['angles'])[mask]
+                                
+                    median_array.append(np.percentile(current_angles, 50))
+                    median_upper.append(np.percentile(current_angles, 100-use_percentiles))
+                    median_lower.append(np.percentile(current_angles, use_percentiles))
+            
+                #----------
+                # remove 'excess'
+                mask_median = np.where(np.array(median_array) < 150)[0][-1] + 1
+                mask_upper  = np.where(np.array(median_upper) < 150)[0][-1] + 1
+                mask_lower  = np.where(np.array(median_lower) < 150)[0][-1] + 1
+                
+                #----------
+                # plot
+                ax_counter_counter.plot(bins[0:mask_median+1]+np.median(diff_counter_counter), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
+                ax_counter_counter.plot(bins[0:mask_upper+1]+np.median(diff_counter_counter), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
+                ax_counter_counter.plot(bins[0:mask_lower+1]+np.median(diff_counter_counter), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
+                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+            if len(stats_lines['counter-co']['time']) != 0:
+                line_color='C3'
+                line_color='k'
+                bins = np.arange((-1*np.median(diff_counter_co))+0.01, 12.09, np.median(diff_counter_co))
+            
+                # Create mask that is essentially the bins
+                digitized = np.digitize(np.array(stats_lines['counter-co']['time']), bins=bins)
+                bins_count, _ = np.histogram(np.array(stats_lines['counter-co']['time']), bins=bins)
+            
+                # Collect median (50%), and 1sigma around that (16% and 84%)
+                median_array = []
+                median_upper = []
+                median_lower = []
+                use_percentiles = 16        # 1 sigma
+                for bin_i in np.arange(1, len(bins_count)+1, 1):
+                    # extract values in current bin
+                    mask = digitized == bin_i
+                    current_time   = np.array(stats_lines['counter-co']['time'])[mask]
+                    current_angles = np.array(stats_lines['counter-co']['angles'])[mask]
+                                
+                    median_array.append(np.percentile(current_angles, 50))
+                    median_upper.append(np.percentile(current_angles, 100-use_percentiles))
+                    median_lower.append(np.percentile(current_angles, use_percentiles))
+            
+                #----------
+                # remove 'excess'
+                mask_median = np.where(np.array(median_array) > 30)[0][-1] + 1
+                mask_upper  = np.where(np.array(median_upper) > 30)[0][-1] + 1
+                mask_lower  = np.where(np.array(median_lower) > 30)[0][-1] + 1
+                
+                #----------
+                # plot
+                ax_counter_co.plot(bins[0:mask_median+1]+np.median(diff_counter_co), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
+                ax_counter_co.plot(bins[0:mask_upper+1]+np.median(diff_counter_co), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
+                ax_counter_co.plot(bins[0:mask_lower+1]+np.median(diff_counter_co), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
+                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+                
+        #-----------
+        # Add threshold
+        for ax in [ax_co_co, ax_co_counter, ax_counter_counter, ax_counter_co]:
+            ax.axhspan(0, misangle_threshold, alpha=0.25, ec=None, fc='grey')
+            ax.axhspan(180-misangle_threshold, 180, alpha=0.25, ec=None, fc='grey')
+        
+        
+        #-----------
+        ### Formatting
+        ax_co_co.set_ylim(0, 180)
+        ax_co_co.set_yticks(np.arange(0, 181, 30))
+        ax_co_co.set_ylabel('Misalignment angle')
+        ax_counter_counter.set_ylabel('Misalignment angle')
+        #ax_counter_counter.get_yaxis().set_label_coords(-0.12,1)
+        ax_counter_counter.set_xlim(-0.5, bin_limit_ttorque)
+        ax_counter_counter.set_xticks(np.arange(0, bin_limit_ttorque+0.1, 2))
+        ax_counter_counter.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{torque}}$')
+        ax_counter_co.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{torque}}$')
+        #ax_counter_counter.get_xaxis().set_label_coords(1,-0.12)
+        for ax in [ax_co_co, ax_co_counter, ax_counter_counter, ax_counter_co]:
+            ax.minorticks_on()
+            ax.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
+            ax.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
+        
+        
+        #-----------
+        ### Annotations
+        for ax in [ax_co_co, ax_co_counter, ax_counter_counter, ax_counter_co]:
+            if (plot_type == 'time') or (plot_type == 'snap'):
+                ax.axvline(0, ls='-', lw=1, c='grey', alpha=1)
+        
+        #-----------
+        ### title
+        if plot_annotate:
+            ax_co_co.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
+          
+        #-----------
+        ### Customise legend labels
+        if plot_merger_limit != None:
+            axs.scatter(scatter_x, scatter_y, c=scatter_c, cmap=merger_colormap, norm=merger_normalize, s=scatter_s, marker='s', edgecolors='grey', zorder=99)
+            
+            plt.scatter(-20, -160, c=0.1, s=50*(0.5**0.5), cmap=merger_colormap, norm=merger_normalize, marker='s', edgecolors='grey', label='$\mu_{\mathrm{gas}}$=0.1')
+            plt.scatter(-20, -150, c=0.3, s=50*(0.5**0.5), cmap=merger_colormap, norm=merger_normalize, marker='s', edgecolors='grey', label='$\mu_{\mathrm{gas}}$=0.3')
+            plt.scatter(-20, -140, c=1.0, s=50*(0.5**0.5), cmap=merger_colormap, norm=merger_normalize, marker='s', edgecolors='grey', label='$\mu_{\mathrm{gas}}$=1.0')
+            plt.scatter(-20, -160, c='w', s=50*(0.1**0.5), marker='s', edgecolors='grey', label='$\mu_{\mathrm{*}}$=0.1')
+            plt.scatter(-20, -150, c='w', s=50*(0.3**0.5), marker='s', edgecolors='grey', label='$\mu_{\mathrm{*}}$=0.3')
+            plt.scatter(-20, -140, c='w', s=50*(1.0**0.5), marker='s', edgecolors='grey', label='$\mu_{\mathrm{*}}$=1.0')
+            
+            legend1 = axs.legend(loc='upper right', frameon=False, labelspacing=0.1, handlelength=0)
+            axs.add_artist(legend1)
+        if plot_relaxation_type_stacked:
+            if plot_merger_limit != None:
+                loc = [0.62, 0.35]
+            else:
+                loc = 'upper right'
+                
+            if 'co-co' in stacked_relaxation_type:
+                legend_labels = ['co → co']
+                legend_elements = [Line2D([0], [0], marker=' ', color='w')]
+                legend_colors = ['C0']
+                legend2 = ax_co_co.legend(handles=legend_elements, labels=legend_labels, loc=loc, handletextpad=5, frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
+                ax_co_co.add_artist(legend2)
+            if 'counter-counter' in stacked_relaxation_type:
+                legend_labels = ['counter → counter']
+                legend_elements = [Line2D([0], [0], marker=' ', color='w')]
+                legend_colors = ['C1']
+                legend2 = ax_counter_counter.legend(handles=legend_elements, labels=legend_labels, loc=loc, handletextpad=5, frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
+                ax_counter_counter.add_artist(legend2)
+            if 'co-counter' in stacked_relaxation_type:
+                legend_labels = ['     co → counter']
+                legend_elements = [Line2D([0], [0], marker=' ', color='w')]
+                legend_colors = ['C2']
+                legend2 = ax_co_counter.legend(handles=legend_elements, labels=legend_labels, loc=loc, handletextpad=5, frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
+                ax_co_counter.add_artist(legend2)
+            if 'counter-co' in stacked_relaxation_type:
+                legend_labels = ['counter → co']
+                legend_elements = [Line2D([0], [0], marker=' ', color='w')]
+                legend_colors = ['C3']
+                legend2 = ax_counter_co.legend(handles=legend_elements, labels=legend_labels, loc=loc, handletextpad=5, frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
+                ax_counter_co.add_artist(legend2)
+                
+            
+        #-----------
+        ### other
+        plt.tight_layout()
+        
+        #-----------
+        #### Savefig
+        # Average timescales
+        mean_co_co   = np.mean(np.array(summary_dict['ttorque']['co-co']))
+        median_co_co = np.median(np.array(summary_dict['ttorque']['co-co']))
+        std_co_co    = np.std(np.array(summary_dict['ttorque']['co-co']))
+        mean_co_counter   = np.mean(np.array(summary_dict['ttorque']['co-counter']))
+        median_co_counter = np.median(np.array(summary_dict['ttorque']['co-counter']))
+        std_co_counter    = np.std(np.array(summary_dict['ttorque']['co-counter']))
+        mean_counter_counter   = np.mean(np.array(summary_dict['ttorque']['counter-counter']))
+        median_counter_counter = np.median(np.array(summary_dict['ttorque']['counter-counter']))
+        std_counter_counter    = np.std(np.array(summary_dict['ttorque']['counter-counter']))
+        mean_counter_co   = np.mean(np.array(summary_dict['ttorque']['counter-co']))
+        median_counter_co = np.median(np.array(summary_dict['ttorque']['counter-co']))
+        std_counter_co    = np.std(np.array(summary_dict['ttorque']['counter-co']))
+        print('trelax/ttorque multiples:')
+        print('             all   co-co   co-counter   counter-counter   counter-co')
+        print('   Mean:    %.2f    %.2f      %.2f           %.2f            %.2f' %(mean_ttorque, (math.nan if len(summary_dict['ttorque']['co-co']) == 0 else mean_co_co), (math.nan if len(summary_dict['ttorque']['co-counter']) == 0 else mean_co_counter), (math.nan if len(summary_dict['ttorque']['counter-counter']) == 0 else mean_counter_counter), (math.nan if len(summary_dict['ttorque']['counter-co']) == 0 else mean_counter_co)))   
+        print('   Median:  %.2f    %.2f      %.2f           %.2f            %.2f' %(median_ttorque, (math.nan if len(summary_dict['ttorque']['co-co']) == 0 else median_co_co), (math.nan if len(summary_dict['ttorque']['co-counter']) == 0 else median_co_counter), (math.nan if len(summary_dict['ttorque']['counter-counter']) == 0 else median_counter_counter), (math.nan if len(summary_dict['ttorque']['counter-co']) == 0 else median_counter_co)))   
+        print('   std:     %.2f    %.2f      %.2f           %.2f            %.2f' %(std_ttorque, (math.nan if len(summary_dict['ttorque']['co-co']) == 0 else std_co_co), (math.nan if len(summary_dict['ttorque']['co-counter']) == 0 else std_co_counter), (math.nan if len(summary_dict['ttorque']['counter-counter']) == 0 else std_counter_counter), (math.nan if len(summary_dict['ttorque']['counter-co']) == 0 else std_counter_co)))
+        
+        metadata_plot = {'Title': '%s, %s\nThreshold: %s\nMin delta:%s\nLatency time: %s\nMin ratio: %s\nUSE MERGERS: %s\nMax closest merger: %s-%s\nTime extra: %s\nTime no misangle: %s\nStelmass: %s/%s\n kappa*: %s/%s\n outflow: %s/%s' %(abs_or_proj, use_angle, misangle_threshold, min_delta_angle, latency_time, min_stellar_ratio, use_merger_criteria, max_merger_pre, max_merger_post, time_extra, time_no_misangle, min_stelmass, max_stelmass, min_kappa_stars, max_kappa_stars, min_inflow, max_inflow),
+                         'Author': 'Min particles: %s\nMax CoM: %s\nMin inc: %s\nPlot ratio limit: %s\n\n# MISALIGNMENTS: %s\nco-co: %s\ncnt-cnt: %s\nco-cnt: %s\ncnt-co: %s\nETG-ETG: %s\nLTG-LTG: %s\nETG-LTG: %s\nLTG-ETG: %s\nMean: %.2f\nMedian: %.2f\nstd: %.2f' %(min_particles, max_com, min_inclination, plot_merger_limit, len(misalignment_tree.keys()), len(summary_dict['ID']['co-co']), len(summary_dict['ID']['counter-counter']), len(summary_dict['ID']['co-counter']), len(summary_dict['ID']['counter-co']), len(summary_dict['ID']['ETG-ETG']), len(summary_dict['ID']['LTG-LTG']), len(summary_dict['ID']['ETG-LTG']), len(summary_dict['ID']['LTG-ETG']), mean_ttorque, median_ttorque, std_ttorque)}
+                         
+        if savefig:
+            if savefig_txt == 'manual':
+                savefig_txt = input('\n  -> Enter savefig_txt:   ')
+            plt.savefig("%s/stacked_misalignments/ttorque_2x2_stacked_misalignments_%s_%s_%s.%s" %(fig_dir, plot_type, len(misalignment_tree.keys()), savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/stacked_misalignments/ttorque_2x2_stacked_misalignments_%s_%s_%s.%s" %(fig_dir, plot_type, len(misalignment_tree.keys()), savefig_txt, file_format)) 
         if showfig:
             plt.show()
         plt.close()
     
     
     
+    
+    #populate presentation
+    #box and whisker - format, populate
+    # tdyn, ttorque - format, populate
+    # mergers
+    # main tweaks
     
     
     
@@ -4543,6 +6638,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         elif 'ETG-ETG' in whisker_morphs:   
             order = ['ETG-ETG', 'LTG-LTG']
         sns.violinplot(data=df, y='Relaxation time', x='Morphology', hue='Relaxation type', scale='width', order=order, hue_order=['co-co', 'counter-counter', 'co-counter', 'counter-co'])
+        
+        #-----------
+        ### title
+        if plot_annotate:
+            axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
         
         #-------------
         ### Formatting
@@ -5192,7 +7292,12 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 axs.set_ylim(0, 4)
                 axs.set_ylabel('Relaxation time (Gyr)')
             
-
+        
+        #-----------
+        ### title
+        if plot_annotate:
+            axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
+            
         #-----------
         ### other
         axs.minorticks_on()
@@ -5285,6 +7390,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         if plot_GalaxyIDs:
             for ID_plot_i, x_i, y_i in zip(ID_plot, angles_plot, relaxationtime_plot):
                 axs.text(x_i+5, y_i+0.1, '%s' %ID_plot_i, fontsize=7)
+                
+        #-----------
+        ### title
+        if plot_annotate:
+            axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
         
         #-----------
         ### other
@@ -5359,6 +7469,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         #if plot_GalaxyIDs:
         #    for ID_plot_i, x_i, y_i in zip(ID_plot, angles_plot, relaxationtime_plot):
         #        axs.text(x_i+5, y_i+0.1, '%s' %ID_plot_i, fontsize=7)
+        
+        #-----------
+        ### title
+        if plot_annotate:
+            axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
         
         #-----------
         ### other

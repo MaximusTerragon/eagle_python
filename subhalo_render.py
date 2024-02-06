@@ -13,6 +13,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.patches import Circle
 from matplotlib.ticker import PercentFormatter
 from matplotlib.lines import Line2D
+from plotbin.sauron_colormap import register_sauron_colormap
 import astropy.units as u
 import csv
 import json
@@ -23,6 +24,7 @@ from subhalo_main import Initial_Sample, Subhalo_Extract, Subhalo_Analysis, Conv
 import eagleSqlTools as sql
 from graphformat import set_rc_params
 from read_dataset_directories import _assign_directories
+
 
 
 #====================================
@@ -54,7 +56,7 @@ ID_list = [3748, 20455, 37445, 30494, 43163, 40124, 44545, 48383, 57647, 55343, 
 def galaxy_render(csv_sample = False,              # False, Whether to read in existing list of galaxies  
                     #--------------------------
                     mySims = [('RefL0012N0188', 12)],
-                    GalaxyID_List = [37445],
+                    GalaxyID_List = [30495],
                     #--------------------------
                     # Galaxy extraction properties
                     kappa_rad            = 30,          # calculate kappa for this radius [pkpc]
@@ -63,7 +65,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                     # Visualisation properties
                     boxradius           = 30,                           # size of box of render [kpc], 'rad', 'tworad'
                     particles           = 5000,                         # number of random particles to plot
-                    viewing_axis        = 'z',                          # Which axis to view galaxy from.  DEFAULT 'z'
+                    viewing_axis        = 'x',                          # Which axis to view galaxy from.  DEFAULT 'z'
                     aperture_rad        = 30,                           # calculations radius limit [pkpc]
                     trim_rad            = np.array([30]),           # largest radius in pkpc to plot | 2.0_hmr, rad_projected=True
                     align_rad           = False,                          # 2hmr, 1hmr, False/Value
@@ -245,10 +247,6 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         galaxy = Subhalo_Extract(mySims, dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, Centre_i, HaloMass, aperture_rad, viewing_axis, MorphoKinem, mask_sgn = mask_sgn)
         GroupNum = galaxy.gn
         
-        for i, j in zip(galaxy.data_nil['bh']['Mass'], galaxy.data_nil['bh']['BH_Mass']):
-            print(i, j)
-        
-        
         # Gives: galaxy.stars, galaxy.gas, galaxy.dm, galaxy.bh
         # Gives: subhalo.general: GroupNum, SubGroupNum, GalaxyID, stelmass, gasmass, gasmass_sf, gasmass_nsf
         """mask_sf        = np.nonzero(galaxy.data_nil['gas']['StarFormationRate'])          
@@ -312,14 +310,16 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         # Set align_rad
         if align_rad == '1hmr':
             if rad_projected:
-                align_rad = 1*galaxy.halfmass_rad_proj
+                align_rad_in = 1*galaxy.halfmass_rad_proj
             else:
-                align_rad = 1*galaxy.halfmass_rad
+                align_rad_in = 1*galaxy.halfmass_rad
         elif align_rad == '2hmr':
             if rad_projected:
-                align_rad = 2*galaxy.halfmass_rad_proj
+                align_rad_in = 2*galaxy.halfmass_rad_proj
             else:
-                align_rad = 2*galaxy.halfmass_rad
+                align_rad_in = 2*galaxy.halfmass_rad
+        else:
+            align_rad_in = align_rad      
         
         # If we want the original values, enter 0 for viewing angle
         subhalo = Subhalo_Analysis(mySims, GroupNum, SubGroupNum, GalaxyID, SnapNum, galaxy.MorphoKinem, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.data_nil, 
@@ -327,7 +327,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                                             aperture_rad,
                                             kappa_rad, 
                                             trim_rad, 
-                                            align_rad,              #align_rad = False
+                                            align_rad_in,              #align_rad = False
                                             orientate_to_axis,
                                             viewing_angle,
                                             
@@ -340,10 +340,15 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                                             com_min_distance,
                                             min_particles,                                            
                                             min_inclination)
+                                            
                 
         if print_galaxy:
             print('|Combined particle properties within %s pkpc:' %aperture_rad)
             print('|%s| |ID:   %s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f  %.2f  %.2f' %(SnapNum, str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad, subhalo.general['kappa_stars'], subhalo.general['kappa_gas'], subhalo.general['kappa_gas_sf'])) 
+        
+        print('REGULAR RENDER:')
+        print('1hmr stars spin aaa: ', subhalo.halfmass_rad)
+        print(subhalo.spins['stars'])
         
         
         # RELAXATION TIMES 
@@ -416,7 +421,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
 
             plt.rc('figure', figsize=(width, height))  # figure size [inches]
         graphformat(8, 11, 11, 11, 11, 5, 5)
-        fig = plt.figure() 
+        fig = plt.figure(figsize=(8,8)) 
         if (answer == '2') or (answer == '3'):
             ax = Axes3D(fig, box_aspect=[1,1,1])
         else:
@@ -466,6 +471,10 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                         
                     else:
                         ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=0.02, alpha=0.9, c=color, zorder=4)
+                        
+                        
+                        
+                        
                 else:
                     ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=0.02, alpha=0.9, c=color, zorder=4)
            
@@ -484,7 +493,12 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
             mask = np.where(dict_name['hmr'] == rad)
                     
             arrow = dict_name[part_type][int(min(mask))]
-            point = subhalo.coms['adjust'][int(min(mask))]
+            
+            # if we are trimming to say, 1hmr... we dont need to adjust position
+            if str(rad)+'_hmr' == trim_rad[0]:
+                point = [0,0,0]
+            else:
+                point = subhalo.coms['adjust'][int(min(mask))]
         
             # Plot original stars spin vector
             ax.quiver(point[0], point[1], point[2], arrow[0]*boxradius*0.6, arrow[1]*boxradius*0.6, arrow[2]*boxradius*0.6, color=color, alpha=1, linewidth=1, zorder=50)
@@ -857,25 +871,31 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
 
 
 #====================================
+# counter-rotators
+ID_list = [95543294, 92357662, 89446165, 85281325, 82927744, 76110618, 58413057, 55795862, 55498617, 45564872, 40532736, 37720510, 37183699, 271611, 24492215, 21659331, 157786415, 153276029, 148038083, 144498089, 141671882, 14111024, 138496085, 1361557, 135310460, 135143499, 128867308, 113008138, 105237562, 104152191]
+ID_list = [37445]
 # Will color particles based on line of sight velocity 
 # SAVED:%s/individual_render/
 def galaxy_map(csv_sample = False,              # False, Whether to read in existing list of galaxies  
                     #--------------------------
                     mySims = [('RefL0012N0188', 12)],
-                    GalaxyID_List = [37445],
+                    GalaxyID_List = np.arange(251899973, 251900039+1, 1),
                     #--------------------------
                     # Galaxy extraction properties
                     kappa_rad            = 30,          # calculate kappa for this radius [pkpc]
                     viewing_angle        = 0,           # Keep as 0
                     #--------------------------
+                    cmap                 = 'sauron',      # 'sauron' or 'coolwarm'
+                    vmin_vmax            = 200,              # 80 for better visual, 300 normally
+                    #--------------------------
                     # Visualisation properties
-                    boxradius           = 15,                           # size of box of render [kpc], 'rad', 'tworad'
+                    boxradius           = 30,                           # size of box of render [kpc], 'rad', 'tworad'
                     particles           = 100000,                         # number of random particles to plot
-                    viewing_axis        = 'z',                          # Which axis to view galaxy from.  DEFAULT 'z'
                     aperture_rad        = 30,                           # calculations radius limit [pkpc]
-                    trim_rad            = np.array(['1.0_hmr']),           # largest radius in pkpc to plot | 2.0_hmr, rad_projected=True
-                    align_rad           = False,                          # 2hmr, 1hmr, False/Value
-                    mask_sgn            = True,                        # False = plot all nearby subhalos too
+                    trim_rad            = np.array([30]),           # largest radius in pkpc to plot | 2.0_hmr, rad_projected=True
+                    align_rad           = '1hmr',                          # 2hmr, 1hmr, False/Value
+                    mask_sgn            = False,                        # False = plot all nearby subhalos too
+                    viewing_axis        = 'x',                          # Which axis to view galaxy from.  DEFAULT 'z'
                     #=====================================================
                     # Misalignments we want extracted and at which radii  
                     angle_selection     = ['stars_gas',                     # stars_gas     stars_gas_sf    stars_gas_nsf
@@ -898,10 +918,10 @@ def galaxy_map(csv_sample = False,              # False, Whether to read in exis
                     gas_sf              = False,
                     gas_nsf             = False,    
                     dark_matter         = False,
-                    black_holes         = True,
+                    black_holes         = False,
                     #=====================================================
-                    showfig       = False,
-                    savefig       = True,
+                    showfig       = True,
+                    savefig       = False,
                       savefig_txt = '',                # added txt to append to end of savefile
                       file_format = 'pdf',
                     #--------------------------
@@ -912,6 +932,7 @@ def galaxy_map(csv_sample = False,              # False, Whether to read in exis
 
     #=========================================
     # Properties that don't change
+    register_sauron_colormap()
     spin_vector_rad      = spin_hmr[0]
     min_inclination      = 0           # Minimum inclination toward viewing axis [deg] DEFAULT 0
     find_uncertainties   = False       # whether to find 2D and 3D uncertainties
@@ -1090,14 +1111,16 @@ def galaxy_map(csv_sample = False,              # False, Whether to read in exis
         # Set align_rad
         if align_rad == '1hmr':
             if rad_projected:
-                align_rad = 1*galaxy.halfmass_rad_proj
+                align_rad_in = 1*galaxy.halfmass_rad_proj
             else:
-                align_rad = 1*galaxy.halfmass_rad
+                align_rad_in = 1*galaxy.halfmass_rad
         elif align_rad == '2hmr':
             if rad_projected:
-                align_rad = 2*galaxy.halfmass_rad_proj
+                align_rad_in = 2*galaxy.halfmass_rad_proj
             else:
-                align_rad = 2*galaxy.halfmass_rad
+                align_rad_in = 2*galaxy.halfmass_rad
+        else:
+            align_rad_in = align_rad
         
         # If we want the original values, enter 0 for viewing angle
         subhalo = Subhalo_Analysis(mySims, GroupNum, SubGroupNum, GalaxyID, SnapNum, galaxy.MorphoKinem, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.data_nil, 
@@ -1105,7 +1128,7 @@ def galaxy_map(csv_sample = False,              # False, Whether to read in exis
                                             aperture_rad,
                                             kappa_rad, 
                                             trim_rad, 
-                                            align_rad,              #align_rad = False
+                                            align_rad_in,              #align_rad = False
                                             orientate_to_axis,
                                             viewing_angle,
                                             
@@ -1121,10 +1144,10 @@ def galaxy_map(csv_sample = False,              # False, Whether to read in exis
                 
         if print_galaxy:
             print('|Combined particle properties within %s pkpc:' %aperture_rad)
-            print('|%s| |ID:   %s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f  %.2f  %.2f' %(SnapNum, str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad, subhalo.general['kappa_stars'], subhalo.general['kappa_gas'], subhalo.general['kappa_gas_sf'])) 
+            print('|%s| |ID:   %s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA (*/g/gsf):  %.2f  %.2f  %.2f' %(SnapNum, str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad, subhalo.general['kappa_stars'], subhalo.general['kappa_gas'], subhalo.general['kappa_gas_sf'])) 
         
         
-
+        print(subhalo.mis_angles['stars_gas_sf_angle'])
         
         #===========================================
         # Graph initialising and base formatting
@@ -1148,7 +1171,7 @@ def galaxy_map(csv_sample = False,              # False, Whether to read in exis
 
             plt.rc('figure', figsize=(width, height))  # figure size [inches]
         graphformat(8, 11, 11, 11, 11, 5, 5)
-        fig = plt.figure() 
+        fig = plt.figure(figsize=(10,10)) 
         if (answer == '2') or (answer == '3'):
             ax = Axes3D(fig, box_aspect=[1,1,1])
         else:
@@ -1179,11 +1202,14 @@ def galaxy_map(csv_sample = False,              # False, Whether to read in exis
                 vels   = dict_name[part_type]['Velocity'][np.random.choice(dict_name[part_type]['Coordinates'].shape[0], particles, replace=False), :]
             
             # Plot scatter
-            colormap = plt.cm.bwr
-            if part_type == 'stars':
-                norm = colors.Normalize(vmin=-100, vmax=100)
+            if cmap == 'coolwarm':
+                colormap = plt.cm.bwr
             else:
-                norm = colors.Normalize(vmin=-100, vmax=100)
+                colormap = 'sauron'
+            if part_type == 'stars':
+                norm = colors.Normalize(vmin=-vmin_vmax, vmax=vmin_vmax)
+            else:
+                norm = colors.Normalize(vmin=-vmin_vmax, vmax=vmin_vmax)
             if part_type == 'bh':
                 bh_size = dict_name[part_type]['Mass']
                 ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=(bh_size/8e5)**(1/3), alpha=1, c='blueviolet', zorder=4)
@@ -1199,8 +1225,8 @@ def galaxy_map(csv_sample = False,              # False, Whether to read in exis
                     alpha = 0.25
                 else:
                     alpha = 0.5
-                ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=1, alpha=alpha, c=vels_axis, zorder=4, cmap=colormap, norm=norm)
-          
+                ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=0.5, alpha=alpha, c=vels_axis, zorder=4, cmap=colormap, norm=norm)
+                 
         def plot_spin_vector(dict_name, part_type, rad, color, debug=False):
             # Plot formatting
             ax.set_facecolor('xkcd:black')
@@ -1216,11 +1242,16 @@ def galaxy_map(csv_sample = False,              # False, Whether to read in exis
             mask = np.where(dict_name['hmr'] == rad)
                     
             arrow = dict_name[part_type][int(min(mask))]
-            point = subhalo.coms['adjust'][int(min(mask))]
+            
+            # if we are trimming to say, 1hmr... we dont need to adjust position
+            if str(rad)+'_hmr' == trim_rad[0]:
+                point = [0,0,0]
+            else:
+                point = subhalo.coms['adjust'][int(min(mask))]
         
             # Plot original stars spin vector
-            ax.quiver(point[0], point[1], point[2], arrow[0]*boxradius*1, arrow[1]*boxradius*1, arrow[2]*boxradius*1, color=color, alpha=1, linewidth=2, zorder=50)
-
+            ax.quiver(point[0], point[1], point[2], arrow[0]*boxradius*0.4, arrow[1]*boxradius*0.4, arrow[2]*boxradius*0.4, color=color, alpha=1, linewidth=1, zorder=50)
+            
         def plot_coms(dict_name, part_type, rad, color, debug=False):
             # Plot formatting
             ax.set_facecolor('xkcd:black')
@@ -1246,7 +1277,7 @@ def galaxy_map(csv_sample = False,              # False, Whether to read in exis
                 # Plot COM
                 ax.scatter(com[0], com[1], com[2], color=color, alpha=1, s=3, zorder=10)
                 
-            
+        
         #--------------------------------------------
         # Buttons 
         class Index:
@@ -1562,9 +1593,13 @@ def galaxy_map(csv_sample = False,              # False, Whether to read in exis
 
 
 #--------------      
-galaxy_render()
+#galaxy_render()
 
 
-#galaxy_map(stars=True)
-#galaxy_map(gas_sf=True)
+galaxy_map(stars=True, gas_sf=False, mask_sgn=True)
+galaxy_map(stars=False, gas_sf=True, mask_sgn=False)
+
+### for counter rotators:
+#galaxy_map(stars=True, showfig= True, savefig= False, align_rad=False, mask_sgn=True, trim_rad=np.array(['1.0_hmr']), viewing_axis = 'z', savefig_txt = '_febTEST', showfig=False, savefig=True)
+#galaxy_map(gas_sf=True, showfig= True, savefig= False, align_rad=False, mask_sgn=True, trim_rad=np.array(['1.0_hmr']), viewing_axis = 'z',  savefig_txt = '_febTEST', showfig=False, savefig=True)
 #--------------

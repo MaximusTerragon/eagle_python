@@ -318,6 +318,9 @@ class Initial_Sample_Snip:
         
 
 #================================
+#class Open_Snapshot:
+
+#================================
 """ 
 Purpose
 -------
@@ -501,7 +504,7 @@ class Subhalo_Extract:
             bh['Coordinates']    = bh['Coordinates'] - self.centre
         
         
-        # if ellipticity is nan (from snip), make sure we calculate it at this stage
+        # if ellipticity is nan (from snip), make sure we calculate it at this stage. Find this for stellar values... velocity is auto-centred in function
         self.MorphoKinem = MorphoKinem
         if np.isnan(MorphoKinem[0]) == True:
             # Find morphokinem values
@@ -510,6 +513,7 @@ class Subhalo_Extract:
             
             # Assign to self
             self.MorphoKinem = [ellip, triax, kappa, delta, discfrac, vrotsig]
+            
             
         #---------------------------
         # Find main BH after all coords have been centred based on CoP
@@ -638,6 +642,7 @@ class Subhalo_Extract:
                 	# Find hydrogen threshold
                     with np.errstate(divide='ignore'):
                         nhthresh  = 0.1 * (gasmetal / 0.002)**(-0.64)           # Threshold for starforming gas
+                        
                     
                     # Mask hydrogen threshold
                     mask_wherehigh = nhthresh > 10                          # upper limit from schaye 2015 equation (2)
@@ -997,7 +1002,7 @@ Output Parameters
 .general:       dictionary
     'GroupNum', 'SubGroupNum', 'GalaxyID', 'SnapNum', 'halo_mass', 
         'stelmass', 'gasmass', 'gasmass_sf', 'gasmass_nsf', 'dmmass', 
-        'ap_sfr', 'bh_id', 'bh_mass', 'bh_mdot', 'bh_edd', 'halfmass_rad', 
+        'ap_sfr', 'bh_id', 'bh_mass' (subgrid), 'bh_mdot' (subgrid), 'bh_edd', 'halfmass_rad', 
         'halfmass_rad_proj', 'halfmass_rad_sf', 'viewing_axis',
         'kappa_stars' - 30 kpc
         'kappa_gas'   - 2.0 hmr
@@ -1236,6 +1241,10 @@ class Subhalo_Analysis:
                             
         
         #======================================================
+        # data_nil  = raw data we feed in
+        # self.data = data_nil trimmed to aperture before all calculations... no vel or CoM adjustments, then extracted again at the end for render functions
+        # trimmed_data = variable used to store a version of self.data trimmed to a certain radius, velocity and CoM adjusted
+        
         # Keep data or align galaxy for all components that have particle counts
         if not align_rad:
             # Find rotation matrix to rotate entire galaxy depending on viewing_angle if viewing_axis is not 0
@@ -1246,15 +1255,29 @@ class Subhalo_Analysis:
                     # If there are no flags (ei. there exists particle data for the given type)... rotate, else: keep as before
                     if len(data_nil[parttype_name]['Mass']) > 0:
                         data_nil[parttype_name] = self._rotate_galaxy(matrix, data_nil[parttype_name])
-    
         else:
-            # Large-scale stellar spin vector within align_rad used to align galaxy
+            # Large-scale STELLAR spin vector within align_rad used to align galaxy
             # Trim data to particular radius
-            trimmed_data = self._trim_data(data_nil, align_rad)
+            trimmed_data = self._trim_data(data_nil, aperture_rad)
+            trimmed_data = self._trim_data(trimmed_data, align_rad)
             
+            # Find peculiar velocity of trimmed data stars
+            #pec_vel_rad = self._peculiar_velocity(trimmed_data)
+            if len(trimmed_data['stars']['Mass']) > 0:
+                pec_vel_rad = self._peculiar_velocity_part(trimmed_data['stars'])
+                stellar_com = self._centre_of_mass(trimmed_data['stars'])
+            
+            
+            # Adjust velocity of STELLAR trimmed_data to account for peculiar velocity
+            # if array empty, it'll just leave the empty array
+            if len(trimmed_data['stars']['Mass']) != 0:
+                trimmed_data['stars']['Velocity']     = trimmed_data['stars']['Velocity'] - pec_vel_rad
+                trimmed_data['stars']['Coordinates']  = trimmed_data['stars']['Coordinates'] - stellar_com
+
             # Finding star unit vector within align_rad_in, finding angle between it and z and returning matrix for this
             stars_spin_align, _     = self._find_spin(trimmed_data['stars'])
             _ , matrix              = self._orientate('z', stars_spin_align)
+            
             
             # Orientate entire galaxy according to matrix above
             for parttype_name in data_nil.keys():
@@ -1437,7 +1460,7 @@ class Subhalo_Analysis:
         if find_uncertainties:
             # 1-sigma
             use_percentiles = 16
-            iterations = 500 
+            iterations = 200 
             
             spins_rand = {}
             
@@ -1457,7 +1480,7 @@ class Subhalo_Analysis:
                 dict_list['mass_disc'] = []     # total masses at r_50 gas sf, and 2*r_50
                 
             #-----------------------------
-            # Baryonic matter that is calculated over several radii 
+            # Total matter that is calculated over several radii 
             for rad_i, hmr_i in zip(spin_rad, spin_hmr):
                 # Trim data to particular radius
                 trimmed_data = self._trim_data(self.data, rad_i)
@@ -1466,7 +1489,7 @@ class Subhalo_Analysis:
                 self.tot_mass['mass'].append((np.sum(trimmed_data['stars']['Mass']) + np.sum(trimmed_data['gas']['Mass']) + np.sum(trimmed_data['dm']['Mass']) + np.sum(trimmed_data['bh']['Mass'])))
                 
             #-----------------------------
-            # Baryonic matter that is calculated over several radii 
+            # Total matter that is calculated over several radii 
             for hmr_i in spin_hmr:
                 # Trim data to particular radius
                 trimmed_data = self._trim_data(self.data, hmr_i*self.halfmass_rad_sf)
@@ -1512,9 +1535,9 @@ class Subhalo_Analysis:
             for rad_i, hmr_i in zip(spin_rad, spin_hmr):
                 # Trim data to particular radius
                 trimmed_data = self._trim_data(self.data, rad_i)
-                trimmed_halo = self._trim_data_inner(self.data, rad_i)
+                trimmed_halo = self._trim_data_inner(self.data, rad_i)    
                 
-                # Find peculiar velocity of trimmed data
+                # Find peculiar velocity of trimmed data stars
                 #pec_vel_rad = self._peculiar_velocity(trimmed_data)
                 if len(trimmed_data['stars']['Mass']) > 0:
                     pec_vel_rad = self._peculiar_velocity_part(trimmed_data['stars'])
@@ -2327,15 +2350,23 @@ class Subhalo_Analysis:
                     # Trim data to kappa radius
                     trimmed_data = self._trim_data(data_nil, self.halfmass_rad)
             
-                    # Find peculiar velocity of trimmed data
-                    pec_vel_rad = self._peculiar_velocity(trimmed_data)
-
+                    # Find peculiar velocity of trimmed data stars
+                    #pec_vel_rad = self._peculiar_velocity(trimmed_data)
+                    if len(trimmed_data['stars']['Mass']) > 0:
+                        pec_vel_rad = self._peculiar_velocity_part(trimmed_data['stars'])
+                        stellar_com = self._centre_of_mass(trimmed_data['stars'])
+                    else:
+                        pec_vel_rad = np.array([math.nan, math.nan, math.nan])
+                        stellar_com = np.array([math.nan, math.nan, math.nan])
+                    
+                
                     # Adjust velocity of trimmed_data to account for peculiar velocity
                     for parttype_name_i in trimmed_data.keys():
                         if len(trimmed_data[parttype_name_i]['Mass']) == 0:
                             continue
                         else:
-                            trimmed_data[parttype_name_i]['Velocity'] = trimmed_data[parttype_name_i]['Velocity'] - pec_vel_rad
+                            trimmed_data[parttype_name_i]['Velocity']    = trimmed_data[parttype_name_i]['Velocity'] - pec_vel_rad
+                            trimmed_data[parttype_name_i]['Coordinates'] = trimmed_data[parttype_name_i]['Coordinates'] - stellar_com 
                     if debug:
                         print('Peculiar velocity in rad', kappa_rad)
                         print(pec_vel_rad)
@@ -2360,7 +2391,7 @@ class Subhalo_Analysis:
         find_kappa()
         
         #-----------------------------
-        # Trimming data
+        # Trimming data (for render)
         def trim_output_data():
             if print_progress:
                 print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
@@ -2389,15 +2420,25 @@ class Subhalo_Analysis:
                     # Trim data to particular radius
                     trimmed_data = self._trim_data(data_nil, trim_to_rad)
                     
-                    # Find peculiar velocity of trimmed data
-                    pec_vel_rad = self._peculiar_velocity(trimmed_data)
+                    # Find peculiar velocity of trimmed data stars
+                    #pec_vel_rad = self._peculiar_velocity(trimmed_data)
+                    if len(trimmed_data['stars']['Mass']) > 0:
+                        pec_vel_rad = self._peculiar_velocity_part(trimmed_data['stars'])
+                        stellar_com = self._centre_of_mass(trimmed_data['stars'])
+                    else:
+                        pec_vel_rad = np.array([math.nan, math.nan, math.nan])
+                        stellar_com = np.array([math.nan, math.nan, math.nan])
                 
                     # Adjust velocity of trimmed_data to account for peculiar velocity
                     for parttype_name in trimmed_data.keys():
-                        if len(trimmed_data[parttype_name]['Mass']) == 0:
-                            continue
-                        else:
-                            trimmed_data[parttype_name]['Velocity'] = trimmed_data[parttype_name]['Velocity'] - pec_vel_rad
+                        # if array empty, it'll just leave the empty array
+                        if len(trimmed_data[parttype_name]['Mass']) != 0:
+                            trimmed_data[parttype_name]['Velocity']     = trimmed_data[parttype_name]['Velocity'] - pec_vel_rad
+                            trimmed_data[parttype_name]['Coordinates']  = trimmed_data[parttype_name]['Coordinates'] - stellar_com 
+                            trimmed_data['dm']['Velocity']      = self.data['dm']['Velocity'] - pec_vel_rad
+                            trimmed_data['dm']['Coordinates']   = self.data['dm']['Coordinates'] - stellar_com    
+                            trimmed_data['dm']['Mass']          = self.data['dm']['Mass']        
+                        
                     if debug:
                         print('Peculiar velocity in rad', rad_i)
                         print(pec_vel_rad)
@@ -2408,18 +2449,34 @@ class Subhalo_Analysis:
                         tmp_data['%s' %str(rad_i)][parttype_name] = trimmed_data[parttype_name]
                 
                 else:
-                    # Trim data to particular radius
+                    #-------------------------------------
+                    # find perc vel and stellar com in 1 hmr... we trim properly below
+                    trim_to_rad = 1*halfmass_rad
+                    trimmed_data = self._trim_data(data_nil, trim_to_rad)
+                    # Find peculiar velocity of trimmed data stars
+                    #pec_vel_rad = self._peculiar_velocity(trimmed_data)
+                    if len(trimmed_data['stars']['Mass']) > 0:
+                        pec_vel_rad = self._peculiar_velocity_part(trimmed_data['stars'])
+                        stellar_com = self._centre_of_mass(trimmed_data['stars'])
+                    else:
+                        pec_vel_rad = np.array([math.nan, math.nan, math.nan])
+                        stellar_com = np.array([math.nan, math.nan, math.nan])
+                
+                
+                    #---------------------------
+                    # Trim data to particular radius that we ACTUALLY WANT
                     trimmed_data = self._trim_data(data_nil, float(rad_i))
                     
-                    # Find peculiar velocity of trimmed data
-                    pec_vel_rad = self._peculiar_velocity(trimmed_data)
                 
                     # Adjust velocity of trimmed_data to account for peculiar velocity
                     for parttype_name in trimmed_data.keys():
-                        if len(trimmed_data[parttype_name]['Mass']) == 0:
-                            continue
-                        else:
-                            trimmed_data[parttype_name]['Velocity'] = trimmed_data[parttype_name]['Velocity'] - pec_vel_rad
+                        # if array empty, it'll just leave the empty array
+                        if len(trimmed_data[parttype_name]['Mass']) != 0:
+                            trimmed_data[parttype_name]['Velocity']     = trimmed_data[parttype_name]['Velocity'] - pec_vel_rad
+                            trimmed_data[parttype_name]['Coordinates']  = trimmed_data[parttype_name]['Coordinates'] - stellar_com 
+                            trimmed_data['dm']['Velocity']      = self.data['dm']['Velocity'] - pec_vel_rad
+                            trimmed_data['dm']['Coordinates']   = self.data['dm']['Coordinates'] - stellar_com    
+                            trimmed_data['dm']['Mass']          = self.data['dm']['Mass']
                     if debug:
                         print('Peculiar velocity in rad', rad_i)
                         print(pec_vel_rad)

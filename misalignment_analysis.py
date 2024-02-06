@@ -1000,9 +1000,9 @@ def _analysis_misalignment_minor(csv_sample = 'L100_19_minor_sample_misalignment
 #    _sample_misalignment(snapNum = snap_i)
 #    _analysis_misalignment_distribution(csv_sample = 'L100_%s_all_sample_misalignment_9.5' %snap_i)
   
-for snap_i in np.arange(19, 28.1, 1):
-    _sample_misalignment(mySims = [('RefL0012N0188', 12)], galaxy_mass_min    = 10**(9), galaxy_mass_max    = 10**(15), snapNum = snap_i)
-    _analysis_misalignment_distribution(csv_sample = 'L12_%s_all_sample_misalignment_9.0' %snap_i)
+#for snap_i in np.arange(19, 28.1, 1):
+#    _sample_misalignment(mySims = [('RefL0012N0188', 12)], galaxy_mass_min    = 10**(9), galaxy_mass_max    = 10**(15), snapNum = snap_i)
+#    _analysis_misalignment_distribution(csv_sample = 'L12_%s_all_sample_misalignment_9.0' %snap_i)
 
 
     

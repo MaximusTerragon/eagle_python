@@ -169,6 +169,7 @@ gasdata_old             - gets updated and replaced with math.nan
         err_abs         - error 
         angle_proj      - projected angle
         err_proj        - error of projected
+		angle_halo		- inner stars vs outer gas
         com_abs         - com [pkpc]
         com_proj        - com [pkpc] for viewing axis
 
@@ -179,6 +180,7 @@ gasdata_old             - gets updated and replaced with math.nan
         err_abs         - error 
         angle_proj      - projected angle
         err_proj        - error of projected
+		angle_halo		- inner stars vs outer gas_sf
         com_abs         - com [pkpc]
         com_proj        - com [pkpc] for  viewing axis
 
@@ -189,6 +191,7 @@ gasdata_old             - gets updated and replaced with math.nan
         err_abs         - error 
         angle_proj      - projected angle
         err_proj        - error of projected
+		angle_halo		- inner gas_sf vs outer gas_nsf
         com_abs         - com [pkpc]
         com_proj        - com [pkpc] for  viewing axis
 
@@ -199,6 +202,7 @@ gasdata_old             - gets updated and replaced with math.nan
         err_abs         - error 
         angle_proj      - projected angle
         err_proj        - error of projected
+		angle_halo		- outer stars vs dm halo
         com_abs         - com [pkpc]
         com_proj        - com [pkpc] for  viewing axis
 
@@ -209,6 +213,7 @@ gasdata_old             - gets updated and replaced with math.nan
         err_abs         - error 
         angle_proj      - projected angle
         err_proj        - error of projected
+		angle_halo		- outer gas vs dm halo
         com_abs         - com [pkpc]
         com_proj        - com [pkpc] for  viewing axis
 
@@ -219,6 +224,7 @@ gasdata_old             - gets updated and replaced with math.nan
         err_abs         - error 
         angle_proj      - projected angle
         err_proj        - error of projected
+		angle_halo		- outer gas_sf vs dm halo
         com_abs         - com [pkpc]
         com_proj        - com [pkpc] for  viewing axis
             
@@ -1510,9 +1516,9 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                   #------------------------------------------------------------
                   # Mergers 
                   use_merger_criteria   = False,   # [ True / None / False ] Whether we limit to merger-induced, no mergers, or any misalignments
-                    min_stellar_ratio   = 0.1,       max_stellar_ratio   = 999,     # [ value ] -> set to 0 if we dont care
+                    min_stellar_ratio   = 0.1,       max_stellar_ratio   = 1/0.1,     # [ value ] -> set to 0 if we dont care, set to 999 if we dont care
                     min_gas_ratio       = None,      max_gas_ratio       = None,    # [ None / value ]
-                    max_merger_pre      = 0.2,       max_merger_post     = 0.5,    # [Gyr] -/+ max time to closest merger from point of misalignment
+                    max_merger_pre      = 0.2,       max_merger_post     = 0.5,    # [0.2 + 0.5 / Gyr] -/+ max time to closest merger from point of misalignment
                   #------------------------------------------------------------
                   # Temporal selection
                     latency_time     = 0.1,          # [ None / 0.1 Gyr ]   Consecutive time galaxy must be <30 / >150 to count as finished relaxing
@@ -1531,33 +1537,33 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                     max_trelax         = None,        # [ None / Gyr ] Min/max relaxation time
                   #--------------------------
                   csv_file       = False,             # Will write sample to csv file in sample_dir
-                    csv_name     = 'normalLatency_anyMergers_anyMorph',               # extra stuff at end
+                    csv_name     = '_',               # extra stuff at end
                   
                   
                   #====================================================================================================
                   # Plot histogram of sample we ended up selecting
                   plot_sample_hist  = True,
-                    bin_width_mass  = 0.1,
+                    bin_width_mass  = 0.01,      # 0.1
                     
                   #-----------------------------
                   # Plot timescale histogram with current sample
-                  plot_timescale_histogram  = True,   
+                  plot_timescale_histogram  = False,   
                     bin_limit_trelax      = 6,        # [ None / Gyr ]
                     bin_width_trelax      = 0.25,      # [ Gyr ]
                       plot_percentage     = True,
                       plot_relaxation_type  = True,     # SET TO FALSE IF BELOW TRUE. Stack histogram types   
                       plot_histogram_log    = False,    # set yaxis as log
-                  plot_tdyn_histogram     = True,
+                  plot_tdyn_histogram     = False,
                     bin_limit_tdyn        = 28,        # [ None / multiples ]
                     bin_width_tdyn        = 1,      # [ multiples ]
-                  plot_ttorque_histogram    = True,
+                  plot_ttorque_histogram    = False,
                     bin_limit_ttorque     = 12,        # [ None / multiples ]
                     bin_width_ttorque     = 0.5,      # [ multiples ]
                 
                   #-----------------------------
                   # Plot stacked misalignments based on current sample
                   plot_stacked_trelax      = False,           # single
-                  plot_stacked_trelax_2x2  = True,           # 2x2 subplot of co-co, co-counter, ...
+                  plot_stacked_trelax_2x2  = False,           # 2x2 subplot of co-co, co-counter, ...
                     plot_type          = 'time',            # 'time', 'snap', 'raw_time', 'raw_snap'
                     plot_stacked_type  = 'misangle',        # 'misangle', 'merger' where to lineup stacks to
                     plot_extra_time    = False,              # Plot extra time after relaxation
@@ -1567,17 +1573,19 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                       stacked_median   = True,             # Whether to add a median line (will lower transparency of other lines)
                       stacked_relaxation_type = ['co-co', 'co-counter', 'counter-co', 'counter-counter'],          # ['co-co', 'co-counter', 'counter-co', 'counter-counter']
                   plot_stacked_tdyn        = False,
-                  plot_stacked_tdyn_2x2    = True,
+                  plot_stacked_tdyn_2x2    = False,
                   plot_stacked_ttorque     = False,
-                  plot_stacked_ttorque_2x2 = True,
-                
-                
-                
-                
+                  plot_stacked_ttorque_2x2 = False,
                 
                   #-----------------------------
-                  plot_box_and_whisker      = False,     # Plots relaxation type vs relaxation time for ETG and LTG. USes relaxation_type and relaxation_morph
-                    whisker_morphs          = ['LTG-LTG', 'ETG-ETG'],           # Can be either relaxation_morph or misalignment_morph
+                  plot_box_and_whisker_trelax = False,     # Plots relaxation type vs relaxation time for ETG and LTG. USes relaxation_type and relaxation_morph
+                    whisker_morphs            = ['LTG-LTG', 'ETG-ETG'],           # Can be either relaxation_morph or misalignment_morph
+                  plot_box_and_whisker_tdyn    = False,
+                  plot_box_and_whisker_ttorque = False,
+                  
+                
+                
+                  
                   #-----------------------------
                   # Plot scatter and extract spearman from it
                   plot_spearman         = False,                     # Available variables: halomass, stelmass, gasmass, sfmass, nsfmass, dmmass,   sfr, ssfr,   stars_Z, gas_Z, inflow_Z, outflow_Z
@@ -1600,12 +1608,12 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                   plot_ellip_trelaxtdyn = False,
                   #-----------------------------
                   # General formatting
-                  showfig       = False,
+                  showfig       = True,
                   savefig       = False,    
                     file_format = 'pdf',
                     savefig_txt = 'txt',     # [ 'manual' / txt ] 'manual' will prompt txt before saving
               #====================================================================================================
-              load_csv_file  = 'normalLatency_anyMergers_anyMorph',     # [ 'file_name' / False ] load existing misalignment tree
+              load_csv_file  = '_normalLatency_anyMergers_anyMorph',     # [ 'file_name' / False ] load existing misalignment tree  '_normalLatency_anyMergers_anyMorph'
                                           plot_annotate  = False,    #  r'ETG ($\bar{\kappa}_{\mathrm{co}}^{\mathrm{*}} < 0.35$)'                     # string of text or False / 'ETG' 
               #====================================================================================================
                   print_progress = False,
@@ -2369,7 +2377,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             
             
                 #------------------------------------------------------------------------------------------------
-                # Check window properties
+                # Check window properties which are to be ALWAYS met
                 # Loop over window and apply checks for particle counts (using particles we care about), com (using angle we care about), and inclination angle (using particles we care about)
                 index_start = index_dict['window_locations']['misalign']['index'][misindex_i]
                 index_stop  = index_dict['window_locations']['relax']['index'][misindex_i]+1
@@ -2412,7 +2420,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                         check_i_previous = check_i
                         continue
                     else:
-                        # Ensure ratio between stelmasses doesnt drop by order of magnitude
+                        # Ensure ratio between stelmasses doesnt drop by half or worse
                         if check_i/check_i_previous >= 0.5:
                             check.append(True)
                         else:
@@ -2423,7 +2431,18 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                     continue
                 if print_checks:
                     print('    MET SUBGROUPNUM MASS')
-            
+                
+                
+                # Check aperture stelmass
+                check = []
+                check.append((np.log10(np.array(galaxy_tree['%s' %GalaxyID]['stars']['ap_mass'][index_start:index_stop])) >= 9.5).all())
+                if np.array(check).all() == False:
+                    if print_checks:
+                        print('    x FAILED APERTURE STEL MASS:\t %.1e, for limit 9.5+ [Msun]' %(np.average(check_array, weights=time_weight)))
+                    continue
+                if print_checks:
+                    print('    MET APERTURE STEL MASS:\t %.1e, for limit 9.5+ [Msun]' %(np.average(check_array, weights=time_weight)))
+                
                 
                 # Check inclination
                 check = []            
@@ -3051,7 +3070,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
     #===================================================================================================
     # Load previous csv if asked for
     if load_csv_file:
-        dict_tree = json.load(open('%s/L100_misalignment_tree__%s.csv' %(output_dir, load_csv_file), 'r'))
+        dict_tree = json.load(open('%s/L100_misalignment_tree_%s.csv' %(output_dir, load_csv_file), 'r'))
         misalignment_input = dict_tree['misalignment_input']
         sample_input       = dict_tree['sample_input']
         output_input       = dict_tree['output_input']
@@ -3468,7 +3487,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
     #-------------------------
     # Plot sample histogram of misalignments extracted
     if plot_sample_hist:
-        # Gather data
+        # Gather data, average stelmass over misalignment
         stelmass_plot = []
         for ID_i in misalignment_tree.keys():
             stelmass_plot.append(np.log10(np.mean(misalignment_tree['%s' %ID_i]['stelmass'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])))
@@ -6556,22 +6575,9 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         plt.close()
     
     
-    
-    
-    #populate presentation
-    #box and whisker - format, populate
-    # tdyn, ttorque - format, populate
-    # mergers
-    # main tweaks
-    
-    
-    
-    
-    
-    
     #-------------------------
     # Plot box and whisker of relaxation distributions
-    if plot_box_and_whisker:
+    if plot_box_and_whisker_trelax:
         # Gather data
         relaxationtime_plot  = []
         relaxationtype_plot  = []
@@ -6588,12 +6594,24 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             
             # Gather data
             relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
-            relaxationtype_plot.append(misalignment_tree['%s' %ID_i]['relaxation_type'])
+            #relaxationtype_plot.append(misalignment_tree['%s' %ID_i]['relaxation_type'])
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
+                relaxationtype_plot.append('co\n ↓ \nco')
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
+                relaxationtype_plot.append('co\n ↓ \ncounter')
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
+                relaxationtype_plot.append('counter\n ↓ \nco')
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
+                relaxationtype_plot.append('counter\n ↓ \ncounter')
             
             if 'ETG' in whisker_morphs:
                 relaxationmorph_plot.append(misalignment_tree['%s' %ID_i]['misalignment_morph'])
             elif 'ETG-ETG' in whisker_morphs: 
-                relaxationmorph_plot.append(misalignment_tree['%s' %ID_i]['relaxation_morph'])
+                #relaxationmorph_plot.append(misalignment_tree['%s' %ID_i]['relaxation_morph'])
+                if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-ETG':
+                    relaxationmorph_plot.append('ETG → ETG')
+                if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'LTG-LTG':
+                    relaxationmorph_plot.append('LTG → LTG')
         
         # Collect data into dataframe
         df = pd.DataFrame(data={'Relaxation type': relaxationtype_plot, 'Morphology': relaxationmorph_plot, 'Relaxation time': relaxationtime_plot})
@@ -6601,20 +6619,39 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         #----------------------
         # Run k-s test on co-co, counter-counter, counter-co, co-counter between morphology types
         print('\n--------------------------------------')
+        print('trelax')
         for relaxation_type_i in relaxation_type:
+            
+            if relaxation_type_i == 'co-co':
+                relaxation_type_i = 'co\n ↓ \nco'
+            if relaxation_type_i == 'co-counter':
+                relaxation_type_i = 'co\n ↓ \ncounter'
+            if relaxation_type_i == 'counter-co':
+                relaxation_type_i = 'counter\n ↓ \nco'
+            if relaxation_type_i == 'counter-counter':
+                relaxation_type_i = 'counter\n ↓ \ncounter'
             
             # Select only relaxation morphs
             if 'ETG' in whisker_morphs:
                 df_ETG_ETG = df.loc[(df['Relaxation type'] == relaxation_type_i) & (df['Morphology'] == 'ETG')]
                 df_LTG_LTG = df.loc[(df['Relaxation type'] == relaxation_type_i) & (df['Morphology'] == 'LTG')]
             elif 'ETG-ETG' in whisker_morphs:    
-                df_ETG_ETG = df.loc[(df['Relaxation type'] == relaxation_type_i) & (df['Morphology'] == 'ETG-ETG')]
-                df_LTG_LTG = df.loc[(df['Relaxation type'] == relaxation_type_i) & (df['Morphology'] == 'LTG-LTG')]
+                df_ETG_ETG = df.loc[(df['Relaxation type'] == relaxation_type_i) & (df['Morphology'] == 'ETG → ETG')]
+                df_LTG_LTG = df.loc[(df['Relaxation type'] == relaxation_type_i) & (df['Morphology'] == 'LTG → LTG')]
             
             # KS test relaxation types between ETG and LTG
             if (df_ETG_ETG.shape[0] > 0) and (df_LTG_LTG.shape[0] > 0):
 
                 res = stats.ks_2samp(df_ETG_ETG['Relaxation time'], df_LTG_LTG['Relaxation time'])
+                
+                if relaxation_type_i == 'co\n ↓ \nco':
+                    relaxation_type_i = 'co-co'
+                if relaxation_type_i == 'co\n ↓ \ncounter':
+                    relaxation_type_i = 'co-counter'
+                if relaxation_type_i == 'counter\n ↓ \nco':
+                    relaxation_type_i = 'counter-co'
+                if relaxation_type_i == 'counter\n ↓ \ncounter':
+                    relaxation_type_i = 'counter-counter'
             
                 if 'ETG' in whisker_morphs:
                     print('K-S TEST FOR ETG and LTG %s:    %s %s' %(relaxation_type_i, df_ETG_ETG.shape[0], df_LTG_LTG.shape[0]))
@@ -6636,8 +6673,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         if 'ETG' in whisker_morphs:
             order = ['ETG', 'LTG']
         elif 'ETG-ETG' in whisker_morphs:   
-            order = ['ETG-ETG', 'LTG-LTG']
-        sns.violinplot(data=df, y='Relaxation time', x='Morphology', hue='Relaxation type', scale='width', order=order, hue_order=['co-co', 'counter-counter', 'co-counter', 'counter-co'])
+            order = ['ETG → ETG', 'LTG → LTG']
+        #sns.violinplot(data=df, y='Relaxation time', x='Morphology', hue='Relaxation type', scale='width', order=order, hue_order=['co-co', 'counter-counter', 'co-counter', 'counter-co'])
+        #sns.violinplot(data=df, y='Relaxation time', x='Relaxation type', hue='Morphology', split=True, density_norm='width', gap=0.2, order=['co\n ↓ \nco', 'counter\n ↓ \ncounter', 'co\n ↓ \ncounter', 'counter\n ↓ \nco'], hue_order=['LTG → LTG', 'ETG → ETG'], inner='quart', linewidth=1)
+        sns.violinplot(data=df, x='Relaxation time', y='Relaxation type', hue='Morphology', split=True, density_norm='width', gap=0.2, order=['co\n ↓ \nco', 'counter\n ↓ \ncounter', 'co\n ↓ \ncounter', 'counter\n ↓ \nco'], hue_order=['LTG → LTG', 'ETG → ETG'], inner='quart', linewidth=1)
+        
         
         #-----------
         ### title
@@ -6646,13 +6686,16 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
         #-------------
         ### Formatting
-        axs.set_ylim(bottom=0)
-        axs.set_yticks(np.arange(0, bin_limit+0.1, step=1))
-        axs.set_ylabel('Relaxation time (Gyr)')
+        axs.set_xlim(left=0)
+        #axs.set_yticks(np.arange(0, bin_limit_trelax+0.1, step=1))
+        axs.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)')
+        
+        print(max(relaxationtime_plot))
+        
         
         #------------
         # Legend
-        axs.legend(loc='upper right', frameon=False, labelspacing=0.1, handlelength=1)
+        axs.legend(loc='center right', frameon=False, labelspacing=0.1, handlelength=1)
         
         #------------
         ### other
@@ -6666,15 +6709,292 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         if savefig:
             if savefig_txt == 'manual':
                 savefig_txt = input('\n  -> Enter savefig_txt:   ')
-            plt.savefig("%s/violinplot_relaxation_morph/%srelaxation_morph_%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print("\n  SAVED: %s/violinplot_relaxation_morph/%srelaxation_morph_%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), savefig_txt, file_format)) 
+            plt.savefig("%s/violinplot_relaxation_morph/trelax_relaxation_morph_%s_%s.%s" %(fig_dir, len(misalignment_tree.keys()), savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/violinplot_relaxation_morph/trelax_relaxation_morph_%s_%s.%s" %(fig_dir, len(misalignment_tree.keys()), savefig_txt, file_format)) 
         if showfig:
             plt.show()
         plt.close()
         
         df = 0
+    # tdyn
+    if plot_box_and_whisker_tdyn:
+        # Gather data
+        relaxationtime_plot  = []
+        relaxationtype_plot  = []
+        relaxationmorph_plot = []
+        for ID_i in misalignment_tree.keys():
+            
+            # only plot morphs we care about (default ETG-ETG, LTG-LTG)
+            if 'ETG' in whisker_morphs:
+                if (misalignment_tree['%s' %ID_i]['misalignment_morph'] not in whisker_morphs):
+                    continue
+            elif 'ETG-ETG' in whisker_morphs: 
+                if (misalignment_tree['%s' %ID_i]['relaxation_morph'] not in whisker_morphs):
+                    continue
+            
+            # Gather data
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+            #relaxationtype_plot.append(misalignment_tree['%s' %ID_i]['relaxation_type'])
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
+                relaxationtype_plot.append('co\n ↓ \nco')
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
+                relaxationtype_plot.append('co\n ↓ \ncounter')
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
+                relaxationtype_plot.append('counter\n ↓ \nco')
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
+                relaxationtype_plot.append('counter\n ↓ \ncounter')
+            
+            if 'ETG' in whisker_morphs:
+                relaxationmorph_plot.append(misalignment_tree['%s' %ID_i]['misalignment_morph'])
+            elif 'ETG-ETG' in whisker_morphs: 
+                #relaxationmorph_plot.append(misalignment_tree['%s' %ID_i]['relaxation_morph'])
+                if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-ETG':
+                    relaxationmorph_plot.append('ETG → ETG')
+                if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'LTG-LTG':
+                    relaxationmorph_plot.append('LTG → LTG')
+        
+        # Collect data into dataframe
+        df = pd.DataFrame(data={'Relaxation type': relaxationtype_plot, 'Morphology': relaxationmorph_plot, 'Relaxation time': relaxationtime_plot})
+        
+        #----------------------
+        # Run k-s test on co-co, counter-counter, counter-co, co-counter between morphology types
+        print('\n--------------------------------------')
+        print('tdyn')
+        for relaxation_type_i in relaxation_type:
+            
+            if relaxation_type_i == 'co-co':
+                relaxation_type_i = 'co\n ↓ \nco'
+            if relaxation_type_i == 'co-counter':
+                relaxation_type_i = 'co\n ↓ \ncounter'
+            if relaxation_type_i == 'counter-co':
+                relaxation_type_i = 'counter\n ↓ \nco'
+            if relaxation_type_i == 'counter-counter':
+                relaxation_type_i = 'counter\n ↓ \ncounter'
+            
+            # Select only relaxation morphs
+            if 'ETG' in whisker_morphs:
+                df_ETG_ETG = df.loc[(df['Relaxation type'] == relaxation_type_i) & (df['Morphology'] == 'ETG')]
+                df_LTG_LTG = df.loc[(df['Relaxation type'] == relaxation_type_i) & (df['Morphology'] == 'LTG')]
+            elif 'ETG-ETG' in whisker_morphs:    
+                df_ETG_ETG = df.loc[(df['Relaxation type'] == relaxation_type_i) & (df['Morphology'] == 'ETG → ETG')]
+                df_LTG_LTG = df.loc[(df['Relaxation type'] == relaxation_type_i) & (df['Morphology'] == 'LTG → LTG')]
+            
+            # KS test relaxation types between ETG and LTG
+            if (df_ETG_ETG.shape[0] > 0) and (df_LTG_LTG.shape[0] > 0):
+
+                res = stats.ks_2samp(df_ETG_ETG['Relaxation time'], df_LTG_LTG['Relaxation time'])
+                
+                if relaxation_type_i == 'co\n ↓ \nco':
+                    relaxation_type_i = 'co-co'
+                if relaxation_type_i == 'co\n ↓ \ncounter':
+                    relaxation_type_i = 'co-counter'
+                if relaxation_type_i == 'counter\n ↓ \nco':
+                    relaxation_type_i = 'counter-co'
+                if relaxation_type_i == 'counter\n ↓ \ncounter':
+                    relaxation_type_i = 'counter-counter'
+            
+                if 'ETG' in whisker_morphs:
+                    print('K-S TEST FOR ETG and LTG %s:    %s %s' %(relaxation_type_i, df_ETG_ETG.shape[0], df_LTG_LTG.shape[0]))
+                elif 'ETG-ETG' in whisker_morphs:  
+                    print('K-S TEST FOR ETG-ETG and LTG-LTG %s:    %s %s' %(relaxation_type_i, df_ETG_ETG.shape[0], df_LTG_LTG.shape[0]))
+                print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((df_ETG_ETG.shape[0] + df_LTG_LTG.shape[0])/(df_ETG_ETG.shape[0]*df_LTG_LTG.shape[0])))))
+                print('   p-value: %s' %res.pvalue)
+            else:
+                print('K-S TEST FOR ETG-ETG and LTG-LTG %s:\tSKIPPED    %s %s' %(relaxation_type_i, df_ETG_ETG.shape[0], df_LTG_LTG.shape[0]))
+        print('--------------------------------------')
         
         
+        #-------------
+        ### Plotting
+        fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.5], sharex=True, sharey=False)
+        plt.subplots_adjust(wspace=0.4, hspace=0.4)
+        
+
+        if 'ETG' in whisker_morphs:
+            order = ['ETG', 'LTG']
+        elif 'ETG-ETG' in whisker_morphs:   
+            order = ['ETG → ETG', 'LTG → LTG']
+        #sns.violinplot(data=df, y='Relaxation time', x='Morphology', hue='Relaxation type', scale='width', order=order, hue_order=['co-co', 'counter-counter', 'co-counter', 'counter-co'])
+        #sns.violinplot(data=df, y='Relaxation time', x='Relaxation type', hue='Morphology', split=True, density_norm='width', gap=0.2, order=['co\n ↓ \nco', 'counter\n ↓ \ncounter', 'co\n ↓ \ncounter', 'counter\n ↓ \nco'], hue_order=['LTG → LTG', 'ETG → ETG'], inner='quart', linewidth=1)
+        sns.violinplot(data=df, x='Relaxation time', y='Relaxation type', hue='Morphology', split=True, density_norm='width', gap=0.2, order=['co\n ↓ \nco', 'counter\n ↓ \ncounter', 'co\n ↓ \ncounter', 'counter\n ↓ \nco'], hue_order=['LTG → LTG', 'ETG → ETG'], inner='quart', linewidth=1)
+        
+        
+        #-----------
+        ### title
+        if plot_annotate:
+            axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
+        
+        #-------------
+        ### Formatting
+        axs.set_xlim(left=0)
+        #axs.set_yticks(np.arange(0, bin_limit_trelax+0.1, step=1))
+        axs.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{dyn}}$')
+        
+        #------------
+        # Legend
+        axs.legend(loc='center right', frameon=False, labelspacing=0.1, handlelength=1)
+        
+        #------------
+        ### other
+        plt.tight_layout()
+        
+        #-----------
+        # savefig
+        metadata_plot = {'Title': '%s, %s\nThreshold: %s\nMin delta:%s\nLatency time: %s\nMin ratio: %s\nUSE MERGERS: %s\nMax closest merger: %s-%s\nTime extra: %s\nTime no misangle: %s\nStelmass: %s/%s\n kappa*: %s/%s\n outflow: %s/%s' %(abs_or_proj, use_angle, misangle_threshold, min_delta_angle, latency_time, min_stellar_ratio, use_merger_criteria, max_merger_pre, max_merger_post, time_extra, time_no_misangle, min_stelmass, max_stelmass, min_kappa_stars, max_kappa_stars, min_inflow, max_inflow),
+                         'Author': 'Min particles: %s\nMax CoM: %s\nMin inc: %s\nPlot ratio limit: %s\n\n# MISALIGNMENTS: %s\nco-co: %s\ncnt-cnt: %s\nco-cnt: %s\ncnt-co: %s\nETG-ETG: %s\nLTG-LTG: %s\nETG-LTG: %s\nLTG-ETG: %s\nMean: %.2f\nMedian: %.2f\nstd: %.2f' %(min_particles, max_com, min_inclination, plot_merger_limit, len(misalignment_tree.keys()), len(summary_dict['ID']['co-co']), len(summary_dict['ID']['counter-counter']), len(summary_dict['ID']['co-counter']), len(summary_dict['ID']['counter-co']), len(summary_dict['ID']['ETG-ETG']), len(summary_dict['ID']['LTG-LTG']), len(summary_dict['ID']['ETG-LTG']), len(summary_dict['ID']['LTG-ETG']), mean_tdyn, median_tdyn, std_tdyn)}
+        
+        if savefig:
+            if savefig_txt == 'manual':
+                savefig_txt = input('\n  -> Enter savefig_txt:   ')
+            plt.savefig("%s/violinplot_relaxation_morph/tdyn_relaxation_morph_%s_%s.%s" %(fig_dir, len(misalignment_tree.keys()), savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/violinplot_relaxation_morph/tdyn_relaxation_morph_%s_%s.%s" %(fig_dir, len(misalignment_tree.keys()), savefig_txt, file_format)) 
+        if showfig:
+            plt.show()
+        plt.close()
+        
+        df = 0
+    # ttorque 
+    if plot_box_and_whisker_tdyn:
+        # Gather data
+        relaxationtime_plot  = []
+        relaxationtype_plot  = []
+        relaxationmorph_plot = []
+        for ID_i in misalignment_tree.keys():
+            
+            # only plot morphs we care about (default ETG-ETG, LTG-LTG)
+            if 'ETG' in whisker_morphs:
+                if (misalignment_tree['%s' %ID_i]['misalignment_morph'] not in whisker_morphs):
+                    continue
+            elif 'ETG-ETG' in whisker_morphs: 
+                if (misalignment_tree['%s' %ID_i]['relaxation_morph'] not in whisker_morphs):
+                    continue
+            
+            # Gather data
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            #relaxationtype_plot.append(misalignment_tree['%s' %ID_i]['relaxation_type'])
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
+                relaxationtype_plot.append('co\n ↓ \nco')
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
+                relaxationtype_plot.append('co\n ↓ \ncounter')
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
+                relaxationtype_plot.append('counter\n ↓ \nco')
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
+                relaxationtype_plot.append('counter\n ↓ \ncounter')
+            
+            if 'ETG' in whisker_morphs:
+                relaxationmorph_plot.append(misalignment_tree['%s' %ID_i]['misalignment_morph'])
+            elif 'ETG-ETG' in whisker_morphs: 
+                #relaxationmorph_plot.append(misalignment_tree['%s' %ID_i]['relaxation_morph'])
+                if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-ETG':
+                    relaxationmorph_plot.append('ETG → ETG')
+                if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'LTG-LTG':
+                    relaxationmorph_plot.append('LTG → LTG')
+        
+        # Collect data into dataframe
+        df = pd.DataFrame(data={'Relaxation type': relaxationtype_plot, 'Morphology': relaxationmorph_plot, 'Relaxation time': relaxationtime_plot})
+        
+        #----------------------
+        # Run k-s test on co-co, counter-counter, counter-co, co-counter between morphology types
+        print('\n--------------------------------------')
+        print('ttorque')
+        for relaxation_type_i in relaxation_type:
+            
+            if relaxation_type_i == 'co-co':
+                relaxation_type_i = 'co\n ↓ \nco'
+            if relaxation_type_i == 'co-counter':
+                relaxation_type_i = 'co\n ↓ \ncounter'
+            if relaxation_type_i == 'counter-co':
+                relaxation_type_i = 'counter\n ↓ \nco'
+            if relaxation_type_i == 'counter-counter':
+                relaxation_type_i = 'counter\n ↓ \ncounter'
+            
+            # Select only relaxation morphs
+            if 'ETG' in whisker_morphs:
+                df_ETG_ETG = df.loc[(df['Relaxation type'] == relaxation_type_i) & (df['Morphology'] == 'ETG')]
+                df_LTG_LTG = df.loc[(df['Relaxation type'] == relaxation_type_i) & (df['Morphology'] == 'LTG')]
+            elif 'ETG-ETG' in whisker_morphs:    
+                df_ETG_ETG = df.loc[(df['Relaxation type'] == relaxation_type_i) & (df['Morphology'] == 'ETG → ETG')]
+                df_LTG_LTG = df.loc[(df['Relaxation type'] == relaxation_type_i) & (df['Morphology'] == 'LTG → LTG')]
+            
+            # KS test relaxation types between ETG and LTG
+            if (df_ETG_ETG.shape[0] > 0) and (df_LTG_LTG.shape[0] > 0):
+
+                res = stats.ks_2samp(df_ETG_ETG['Relaxation time'], df_LTG_LTG['Relaxation time'])
+                
+                if relaxation_type_i == 'co\n ↓ \nco':
+                    relaxation_type_i = 'co-co'
+                if relaxation_type_i == 'co\n ↓ \ncounter':
+                    relaxation_type_i = 'co-counter'
+                if relaxation_type_i == 'counter\n ↓ \nco':
+                    relaxation_type_i = 'counter-co'
+                if relaxation_type_i == 'counter\n ↓ \ncounter':
+                    relaxation_type_i = 'counter-counter'
+            
+                if 'ETG' in whisker_morphs:
+                    print('K-S TEST FOR ETG and LTG %s:    %s %s' %(relaxation_type_i, df_ETG_ETG.shape[0], df_LTG_LTG.shape[0]))
+                elif 'ETG-ETG' in whisker_morphs:  
+                    print('K-S TEST FOR ETG-ETG and LTG-LTG %s:    %s %s' %(relaxation_type_i, df_ETG_ETG.shape[0], df_LTG_LTG.shape[0]))
+                print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((df_ETG_ETG.shape[0] + df_LTG_LTG.shape[0])/(df_ETG_ETG.shape[0]*df_LTG_LTG.shape[0])))))
+                print('   p-value: %s' %res.pvalue)
+            else:
+                print('K-S TEST FOR ETG-ETG and LTG-LTG %s:\tSKIPPED    %s %s' %(relaxation_type_i, df_ETG_ETG.shape[0], df_LTG_LTG.shape[0]))
+        print('--------------------------------------')
+        
+        
+        #-------------
+        ### Plotting
+        fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.5], sharex=True, sharey=False)
+        plt.subplots_adjust(wspace=0.4, hspace=0.4)
+        
+
+        if 'ETG' in whisker_morphs:
+            order = ['ETG', 'LTG']
+        elif 'ETG-ETG' in whisker_morphs:   
+            order = ['ETG → ETG', 'LTG → LTG']
+        #sns.violinplot(data=df, y='Relaxation time', x='Morphology', hue='Relaxation type', scale='width', order=order, hue_order=['co-co', 'counter-counter', 'co-counter', 'counter-co'])
+        #sns.violinplot(data=df, y='Relaxation time', x='Relaxation type', hue='Morphology', split=True, density_norm='width', gap=0.2, order=['co\n ↓ \nco', 'counter\n ↓ \ncounter', 'co\n ↓ \ncounter', 'counter\n ↓ \nco'], hue_order=['LTG → LTG', 'ETG → ETG'], inner='quart', linewidth=1)
+        sns.violinplot(data=df, x='Relaxation time', y='Relaxation type', hue='Morphology', split=True, density_norm='width', gap=0.2, order=['co\n ↓ \nco', 'counter\n ↓ \ncounter', 'co\n ↓ \ncounter', 'counter\n ↓ \nco'], hue_order=['LTG → LTG', 'ETG → ETG'], inner='quart', linewidth=1)
+        
+        
+        #-----------
+        ### title
+        if plot_annotate:
+            axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
+        
+        #-------------
+        ### Formatting
+        axs.set_xlim(left=0)
+        #axs.set_yticks(np.arange(0, bin_limit_trelax+0.1, step=1))
+        axs.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{torque}}$')
+        
+        #------------
+        # Legend
+        axs.legend(loc='center right', frameon=False, labelspacing=0.1, handlelength=1)
+        
+        #------------
+        ### other
+        plt.tight_layout()
+        
+        #-----------
+        # savefig
+        metadata_plot = {'Title': '%s, %s\nThreshold: %s\nMin delta:%s\nLatency time: %s\nMin ratio: %s\nUSE MERGERS: %s\nMax closest merger: %s-%s\nTime extra: %s\nTime no misangle: %s\nStelmass: %s/%s\n kappa*: %s/%s\n outflow: %s/%s' %(abs_or_proj, use_angle, misangle_threshold, min_delta_angle, latency_time, min_stellar_ratio, use_merger_criteria, max_merger_pre, max_merger_post, time_extra, time_no_misangle, min_stelmass, max_stelmass, min_kappa_stars, max_kappa_stars, min_inflow, max_inflow),
+                         'Author': 'Min particles: %s\nMax CoM: %s\nMin inc: %s\nPlot ratio limit: %s\n\n# MISALIGNMENTS: %s\nco-co: %s\ncnt-cnt: %s\nco-cnt: %s\ncnt-co: %s\nETG-ETG: %s\nLTG-LTG: %s\nETG-LTG: %s\nLTG-ETG: %s\nMean: %.2f\nMedian: %.2f\nstd: %.2f' %(min_particles, max_com, min_inclination, plot_merger_limit, len(misalignment_tree.keys()), len(summary_dict['ID']['co-co']), len(summary_dict['ID']['counter-counter']), len(summary_dict['ID']['co-counter']), len(summary_dict['ID']['counter-co']), len(summary_dict['ID']['ETG-ETG']), len(summary_dict['ID']['LTG-LTG']), len(summary_dict['ID']['ETG-LTG']), len(summary_dict['ID']['LTG-ETG']), mean_ttorque, median_ttorque, std_ttorque)}
+        
+        if savefig:
+            if savefig_txt == 'manual':
+                savefig_txt = input('\n  -> Enter savefig_txt:   ')
+            plt.savefig("%s/violinplot_relaxation_morph/ttorque_relaxation_morph_%s_%s.%s" %(fig_dir, len(misalignment_tree.keys()), savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/violinplot_relaxation_morph/ttorque_relaxation_morph_%s_%s.%s" %(fig_dir, len(misalignment_tree.keys()), savefig_txt, file_format)) 
+        if showfig:
+            plt.show()
+        plt.close()
+        
+        df = 0
+    
+    
+    
+    
+    
     #-------------------------
     # Plot spearman
     if plot_spearman:

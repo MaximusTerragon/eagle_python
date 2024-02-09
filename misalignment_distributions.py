@@ -45,7 +45,7 @@ def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_9.5',     #
                            max_uncertainty  = 30,            # [ None / 30 / 45 ]                  Degrees
                          lower_mass_limit   = 10**9.5,            # Whether to plot only certain masses 10**15
                          upper_mass_limit   = 10**15,         
-                         ETG_or_LTG         = 'both',           # Whether to plot only ETG/LTG/both
+                         ETG_or_LTG         = 'ETG',           # Whether to plot only ETG/LTG/both
                          cluster_or_field   = 'both',           # Whether to plot only field/cluster/both
                          use_satellites     = True,             # Whether to include SubGroupNum =/ 0
                        #--------------------------
@@ -225,6 +225,7 @@ def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_9.5',     #
         satellite_criteria = 0
     
     collect_ID = []
+    collect_value = []
     #------------------------------
     def _plot_misalignment_distributions(debug=False):
         # We have use_angle = 'stars_gas_sf', and use_particles = ['stars', 'gas_sf'] 
@@ -359,6 +360,7 @@ def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_9.5',     #
                         
                         if all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle' %use_angle][mask_angles] > 170:
                             collect_ID.append(GalaxyID)
+                            collect_value.append(all_general['%s' %GalaxyID]['kappa_stars'])
                             
                         
                         # CHECKING FOR SPECIFIC GALAXY
@@ -384,6 +386,7 @@ def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_9.5',     #
         print('\tcollect_ID of counter-rotatos:')
         print(collect_ID)
         print(len(collect_ID))
+        print(collect_value)
         
         
         #================================
@@ -2244,19 +2247,19 @@ def _plot_misalignment_z(csv_sample1 = 'L100_',                                 
 # SAVED: /plots/misalignment_distributions_z/
 def _manual_plot_misalignment_z(Lookbacktime_array         = [7.94, 7.32, 6.65, 5.94, 5.26, 4.12, 3.23, 2.34, 1.33, 0.00],
                                 #--- tally :
-                                  LTG_aligned_array        = [95.81, 95.18, 95.15, 94.79, 94.60, 94.49, 94.28, 93.52, 93.11, 92.52],    # %
-                                  LTG_aligned_err_array    = [2.54, 2.44, 2.36, 2.33, 2.33, 2.34, 2.37, 2.41, 2.46, 2.59],    # % error
-                                  LTG_misaligned_array     = [4.18, 4.81, 4.84, 5.20, 5.39, 5.50, 5.71, 6.47, 6.88, 7.47],
-                                  LTG_misaligned_err_array = [1.29, 1.36, 1.34, 1.38, 1.36, 1.38, 1.42, 1.52, 1.60, 1.63],
-                                  LTG_counter_array        = [1.09, 1.41, 1.65, 1.57, 1.95, 2.31, 2.73, 2.70, 3.21, 4.13],
-                                  LTG_counter_err_array    = [0.31, 0.35, 0.36, 0.33, 0.38, 0.42, 0.47, 0.45, 0.52, 0.60],
+                                  LTG_aligned_array        = [96.2, 95.7, 95.4, 95.0, 94.6, 94.5, 93.9, 93.8, 92.8, 92.5],    # %
+                                  LTG_aligned_err_array    = [2.6, 2.4, 2.4, 2.3, 2.3, 2.4, 2.4, 2.4, 2.5, 2.6],    # % error
+                                  LTG_misaligned_array     = [3.8, 4.3, 4.6, 5.0, 5.4, 5.5, 6.1, 6.2, 7.2, 7.5],
+                                  LTG_misaligned_err_array = [1.2, 1.3, 1.3, 1.4, 1.4, 1.4, 1.5, 1.5, 1.7, 1.8],
+                                  LTG_counter_array        = [1.0, 1.1, 1.5, 1.5, 1.9, 2.3, 2.8, 2.7, 3.2, 2.6],
+                                  LTG_counter_err_array    = [0.3, 0.3, 0.3, 0.3, 0.4, 0.4, 0.5, 0.5, 0.5, 0.6],
                                 #----
-                                  ETG_aligned_array        = [66.94, 66.29, 66.76, 65.67, 64.33, 64.28, 63.45, 63.08, 61.29, 62.57],
-                                  ETG_aligned_err_array    = [2.66, 2.67, 2.75, 2.75, 2.78, 2.78, 2.84, 2.89, 2.88, 3.00],
-                                  ETG_misaligned_array     = [33.05, 33.70, 33.23, 34.32, 35.66, 35.71, 36.54, 36.91, 38.70, 37.42],
-                                  ETG_misaligned_err_array = [4.14, 4.25, 4.31, 4.44, 4.65, 4.67, 4.79, 4.94, 5.11, 5.21],
-                                  ETG_counter_array        = [5.74, 6.55, 6.88, 7.60, 8.51, 8.53, 11.09, 10.75, 12.25, 12.05],
-                                  ETG_counter_err_array    = [0.80, 0.85, 0.89, 0.96, 1.03, 1.03, 1.21, 1.22, 1.32, 1.35],
+                                  ETG_aligned_array        = [61.4, 60.2, 61.0, 60.0, 58.1, 57.7, 57.9, 56.7, 55.0, 56.6],
+                                  ETG_aligned_err_array    = [2.5, 2.5, 2.6, 2.6, 2.6, 2.6, 2.7, 2.7, 2.7, 2.8],
+                                  ETG_misaligned_array     = [38.6, 39.8, 39.0, 40.0, 41.9, 42.3, 42.1, 43.4, 45.0, 43.4],
+                                  ETG_misaligned_err_array = [4.2, 4.4, 4.5, 4.6, 4.9, 4.9, 5.0, 5.2, 5.4, 5.5],
+                                  ETG_counter_array        = [3.8, 4.7, 4.8, 5.4, 6.8, 7.2, 8.9, 8.5, 9.5, 9.4],
+                                  ETG_counter_err_array    = [0.6, 0.7, 0.7, 0.8, 0.9, 0.9, 1.1, 1.1, 1.1, 1.2],
                                 #--------------------------
                                 showfig       = True,
                                 savefig       = True,
@@ -3067,7 +3070,7 @@ def _plot_misalignment_distribution_timescale(csv_tree = 'L100_galaxy_tree_',
 #_manual_plot_misalignment_double()
 
 #_plot_misalignment_z()
-#_manual_plot_misalignment_z()
+_manual_plot_misalignment_z()
 
 # not finished:
 #_plot_misalignment_distribution_timescale()
@@ -3091,14 +3094,6 @@ def _plot_misalignment_distribution_timescale(csv_tree = 'L100_galaxy_tree_',
 #_plot_misalignment(csv_sample = 'L100_188_all_sample_misalignment_9.5', csv_output = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_', use_angle = 'stars_gas_sf', ETG_or_LTG = 'LTG', cluster_or_field   = 'both', use_proj_angle     = False, add_observational  = None)
 
 
-
-
-_plot_misalignment(csv_sample = 'L100_188_all_sample_misalignment_9.5', csv_output = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_', use_angle = 'stars_gas_sf', ETG_or_LTG = 'both', cluster_or_field   = 'both', use_proj_angle     = True, add_observational  = None)
-
-
-
-
-
 #_plot_misalignment_double(csv_sample = 'L100_188_all_sample_misalignment_9.5', csv_output = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_', use_angle = 'stars_gas_sf', ETG_or_LTG = 'both', cluster_or_field   = 'both', use_proj_angle     = True, add_observational  = None)
 #_plot_misalignment_double(csv_sample = 'L100_188_all_sample_misalignment_9.5', csv_output = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_', use_angle = 'stars_gas_sf', ETG_or_LTG = 'both', cluster_or_field   = 'both', use_proj_angle     = False, add_observational  = None)
 
@@ -3116,12 +3111,14 @@ _plot_misalignment(csv_sample = 'L100_188_all_sample_misalignment_9.5', csv_outp
 #_plot_misalignment_z(use_angle = 'stars_gas_sf', ETG_or_LTG = 'ETG', cluster_or_field   = 'cluster')
 #_plot_misalignment_z(use_angle = 'stars_gas_sf', ETG_or_LTG = 'LTG', cluster_or_field   = 'cluster')
 
+
 #       SNIP EVOLUTION
 #_plot_misalignment_z(csv_sample1 = 'L100_', 
 #                     csv_sample_range = np.array([134, 140, 146, 152, 157, 166, 173, 180, 188, 200]), 
 #                     csv_sample2 = '_all_sample_misalignment_9.5', 
 #                     csv_output_in = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_', 
 #                     use_angle = 'stars_gas_sf', 
+#                     use_proj_angle     = False,
 #                     ETG_or_LTG = 'ETG', 
 #                     cluster_or_field   = 'both')
 #_plot_misalignment_z(csv_sample1 = 'L100_', 
@@ -3129,6 +3126,7 @@ _plot_misalignment(csv_sample = 'L100_188_all_sample_misalignment_9.5', csv_outp
 #                     csv_sample2 = '_all_sample_misalignment_9.5', 
 #                     csv_output_in = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_', 
 #                     use_angle = 'stars_gas_sf', 
+#                     use_proj_angle     = False,
 #                     ETG_or_LTG = 'LTG', 
 #                     cluster_or_field   = 'both')
 #_plot_misalignment_z(csv_sample1 = 'L100_', 
@@ -3136,6 +3134,7 @@ _plot_misalignment(csv_sample = 'L100_188_all_sample_misalignment_9.5', csv_outp
 #                     csv_sample2 = '_all_sample_misalignment_9.5', 
 #                     csv_output_in = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_', 
 #                     use_angle = 'stars_gas_sf', 
+#                     use_proj_angle     = False,
 #                     ETG_or_LTG = 'ETG', 
 #                     cluster_or_field   = 'field')
 #_plot_misalignment_z(csv_sample1 = 'L100_', 
@@ -3143,6 +3142,7 @@ _plot_misalignment(csv_sample = 'L100_188_all_sample_misalignment_9.5', csv_outp
 #                     csv_sample2 = '_all_sample_misalignment_9.5', 
 #                     csv_output_in = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_', 
 #                     use_angle = 'stars_gas_sf', 
+#                     use_proj_angle     = False,
 #                     ETG_or_LTG = 'LTG', 
 #                     cluster_or_field   = 'field')
 #_plot_misalignment_z(csv_sample1 = 'L100_', 
@@ -3150,6 +3150,7 @@ _plot_misalignment(csv_sample = 'L100_188_all_sample_misalignment_9.5', csv_outp
 #                     csv_sample2 = '_all_sample_misalignment_9.5', 
 #                     csv_output_in = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_', 
 #                     use_angle = 'stars_gas_sf', 
+#                     use_proj_angle     = False,
 #                     ETG_or_LTG = 'ETG', 
 #                     cluster_or_field   = 'cluster')
 #_plot_misalignment_z(csv_sample1 = 'L100_', 
@@ -3157,6 +3158,7 @@ _plot_misalignment(csv_sample = 'L100_188_all_sample_misalignment_9.5', csv_outp
 #                     csv_sample2 = '_all_sample_misalignment_9.5', 
 #                     csv_output_in = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_', 
 #                     use_angle = 'stars_gas_sf', 
+#                     use_proj_angle     = False,
 #                     ETG_or_LTG = 'LTG', 
 #                     cluster_or_field   = 'cluster')
 

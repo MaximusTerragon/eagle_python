@@ -496,6 +496,7 @@ class Subhalo_Extract:
         dm        = self._read_galaxy(data_dir, 1, self.gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length, snapNum, mask_sgn)
         bh        = self._read_galaxy(data_dir, 5, self.gn, sgn, self.centre*u.kpc.to(u.Mpc), load_region_length, snapNum, mask_sgn)
         
+        
         # CENTER COORDS, VELOCITY NOT ADJUSTED  [pkpc]
         if centre_galaxy == True:
             stars['Coordinates'] = stars['Coordinates'] - self.centre
@@ -1542,12 +1543,13 @@ class Subhalo_Analysis:
                 if len(trimmed_data['stars']['Mass']) > 0:
                     pec_vel_rad = self._peculiar_velocity_part(trimmed_data['stars'])
                     stellar_com = self._centre_of_mass(trimmed_data['stars'])
-                    self.coms['adjust'].append(stellar_com)
+                    self.coms['adjust'].append(stellar_com)                     # shift from aperture, away from stellar CoM
                 else:
                     pec_vel_rad = np.array([math.nan, math.nan, math.nan])
                     stellar_com = np.array([math.nan, math.nan, math.nan])
                     self.coms['adjust'].append(stellar_com)
-                
+                    
+                # technically we should iterate this... trim... find CoM+pecvel... adjust... find new CoM+pecvel... adjust, but we find the offset is small and unlikely to make much difference given the CoM adjust is only around 0.2 pkpc at ~max, more like 0.05-0.1 pkpc
                 # Adjust velocity of trimmed_data to account for peculiar velocity
                 for parttype_name in trimmed_data.keys():
                     # if array empty, it'll just leave the empty array
@@ -2309,6 +2311,7 @@ class Subhalo_Analysis:
             
             # Trim data to kappa radius
             trimmed_data = self._trim_data(data_nil, kappa_rad)
+            print('MAIN: kappa may be ever so slightly different as CoM not CoP')
             
             # Find peculiar velocity of trimmed data
             pec_vel_rad = self._peculiar_velocity(trimmed_data)

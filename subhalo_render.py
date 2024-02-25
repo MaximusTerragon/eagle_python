@@ -56,7 +56,7 @@ ID_list = [3748, 20455, 37445, 30494, 43163, 40124, 44545, 48383, 57647, 55343, 
 def galaxy_render(csv_sample = False,              # False, Whether to read in existing list of galaxies  
                     #--------------------------
                     mySims = [('RefL0012N0188', 12)],
-                    GalaxyID_List = [30495],
+                    GalaxyID_List = [37445],
                     #--------------------------
                     # Galaxy extraction properties
                     kappa_rad            = 30,          # calculate kappa for this radius [pkpc]
@@ -346,9 +346,11 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
             print('|Combined particle properties within %s pkpc:' %aperture_rad)
             print('|%s| |ID:   %s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f  %.2f  %.2f' %(SnapNum, str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad, subhalo.general['kappa_stars'], subhalo.general['kappa_gas'], subhalo.general['kappa_gas_sf'])) 
         
-        print('REGULAR RENDER:')
-        print('1hmr stars spin aaa: ', subhalo.halfmass_rad)
-        print(subhalo.spins['stars'])
+        
+        
+        #print(subhalo.coms['adjust'][0])
+        #print(subhalo.coms['stars'][0])
+        
         
         
         # RELAXATION TIMES 
@@ -547,6 +549,9 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                 
                 # Plot COM
                 ax.scatter(com[0], com[1], com[2], color=color, alpha=1, s=3, zorder=10)
+            
+            # centre of mass for stars
+            ax.scatter(0, 0, 0, c='pink', s=20, zorder=10, marker='x')
                 
             
         #--------------------------------------------
@@ -606,6 +611,11 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                 plot_rand_scatter(subhalo.data['%s' %str(trim_rad[-1])], 'bh', 'blueviolet')
                 fig.canvas.draw_idle()
             def com_button(self, event):
+                # plots CoM for all components for the spin vector radius we calculated. Stars will essentially 0, and then adjusted for the 'wiggle/offset' we did to in CoM 'adjust'. 
+                # basically we have our data, 30pkpc centred on stellar CoM in that radius
+                # we trimmed down to say, 1hmr
+                # we find the new stellar CoM (typically a small offset)
+                # then we adjust all coords according to new stellar CoM
                 plot_coms(subhalo.coms, 'stars', spin_vector_rad, 'r')
                 plot_coms(subhalo.coms, 'gas', spin_vector_rad, 'forestgreen')
                 plot_coms(subhalo.coms, 'gas_sf', spin_vector_rad, 'darkturquoise')
@@ -614,7 +624,8 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                 
                 fig.canvas.draw_idle()
             def cop_button(self, event):
-                ax.scatter(galaxy.stars_com[0], galaxy.stars_com[1], galaxy.stars_com[2], c='pink', s=20, zorder=10, marker='x')
+                #ax.scatter(galaxy.stars_com[0], galaxy.stars_com[1], galaxy.stars_com[2], c='pink', s=20, zorder=10, marker='x')
+                print('cop disabled')
                 fig.canvas.draw_idle()    
             def draw_hmr(self, event):
                 # Plot 1 and 2 HMR projected rad 
@@ -874,12 +885,13 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
 # counter-rotators
 ID_list = [95543294, 92357662, 89446165, 85281325, 82927744, 76110618, 58413057, 55795862, 55498617, 45564872, 40532736, 37720510, 37183699, 271611, 24492215, 21659331, 157786415, 153276029, 148038083, 144498089, 141671882, 14111024, 138496085, 1361557, 135310460, 135143499, 128867308, 113008138, 105237562, 104152191]
 ID_list = [37445]
+
 # Will color particles based on line of sight velocity 
 # SAVED:%s/individual_render/
 def galaxy_map(csv_sample = False,              # False, Whether to read in existing list of galaxies  
                     #--------------------------
                     mySims = [('RefL0012N0188', 12)],
-                    GalaxyID_List = np.arange(251899973, 251900039+1, 1),
+                    GalaxyID_List = ID_list,
                     #--------------------------
                     # Galaxy extraction properties
                     kappa_rad            = 30,          # calculate kappa for this radius [pkpc]
@@ -1567,8 +1579,7 @@ def galaxy_map(csv_sample = False,              # False, Whether to read in exis
             print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
             print('Finished')
         
-        metadata_plot = {'Author': 'ID: %s' %GalaxyID,
-                         'Title': 'Particles: %s' %particles}
+        metadata_plot = {'Author': 'ID: %s\nParticles: %s\nGassf angle: %.2f' %(GalaxyID, particles, subhalo.mis_angles['stars_gas_sf_angle'][0])}
        
         particle_txt = ''
         if stars:
@@ -1585,8 +1596,8 @@ def galaxy_map(csv_sample = False,              # False, Whether to read in exis
             particle_txt += '_bh'
         
         if savefig:
-            plt.savefig("%s/individual_render/L%s_velocitymap_ID%s_sgn%s_%s_%s_%s.%s" %(fig_dir, mySims[0][1], GalaxyID, mask_sgn, SnapNum, particle_txt, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print('\n  SAVED:%s/individual_render/L%s_velocitymap_ID%s_sgn%s_%s_%s_%s.%s' %(fig_dir, mySims[0][1], GalaxyID, mask_sgn, SnapNum, particle_txt, savefig_txt, file_format))
+            plt.savefig("%s/individual_render/GIF/L%s_velocitymap_ID%s_sgn%s_%s_%s_%s.%s" %(fig_dir, mySims[0][1], GalaxyID, mask_sgn, SnapNum, particle_txt, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print('\n  SAVED:%s/individual_render/GIF/L%s_velocitymap_ID%s_sgn%s_%s_%s_%s.%s' %(fig_dir, mySims[0][1], GalaxyID, mask_sgn, SnapNum, particle_txt, savefig_txt, file_format))
         if showfig:
             plt.show()
         plt.close()
@@ -1595,11 +1606,19 @@ def galaxy_map(csv_sample = False,              # False, Whether to read in exis
 #--------------      
 #galaxy_render()
 
+#galaxy_map(stars=True, gas_sf=False, mask_sgn=True)
+#galaxy_map(stars=False, gas_sf=True, mask_sgn=False)
 
-galaxy_map(stars=True, gas_sf=False, mask_sgn=True)
-galaxy_map(stars=False, gas_sf=True, mask_sgn=False)
+
+### for interesting galaxies:
+galaxy_map(GalaxyID_List = np.arange(251899973, 251900039+1, 1), stars=True, gas_sf=False, mask_sgn=False, savefig_txt = '_gif1', showfig=False, savefig=True)
+galaxy_map(GalaxyID_List = np.arange(251899973, 251900039+1, 1), stars=False, gas_sf=True, mask_sgn=False, savefig_txt = '_gif1', showfig=False, savefig=True)
+galaxy_map(GalaxyID_List = np.arange(453139689, 453139755+1, 1), stars=True, gas_sf=False, mask_sgn=False, savefig_txt = '_gif2', showfig=False, savefig=True)
+galaxy_map(GalaxyID_List = np.arange(453139689, 453139755+1, 1), stars=False, gas_sf=True, mask_sgn=False, savefig_txt = '_gif2', showfig=False, savefig=True)
+
+
 
 ### for counter rotators:
-#galaxy_map(stars=True, showfig= True, savefig= False, align_rad=False, mask_sgn=True, trim_rad=np.array(['1.0_hmr']), viewing_axis = 'z', savefig_txt = '_febTEST', showfig=False, savefig=True)
-#galaxy_map(gas_sf=True, showfig= True, savefig= False, align_rad=False, mask_sgn=True, trim_rad=np.array(['1.0_hmr']), viewing_axis = 'z',  savefig_txt = '_febTEST', showfig=False, savefig=True)
+#galaxy_map(stars=True, showfig= True, savefig= False, align_rad=False, mask_sgn=True, trim_rad=np.array(['1.0_hmr']), viewing_axis = 'z', savefig_txt = '_counter', showfig=False, savefig=True)
+#galaxy_map(gas_sf=True, showfig= True, savefig= False, align_rad=False, mask_sgn=True, trim_rad=np.array(['1.0_hmr']), viewing_axis = 'z',  savefig_txt = '_counter', showfig=False, savefig=True)
 #--------------

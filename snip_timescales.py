@@ -405,6 +405,11 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                     # Find largest stellar mass of this satellite, per method of Rodriguez-Gomez et al. 2015, Qu et al. 2017 (see crain2017)
                     mass_mask = np.argmax(StellarMass_tree[mask_i][int(SnapNum-100):int(SnapNum)]) + (SnapNum-100)
                     
+                    # Find SnapNum that is 2 Gyr before this one
+                    #snap_mask = np.where(Lookbacktime_tree)
+                    #mass_mask = np.argmax(StellarMass_tree[mask_i][int(SnapNum-100):int(SnapNum)]) + (SnapNum-100)
+                    
+                    
                     # Extract secondary properties
                     primary_stelmass   = StellarMass_tree[row_mask][mass_mask]
                     primary_gasmass    = GasMass_tree[row_mask][mass_mask]
@@ -501,12 +506,12 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                         mask_disc = np.where(np.array(all_totmass['%s' %GalaxyID]['hmr']) == float(disc_edge))[0][0]
                         mask_masses  = np.where(np.array(all_totmass['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                         
-                        # if edge of SF disk larger than current hmr, we use R and M of current hmr. Else we use R and M of SF disk
+                        # if edge of SF disk larger than current hmr, we cap and use R and M of current hmr. Else we use R and M of SF disk (most commonly done for ETGs)
                         if (disc_edge*float(all_general['%s' %GalaxyID]['halfmass_rad_sf'])) > (hmr_i*float(all_general['%s' %GalaxyID]['halfmass_rad'])):
-                            R = hmr_i*float(all_general['%s' %GalaxyID]['halfmass_rad'])
+                            R = hmr_i*float(all_general['%s' %GalaxyID]['halfmass_rad'])            # R of hmr
                             M = float(all_totmass['%s' %GalaxyID]['mass'][mask_masses])             # totmass at hmr edge
                         else:
-                            R = disc_edge*float(all_general['%s' %GalaxyID]['halfmass_rad_sf'])
+                            R = disc_edge*float(all_general['%s' %GalaxyID]['halfmass_rad_sf'])     # R of gassf
                             M = float(all_totmass['%s' %GalaxyID]['mass_disc'][mask_disc])          # totmass at disk edge
                         
                         
@@ -721,6 +726,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                             mask_coms   = np.where(np.array(all_coms['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                             mask_spins  = np.where(np.array(all_spins['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                             mask_angles = np.where(np.array(all_misangles['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
+                            mask_angles_halo = np.where(np.array(all_misangles['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                             
                             if angle_name not in ('stars_dm', 'gas_dm', 'gas_sf_dm'):
                                 com_abs  = _evaluate_com(all_coms['%s' %GalaxyID][particle_names[0]][mask_angles], all_coms['%s' %GalaxyID][particle_names[1]][mask_angles], 'abs')
@@ -734,7 +740,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                                                                                              'err_abs': [all_misangles['%s' %GalaxyID]['%s_angle_err' %angle_name][mask_angles]],
                                                                                              'angle_proj': [all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle' %angle_name][mask_angles]],
                                                                                              'err_proj': [all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle_err' %angle_name][mask_angles]],
-                                                                                             'angle_halo': [all_misangleshalo['%s' %GalaxyID]['%s_angle' %angle_name][mask_angles]],
+                                                                                             'angle_halo': [all_misangleshalo['%s' %GalaxyID]['%s_angle' %angle_name][mask_angles_halo]],
                                                                                              'com_abs': [com_abs],
                                                                                              'com_proj': [com_proj]}})
                             
@@ -1232,6 +1238,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                             mask_coms   = np.where(np.array(all_coms['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                             mask_spins  = np.where(np.array(all_spins['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                             mask_angles = np.where(np.array(all_misangles['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
+                            mask_angles_halo = np.where(np.array(all_misangles['%s' %GalaxyID]['hmr']) == float(hmr_i))[0][0]
                             
                             if angle_name not in ('stars_dm', 'gas_dm', 'gas_sf_dm'):
                                 com_abs  = _evaluate_com(all_coms['%s' %GalaxyID][particle_names[0]][mask_angles], all_coms['%s' %GalaxyID][particle_names[1]][mask_angles], 'abs')
@@ -1245,7 +1252,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                             galaxy_tree['%s' %ID_dict][angle_name]['%s_hmr' %hmr_i]['err_abs'].append(all_misangles['%s' %GalaxyID]['%s_angle_err' %angle_name][mask_angles])
                             galaxy_tree['%s' %ID_dict][angle_name]['%s_hmr' %hmr_i]['angle_proj'].append(all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle' %angle_name][mask_angles])
                             galaxy_tree['%s' %ID_dict][angle_name]['%s_hmr' %hmr_i]['err_proj'].append(all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle_err' %angle_name][mask_angles])
-                            galaxy_tree['%s' %ID_dict][angle_name]['%s_hmr' %hmr_i]['angle_halo'].append(all_misangleshalo['%s' %GalaxyID]['%s_angle' %angle_name][mask_angles])
+                            galaxy_tree['%s' %ID_dict][angle_name]['%s_hmr' %hmr_i]['angle_halo'].append(all_misangleshalo['%s' %GalaxyID]['%s_angle' %angle_name][mask_angles_halo])
                             galaxy_tree['%s' %ID_dict][angle_name]['%s_hmr' %hmr_i]['com_abs'].append(com_abs)
                             galaxy_tree['%s' %ID_dict][angle_name]['%s_hmr' %hmr_i]['com_proj'].append(com_proj)
                                                                                                                                                         
@@ -1542,17 +1549,18 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                   
                   #====================================================================================================
                   # Plot histogram of sample we ended up selecting
-                  plot_sample_hist  = True,
+                  plot_sample_hist  = False,
                     bin_width_mass  = 0.01,      # 0.1
                     
                   #-----------------------------
                   # Plot timescale histogram with current sample
                   plot_timescale_histogram  = False,   
                     bin_limit_trelax      = 6,        # [ None / Gyr ]
-                    bin_width_trelax      = 0.25,      # [ Gyr ]
+                    bin_width_trelax      = 0.25,      # [ 0.25 / Gyr ]
                       plot_percentage     = True,
                       plot_relaxation_type  = True,     # SET TO FALSE IF BELOW TRUE. Stack histogram types   
                       plot_histogram_log    = False,    # set yaxis as log
+                      plot_inset            = True,     # whether to have smaller second plot
                   plot_tdyn_histogram     = False,
                     bin_limit_tdyn        = 28,        # [ None / multiples ]
                     bin_width_tdyn        = 1,      # [ multiples ]
@@ -1579,33 +1587,26 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 
                   #-----------------------------
                   plot_box_and_whisker_trelax = False,     # Plots relaxation type vs relaxation time for ETG and LTG. USes relaxation_type and relaxation_morph
-                    whisker_morphs            = ['LTG-LTG', 'ETG-ETG'],           # Can be either relaxation_morph or misalignment_morph
+                    whisker_morphs            = ['ETG-ETG', 'LTG-LTG'],           # Can be either relaxation_morph or misalignment_morph
                   plot_box_and_whisker_tdyn    = False,
                   plot_box_and_whisker_ttorque = False,
                   
-                
+                  #-----------------------------
+                  # Will plot misalignments within an offset range (peak misangle) for ETGs and LTGs
+                  plot_offset_trelax        = False,                
+                  plot_offset_morph_trelax  = False,                
+                    offset_morphs       = ['LTG-LTG', 'ETG-ETG'],           # Can be either relaxation_morph or misalignment_morph
+                    plot_offset_range   = [30, 150],                         # [min angle , max angle] of peak misangle
+                    plot_offset_type    = ['co-co'],                     # [ 'co-co', 'co-counter' ]  or False
+                  plot_offset_tdyn          = False,                
+                  plot_offset_morph_tdyn    = False,     
+                  plot_offset_ttorque       = False,           
+                  plot_offset_morph_ttorque = False,        
+                    
+                    
                 
                   
-                  #-----------------------------
-                  # Plot scatter and extract spearman from it
-                  plot_spearman         = False,                     # Available variables: halomass, stelmass, gasmass, sfmass, nsfmass, dmmass,   sfr, ssfr,   stars_Z, gas_Z, inflow_Z, outflow_Z
-                                                                    #                      kappa_stars, kappa_gas, kappa_sf,   ellip, triax,   rad, radproj, rad_sf
-                                                                    #                      inflow_rate, outflow_rate, stelmassloss_rate,   s_inflow_rate, s_outflow_rate,   inflow_cum, outflow_cum, 
-                                                                    #                      angle_peak,   number_of_mergers,  relaxation_time
-                    plot_spearman_x     = 'stelmass',        # [ array name ]
-                    plot_spearman_y     = 'sfmass',            # [ array name ]
-                    plot_spearman_c     = 'kappa_stars',               # [ None / array name]
-                      inflow_skip       = 0.5,                      # [ Gyr ] time to ignore inflow, after which to sample. Relaxations below this time are automatically filetred out
-                  #-----------------------------
-                  # Same as spearman but more specific and has errors
-                  plot_delta_timescale  = False,                # Plot time spent misaligned as a function of misalignment angle. Will plot the 'peak_misangle' with time
-                    plot_delta_color    = 'inflow_rate',        # averaged over misalignment duration, pick from misalignment_tree{}
-                  #-----------------------------
-                  # Plots trelax - tdyn, which should be proportional
-                  plot_trelax_tdyn      = False,
-                  #-----------------------------
-                  # Plots log(ellip) - log(trelax/tdyn), which should have a (rough) gradient of -1 
-                  plot_ellip_trelaxtdyn = False,
+                  
                   #-----------------------------
                   # General formatting
                   showfig       = True,
@@ -1613,8 +1614,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                     file_format = 'pdf',
                     savefig_txt = 'txt',     # [ 'manual' / txt ] 'manual' will prompt txt before saving
               #====================================================================================================
-              load_csv_file  = '_normalLatency_anyMergers_anyMorph',     # [ 'file_name' / False ] load existing misalignment tree  '_normalLatency_anyMergers_anyMorph'
-                                          plot_annotate  = False,    #  r'ETG ($\bar{\kappa}_{\mathrm{co}}^{\mathrm{*}} < 0.35$)'                     # string of text or False / 'ETG' 
+              load_csv_file  = False,     # [ 'file_name' / False ] load existing misalignment tree  '_normalLatency_anyMergers_anyMorph'
+                plot_annotate  = False,    #  [ False / 'ETG → ETG' r'ETG ($\bar{\kappa}_{\mathrm{co}}^{\mathrm{*}} < 0.35$)'  ]                   # string of text or False / 'ETG' 
               #====================================================================================================
                   print_progress = False,
                   debug = False):
@@ -3087,6 +3088,19 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         savefig_txt = load_csv_file
     
     
+    """for ID_i in misalignment_tree.keys():
+        if int(ID_i) in range(251899973, 251899973+80):
+            print('Found misalignment: ', ID_i)
+            print('\t%.2f Gyr' %misalignment_tree['%s' %ID_i]['relaxation_time'])
+            print('\t%.2f trelax/tdyn' %misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+            print('\t%.2f trelax/ttorque' %misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            print('\t%s' %misalignment_tree['%s' %ID_i]['relaxation_morph'])
+            print('\t%.2f peak offset angle' %misalignment_tree['%s' %ID_i]['angle_peak'])
+            for i, time_i, angle_i in zip(np.arange(0, len(misalignment_tree['%s' %ID_i]['Lookbacktime'])), misalignment_tree['%s' %ID_i]['Lookbacktime'], misalignment_tree['%s' %ID_i]['stars_gas_sf']):
+                print('\t\t%.2f\t%.1f' %(time_i, angle_i), misalignment_tree['%s' %ID_i]['merger_ratio_stars'][i], misalignment_tree['%s' %ID_i]['merger_ratio_gas'][i], misalignment_tree['%s' %ID_i]['sfmass'][i])
+            print(' ')
+    """
+    
     #------------------------------------------------ 
     plt.close()
     # Summary and K-S KS test
@@ -3502,7 +3516,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
         #-------------
         ### Formatting
-        axs.set_xlabel(r'log$_{10}$ M$_{*}$ [M$_{\odot}$]')
+        axs.set_xlabel(r'log$_{10}$ M$_{*}$ ($2r_{50}$) [M$_{\odot}$]')
         axs.set_ylabel('Galaxies in sample')
         axs.set_xticks(np.arange(9, 12.1, 0.5))
         axs.set_xlim(9, 12.1)
@@ -3564,7 +3578,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         if plot_relaxation_type:
             if plot_percentage:
                 axs.hist([co_co_array, counter_counter_array, co_counter_array, counter_co_array], weights=(np.ones(len(summary_dict['ID']['co-co']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['co-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-co']))/len(relaxationtime_plot)), bins=np.arange(0, bin_limit_trelax+bin_width_trelax, bin_width_trelax), histtype='bar', edgecolor='none', alpha=0.5, stacked=True)
-                axs.hist([co_co_array, counter_counter_array, co_counter_array, counter_co_array], weights=(np.ones(len(summary_dict['ID']['co-co']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['co-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-co']))/len(relaxationtime_plot)), bins=np.arange(0, bin_limit_trelax+bin_width_trelax, bin_width_trelax), histtype='bar', facecolor='none', edgecolor='k', alpha=0.9, stacked=True)
+                axs.hist([co_co_array, counter_counter_array, co_counter_array, counter_co_array], weights=(np.ones(len(summary_dict['ID']['co-co']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['co-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-co']))/len(relaxationtime_plot)), bins=np.arange(0, bin_limit_trelax+bin_width_trelax, bin_width_trelax), histtype='bar', facecolor='none', edgecolor='k', alpha=0.9, lw=0.7, stacked=True)
             
                 # Add poisson errors to each bin (sqrt N)
                 hist_n, _ = np.histogram(relaxationtime_plot, bins=np.arange(0, bin_limit_trelax+bin_width_trelax, bin_width_trelax), range=(0, bin_limit_trelax))
@@ -3590,7 +3604,26 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 hist_n, _ = np.histogram(relaxationtime_plot, bins=np.arange(0, bin_limit_trelax+bin_width_trelax, bin_width_trelax), range=(0, bin_limit_trelax))
                 axs.errorbar(np.arange(bin_width_trelax/2, bin_limit_trelax+0.5*bin_width_trelax, bin_width_trelax), hist_n, xerr=None, yerr=np.sqrt(hist_n), ecolor='k', ls='none', capsize=2, elinewidth=1.0, markeredgewidth=1, alpha=0.9)
         
+        #-------------
+        ### Inset second axes
+        if plot_inset:
+            axins = axs.inset_axes([0.4, 0.2, 0.5, 0.6])
             
+            axins.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, bin_limit_trelax+bin_width_trelax, bin_width_trelax), histtype='bar', edgecolor='none', facecolor='k', alpha=0.1)
+            bin_count, _, _ = axins.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, bin_limit_trelax+bin_width_trelax, bin_width_trelax), histtype='bar', edgecolor='k', facecolor='none', lw=0.7, alpha=1.0)
+            
+            print('bin_count of hist:', bin_count)
+            
+            axins.set_yscale('log')
+            axins.set_ylim(0.0002, 0.55)
+            axins.set_xlim(0, bin_limit_trelax)
+            axins.set_xticks(np.arange(0, bin_limit_trelax+0.1, step=1))
+            axins.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)', fontsize = 5)
+            if plot_percentage:
+                axins.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
+                axins.set_ylabel('Percentage of misalignments', fontsize=5)
+            
+        
         #-----------
         ### General formatting
         # Axis labels
@@ -3605,8 +3638,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             axs.set_ylabel('Percentage of misalignments')
         else:
             axs.set_ylabel('Number of misalignments')
-    
-        #axs.set_ylim(0, 0.2)
+        axs.set_ylim(0, 0.55)
+        
         
         #-----------
         ### Legend
@@ -3708,7 +3741,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 legend_labels.append('counter → co')
                 legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
                 legend_colors.append('C3')
-        axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
+        if plot_inset:
+            ncol=2
+        else:
+            ncol=4
+        axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0, ncol=ncol)
         
         
         #-----------
@@ -3723,6 +3760,9 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
         #-----------
         ### Savefig
+        if plot_inset:
+            savefig_txt_2 = savefig_txt + '_inset'
+            
         metadata_plot = {'Title': '%s, %s\nThreshold: %s\nMin delta:%s\nLatency time: %s\nMin ratio: %s\nUSE MERGERS: %s\nMax closest merger: %s-%s\nTime extra: %s\nTime no misangle: %s\nStelmass: %s/%s\n kappa*: %s/%s\n outflow: %s/%s' %(abs_or_proj, use_angle, misangle_threshold, min_delta_angle, latency_time, min_stellar_ratio, use_merger_criteria, max_merger_pre, max_merger_post, time_extra, time_no_misangle, min_stelmass, max_stelmass, min_kappa_stars, max_kappa_stars, min_inflow, max_inflow),
                          'Author': 'Min particles: %s\nMax CoM: %s\nMin inc: %s\nPlot ratio limit: %s\n\n# MISALIGNMENTS: %s\nco-co: %s\ncnt-cnt: %s\nco-cnt: %s\ncnt-co: %s\nETG-ETG: %s\nLTG-LTG: %s\nETG-LTG: %s\nLTG-ETG: %s\nMean: %.2f Gyr\nMedian: %.2f Gyr\nstd: %.2f Gyr\nmax: %.2f Gyr' %(min_particles, max_com, min_inclination, plot_merger_limit, len(misalignment_tree.keys()), len(summary_dict['ID']['co-co']), len(summary_dict['ID']['counter-counter']), len(summary_dict['ID']['co-counter']), len(summary_dict['ID']['counter-co']), len(summary_dict['ID']['ETG-ETG']), len(summary_dict['ID']['LTG-LTG']), len(summary_dict['ID']['ETG-LTG']), len(summary_dict['ID']['LTG-ETG']), mean_timescale, median_timescale, std_timescale, max(relaxationtime_plot)),
                          'Producer': str(hist_n)}
@@ -3731,8 +3771,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         if savefig:
             if savefig_txt == 'manual':
                 savefig_txt = input('\n  -> Enter savefig_txt:   ')
-            plt.savefig("%s/time_spent_misaligned/%stime_spent_misaligned_%s_stacked%s_percentage%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), plot_relaxation_type, plot_percentage, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print("\n  SAVED: %s/time_spent_misaligned/%stime_spent_misaligned_%s_stacked%s_percentage%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), plot_relaxation_type, plot_percentage, savefig_txt, file_format)) 
+            plt.savefig("%s/time_spent_misaligned/%stime_spent_misaligned_%s_stacked%s_percentage%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), plot_relaxation_type, plot_percentage, savefig_txt_2, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/time_spent_misaligned/%stime_spent_misaligned_%s_stacked%s_percentage%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), plot_relaxation_type, plot_percentage, savefig_txt_2, file_format)) 
         if showfig:
             plt.show()
         plt.close()
@@ -3774,7 +3814,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         if plot_relaxation_type:
             if plot_percentage:
                 axs.hist([co_co_array, counter_counter_array, co_counter_array, counter_co_array], weights=(np.ones(len(summary_dict['ID']['co-co']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['co-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-co']))/len(relaxationtime_plot)), bins=np.arange(0, bin_limit_tdyn+bin_width_tdyn, bin_width_tdyn), histtype='bar', edgecolor='none', alpha=0.5, stacked=True)
-                axs.hist([co_co_array, counter_counter_array, co_counter_array, counter_co_array], weights=(np.ones(len(summary_dict['ID']['co-co']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['co-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-co']))/len(relaxationtime_plot)), bins=np.arange(0, bin_limit_tdyn+bin_width_tdyn, bin_width_tdyn), histtype='bar', facecolor='none', edgecolor='k', alpha=0.9, stacked=True)
+                axs.hist([co_co_array, counter_counter_array, co_counter_array, counter_co_array], weights=(np.ones(len(summary_dict['ID']['co-co']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['co-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-co']))/len(relaxationtime_plot)), bins=np.arange(0, bin_limit_tdyn+bin_width_tdyn, bin_width_tdyn), histtype='bar', facecolor='none', edgecolor='k', alpha=0.9, lw=0.7, stacked=True)
             
                 # Add poisson errors to each bin (sqrt N)
                 hist_n, _ = np.histogram(relaxationtime_plot, bins=np.arange(0, bin_limit_tdyn+bin_width_tdyn, bin_width_tdyn), range=(0, bin_limit_tdyn))
@@ -3800,7 +3840,25 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 hist_n, _ = np.histogram(relaxationtime_plot, bins=np.arange(0, bin_limit_tdyn+bin_width_tdyn, bin_width_tdyn), range=(0, bin_limit_tdyn))
                 axs.errorbar(np.arange(bin_width_tdyn/2, bin_limit_tdyn+0.5*bin_width_tdyn, bin_width_tdyn), hist_n, xerr=None, yerr=np.sqrt(hist_n), ecolor='k', ls='none', capsize=2, elinewidth=1.0, markeredgewidth=1, alpha=0.9)
         
-        
+        #-------------
+        ### Inset second axes
+        if plot_inset:
+            axins = axs.inset_axes([0.4, 0.2, 0.5, 0.6])
+            
+            axins.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, bin_limit_tdyn+bin_width_tdyn, bin_width_tdyn), histtype='bar', edgecolor='none', facecolor='k', alpha=0.1)
+            bin_count, _, _ = axins.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, bin_limit_tdyn+bin_width_tdyn, bin_width_tdyn), histtype='bar', edgecolor='k', facecolor='none', lw=0.7, alpha=1.0)
+            
+            print('bin_count of hist:', bin_count)
+            
+            axins.set_yscale('log')
+            axins.set_ylim(0.0002, 0.55)
+            axins.set_xlim(0, bin_limit_tdyn)
+            axins.set_xticks(np.arange(0, bin_limit_tdyn+0.1, step=4))
+            axins.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{dyn}}$', fontsize=5)
+            if plot_percentage:
+                axins.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
+                axins.set_ylabel('Percentage of misalignments', fontsize=5)
+            
         #-----------
         ### General formatting
         # Axis labels
@@ -3815,8 +3873,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             axs.set_ylabel('Percentage of misalignments')
         else:
             axs.set_ylabel('Number of misalignments')
+        axs.set_ylim(0, 0.55)
     
-        #axs.set_ylim(0, 0.2)
         
         #-----------
         ### Legend
@@ -3918,7 +3976,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 legend_labels.append('counter → co')
                 legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
                 legend_colors.append('C3')
-        axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
+        if plot_inset:
+            ncol=2
+        else:
+            ncol=4
+        axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0, ncol=ncol)
         
         #-----------
         ### title
@@ -3932,6 +3994,9 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
         #-----------
         ### Savefig
+        if plot_inset:
+            savefig_txt_2 = savefig_txt + '_inset'
+            
         metadata_plot = {'Title': '%s, %s\nThreshold: %s\nMin delta:%s\nLatency time: %s\nMin ratio: %s\nUSE MERGERS: %s\nMax closest merger: %s-%s\nTime extra: %s\nTime no misangle: %s\nStelmass: %s/%s\n kappa*: %s/%s\n outflow: %s/%s' %(abs_or_proj, use_angle, misangle_threshold, min_delta_angle, latency_time, min_stellar_ratio, use_merger_criteria, max_merger_pre, max_merger_post, time_extra, time_no_misangle, min_stelmass, max_stelmass, min_kappa_stars, max_kappa_stars, min_inflow, max_inflow),
                          'Author': 'Min particles: %s\nMax CoM: %s\nMin inc: %s\nPlot ratio limit: %s\n\n# MISALIGNMENTS: %s\nco-co: %s\ncnt-cnt: %s\nco-cnt: %s\ncnt-co: %s\nETG-ETG: %s\nLTG-LTG: %s\nETG-LTG: %s\nLTG-ETG: %s\nMean: %.2f\nMedian: %.2f\nstd: %.2f\nmax: %.2f' %(min_particles, max_com, min_inclination, plot_merger_limit, len(misalignment_tree.keys()), len(summary_dict['ID']['co-co']), len(summary_dict['ID']['counter-counter']), len(summary_dict['ID']['co-counter']), len(summary_dict['ID']['counter-co']), len(summary_dict['ID']['ETG-ETG']), len(summary_dict['ID']['LTG-LTG']), len(summary_dict['ID']['ETG-LTG']), len(summary_dict['ID']['LTG-ETG']), mean_tdyn, median_tdyn, std_tdyn, max(relaxationtime_plot)),
                          'Producer': str(hist_n)}
@@ -3940,8 +4005,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         if savefig:
             if savefig_txt == 'manual':
                 savefig_txt = input('\n  -> Enter savefig_txt:   ')
-            plt.savefig("%s/time_spent_misaligned/%stdyn_spent_misaligned_%s_stacked%s_percentage%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), plot_relaxation_type, plot_percentage, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print("\n  SAVED: %s/time_spent_misaligned/%stdyn_spent_misaligned_%s_stacked%s_percentage%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), plot_relaxation_type, plot_percentage, savefig_txt, file_format)) 
+            plt.savefig("%s/time_spent_misaligned/%stdyn_spent_misaligned_%s_stacked%s_percentage%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), plot_relaxation_type, plot_percentage, savefig_txt_2, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/time_spent_misaligned/%stdyn_spent_misaligned_%s_stacked%s_percentage%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), plot_relaxation_type, plot_percentage, savefig_txt_2, file_format)) 
         if showfig:
             plt.show()
         plt.close()
@@ -3983,7 +4048,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         if plot_relaxation_type:
             if plot_percentage:
                 axs.hist([co_co_array, counter_counter_array, co_counter_array, counter_co_array], weights=(np.ones(len(summary_dict['ID']['co-co']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['co-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-co']))/len(relaxationtime_plot)), bins=np.arange(0, bin_limit_ttorque+bin_width_ttorque, bin_width_ttorque), histtype='bar', edgecolor='none', alpha=0.5, stacked=True)
-                axs.hist([co_co_array, counter_counter_array, co_counter_array, counter_co_array], weights=(np.ones(len(summary_dict['ID']['co-co']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['co-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-co']))/len(relaxationtime_plot)), bins=np.arange(0, bin_limit_ttorque+bin_width_ttorque, bin_width_ttorque), histtype='bar', facecolor='none', edgecolor='k', alpha=0.9, stacked=True)
+                axs.hist([co_co_array, counter_counter_array, co_counter_array, counter_co_array], weights=(np.ones(len(summary_dict['ID']['co-co']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['co-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-co']))/len(relaxationtime_plot)), bins=np.arange(0, bin_limit_ttorque+bin_width_ttorque, bin_width_ttorque), histtype='bar', facecolor='none', edgecolor='k', alpha=0.9, lw=0.7, stacked=True)
             
                 # Add poisson errors to each bin (sqrt N)
                 hist_n, _ = np.histogram(relaxationtime_plot, bins=np.arange(0, bin_limit_ttorque+bin_width_ttorque, bin_width_ttorque), range=(0, bin_limit_ttorque))
@@ -3996,7 +4061,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         else:
             if plot_percentage:
                 axs.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, bin_limit_ttorque+bin_width_ttorque, bin_width_ttorque), histtype='bar', edgecolor='none', facecolor='k', alpha=0.1)
-                bin_count, _, _ = axs.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, bin_limit_ttorque+bin_width_ttorque, bin_width_ttorque), histtype='bar', edgecolor='k', facecolor='none', alpha=1.0)
+                bin_count, _, _ = axs.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, bin_limit_ttorque+bin_width_ttorque, bin_width_ttorque), histtype='bar', edgecolor='k', facecolor='none', lw=0.7, alpha=1.0)
         
                 # Add poisson errors to each bin (sqrt N)
                 hist_n, _ = np.histogram(relaxationtime_plot, bins=np.arange(0, bin_limit_ttorque+bin_width_ttorque, bin_width_ttorque), range=(0, bin_limit_ttorque))
@@ -4009,7 +4074,26 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 hist_n, _ = np.histogram(relaxationtime_plot, bins=np.arange(0, bin_limit_ttorque+bin_width_ttorque, bin_width_ttorque), range=(0, bin_limit_ttorque))
                 axs.errorbar(np.arange(bin_width_ttorque/2, bin_limit_ttorque+0.5*bin_width_ttorque, bin_width_ttorque), hist_n, xerr=None, yerr=np.sqrt(hist_n), ecolor='k', ls='none', capsize=2, elinewidth=1.0, markeredgewidth=1, alpha=0.9)
         
+        
+        #-------------
+        ### Inset second axes
+        if plot_inset:
+            axins = axs.inset_axes([0.4, 0.2, 0.5, 0.6])
             
+            axins.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, bin_limit_ttorque+bin_width_ttorque, bin_width_ttorque), histtype='bar', edgecolor='none', facecolor='k', alpha=0.1)
+            bin_count, _, _ = axins.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, bin_limit_ttorque+bin_width_ttorque, bin_width_ttorque), histtype='bar', edgecolor='k', facecolor='none', lw=0.7, alpha=1.0)
+            
+            print('bin_count of hist:', bin_count)
+            
+            axins.set_yscale('log')
+            axins.set_ylim(0.0002, 0.55)
+            axins.set_xlim(0, bin_limit_ttorque)
+            axins.set_xticks(np.arange(0, bin_limit_ttorque+0.1, step=2))
+            axins.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{torque}}$', fontsize=5)
+            if plot_percentage:
+                axins.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
+                axins.set_ylabel('Percentage of misalignments', fontsize=5)
+                
         #-----------
         ### General formatting
         # Axis labels
@@ -4024,8 +4108,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             axs.set_ylabel('Percentage of misalignments')
         else:
             axs.set_ylabel('Number of misalignments')
+        axs.set_ylim(0, 0.55)
     
-        #axs.set_ylim(0, 0.2)
         
         #-----------
         ### Legend
@@ -4127,7 +4211,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 legend_labels.append('counter → co')
                 legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
                 legend_colors.append('C3')
-        axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
+        if plot_inset:
+            ncol=2
+        else:
+            ncol=4
+        axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0, ncol=ncol)
         
         #-----------
         ### title
@@ -4141,6 +4229,9 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
         #-----------
         ### Savefig
+        if plot_inset:
+            savefig_txt_2 = savefig_txt + '_inset'
+            
         metadata_plot = {'Title': '%s, %s\nThreshold: %s\nMin delta:%s\nLatency time: %s\nMin ratio: %s\nUSE MERGERS: %s\nMax closest merger: %s-%s\nTime extra: %s\nTime no misangle: %s\nStelmass: %s/%s\n kappa*: %s/%s\n outflow: %s/%s' %(abs_or_proj, use_angle, misangle_threshold, min_delta_angle, latency_time, min_stellar_ratio, use_merger_criteria, max_merger_pre, max_merger_post, time_extra, time_no_misangle, min_stelmass, max_stelmass, min_kappa_stars, max_kappa_stars, min_inflow, max_inflow),
                          'Author': 'Min particles: %s\nMax CoM: %s\nMin inc: %s\nPlot ratio limit: %s\n\n# MISALIGNMENTS: %s\nco-co: %s\ncnt-cnt: %s\nco-cnt: %s\ncnt-co: %s\nETG-ETG: %s\nLTG-LTG: %s\nETG-LTG: %s\nLTG-ETG: %s\nMean: %.2f\nMedian: %.2f\nstd: %.2f\nmax: %.2f' %(min_particles, max_com, min_inclination, plot_merger_limit, len(misalignment_tree.keys()), len(summary_dict['ID']['co-co']), len(summary_dict['ID']['counter-counter']), len(summary_dict['ID']['co-counter']), len(summary_dict['ID']['counter-co']), len(summary_dict['ID']['ETG-ETG']), len(summary_dict['ID']['LTG-LTG']), len(summary_dict['ID']['ETG-LTG']), len(summary_dict['ID']['LTG-ETG']), mean_ttorque, median_ttorque, std_ttorque, max(relaxationtime_plot)),
                          'Producer': str(hist_n)}
@@ -4149,8 +4240,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         if savefig:
             if savefig_txt == 'manual':
                 savefig_txt = input('\n  -> Enter savefig_txt:   ')
-            plt.savefig("%s/time_spent_misaligned/%sttorque_spent_misaligned_%s_stacked%s_percentage%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), plot_relaxation_type, plot_percentage, savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print("\n  SAVED: %s/time_spent_misaligned/%sttorque_spent_misaligned_%s_stacked%s_percentage%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), plot_relaxation_type, plot_percentage, savefig_txt, file_format)) 
+            plt.savefig("%s/time_spent_misaligned/%sttorque_spent_misaligned_%s_stacked%s_percentage%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), plot_relaxation_type, plot_percentage, savefig_txt_2, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/time_spent_misaligned/%sttorque_spent_misaligned_%s_stacked%s_percentage%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), plot_relaxation_type, plot_percentage, savefig_txt_2, file_format)) 
         if showfig:
             plt.show()
         plt.close()
@@ -4453,7 +4544,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         ### Formatting
         axs.set_ylim(0, 180)
         axs.set_yticks(np.arange(0, 181, 30))
-        axs.set_ylabel('Misalignment angle')
+        axs.set_ylabel('Misalignment angle, $\psi_{\mathrm{3D}}$')
         if plot_type == 'time':
             axs.set_xlim(0-3*time_extra, bin_limit_trelax)
             axs.set_xticks(np.arange(0, bin_limit_trelax+0.1, 1))
@@ -4862,8 +4953,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         ### Formatting
         ax_co_co.set_ylim(0, 180)
         ax_co_co.set_yticks(np.arange(0, 181, 30))
-        ax_co_co.set_ylabel('Misalignment angle')
-        ax_counter_counter.set_ylabel('Misalignment angle')
+        ax_co_co.set_ylabel('Misalignment angle, $\psi_{\mathrm{3D}}$')
+        ax_counter_counter.set_ylabel('Misalignment angle, $\psi_{\mathrm{3D}}$')
         #ax_counter_counter.get_yaxis().set_label_coords(-0.12,1)
         if plot_type == 'time':
             ax_counter_counter.set_xlim(0-3*time_extra, bin_limit_trelax)
@@ -5281,7 +5372,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         ### Formatting
         axs.set_ylim(0, 180)
         axs.set_yticks(np.arange(0, 181, 30))
-        axs.set_ylabel('Misalignment angle')
+        axs.set_ylabel('Misalignment angle, $\psi_{\mathrm{3D}}$')
         axs.set_xlim(-1, bin_limit_tdyn)
         axs.set_xticks(np.arange(0, bin_limit_tdyn+0.1, 2))
         axs.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{dyn}}$')
@@ -5672,8 +5763,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         ### Formatting
         ax_co_co.set_ylim(0, 180)
         ax_co_co.set_yticks(np.arange(0, 181, 30))
-        ax_co_co.set_ylabel('Misalignment angle')
-        ax_counter_counter.set_ylabel('Misalignment angle')
+        ax_co_co.set_ylabel('Misalignment angle, $\psi_{\mathrm{3D}}$')
+        ax_counter_counter.set_ylabel('Misalignment angle, $\psi_{\mathrm{3D}}$')
         #ax_counter_counter.get_yaxis().set_label_coords(-0.12,1)
         ax_counter_counter.set_xlim(-1, bin_limit_tdyn)
         ax_counter_counter.set_xticks(np.arange(0, bin_limit_tdyn+0.1, 2))
@@ -6075,7 +6166,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         ### Formatting
         axs.set_ylim(0, 180)
         axs.set_yticks(np.arange(0, 181, 30))
-        axs.set_ylabel('Misalignment angle')
+        axs.set_ylabel('Misalignment angle, $\psi_{\mathrm{3D}}$')
         axs.set_xlim(-0.5, bin_limit_ttorque)
         axs.set_xticks(np.arange(0, bin_limit_ttorque+0.1, 1))
         axs.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{torque}}$')
@@ -6466,8 +6557,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         ### Formatting
         ax_co_co.set_ylim(0, 180)
         ax_co_co.set_yticks(np.arange(0, 181, 30))
-        ax_co_co.set_ylabel('Misalignment angle')
-        ax_counter_counter.set_ylabel('Misalignment angle')
+        ax_co_co.set_ylabel('Misalignment angle, $\psi_{\mathrm{3D}}$')
+        ax_counter_counter.set_ylabel('Misalignment angle, $\psi_{\mathrm{3D}}$')
         #ax_counter_counter.get_yaxis().set_label_coords(-0.12,1)
         ax_counter_counter.set_xlim(-0.5, bin_limit_ttorque)
         ax_counter_counter.set_xticks(np.arange(0, bin_limit_ttorque+0.1, 2))
@@ -6690,7 +6781,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         #axs.set_yticks(np.arange(0, bin_limit_trelax+0.1, step=1))
         axs.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)')
         
-        print(max(relaxationtime_plot))
+        #print(max(relaxationtime_plot))
         
         
         #------------
@@ -6992,12 +7083,864 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         df = 0
     
     
+    #-------------------------
+    # Plot delta angle, trelax. Looks at peak angle from 180
+    if plot_offset_trelax:
+        relaxationtime_plot  = []
+        angles_plot = []
+        ID_plot     = []
+        for ID_i in misalignment_tree.keys():
+            # check offset angle within range            
+            if not plot_offset_range[0] <=  misalignment_tree['%s' %ID_i]['angle_peak'] < plot_offset_range[1]:
+                continue
+            if plot_offset_type:
+                if misalignment_tree['%s' %ID_i]['relaxation_type'] not in plot_offset_type:
+                    continue
+                                
+            # Add angles
+            angles_plot.append(misalignment_tree['%s' %ID_i]['angle_peak'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            ID_plot.append(ID_i)
+        
+        # Collect data into dataframe
+        df = pd.DataFrame(data={'Peak misalignment angle': angles_plot, 'Relaxation time': relaxationtime_plot, 'GalaxyIDs': ID_plot})
+                
+        #-------------
+        # Plotting
+        fig = plt.figure(figsize=(10/3, 10/3))
+        gs  = fig.add_gridspec(2, 2,  width_ratios=(4, 1), height_ratios=(1, 4),
+                              left=0.1, right=0.9, bottom=0.1, top=0.9,
+                              wspace=0.1, hspace=0.1)
+        # Create the Axes.
+        ax = fig.add_subplot(gs[1, 0])
+        ax_histx = fig.add_subplot(gs[0, 0], sharex=ax)
+        ax_histy = fig.add_subplot(gs[1, 1], sharey=ax)
+        
+        bin_width = 15
+        bins = np.arange(plot_offset_range[0], plot_offset_range[1]+1, bin_width)
+        c = 'k'
+        
+        # Bin hist data, find sigma percentiles
+        binned_data_arg = np.digitize(df['Peak misalignment angle'], bins=bins)
+        bin_medians     = np.stack([np.percentile(df['Relaxation time'][binned_data_arg == i], q=[5, 16, 50, 84, 95]) for i in range(1, len(bins))])
+        #print(bin_medians)
+        
+        #-------------------
+        ### Plot scatter
+        ax.scatter(df['Peak misalignment angle'], df['Relaxation time'], s=0.05, c='grey', marker='.', alpha=1, zorder=1)
+        
+        ### Plot upper, median, and lower sigma
+        #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor=c, alpha=0.15, zorder=5)
+        ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor=c, alpha=0.35, zorder=6)
+        #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,2], bin_medians[:,3], facecolor=c, alpha=0.9, zorder=7, label=offset_morph_i)
+        ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=1, c=c, ls='-', zorder=7)
+        #ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls=':')
+        
+        
+        ### Plot histograms
+        ax_histx.hist(df['Peak misalignment angle'], bins=bins, log=True, facecolor='none', linewidth=1, edgecolor=c, histtype='step', alpha=1)
+        #ax_histx.hist(df['Peak misalignment angle'], bins=bins, log=True, facecolor=c, linewidth=1, edgecolor='none', alpha=0.1)
+        
+        ax_histy.hist(df['Relaxation time'], bins=np.arange(0, 3.1, 0.125), log=True, orientation='horizontal', facecolor='none', linewidth=1, edgecolor=c, histtype='step', alpha=0.8)
+        #ax_histy.hist(df['Relaxation time'], bins=np.arange(0, 3.1, 0.125), log=True, orientation='horizontal', facecolor=c, linewidth=1, edgecolor='none', alpha=0.1)
+        
+        
+        #-----------
+        ### General formatting
+        # Axis labels
+        ax.set_xticks(bins)
+        ax.set_xlim(plot_offset_range[0], plot_offset_range[-1])
+        ax.set_ylim(0, 3)
+        ax.set_ylabel('$t_{\mathrm{relax}}$ (Gyr)')
+        ax.set_xlabel('Peak misalignment angle')
+        ax.minorticks_on()
+        ax.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
+        ax.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
+
+        # no labels
+        ax_histx.tick_params(axis="x", labelbottom=False)
+        ax_histy.tick_params(axis="y", labelleft=False)
+        ax_histy.set_xticks([1, 10, 100, 1000])
+        ax_histy.set_xticklabels(['1', '$10^1$', '$10^2$', '$10^3$'])
+        
+        #------------
+        ### Add title
+        if plot_offset_type:
+            if 'co-co' in plot_offset_type:
+                ax_histx.set_title(r'co → co', size=7, loc='left', pad=3)
+            if 'counter-counter' in plot_offset_type:
+                ax_histx.set_title(r'counter → counter', size=7, loc='left', pad=3)
+            if 'co-counter' in plot_offset_type:
+                ax_histx.set_title(r'co → counter', size=7, loc='left', pad=3)
+            if 'counter-co' in plot_offset_type:
+                ax_histx.set_title(r'counter → co', size=7, loc='left', pad=3)
+                
+        
+        #------------
+        # Legend
+        #ax.legend(loc='upper left', frameon=False, labelspacing=0.1, handlelength=1)
+        
+        #------------
+        ### other
+        plt.tight_layout()
+        
+        #------------
+        if savefig:
+            if savefig_txt == 'manual':
+                savefig_txt = input('\n  -> Enter savefig_txt:   ')
+            plt.savefig("%s/offset_angle/trelax_offset_angle_%s_%s.%s" %(fig_dir, len(misalignment_tree.keys()), savefig_txt, file_format), format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/offset_angle/trelax_offset_angle_%s_%s.%s" %(fig_dir, len(misalignment_tree.keys()), savefig_txt, file_format)) 
+        if showfig:
+            plt.show()
+        plt.close()
+    if plot_offset_morph_trelax:
+        relaxationtime_plot  = []
+        relaxationmorph_plot = []
+        angles_plot = []
+        ID_plot     = []
+        for ID_i in misalignment_tree.keys():
+            # check offset angle within range            
+            if not plot_offset_range[0] <=  misalignment_tree['%s' %ID_i]['angle_peak'] < plot_offset_range[1]:
+                continue
+            # check morphology
+            if misalignment_tree['%s' %ID_i]['relaxation_morph'] not in offset_morphs:
+                continue
+            if plot_offset_type:
+                if misalignment_tree['%s' %ID_i]['relaxation_type'] not in plot_offset_type:
+                    continue
+                                
+            # Add angles
+            angles_plot.append(misalignment_tree['%s' %ID_i]['angle_peak'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-ETG':
+                relaxationmorph_plot.append('ETG → ETG')
+            if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'LTG-LTG':
+                relaxationmorph_plot.append('LTG → LTG')
+            ID_plot.append(ID_i)
+        
+        # Collect data into dataframe
+        df = pd.DataFrame(data={'Peak misalignment angle': angles_plot, 'Morphology': relaxationmorph_plot, 'Relaxation time': relaxationtime_plot, 'GalaxyIDs': ID_plot})
+                
+        #-------------
+        # Plotting
+        fig = plt.figure(figsize=(10/3, 10/3))
+        gs  = fig.add_gridspec(2, 2,  width_ratios=(4, 1), height_ratios=(1, 4),
+                              left=0.1, right=0.9, bottom=0.1, top=0.9,
+                              wspace=0.1, hspace=0.1)
+        # Create the Axes.
+        ax = fig.add_subplot(gs[1, 0])
+        ax_histx = fig.add_subplot(gs[0, 0], sharex=ax)
+        ax_histy = fig.add_subplot(gs[1, 1], sharey=ax)
+        
+        bin_width = 15
+        bins = np.arange(plot_offset_range[0], plot_offset_range[1]+1, bin_width)
+        #-------------
+        ### Plot by morphology
+        for offset_morph_i in offset_morphs:
+            
+            if offset_morph_i == 'ETG-ETG':
+                offset_morph_i = 'ETG → ETG'
+                c = 'C1'
+                c_line = 'r'
+            elif offset_morph_i == 'LTG-LTG':
+                offset_morph_i = 'LTG → LTG'
+                c = 'C0'
+                c_line = 'b'
+            
+            # Dataframe of morphs matching this
+            df_morph = df.loc[df['Morphology'] == offset_morph_i]
+            
+            # Bin hist data, find sigma percentiles
+            binned_data_arg = np.digitize(df_morph['Peak misalignment angle'], bins=bins)
+            bin_medians     = np.stack([np.percentile(df_morph['Relaxation time'][binned_data_arg == i], q=[5, 16, 50, 84, 95]) for i in range(1, len(bins))])
+            #print(bin_medians)
+            
+            #-------------------
+            ### Plot scatter
+            ax.scatter(df_morph['Peak misalignment angle'], df_morph['Relaxation time'], s=0.05, c='grey', marker='.', alpha=1, zorder=1)
+            
+            ### Plot upper, median, and lower sigma
+            #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor=c, alpha=0.15, zorder=5)
+            ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor=c, alpha=0.35, zorder=6)
+            #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,2], bin_medians[:,3], facecolor=c, alpha=0.9, zorder=7, label=offset_morph_i)
+            ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=1, c=c, ls='-', label=offset_morph_i, zorder=7)
+            #ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls=':')
+            
+            
+            ### Plot histograms
+            ax_histx.hist(df_morph['Peak misalignment angle'], bins=bins, log=True, facecolor='none', linewidth=1, edgecolor=c, histtype='step', alpha=1)
+            #ax_histx.hist(df_morph['Peak misalignment angle'], bins=bins, log=True, facecolor=c, linewidth=1, edgecolor='none', alpha=0.1)
+            
+            ax_histy.hist(df_morph['Relaxation time'], bins=np.arange(0, 3.1, 0.125), log=True, orientation='horizontal', facecolor='none', linewidth=1, edgecolor=c, histtype='step', alpha=0.8)
+            #ax_histy.hist(df_morph['Relaxation time'], bins=np.arange(0, 3.1, 0.125), log=True, orientation='horizontal', facecolor=c, linewidth=1, edgecolor='none', alpha=0.1)
+            
+        
+        #-----------
+        ### General formatting
+        # Axis labels
+        ax.set_xticks(bins)
+        ax.set_xlim(plot_offset_range[0], plot_offset_range[-1])
+        ax.set_ylim(0, 3)
+        ax.set_ylabel('$t_{\mathrm{relax}}$ (Gyr)')
+        ax.set_xlabel('Peak misalignment angle')
+        ax.minorticks_on()
+        ax.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
+        ax.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
+
+        # no labels
+        ax_histx.tick_params(axis="x", labelbottom=False)
+        ax_histy.tick_params(axis="y", labelleft=False)
+        ax_histy.set_xticks([1, 10, 100, 1000])
+        ax_histy.set_xticklabels(['1', '$10^1$', '$10^2$', '$10^3$'])
+        
+        #------------
+        ### Add title
+        if plot_offset_type:
+            if 'co-co' in plot_offset_type:
+                ax_histx.set_title(r'co → co', size=7, loc='left', pad=3)
+            if 'counter-counter' in plot_offset_type:
+                ax_histx.set_title(r'counter → counter', size=7, loc='left', pad=3)
+            if 'co-counter' in plot_offset_type:
+                ax_histx.set_title(r'co → counter', size=7, loc='left', pad=3)
+            if 'counter-co' in plot_offset_type:
+                ax_histx.set_title(r'counter → co', size=7, loc='left', pad=3)
+                
+        
+        #------------
+        # Legend
+        ax.legend(loc='upper left', frameon=False, labelspacing=0.1, handlelength=1)
+        
+        #------------
+        ### other
+        plt.tight_layout()
+        
+        #------------
+        if savefig:
+            if savefig_txt == 'manual':
+                savefig_txt = input('\n  -> Enter savefig_txt:   ')
+            plt.savefig("%s/offset_angle/trelax_offset_angle_morph_%s_%s.%s" %(fig_dir, len(misalignment_tree.keys()), savefig_txt, file_format), format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/offset_angle/trelax_offset_angle_morph_%s_%s.%s" %(fig_dir, len(misalignment_tree.keys()), savefig_txt, file_format)) 
+        if showfig:
+            plt.show()
+        plt.close()
+    
+    # Plot delta angle, tdyn. Looks at peak angle from 180
+    if plot_offset_tdyn:
+        relaxationtime_plot  = []
+        angles_plot = []
+        ID_plot     = []
+        for ID_i in misalignment_tree.keys():
+            # check offset angle within range            
+            if not plot_offset_range[0] <=  misalignment_tree['%s' %ID_i]['angle_peak'] < plot_offset_range[1]:
+                continue
+            if plot_offset_type:
+                if misalignment_tree['%s' %ID_i]['relaxation_type'] not in plot_offset_type:
+                    continue
+                                
+            # Add angles
+            angles_plot.append(misalignment_tree['%s' %ID_i]['angle_peak'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+            ID_plot.append(ID_i)
+        
+        # Collect data into dataframe
+        df = pd.DataFrame(data={'Peak misalignment angle': angles_plot,  'Relaxation time': relaxationtime_plot, 'GalaxyIDs': ID_plot})
+                
+        #-------------
+        # Plotting
+        fig = plt.figure(figsize=(10/3, 10/3))
+        gs  = fig.add_gridspec(2, 2,  width_ratios=(4, 1), height_ratios=(1, 4),
+                              left=0.1, right=0.9, bottom=0.1, top=0.9,
+                              wspace=0.1, hspace=0.1)
+        # Create the Axes.
+        ax = fig.add_subplot(gs[1, 0])
+        ax_histx = fig.add_subplot(gs[0, 0], sharex=ax)
+        ax_histy = fig.add_subplot(gs[1, 1], sharey=ax)
+        
+        bin_width = 15
+        bins = np.arange(plot_offset_range[0], plot_offset_range[1]+1, bin_width)
+        c = 'k'
+        
+        
+        #-------------
+        # Bin hist data, find sigma percentiles
+        binned_data_arg = np.digitize(df['Peak misalignment angle'], bins=bins)
+        bin_medians     = np.stack([np.percentile(df['Relaxation time'][binned_data_arg == i], q=[5, 16, 50, 84, 95]) for i in range(1, len(bins))])
+        #print(bin_medians)
+        
+        #-------------------
+        ### Plot scatter
+        ax.scatter(df['Peak misalignment angle'], df['Relaxation time'], s=0.05, c='grey', marker='.', alpha=1, zorder=1)
+        
+        ### Plot upper, median, and lower sigma
+        #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor=c, alpha=0.15, zorder=5)
+        ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor=c, alpha=0.35, zorder=6)
+        #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,2], bin_medians[:,3], facecolor=c, alpha=0.9, zorder=7, label=offset_morph_i)
+        ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=1, c=c, ls='-', zorder=7)
+        #ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls=':')
+        
+        
+        ### Plot histograms
+        ax_histx.hist(df['Peak misalignment angle'], bins=bins, log=True, facecolor='none', linewidth=1, edgecolor=c, histtype='step', alpha=1)
+        #ax_histx.hist(df['Peak misalignment angle'], bins=bins, log=True, facecolor=c, linewidth=1, edgecolor='none', alpha=0.1)
+        
+        ax_histy.hist(df['Relaxation time'], bins=np.arange(0, 15.1, 1), log=True, orientation='horizontal', facecolor='none', linewidth=1, edgecolor=c, histtype='step', alpha=0.8)
+        #ax_histy.hist(df['Relaxation time'], bins=np.arange(0, 15.1, 1), log=True, orientation='horizontal', facecolor=c, linewidth=1, edgecolor='none', alpha=0.1)
+        
+        
+        #-----------
+        ### General formatting
+        # Axis labels
+        ax.set_xticks(bins)
+        ax.set_xlim(plot_offset_range[0], plot_offset_range[-1])
+        ax.set_ylim(0, 15)
+        #ax.set_ylabel('$t_{\mathrm{relax}}$ (Gyr)')
+        ax.set_ylabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{dyn}}$')
+        ax.set_xlabel('Peak misalignment angle')
+        ax.minorticks_on()
+        ax.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
+        ax.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
+
+        # no labels
+        ax_histx.tick_params(axis="x", labelbottom=False)
+        ax_histy.tick_params(axis="y", labelleft=False)
+        ax_histy.set_xticks([1, 10, 100, 1000])
+        ax_histy.set_xticklabels(['1', '$10^1$', '$10^2$', '$10^3$'])
+        
+        #------------
+        ### Add title
+        if plot_offset_type:
+            if 'co-co' in plot_offset_type:
+                ax_histx.set_title(r'co → co', size=7, loc='left', pad=3)
+            if 'counter-counter' in plot_offset_type:
+                ax_histx.set_title(r'counter → counter', size=7, loc='left', pad=3)
+            if 'co-counter' in plot_offset_type:
+                ax_histx.set_title(r'co → counter', size=7, loc='left', pad=3)
+            if 'counter-co' in plot_offset_type:
+                ax_histx.set_title(r'counter → co', size=7, loc='left', pad=3)
+                
+        
+        #------------
+        # Legend
+        #ax.legend(loc='upper left', frameon=False, labelspacing=0.1, handlelength=1)
+        
+        #------------
+        ### other
+        plt.tight_layout()
+        
+        #------------
+        if savefig:
+            if savefig_txt == 'manual':
+                savefig_txt = input('\n  -> Enter savefig_txt:   ')
+            plt.savefig("%s/offset_angle/tdyn_offset_angle_%s_%s.%s" %(fig_dir, len(misalignment_tree.keys()), savefig_txt, file_format), format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/offset_angle/tdyn_offset_angle_%s_%s.%s" %(fig_dir, len(misalignment_tree.keys()), savefig_txt, file_format)) 
+        if showfig:
+            plt.show()
+        plt.close()
+    if plot_offset_morph_tdyn:
+        relaxationtime_plot  = []
+        relaxationmorph_plot = []
+        angles_plot = []
+        ID_plot     = []
+        for ID_i in misalignment_tree.keys():
+            # check offset angle within range            
+            if not plot_offset_range[0] <=  misalignment_tree['%s' %ID_i]['angle_peak'] < plot_offset_range[1]:
+                continue
+            # check morphology
+            if misalignment_tree['%s' %ID_i]['relaxation_morph'] not in offset_morphs:
+                continue
+            if plot_offset_type:
+                if misalignment_tree['%s' %ID_i]['relaxation_type'] not in plot_offset_type:
+                    continue
+                                
+            # Add angles
+            angles_plot.append(misalignment_tree['%s' %ID_i]['angle_peak'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+            if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-ETG':
+                relaxationmorph_plot.append('ETG → ETG')
+            if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'LTG-LTG':
+                relaxationmorph_plot.append('LTG → LTG')
+            ID_plot.append(ID_i)
+        
+        # Collect data into dataframe
+        df = pd.DataFrame(data={'Peak misalignment angle': angles_plot, 'Morphology': relaxationmorph_plot, 'Relaxation time': relaxationtime_plot, 'GalaxyIDs': ID_plot})
+                
+        #-------------
+        # Plotting
+        fig = plt.figure(figsize=(10/3, 10/3))
+        gs  = fig.add_gridspec(2, 2,  width_ratios=(4, 1), height_ratios=(1, 4),
+                              left=0.1, right=0.9, bottom=0.1, top=0.9,
+                              wspace=0.1, hspace=0.1)
+        # Create the Axes.
+        ax = fig.add_subplot(gs[1, 0])
+        ax_histx = fig.add_subplot(gs[0, 0], sharex=ax)
+        ax_histy = fig.add_subplot(gs[1, 1], sharey=ax)
+        
+        bin_width = 15
+        bins = np.arange(plot_offset_range[0], plot_offset_range[1]+1, bin_width)
+        #-------------
+        ### Plot by morphology
+        for offset_morph_i in offset_morphs:
+            
+            if offset_morph_i == 'ETG-ETG':
+                offset_morph_i = 'ETG → ETG'
+                c = 'C1'
+                c_line = 'r'
+            elif offset_morph_i == 'LTG-LTG':
+                offset_morph_i = 'LTG → LTG'
+                c = 'C0'
+                c_line = 'b'
+            
+            # Dataframe of morphs matching this
+            df_morph = df.loc[df['Morphology'] == offset_morph_i]
+            
+            # Bin hist data, find sigma percentiles
+            binned_data_arg = np.digitize(df_morph['Peak misalignment angle'], bins=bins)
+            bin_medians     = np.stack([np.percentile(df_morph['Relaxation time'][binned_data_arg == i], q=[5, 16, 50, 84, 95]) for i in range(1, len(bins))])
+            #print(bin_medians)
+            
+            #-------------------
+            ### Plot scatter
+            ax.scatter(df_morph['Peak misalignment angle'], df_morph['Relaxation time'], s=0.05, c='grey', marker='.', alpha=1, zorder=1)
+            
+            ### Plot upper, median, and lower sigma
+            #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor=c, alpha=0.15, zorder=5)
+            ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor=c, alpha=0.35, zorder=6)
+            #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,2], bin_medians[:,3], facecolor=c, alpha=0.9, zorder=7, label=offset_morph_i)
+            ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=1, c=c, ls='-', label=offset_morph_i, zorder=7)
+            #ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls=':')
+            
+            
+            ### Plot histograms
+            ax_histx.hist(df_morph['Peak misalignment angle'], bins=bins, log=True, facecolor='none', linewidth=1, edgecolor=c, histtype='step', alpha=1)
+            #ax_histx.hist(df_morph['Peak misalignment angle'], bins=bins, log=True, facecolor=c, linewidth=1, edgecolor='none', alpha=0.1)
+            
+            ax_histy.hist(df_morph['Relaxation time'], bins=np.arange(0, 15.1, 1), log=True, orientation='horizontal', facecolor='none', linewidth=1, edgecolor=c, histtype='step', alpha=0.8)
+            #ax_histy.hist(df_morph['Relaxation time'], bins=np.arange(0, 15.1, 1), log=True, orientation='horizontal', facecolor=c, linewidth=1, edgecolor='none', alpha=0.1)
+            
+        
+        #-----------
+        ### General formatting
+        # Axis labels
+        ax.set_xticks(bins)
+        ax.set_xlim(plot_offset_range[0], plot_offset_range[-1])
+        ax.set_ylim(0, 15)
+        #ax.set_ylabel('$t_{\mathrm{relax}}$ (Gyr)')
+        ax.set_ylabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{dyn}}$')
+        ax.set_xlabel('Peak misalignment angle')
+        ax.minorticks_on()
+        ax.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
+        ax.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
+
+        # no labels
+        ax_histx.tick_params(axis="x", labelbottom=False)
+        ax_histy.tick_params(axis="y", labelleft=False)
+        ax_histy.set_xticks([1, 10, 100, 1000])
+        ax_histy.set_xticklabels(['1', '$10^1$', '$10^2$', '$10^3$'])
+        
+        #------------
+        ### Add title
+        if plot_offset_type:
+            if 'co-co' in plot_offset_type:
+                ax_histx.set_title(r'co → co', size=7, loc='left', pad=3)
+            if 'counter-counter' in plot_offset_type:
+                ax_histx.set_title(r'counter → counter', size=7, loc='left', pad=3)
+            if 'co-counter' in plot_offset_type:
+                ax_histx.set_title(r'co → counter', size=7, loc='left', pad=3)
+            if 'counter-co' in plot_offset_type:
+                ax_histx.set_title(r'counter → co', size=7, loc='left', pad=3)
+                
+        
+        #------------
+        # Legend
+        ax.legend(loc='upper left', frameon=False, labelspacing=0.1, handlelength=1)
+        
+        #------------
+        ### other
+        plt.tight_layout()
+        
+        #------------
+        if savefig:
+            if savefig_txt == 'manual':
+                savefig_txt = input('\n  -> Enter savefig_txt:   ')
+            plt.savefig("%s/offset_angle/tdyn_offset_angle_morph_%s_%s.%s" %(fig_dir, len(misalignment_tree.keys()), savefig_txt, file_format), format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/offset_angle/tdyn_offset_angle_morph_%s_%s.%s" %(fig_dir, len(misalignment_tree.keys()), savefig_txt, file_format)) 
+        if showfig:
+            plt.show()
+        plt.close()
+    
+    # Plot delta angle, ttorque. Looks at peak angle from 180
+    if plot_offset_ttorque:
+        relaxationtime_plot  = []
+        angles_plot = []
+        ID_plot     = []
+        for ID_i in misalignment_tree.keys():
+            # check offset angle within range            
+            if not plot_offset_range[0] <=  misalignment_tree['%s' %ID_i]['angle_peak'] < plot_offset_range[1]:
+                continue
+            if plot_offset_type:
+                if misalignment_tree['%s' %ID_i]['relaxation_type'] not in plot_offset_type:
+                    continue
+                                
+            # Add angles
+            angles_plot.append(misalignment_tree['%s' %ID_i]['angle_peak'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            ID_plot.append(ID_i)
+        
+        # Collect data into dataframe
+        df = pd.DataFrame(data={'Peak misalignment angle': angles_plot, 'Relaxation time': relaxationtime_plot, 'GalaxyIDs': ID_plot})
+                
+        #-------------
+        # Plotting
+        fig = plt.figure(figsize=(10/3, 10/3))
+        gs  = fig.add_gridspec(2, 2,  width_ratios=(4, 1), height_ratios=(1, 4),
+                              left=0.1, right=0.9, bottom=0.1, top=0.9,
+                              wspace=0.1, hspace=0.1)
+        # Create the Axes.
+        ax = fig.add_subplot(gs[1, 0])
+        ax_histx = fig.add_subplot(gs[0, 0], sharex=ax)
+        ax_histy = fig.add_subplot(gs[1, 1], sharey=ax)
+        
+        bin_width = 15
+        bins = np.arange(plot_offset_range[0], plot_offset_range[1]+1, bin_width)
+        c = 'k'
+        
+        #-------------
+        # Bin hist data, find sigma percentiles
+        binned_data_arg = np.digitize(df['Peak misalignment angle'], bins=bins)
+        bin_medians     = np.stack([np.percentile(df['Relaxation time'][binned_data_arg == i], q=[5, 16, 50, 84, 95]) for i in range(1, len(bins))])
+        #print(bin_medians)
+            
+        #-------------------
+        ### Plot scatter
+        ax.scatter(df['Peak misalignment angle'], df['Relaxation time'], s=0.05, c='grey', marker='.', alpha=1, zorder=1)
+            
+        ### Plot upper, median, and lower sigma
+        #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor=c, alpha=0.15, zorder=5)
+        ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor=c, alpha=0.35, zorder=6)
+        #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,2], bin_medians[:,3], facecolor=c, alpha=0.9, zorder=7, label=offset_morph_i)
+        ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=1, c=c, ls='-', zorder=7)
+        #ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls=':')
+            
+            
+        ### Plot histograms
+        ax_histx.hist(df['Peak misalignment angle'], bins=bins, log=True, facecolor='none', linewidth=1, edgecolor=c, histtype='step', alpha=1)
+        #ax_histx.hist(df['Peak misalignment angle'], bins=bins, log=True, facecolor=c, linewidth=1, edgecolor='none', alpha=0.1)
+            
+        ax_histy.hist(df['Relaxation time'], bins=np.arange(0, 10.1, 1), log=True, orientation='horizontal', facecolor='none', linewidth=1, edgecolor=c, histtype='step', alpha=0.8)
+        #ax_histy.hist(df['Relaxation time'], bins=np.arange(0, 10.1, 1), log=True, orientation='horizontal', facecolor=c, linewidth=1, edgecolor='none', alpha=0.1)
+            
+        
+        #-----------
+        ### General formatting
+        # Axis labels
+        ax.set_xticks(bins)
+        ax.set_xlim(plot_offset_range[0], plot_offset_range[-1])
+        ax.set_ylim(0, 10)
+        #ax.set_ylabel('$t_{\mathrm{relax}}$ (Gyr)')
+        ax.set_ylabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{torque}}$')
+        ax.set_xlabel('Peak misalignment angle')
+        ax.minorticks_on()
+        ax.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
+        ax.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
+
+        # no labels
+        ax_histx.tick_params(axis="x", labelbottom=False)
+        ax_histy.tick_params(axis="y", labelleft=False)
+        ax_histy.set_xticks([1, 10, 100, 1000])
+        ax_histy.set_xticklabels(['1', '$10^1$', '$10^2$', '$10^3$'])
+        
+        #------------
+        ### Add title
+        if plot_offset_type:
+            if 'co-co' in plot_offset_type:
+                ax_histx.set_title(r'co → co', size=7, loc='left', pad=3)
+            if 'counter-counter' in plot_offset_type:
+                ax_histx.set_title(r'counter → counter', size=7, loc='left', pad=3)
+            if 'co-counter' in plot_offset_type:
+                ax_histx.set_title(r'co → counter', size=7, loc='left', pad=3)
+            if 'counter-co' in plot_offset_type:
+                ax_histx.set_title(r'counter → co', size=7, loc='left', pad=3)
+                
+        
+        #------------
+        # Legend
+        #ax.legend(loc='upper left', frameon=False, labelspacing=0.1, handlelength=1)
+        
+        #------------
+        ### other
+        plt.tight_layout()
+        
+        #------------
+        if savefig:
+            if savefig_txt == 'manual':
+                savefig_txt = input('\n  -> Enter savefig_txt:   ')
+            plt.savefig("%s/offset_angle/ttorque_offset_angle_%s_%s.%s" %(fig_dir, len(misalignment_tree.keys()), savefig_txt, file_format), format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/offset_angle/ttorque_offset_angle_%s_%s.%s" %(fig_dir, len(misalignment_tree.keys()), savefig_txt, file_format)) 
+        if showfig:
+            plt.show()
+        plt.close()
+    if plot_offset_morph_ttorque:
+        relaxationtime_plot  = []
+        relaxationmorph_plot = []
+        angles_plot = []
+        ID_plot     = []
+        for ID_i in misalignment_tree.keys():
+            # check offset angle within range            
+            if not plot_offset_range[0] <=  misalignment_tree['%s' %ID_i]['angle_peak'] < plot_offset_range[1]:
+                continue
+            # check morphology
+            if misalignment_tree['%s' %ID_i]['relaxation_morph'] not in offset_morphs:
+                continue
+            if plot_offset_type:
+                if misalignment_tree['%s' %ID_i]['relaxation_type'] not in plot_offset_type:
+                    continue
+                                
+            # Add angles
+            angles_plot.append(misalignment_tree['%s' %ID_i]['angle_peak'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-ETG':
+                relaxationmorph_plot.append('ETG → ETG')
+            if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'LTG-LTG':
+                relaxationmorph_plot.append('LTG → LTG')
+            ID_plot.append(ID_i)
+        
+        # Collect data into dataframe
+        df = pd.DataFrame(data={'Peak misalignment angle': angles_plot, 'Morphology': relaxationmorph_plot, 'Relaxation time': relaxationtime_plot, 'GalaxyIDs': ID_plot})
+                
+        #-------------
+        # Plotting
+        fig = plt.figure(figsize=(10/3, 10/3))
+        gs  = fig.add_gridspec(2, 2,  width_ratios=(4, 1), height_ratios=(1, 4),
+                              left=0.1, right=0.9, bottom=0.1, top=0.9,
+                              wspace=0.1, hspace=0.1)
+        # Create the Axes.
+        ax = fig.add_subplot(gs[1, 0])
+        ax_histx = fig.add_subplot(gs[0, 0], sharex=ax)
+        ax_histy = fig.add_subplot(gs[1, 1], sharey=ax)
+        
+        bin_width = 15
+        bins = np.arange(plot_offset_range[0], plot_offset_range[1]+1, bin_width)
+        #-------------
+        ### Plot by morphology
+        for offset_morph_i in offset_morphs:
+            
+            if offset_morph_i == 'ETG-ETG':
+                offset_morph_i = 'ETG → ETG'
+                c = 'C1'
+                c_line = 'r'
+            elif offset_morph_i == 'LTG-LTG':
+                offset_morph_i = 'LTG → LTG'
+                c = 'C0'
+                c_line = 'b'
+            
+            # Dataframe of morphs matching this
+            df_morph = df.loc[df['Morphology'] == offset_morph_i]
+            
+            # Bin hist data, find sigma percentiles
+            binned_data_arg = np.digitize(df_morph['Peak misalignment angle'], bins=bins)
+            bin_medians     = np.stack([np.percentile(df_morph['Relaxation time'][binned_data_arg == i], q=[5, 16, 50, 84, 95]) for i in range(1, len(bins))])
+            #print(bin_medians)
+            
+            #-------------------
+            ### Plot scatter
+            ax.scatter(df_morph['Peak misalignment angle'], df_morph['Relaxation time'], s=0.05, c='grey', marker='.', alpha=1, zorder=1)
+            
+            ### Plot upper, median, and lower sigma
+            #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor=c, alpha=0.15, zorder=5)
+            ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor=c, alpha=0.35, zorder=6)
+            #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,2], bin_medians[:,3], facecolor=c, alpha=0.9, zorder=7, label=offset_morph_i)
+            ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=1, c=c, ls='-', label=offset_morph_i, zorder=7)
+            #ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls=':')
+            
+            
+            ### Plot histograms
+            ax_histx.hist(df_morph['Peak misalignment angle'], bins=bins, log=True, facecolor='none', linewidth=1, edgecolor=c, histtype='step', alpha=1)
+            #ax_histx.hist(df_morph['Peak misalignment angle'], bins=bins, log=True, facecolor=c, linewidth=1, edgecolor='none', alpha=0.1)
+            
+            ax_histy.hist(df_morph['Relaxation time'], bins=np.arange(0, 10.1, 1), log=True, orientation='horizontal', facecolor='none', linewidth=1, edgecolor=c, histtype='step', alpha=0.8)
+            #ax_histy.hist(df_morph['Relaxation time'], bins=np.arange(0, 10.1, 1), log=True, orientation='horizontal', facecolor=c, linewidth=1, edgecolor='none', alpha=0.1)
+            
+        
+        #-----------
+        ### General formatting
+        # Axis labels
+        ax.set_xticks(bins)
+        ax.set_xlim(plot_offset_range[0], plot_offset_range[-1])
+        ax.set_ylim(0, 10)
+        #ax.set_ylabel('$t_{\mathrm{relax}}$ (Gyr)')
+        ax.set_ylabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{torque}}$')
+        ax.set_xlabel('Peak misalignment angle')
+        ax.minorticks_on()
+        ax.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
+        ax.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
+
+        # no labels
+        ax_histx.tick_params(axis="x", labelbottom=False)
+        ax_histy.tick_params(axis="y", labelleft=False)
+        ax_histy.set_xticks([1, 10, 100, 1000])
+        ax_histy.set_xticklabels(['1', '$10^1$', '$10^2$', '$10^3$'])
+        
+        #------------
+        ### Add title
+        if plot_offset_type:
+            if 'co-co' in plot_offset_type:
+                ax_histx.set_title(r'co → co', size=7, loc='left', pad=3)
+            if 'counter-counter' in plot_offset_type:
+                ax_histx.set_title(r'counter → counter', size=7, loc='left', pad=3)
+            if 'co-counter' in plot_offset_type:
+                ax_histx.set_title(r'co → counter', size=7, loc='left', pad=3)
+            if 'counter-co' in plot_offset_type:
+                ax_histx.set_title(r'counter → co', size=7, loc='left', pad=3)
+                
+        
+        #------------
+        # Legend
+        ax.legend(loc='upper left', frameon=False, labelspacing=0.1, handlelength=1)
+        
+        #------------
+        ### other
+        plt.tight_layout()
+        
+        #------------
+        if savefig:
+            if savefig_txt == 'manual':
+                savefig_txt = input('\n  -> Enter savefig_txt:   ')
+            plt.savefig("%s/offset_angle/ttorque_offset_angle_morph_%s_%s.%s" %(fig_dir, len(misalignment_tree.keys()), savefig_txt, file_format), format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/offset_angle/ttorque_offset_angle_morph_%s_%s.%s" %(fig_dir, len(misalignment_tree.keys()), savefig_txt, file_format)) 
+        if showfig:
+            plt.show()
+        plt.close()
+    
+    
+    #-------------------------
+    # Number of mergers with relaxation time (suited for mass of 1010 and above)
+    
+        
     
     
     
     #-------------------------
+    ### OLD PLOTS
+    # Plot delta angle. Looks at peak angle from 180
+    """ 
+    #-----------------------------
+    # Same as spearman but more specific and has errors
+    plot_delta_timescale  = False,                # Plot time spent misaligned as a function of misalignment angle. Will plot the 'peak_misangle' with time
+    
+    """
+    """if plot_delta_timescale:
+        relaxationtime_plot = []
+        angles_plot = []
+        err_plot_l  = []
+        err_plot_u  = []
+        other_plot  = []
+        ID_plot     = []
+        for ID_i in misalignment_tree.keys():
+            # Find index of peak misalignment from where it relaxes to (-co or -counter)
+            all_angles = np.array(misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+            index_peak = misalignment_tree['%s' %ID_i]['index_peak']
+            angle_peak = misalignment_tree['%s' %ID_i]['angle_peak']
+            
+            angles_plot.append(angle_peak)
+            #angles_plot.append(misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_peak])
+            err_plot_l.append(misalignment_tree['%s' %ID_i]['%s_err' %use_angle][index_peak][0] - misalignment_tree['%s' %ID_i][use_angle][index_peak])
+            err_plot_u.append(misalignment_tree['%s' %ID_i]['%s_err' %use_angle][index_peak][1] - misalignment_tree['%s' %ID_i][use_angle][index_peak])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            
+            other_plot.append(np.average(np.array(misalignment_tree['%s' %ID_i][plot_delta_color][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']]), weights=np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']-1:misalignment_tree['%s' %ID_i]['index_r']-1]) - np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']])))
+            ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
+            
+        
+        #-------------
+        # Stats
+        res = stats.spearmanr(angles_plot, relaxationtime_plot)
+        print('\n--------------------------------------')
+        print('DELTA TIMESCALE SPEARMAN:')
+        print('   ρ:       %.2f' %res.correlation)
+        print('   p-value: %s' %res.pvalue)
+        print('--------------------------------------')
+        
+        
+        #-------------
+        # Plotting
+        fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.5], sharex=True, sharey=False)
+        plt.subplots_adjust(wspace=0.4, hspace=0.4)
+        
+        # Normalise colormap
+        norm = mpl.colors.Normalize(vmin=0, vmax=20, clip=True)
+        mapper = cm.ScalarMappable(norm=norm, cmap='viridis')         #cmap=cm.coolwarm), cmap='sauron'
+        
+        axs.errorbar(relaxationtime_plot, angles_plot, yerr=[np.abs(err_plot_l), err_plot_u], ls='none', fmt='o', capsize=3, elinewidth=0.7, markeredgewidth=1, color='k', ecolor='grey', ms=1, alpha=0.5)
+        im1 = axs.scatter(relaxationtime_plot, angles_plot, c=other_plot, s=10, norm=norm, cmap='viridis', zorder=99, edgecolors='k', linewidths=0.3)
+        
+        #-------------
+        # Colorbar
+        cax = plt.axes([0.98, 0.20, 0.03, 0.71])
+        plt.colorbar(mapper, cax=cax, label='time-averaged gas inflow\n$(\mathrm{M}_{\odot} \mathrm{yr}^{-1})$', extend='max')
+        
+        
+        #-----------
+        ### General formatting
+        # Axis labels
+        axs.set_yticks(np.arange(0, 181, 30))
+        axs.set_ylim(0, 180)
+        axs.set_xlim(0, bin_limit_trelax)
+        axs.set_xlabel('Relaxation time (Gyr)')
+        axs.set_ylabel('Peak misalignment angle')
+        axs.minorticks_on()
+        axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
+        axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
+        axs.set_title(r'$\rho$ = %s, p-value = %s' %(res.correlation, res.pvalue), size=7, loc='left', pad=3)
+        
+        #-----------
+        ### Annotations
+        if plot_GalaxyIDs:
+            for ID_plot_i, x_i, y_i in zip(ID_plot, angles_plot, relaxationtime_plot):
+                axs.text(x_i+5, y_i+0.1, '%s' %ID_plot_i, fontsize=7)
+                
+        #-----------
+        ### title
+        if plot_annotate:
+            axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
+        
+        #-----------
+        ### other
+        plt.tight_layout()
+        
+        #-----------
+        #### Savefig
+        metadata_plot = {'Title': '%s, %s\nThreshold: %s\nMin delta:%s\nLatency time: %s\nMin ratio: %s\nUSE MERGERS: %s\nMax closest merger: %s-%s\nTime extra: %s\nTime no misangle: %s\nStelmass: %s/%s\n kappa*: %s/%s\n outflow: %s/%s' %(abs_or_proj, use_angle, misangle_threshold, min_delta_angle, latency_time, min_stellar_ratio, use_merger_criteria, max_merger_pre, max_merger_post, time_extra, time_no_misangle, min_stelmass, max_stelmass, min_kappa_stars, max_kappa_stars, min_inflow, max_inflow),
+                         'Author': 'Min particles: %s\nMax CoM: %s\nMin inc: %s\nPlot ratio limit: %s\n\nrho: %.2f\np-value %.2e\n\n# MISALIGNMENTS: %s\nco-co: %s\ncnt-cnt: %s\nco-cnt: %s\ncnt-co: %s\nETG-ETG: %s\nLTG-LTG: %s\nETG-LTG: %s\nLTG-ETG: %s\nMean: %.2f Gyr\nMedian: %.2f Gyr\nstd: %.2f Gyr' %(min_particles, max_com, min_inclination, plot_merger_limit, res.correlation, res.pvalue, len(misalignment_tree.keys()), len(summary_dict['ID']['co-co']), len(summary_dict['ID']['counter-counter']), len(summary_dict['ID']['co-counter']), len(summary_dict['ID']['counter-co']), len(summary_dict['ID']['ETG-ETG']), len(summary_dict['ID']['LTG-LTG']), len(summary_dict['ID']['ETG-LTG']), len(summary_dict['ID']['LTG-ETG']), mean_timescale, median_timescale, std_timescale)}
+                         
+        if savefig:
+            if savefig_txt == 'manual':
+                savefig_txt = input('\n  -> Enter savefig_txt:   ')
+            plt.savefig("%s/delta_misangle_t_relax/trelax_delta_misangle_%s_%s.%s" %(fig_dir, len(misalignment_tree.keys()), savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/delta_misangle_t_relax/trelax_delta_misangle_%s_%s.%s" %(fig_dir, len(misalignment_tree.keys()), savefig_txt, file_format)) 
+        if showfig:
+            plt.show()
+        plt.close()
+    """
+    
+    """ 
+    #-----------------------------
+    # Plot scatter and extract spearman from it
+    plot_spearman         = False,                     # Available variables: halomass, stelmass, gasmass, sfmass, nsfmass, dmmass,   sfr, ssfr,   stars_Z, gas_Z, inflow_Z, outflow_Z
+                                                      #                      kappa_stars, kappa_gas, kappa_sf,   ellip, triax,   rad, radproj, rad_sf
+                                                      #                      inflow_rate, outflow_rate, stelmassloss_rate,   s_inflow_rate, s_outflow_rate,   inflow_cum, outflow_cum, 
+                                                      #                      angle_peak,   number_of_mergers,  relaxation_time
+      plot_spearman_x     = 'stelmass',        # [ array name ]
+      plot_spearman_y     = 'sfmass',            # [ array name ]
+      plot_spearman_c     = 'kappa_stars',               # [ None / array name]
+        inflow_skip       = 0.5,                      # [ Gyr ] time to ignore inflow, after which to sample. Relaxations below this time are automatically filetred out
+    #-----------------------------
+    # Plots trelax - tdyn, which should be proportional
+    plot_trelax_tdyn      = False,
+    # Plots log(ellip) - log(trelax/tdyn), which should have a (rough) gradient of -1 
+    plot_ellip_trelaxtdyn = False,
+    """
     # Plot spearman
-    if plot_spearman:
+    """if plot_spearman:
         
         # Collect datapoints
         x_array = []
@@ -7638,106 +8581,9 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         if showfig:
             plt.show()
         plt.close()
-    
-    
-    #-------------------------
-    # Plot delta angle. Looks at peak angle from 180
-    if plot_delta_timescale:
-        relaxationtime_plot = []
-        angles_plot = []
-        err_plot_l  = []
-        err_plot_u  = []
-        other_plot  = []
-        ID_plot     = []
-        for ID_i in misalignment_tree.keys():
-            # Find index of peak misalignment from where it relaxes to (-co or -counter)
-            all_angles = np.array(misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
-            index_peak = misalignment_tree['%s' %ID_i]['index_peak']
-            angle_peak = misalignment_tree['%s' %ID_i]['angle_peak']
-            
-            angles_plot.append(angle_peak)
-            #angles_plot.append(misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_peak])
-            err_plot_l.append(misalignment_tree['%s' %ID_i]['%s_err' %use_angle][index_peak][0] - misalignment_tree['%s' %ID_i][use_angle][index_peak])
-            err_plot_u.append(misalignment_tree['%s' %ID_i]['%s_err' %use_angle][index_peak][1] - misalignment_tree['%s' %ID_i][use_angle][index_peak])
-            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
-            
-            other_plot.append(np.average(np.array(misalignment_tree['%s' %ID_i][plot_delta_color][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']]), weights=np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']-1:misalignment_tree['%s' %ID_i]['index_r']-1]) - np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']])))
-            ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
-            
-        
-        #-------------
-        # Stats
-        res = stats.spearmanr(angles_plot, relaxationtime_plot)
-        print('\n--------------------------------------')
-        print('DELTA TIMESCALE SPEARMAN:')
-        print('   ρ:       %.2f' %res.correlation)
-        print('   p-value: %s' %res.pvalue)
-        print('--------------------------------------')
-        
-        
-        #-------------
-        # Plotting
-        fig, axs = plt.subplots(1, 1, figsize=[10/3, 1.8], sharex=True, sharey=False)
-        plt.subplots_adjust(wspace=0.4, hspace=0.4)
-        
-        # Normalise colormap
-        norm = mpl.colors.Normalize(vmin=0, vmax=20, clip=True)
-        mapper = cm.ScalarMappable(norm=norm, cmap='viridis')         #cmap=cm.coolwarm), cmap='sauron'
-        
-        axs.errorbar(relaxationtime_plot, angles_plot, yerr=[np.abs(err_plot_l), err_plot_u], ls='none', fmt='o', capsize=3, elinewidth=0.7, markeredgewidth=1, color='k', ecolor='grey', ms=1, alpha=0.5)
-        im1 = axs.scatter(relaxationtime_plot, angles_plot, c=other_plot, s=10, norm=norm, cmap='viridis', zorder=99, edgecolors='k', linewidths=0.3)
-        
-        #-------------
-        # Colorbar
-        cax = plt.axes([0.98, 0.20, 0.03, 0.71])
-        plt.colorbar(mapper, cax=cax, label='time-averaged gas inflow\n$(\mathrm{M}_{\odot} \mathrm{yr}^{-1})$', extend='max')
-        
-        
-        #-----------
-        ### General formatting
-        # Axis labels
-        axs.set_yticks(np.arange(0, 181, 30))
-        axs.set_ylim(0, 180)
-        axs.set_xlim(0, bin_limit)
-        axs.set_xlabel('Relaxation time (Gyr)')
-        axs.set_ylabel('Peak misalignment angle')
-        axs.minorticks_on()
-        axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
-        axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
-        
-        #-----------
-        ### Annotations
-        if plot_GalaxyIDs:
-            for ID_plot_i, x_i, y_i in zip(ID_plot, angles_plot, relaxationtime_plot):
-                axs.text(x_i+5, y_i+0.1, '%s' %ID_plot_i, fontsize=7)
-                
-        #-----------
-        ### title
-        if plot_annotate:
-            axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
-        
-        #-----------
-        ### other
-        plt.tight_layout()
-        
-        #-----------
-        #### Savefig
-        metadata_plot = {'Title': '%s, %s\nThreshold: %s\nMin delta:%s\nLatency time: %s\nMin ratio: %s\nUSE MERGERS: %s\nMax closest merger: %s-%s\nTime extra: %s\nTime no misangle: %s\nStelmass: %s/%s\n kappa*: %s/%s\n outflow: %s/%s' %(abs_or_proj, use_angle, misangle_threshold, min_delta_angle, latency_time, min_stellar_ratio, use_merger_criteria, max_merger_pre, max_merger_post, time_extra, time_no_misangle, min_stelmass, max_stelmass, min_kappa_stars, max_kappa_stars, min_inflow, max_inflow),
-                         'Author': 'Min particles: %s\nMax CoM: %s\nMin inc: %s\nPlot ratio limit: %s\n\nrho: %.2f\np-value %.2e\n\n# MISALIGNMENTS: %s\nco-co: %s\ncnt-cnt: %s\nco-cnt: %s\ncnt-co: %s\nETG-ETG: %s\nLTG-LTG: %s\nETG-LTG: %s\nLTG-ETG: %s\nMean: %.2f Gyr\nMedian: %.2f Gyr\nstd: %.2f Gyr' %(min_particles, max_com, min_inclination, plot_merger_limit, res.correlation, res.pvalue, len(misalignment_tree.keys()), len(summary_dict['ID']['co-co']), len(summary_dict['ID']['counter-counter']), len(summary_dict['ID']['co-counter']), len(summary_dict['ID']['counter-co']), len(summary_dict['ID']['ETG-ETG']), len(summary_dict['ID']['LTG-LTG']), len(summary_dict['ID']['ETG-LTG']), len(summary_dict['ID']['LTG-ETG']), mean_timescale, median_timescale, std_timescale)}
-                         
-        if savefig:
-            if savefig_txt == 'manual':
-                savefig_txt = input('\n  -> Enter savefig_txt:   ')
-            plt.savefig("%s/delta_misangle_t_relax/%sdelta_misangle_%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), savefig_txt, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-            print("\n  SAVED: %s/delta_misangle_t_relax/%sdelta_misangle_%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), savefig_txt, file_format)) 
-        if showfig:
-            plt.show()
-        plt.close()
-    
-    
-    #-------------------------
+    """
     # Plots trelax - tdyn, which should be proportional
-    if plot_trelax_tdyn:  
+    """if plot_trelax_tdyn:  
         relaxationtime_plot = []
         dyntime_plot        = []
         ID_plot             = []
@@ -7746,7 +8592,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
             
             # Average the dynamical time and ellip
-            dyntime_plot.append(np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])))
+            dyntime_plot.append(np.mean(np.array(misalignment_tree['%s' %ID_i]['relaxation_tdyn'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])))
             
             ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
             
@@ -7812,11 +8658,9 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         if showfig:
             plt.show()
         plt.close()
-        
-        
-    #------------------------- 
+    """
     # Plots log(ellip) - log(trelax/tdyn), which should have a (rough) gradient of -1 
-    if plot_ellip_trelaxtdyn:
+    """if plot_ellip_trelaxtdyn:
         relaxationtime_plot = []
         dyntime_plot        = []
         ellip_plot          = []
@@ -7826,7 +8670,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
             
             # Average the dynamical time and ellip
-            dyntime_plot.append(np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])))
+            dyntime_plot.append(np.mean(np.array(misalignment_tree['%s' %ID_i]['relaxation_tdyn'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])))
             ellip_plot.append(np.mean(np.array(misalignment_tree['%s' %ID_i]['ellip'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])))
             
             ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
@@ -7894,14 +8738,19 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         if showfig:
             plt.show()
         plt.close()
+    """
     
     
-    
+def _plot_tree(
+               # Galaxy analysis
+               print_summary             = True,
+                ):
     
         
 
 #=============================
 #_create_galaxy_tree()  
-_analyse_tree()
+#_analyse_tree()
+_plot_tree()
 #=============================
     

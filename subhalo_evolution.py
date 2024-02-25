@@ -1714,7 +1714,9 @@ ID_list = [443962, 17386687, 37720520, 74948378, 102011598, 236121860, 239192401
 # long trelax >2 GYR
 #ID_list = [115659946, 203653117, 216029810, 251900011, 273987842, 300443124, 453139727, 463220955, 390652869, 137732479, 208235276, 370237257, 239924249, 208272775, 334237852, 350073611, 92395081, 175434605, 264298155, 470037125, 444435190]
 # Casanueva galaxies:
-ID_list = [198707313, 248944532]
+#ID_list = [198707313, 248944532]
+# paper plots:
+ID_list = [453139689, 251899973]
 
 def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                          #--------------------------
@@ -1751,7 +1753,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                            plot_stelmassloss    = False,
                            plot_bh_acc          = False,
                            plot_bh_acc_instant  = False,
-                           plot_sfr             = True,
+                           plot_sfr             = False,
                          # Masses   [ Msun ]
                            plot_halomass        = False,
                            plot_stelmass        = True,
@@ -1790,9 +1792,9 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                            plot_ttorque         = True,     
                          #==================================================================================
                          showfig        = True,
-                         savefig        = False,
+                         savefig        = True,
                            file_format  = 'pdf',
-                           savefig_txt  = '', 
+                           savefig_txt  = 'trelax-2gy-DM-paper', 
                          #--------------------------
                          print_progress = False,
                          debug = False):
@@ -1896,6 +1898,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
     
     #================================================ 
     # Loop over all galaxies
+    print('Searching for Galaxies matching ID...')
     for GalaxyID in tqdm(galaxy_tree.keys()):
         
         # If we are looking at individual galaxies, filter them out
@@ -2029,7 +2032,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                     ax_top.set_xticklabels(['{:g}'.format(z) for z in redshiftticks])
                 if not redshift_axis:
                     ax_top.set_xticklabels([])
-                axs[i].set_ylabel('Misalignment angle, $\psi$')
+                axs[i].set_ylabel('Misalignment angle, $\psi_{\mathrm{3D}}$')
                 
                 #---------------------
                 ### Annotation
@@ -2284,29 +2287,26 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                 
                 
                 
-                
-                
-                
                 #---------------------
                 ### Annotate
-                axs[i].axhline(0.4, lw=0.5, ls=':', c='k', alpha=0.9, zorder=1)
-                axs[i].text(7.95, 0.42, 'LTG', color='grey', fontsize=7, alpha=0.9)
-                axs[i].text(7.95, 0.30, 'ETG', color='grey', fontsize=7, alpha=0.9)
+                axs[i].axhline(0.4, lw=0.5, ls='-', c='k', alpha=0.9, zorder=1)
+                axs[i].text(7.88, 0.43, 'LTG', color='grey', fontsize=7, alpha=0.9)
+                axs[i].text(7.88, 0.28, 'ETG', color='grey', fontsize=7, alpha=0.9)
                 
                 #---------------------
                 ### Formatting
                 axs[i].set_ylim(0, 1)
                 axs[i].set_yticks(np.arange(0, 1.1, 0.2))
-                if not plot_ellip or not plot_triax:
-                    axs[i].set_ylabel('$\kappa_{\mathrm{co}}$')
-                else:
+                if plot_ellip or plot_triax:
                     axs[i].set_ylabel('Morphology')
+                else:
+                    axs[i].set_ylabel('$\kappa_{\mathrm{co}}$')
                 ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major', labelbottom=False, labeltop=False)
                 ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='minor')
                 
                 #---------------------
                 ### Legend
-                axs[i].legend(loc='best', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.2)
+                axs[i].legend(loc='best', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1.2, ncol=3, columnspacing=1)
                 
                 #---------------------
                 ### Plot mergers

@@ -22,8 +22,6 @@ from read_dataset_directories import _assign_directories
 #====================================
 # finding directories
 answer = input("-----------------\nDirectories?:\n     1 local\n     2 serpens_snap\n     3 snip\n     4 snip local\n")
-if answer == '4':
-    raise Exception('Doesnt work on snips, use closest snap')
 EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_directories(answer)
 #====================================
 
@@ -393,10 +391,94 @@ def _plot_stellar_mass_function(csv_sample = 'L100_27_all_sample_misalignment_9.
     _plot_stellar_mass_func()
     #------------------------
 
+
+#----------------------------------------
+# Will plot stellar mass of a given snip
+def _plot_stellar_mass_function_snip(snipshot_in = 188,  
+                                    #--------------------------
+                                     hist_bin_width = 0.2,
+                                     lower_mass_limit = 10**7,
+                                     upper_mass_limit = 10**15,
+                                     #--------------------------
+                                     showfig       = True,
+                                     savefig       = False,
+                                       file_format = 'pdf',
+                                       savefig_txt = '',
+                                     #--------------------------
+                                     print_progress = False,
+                                     debug = False):
+                                     
+    #================================================   
+    assert (answer == '4') or (answer == '3'), 'Must use snips'
+    
+    #-------------------------
+    # Loading sample
+    dict_sample = json.load(open('%s/L100_%s_all_sample_misalignment_9.5.csv' %(sample_dir, snipshot_in), 'r'))
+    GroupNum_List       = np.array(dict_sample['GroupNum'])
+    SubGroupNum_List    = np.array(dict_sample['SubGroupNum'])
+    GalaxyID_List       = np.array(dict_sample['GalaxyID'])
+    SnapNum_List        = np.array(dict_sample['SnapNum'])
+    sample_input        = dict_sample['sample_input']
+    
+    #---------------------- 
+    # Loading mergertree file    
+    f = h5py.File(tree_dir + 'Snip100_MainProgenitorTrees.hdf5', 'r')
+    GalaxyID_tree             = np.array(f['Histories']['GalaxyID'])
+    DescendantID_tree         = np.array(f['Histories']['DescendantID'])
+    Redshift_tree             = np.array(f['Snapnum_Index']['Redshift'])
+    Lookbacktime_tree         = np.array(f['Snapnum_Index']['LookbackTime'])
+    StellarMass_tree          = np.array(f['Histories']['StellarMass'])
+    GasMass_tree              = np.array(f['Histories']['GasMass'])
+    StarFormationRate_30_tree = np.array(f['Histories']['StarFormationRate_30'])
+    f.close()
+    
+    
+    #---------------------- 
+    # Mask stellarmass, remove -1
+    plot_stelmass = StellarMass_tree[:,int(snipshot_in)][StellarMass_tree[:,int(snipshot_in)] != -1]
+    
+    
+    #--------------------------
+    # Graph initialising and base formatting
+    fig, axs = plt.subplots(1, 1, figsize=[10/3, 3], sharex=True, sharey=False)
+    plt.subplots_adjust(wspace=0.4, hspace=0.4)
+    
+    # Create histogram of our sample    
+    mod_lower_mass_limit = lower_mass_limit
+    hist_sample, _ = np.histogram((hist_bin_width/2)+np.floor(np.log10(plot_stelmass)/hist_bin_width)*hist_bin_width , bins=np.arange(np.log10(mod_lower_mass_limit)+(hist_bin_width/2), np.log10(upper_mass_limit), hist_bin_width))
+    hist_sample = hist_sample[:] / (float(sample_input['mySims'][0][1]))**3
+    hist_sample = hist_sample / hist_bin_width                      # why?
+    hist_bins   = np.arange(np.log10(mod_lower_mass_limit)+(hist_bin_width/2), np.log10(upper_mass_limit)-hist_bin_width, hist_bin_width)
+    
+    # Masking out nans
+    with np.errstate(divide='ignore', invalid='ignore'):
+        hist_mask = np.isfinite(np.log10(hist_sample))
+    hist_sample = hist_sample[hist_mask]
+    hist_bins   = hist_bins[hist_mask]
+    
+    
+    axs.plot(hist_bins, np.log10(hist_sample), label='Sample selection', ls='--', linewidth=1, c='r')
+    
+    
+    #-----------
+    # Axis formatting
+    plt.xlim(np.log10(lower_mass_limit), 12.5)
+    plt.ylim(-5, -0.5)
+    plt.yticks(np.arange(-5, 0, 0.5))
+    plt.xlabel(r'log$_{10}$ M$_{*}$ [M$_{\odot}$]')
+    plt.ylabel(r'log$_{10}$ dn/dlog$_{10}$(M$_{*}$) [cMpc$^{-3}$]')
+    plt.xticks(np.arange(np.log10(lower_mass_limit), 12.5, 0.5))
+    
+    plt.show()
+
+
+
 #===========================
 #_plot_stellar_mass_function()
-_plot_stellar_mass_function(use_angle = 'stars_gas_sf')
-_plot_stellar_mass_function(use_angle = 'stars_dm')
+#_plot_stellar_mass_function(use_angle = 'stars_gas_sf')
+#_plot_stellar_mass_function(use_angle = 'stars_dm')
+
+_plot_stellar_mass_function_snip()
 #===========================
 
 

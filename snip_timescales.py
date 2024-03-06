@@ -1482,7 +1482,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                   # Group / Field / both                 [ None / value ] (halo threshold: 10**14)
                     min_halomass        = None,     max_halomass        = None, 
                   # Masses and                           [ None / value ]
-                    min_stelmass        = 10**10,     max_stelmass        = None,
+                    min_stelmass        = None,     max_stelmass        = None,
                     min_gasmass         = None,     max_gasmass         = None,
                     min_sfmass          = None,     max_sfmass          = None,
                     min_nsfmass         = None,     max_nsfmass         = None,
@@ -1529,7 +1529,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                   use_merger_criteria   = False,   # [ True / None / False ] Whether we limit to merger-induced, no mergers, or any misalignments
                     min_stellar_ratio   = 0.1,       max_stellar_ratio   = 1/0.1,     # [ value ] -> set to 0 if we dont care, set to 999 if we dont care
                     min_gas_ratio       = None,      max_gas_ratio       = None,    # [ None / value ]
-                    max_merger_pre      = 0.2,       max_merger_post     = 0.5,    # [0.2 + 0.5 / Gyr] -/+ max time to closest merger from point of misalignment
+                    max_merger_pre      = 0.1,       max_merger_post     = 0.1,    # [0.2 + 0.5 / Gyr] -/+ max time to closest merger from point of misalignment
                   #------------------------------------------------------------
                   # Temporal selection
                     latency_time     = 0.1,          # [ None / 0.1 Gyr ]   Consecutive time galaxy must be <30 / >150 to count as finished relaxing
@@ -1541,7 +1541,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                   # Relaxation selection
                     relaxation_type    = ['co-co', 'co-counter', 'counter-co', 'counter-counter'],        # ['co-co', 'co-counter', 'counter-co', 'counter-counter']
                     relaxation_morph   = ['LTG-LTG', 'ETG-ETG', 'LTG-ETG', 'ETG-LTG', 'other'],           # ['LTG-LTG', 'ETG-ETG', 'LTG-ETG', 'ETG-LTG', 'other'] based off initial vs end kappa
-                    misalignment_morph = ['ETG', 'LTG'],                                # ['ETG', 'LTG', 'other'] averages kappa over misalignment. Uses 0.35, 0.45 means as cutoff
+                    misalignment_morph = ['LTG', 'ETG'],                                # ['ETG', 'LTG', 'other'] averages kappa over misalignment. Uses 0.35, 0.45 means as cutoff
                       morph_limits     = [0.4, 0.4],                                                    # [ upper ETG, lower LTG ] bounds
                     peak_misangle      = None,          # [ None / angle ] Maximum delta from where the galaxy relaxes to. So for co = 50, counter = 180-50
                     min_trelax         = None,        
@@ -1563,7 +1563,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                     set_bin_width_trelax                = 0.25,     # [ 0.25 / Gyr ]
                       set_plot_percentage               = True,
                       set_plot_relaxation_type          = True,     # SET TO FALSE IF BELOW TRUE. Stack histogram types   
-                      set_plot_histogram_log            = False,    # set yaxis as log
+                      set_plot_histogram_log              = False,    # set yaxis as log
                         add_inset                       = True,     # whether to have smaller second plot
                   _plot_tdyn_histogram          = False,
                     set_bin_limit_tdyn                  = 28,       # [ None / multiples ]
@@ -1579,10 +1579,10 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                     set_plot_type                       = 'time',            # 'time', 'snap', 'raw_time', 'raw_snap'
                     set_stacked_plot_type               = 'misangle',        # 'misangle', 'merger' where to lineup stacks to
                     set_plot_extra_time                 = False,              # Plot extra time after relaxation
-                    set_plot_merger_limit               = None,               # [ None / merger ratio ] None will not plot legend or squares
+                    set_plot_merger_limit               = 0.1,               # [ None / merger ratio ] None will not plot legend or squares
                     set_add_GalaxyIDs                   = False,             # Add GalaxyID of entry
                     set_plot_relaxation_type_stacked    = True,             # Stack histogram types
-                      add_stacked_median                = True,             # Whether to add a median line (will lower transparency of other lines)
+                      add_stacked_median                = False,             # Whether to add a median line (will lower transparency of other lines)
                       set_stacked_relaxation_type       = ['co-co', 'co-counter', 'counter-co', 'counter-counter'],          # ['co-co', 'co-counter', 'counter-co', 'counter-counter']
                   _plot_stacked_tdyn            = False,
                   _plot_stacked_tdyn_2x2        = False,
@@ -1634,7 +1634,12 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                     set_min_halo_ttorque                = 0,          # [ trelax/torque ] min relaxation time, as we dont care about short relaxers
                   _plot_halo_misangle_manual    = False,
                     
-                
+                  #-----------------------------
+                  # Average halo misalignment before misalignment with fractional occurence
+                  _plot_halo_misangle_pre_frac  = True, 
+                    set_misanglepre_morph               = True,         # will use a stacked histogram for ETG-ETG, LTG-LTG, ETG-LTG, etc.
+                    set_misanglepre_type                = ['co-co'],           # [ 'co-co', 'co-counter' ]  or False
+                  
                   
                   
                   #-----------------------------
@@ -1644,7 +1649,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                     file_format = 'pdf',
                     savefig_txt = 'txt',     # [ 'manual' / txt ] 'manual' will prompt txt before saving
               #====================================================================================================
-              load_csv_file  = '_normalLatency_anyMergers_anyMorph',     # [ 'file_name' / False ] load existing misalignment tree  '_normalLatency_anyMergers_anyMorph'
+              load_csv_file  = '_normalLatency_anyMergers_anyMorph_',     # [ 'file_name' / False ] load existing misalignment tree  '_normalLatency_anyMergers_anyMorph_' '_normalLatency_verystrictMergers_Major_anyMorph_1010_'
                 plot_annotate  = False,    #  [ False / 'ETG → ETG' r'ETG ($\bar{\kappa}_{\mathrm{co}}^{\mathrm{*}} < 0.35$)'  ]                   # string of text or False / 'ETG' 
               #====================================================================================================
                   print_progress = False,
@@ -2994,6 +2999,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                                                                                                                   
                                                         '%s' %use_angle: galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj][index_start:index_stop],
                                                         '%s_err' %use_angle: galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj][index_start:index_stop],
+                                                        '%s_halo' %use_angle: galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['angle_halo'][index_start:index_stop],
                                                         'stars_dm': galaxy_tree['%s' %GalaxyID]['stars_dm']['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj][index_start:index_stop],
                                                         'stars_dm_err': galaxy_tree['%s' %GalaxyID]['stars_dm']['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj][index_start:index_stop],
                                                         'gas_dm': galaxy_tree['%s' %GalaxyID]['gas_dm']['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj][index_start:index_stop],
@@ -3283,7 +3289,6 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         print('\tnumber of IDs in common:            ', len([ID_i for ID_i in summary_dict['ID']['LTG'] if ID_i in summary_dict['ID']['LTG-LTG']]))
         print('\tnumber of IDs in LTG but not LTG_LTG', len([ID_i for ID_i in summary_dict['ID']['LTG'] if ID_i not in summary_dict['ID']['LTG-LTG']]))
         print('\tnumber of IDs in LTG_LTG but not LTG', len([ID_i for ID_i in summary_dict['ID']['LTG-LTG'] if ID_i not in summary_dict['ID']['LTG']]))
-        print('\n\t\tCHECK OVERLAP WITH ETG_ID_array and ETG_ETG_ID_array')
         print('\n======================================')
         print('NUMBER OF MISALIGNMENTS RECORDED: ', len(misalignment_tree.keys()))    
         print('   co-co: %s \tcounter-counter: %s \tco-counter: %s \tcounter-co: %s' %(('n/a' if 'co-co' not in relaxation_type else len(summary_dict['ID']['co-co'])), ('n/a' if 'counter-counter' not in relaxation_type else len(summary_dict['ID']['counter-counter'])), ('n/a' if 'co-counter' not in relaxation_type else len(summary_dict['ID']['co-counter'])), ('n/a' if 'counter-co' not in relaxation_type else len(summary_dict['ID']['counter-co']))))
@@ -3591,6 +3596,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
                 counter_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
                 
+                
+            #if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
+            #    if misalignment_tree['%s' %ID_i]['angle_peak'] > 135:
+            #        aaa.append(misalignment_tree['%s' %ID_i]['misalignment_morph'])
+                
         print('\nMax trelax:  %.2f Gyr' %max(relaxationtime_plot))  
         
         #-------------
@@ -3774,7 +3784,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         if add_inset:
             ncol=2
         else:
-            ncol=4
+            ncol=1
         axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0, ncol=ncol)
         
         
@@ -3792,6 +3802,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         ### Savefig
         if add_inset:
             savefig_txt_2 = savefig_txt + '_inset'
+        else:
+            savefig_txt_2 = savefig_txt
             
         metadata_plot = {'Title': '%s, %s\nThreshold: %s\nMin delta:%s\nLatency time: %s\nMin ratio: %s\nUSE MERGERS: %s\nMax closest merger: %s-%s\nTime extra: %s\nTime no misangle: %s\nStelmass: %s/%s\n kappa*: %s/%s\n outflow: %s/%s' %(abs_or_proj, use_angle, misangle_threshold, min_delta_angle, latency_time, min_stellar_ratio, use_merger_criteria, max_merger_pre, max_merger_post, time_extra, time_no_misangle, min_stelmass, max_stelmass, min_kappa_stars, max_kappa_stars, min_inflow, max_inflow),
                          'Author': 'Min particles: %s\nMax CoM: %s\nMin inc: %s\nPlot ratio limit: %s\n\n# MISALIGNMENTS: %s\nco-co: %s\ncnt-cnt: %s\nco-cnt: %s\ncnt-co: %s\nETG-ETG: %s\nLTG-LTG: %s\nETG-LTG: %s\nLTG-ETG: %s\nMean: %.2f Gyr\nMedian: %.2f Gyr\nstd: %.2f Gyr\nmax: %.2f Gyr' %(min_particles, max_com, min_inclination, set_plot_merger_limit, len(misalignment_tree.keys()), len(summary_dict['ID']['co-co']), len(summary_dict['ID']['counter-counter']), len(summary_dict['ID']['co-counter']), len(summary_dict['ID']['counter-co']), len(summary_dict['ID']['ETG-ETG']), len(summary_dict['ID']['LTG-LTG']), len(summary_dict['ID']['ETG-LTG']), len(summary_dict['ID']['LTG-ETG']), mean_timescale, median_timescale, std_timescale, max(relaxationtime_plot)),
@@ -3826,6 +3838,10 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 counter_co_array.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
             elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
                 counter_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+                
+            if misalignment_tree['%s' %ID_i]['relaxation_tdyn'] > 20:
+                print('\tFound >20 tdyn:   ID: %s\tMass: %.2e Msun' %(ID_i, np.mean(misalignment_tree['%s' %ID_i]['stelmass'])))
+                print('\t  type: %s, morph: %s, time: %.2f, tdyn: %.2f, ttorque: %.2f' %(misalignment_tree['%s' %ID_i]['relaxation_type'], misalignment_tree['%s' %ID_i]['relaxation_morph'], misalignment_tree['%s' %ID_i]['relaxation_time'], misalignment_tree['%s' %ID_i]['relaxation_tdyn'], misalignment_tree['%s' %ID_i]['relaxation_ttorque']))
             
         print('\nMax tdyn/trelax:  %.2f' %max(relaxationtime_plot)) 
                 
@@ -4009,7 +4025,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         if add_inset:
             ncol=2
         else:
-            ncol=4
+            ncol=1
         axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0, ncol=ncol)
         
         #-----------
@@ -4026,6 +4042,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         ### Savefig
         if add_inset:
             savefig_txt_2 = savefig_txt + '_inset'
+        else:
+            savefig_txt_2 = savefig_txt
             
         metadata_plot = {'Title': '%s, %s\nThreshold: %s\nMin delta:%s\nLatency time: %s\nMin ratio: %s\nUSE MERGERS: %s\nMax closest merger: %s-%s\nTime extra: %s\nTime no misangle: %s\nStelmass: %s/%s\n kappa*: %s/%s\n outflow: %s/%s' %(abs_or_proj, use_angle, misangle_threshold, min_delta_angle, latency_time, min_stellar_ratio, use_merger_criteria, max_merger_pre, max_merger_post, time_extra, time_no_misangle, min_stelmass, max_stelmass, min_kappa_stars, max_kappa_stars, min_inflow, max_inflow),
                          'Author': 'Min particles: %s\nMax CoM: %s\nMin inc: %s\nPlot ratio limit: %s\n\n# MISALIGNMENTS: %s\nco-co: %s\ncnt-cnt: %s\nco-cnt: %s\ncnt-co: %s\nETG-ETG: %s\nLTG-LTG: %s\nETG-LTG: %s\nLTG-ETG: %s\nMean: %.2f\nMedian: %.2f\nstd: %.2f\nmax: %.2f' %(min_particles, max_com, min_inclination, set_plot_merger_limit, len(misalignment_tree.keys()), len(summary_dict['ID']['co-co']), len(summary_dict['ID']['counter-counter']), len(summary_dict['ID']['co-counter']), len(summary_dict['ID']['counter-co']), len(summary_dict['ID']['ETG-ETG']), len(summary_dict['ID']['LTG-LTG']), len(summary_dict['ID']['ETG-LTG']), len(summary_dict['ID']['LTG-ETG']), mean_tdyn, median_tdyn, std_tdyn, max(relaxationtime_plot)),
@@ -4244,7 +4262,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         if add_inset:
             ncol=2
         else:
-            ncol=4
+            ncol=1
         axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0, ncol=ncol)
         
         #-----------
@@ -4261,6 +4279,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         ### Savefig
         if add_inset:
             savefig_txt_2 = savefig_txt + '_inset'
+        else:
+            savefig_txt_2 = savefig_txt
             
         metadata_plot = {'Title': '%s, %s\nThreshold: %s\nMin delta:%s\nLatency time: %s\nMin ratio: %s\nUSE MERGERS: %s\nMax closest merger: %s-%s\nTime extra: %s\nTime no misangle: %s\nStelmass: %s/%s\n kappa*: %s/%s\n outflow: %s/%s' %(abs_or_proj, use_angle, misangle_threshold, min_delta_angle, latency_time, min_stellar_ratio, use_merger_criteria, max_merger_pre, max_merger_post, time_extra, time_no_misangle, min_stelmass, max_stelmass, min_kappa_stars, max_kappa_stars, min_inflow, max_inflow),
                          'Author': 'Min particles: %s\nMax CoM: %s\nMin inc: %s\nPlot ratio limit: %s\n\n# MISALIGNMENTS: %s\nco-co: %s\ncnt-cnt: %s\nco-cnt: %s\ncnt-co: %s\nETG-ETG: %s\nLTG-LTG: %s\nETG-LTG: %s\nLTG-ETG: %s\nMean: %.2f\nMedian: %.2f\nstd: %.2f\nmax: %.2f' %(min_particles, max_com, min_inclination, set_plot_merger_limit, len(misalignment_tree.keys()), len(summary_dict['ID']['co-co']), len(summary_dict['ID']['counter-counter']), len(summary_dict['ID']['co-counter']), len(summary_dict['ID']['counter-co']), len(summary_dict['ID']['ETG-ETG']), len(summary_dict['ID']['LTG-LTG']), len(summary_dict['ID']['ETG-LTG']), len(summary_dict['ID']['LTG-ETG']), mean_ttorque, median_ttorque, std_ttorque, max(relaxationtime_plot)),
@@ -4318,6 +4338,35 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             
             if misalignment_tree['%s' %ID_i]['relaxation_type'] not in set_stacked_relaxation_type:
                 continue
+                
+                
+            half_window = 0.2   # Gyr
+            desired_ratio = 0.1
+            index_merger_window = np.where(np.absolute(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']+1]) < half_window)[0]
+            
+            meets_criteria = False
+            for merger_i in np.array(misalignment_tree['%s' %ID_i]['merger_ratio_stars'])[index_merger_window]:
+                if len(merger_i) > 0:
+                    if (min(merger_i, key=lambda x:abs(x - 1)) > desired_ratio) & (min(merger_i, key=lambda x:abs(x - 1)) < 1/desired_ratio):
+                        meets_criteria = True
+            if meets_criteria == False:
+                continue
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            print('\n\n\t\t\tUSING CUSTOM MERGER CRITERIA')
+            
+            
+            
+            
+
+                
             
             ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
             time_collect.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
@@ -4395,7 +4444,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 
                 
                 
-            axs.plot(timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if set_plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if set_plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], lw=0.3, c=c, alpha=alpha)
+            #axs.plot(timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if set_plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if set_plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], lw=0.3, c=c, alpha=alpha)
+            axs.plot(timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if set_plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if set_plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], lw=0.3, c='k', alpha=1)
             
             ### Annotate
             if set_add_GalaxyIDs:
@@ -4568,6 +4618,15 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         # Add threshold
         axs.axhspan(0, misangle_threshold, alpha=0.25, ec=None, fc='grey')
         axs.axhspan(180-misangle_threshold, 180, alpha=0.25, ec=None, fc='grey')
+        
+        
+        #ßfor ID_i in ID_plot:
+        #    print(' ')
+        #    print(' ID: ', ID_i)
+        #    for time_i, angle_i, merger_i in zip(misalignment_tree['%s' %ID_i]['Lookbacktime'], misalignment_tree['%s' %ID_i][use_angle], misalignment_tree['%s' %ID_i]['merger_ratio_stars']):
+        #        print('%.2f\t%.1f\t' %(time_i, angle_i), merger_i)
+        print(' remaining sample aaaaaa: ', len(ID_plot))
+        
         
         
         #-----------
@@ -8972,6 +9031,180 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         plt.close()
     
     
+    #-------------------------
+    # Plots hist of average DM-stars misangle co-co preceeding misalignment with fraction
+    if _plot_halo_misangle_trelax:
+        relaxationtime_plot  = []
+        halomisangle_plot    = []
+        ID_plot     = []
+        for ID_i in misalignment_tree.keys():
+            
+            # remove misalignments that are too below resolution
+            if misalignment_tree['%s' %ID_i]['relaxation_time'] <= set_halo_trelax_resolution:
+                continue
+            
+            # remove misalignments that are too short
+            if misalignment_tree['%s' %ID_i]['relaxation_time'] <= set_min_halo_trelax:
+                continue
+                
+            # Collect relaxation time
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            ID_plot.append(ID_i)
+            if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-ETG':
+                relaxationmorph_plot.append('ETG → ETG')
+            elif misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'LTG-LTG':
+                relaxationmorph_plot.append('LTG → LTG')
+            else:
+                relaxationmorph_plot.append('other')
+            
+            # Collect average kappa during misalignment
+            relaxationkappa_plot.append(np.mean(misalignment_tree['%s' %ID_i]['kappa_stars'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+            
+            # Collect average stellar-DM misalignment angle
+            halomisangle_plot.append(np.mean(misalignment_tree['%s' %ID_i]['stars_dm'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+            
+                            
+        # Collect data into dataframe
+        df = pd.DataFrame(data={'Relaxation time': relaxationtime_plot, 'Relaxation kappa': relaxationkappa_plot, 'Relaxation morph': relaxationmorph_plot, 'DM-stars angle': halomisangle_plot, 'GalaxyIDs': ID_plot})
+        
+        #-------------
+        # Stats
+        res = stats.spearmanr(relaxationtime_plot, halomisangle_plot)
+        print('\n--------------------------------------')
+        print('Size of halo-misangle trelax plot: ', len(ID_plot))
+        print('Stars-DM misangle vs trelax:')
+        print('   ρ:       %.2f' %res.correlation)
+        print('   p-value: %s' %res.pvalue)
+        print('--------------------------------------')
+        
+        #-------------
+        # Plotting scatter
+        fig, (ax_scatter, ax_line) = plt.subplots(nrows=2, ncols=1, gridspec_kw={'height_ratios': [2.5, 1]}, figsize=[10/3, 2.5], sharex=True, sharey=False, layout='constrained')
+        #plt.subplots_adjust(wspace=0.4, hspace=0.4)
+        
+        # Normalise colormap
+        norm = mpl.colors.Normalize(vmin=0.15, vmax=0.65, clip=True)
+        mapper = cm.ScalarMappable(norm=norm, cmap='Spectral')         #cmap=cm.coolwarm), cmap='sauron'
+        
+        im1 = ax_scatter.scatter(df['DM-stars angle'], df['Relaxation time'], c=df['Relaxation kappa'], s=2, norm=norm, cmap='Spectral', zorder=99, edgecolors='k', linewidths=0.1, alpha=1)
+        plt.colorbar(im1, ax=ax_scatter, label=r'$\bar{\kappa}_{\mathrm{co}}^{*}$', extend='both', pad=0.025)
+        
+        
+        #---------------
+        # Bin hist data, find sigma percentiles
+        bin_width = 15
+        bins = np.arange(0, 181, bin_width)
+        binned_data_arg = np.digitize(df['DM-stars angle'], bins=bins)
+        bin_medians     = np.stack([np.percentile(df['Relaxation time'][binned_data_arg == i], q=[5, 16, 50, 84, 95]) for i in range(1, len(bins))])
+        print(bin_medians)
+        
+        # Plot average line for total sample
+        #ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor='k', alpha=0.2, zorder=6)
+        ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor='k', alpha=0.2, zorder=6)
+        #ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,1], lw=1, c='k', ls='--', zorder=101)
+        ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=1, c='k', ls='-', zorder=101, label='sample')
+        #ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,3], lw=1, c='k', ls='--', zorder=101)
+        
+        if add_plot_halo_morph_median:
+            # Bin hist data, find sigma percentiles
+            bin_width = 15
+            bins = np.arange(0, 181, bin_width)
+            binned_data_arg = np.digitize(df['DM-stars angle'][df['Relaxation kappa'] > 0.4], bins=bins)
+            bin_medians     = np.stack([np.percentile(df['Relaxation time'][df['Relaxation kappa'] > 0.4][binned_data_arg == i], q=[5, 16, 50, 84, 95]) for i in range(1, len(bins))])
+            #print(bin_medians)
+        
+            # Plot average line for total sample
+            #ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor='k', alpha=0.2, zorder=6)
+            #ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor='b', alpha=0.2, zorder=6)
+            ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=1, c='b', ls='-', zorder=101, label=r'$\bar{\kappa}_{\mathrm{co}}^{*}>0.4$')
+        
+            # Bin hist data, find sigma percentiles
+            bin_width = 15
+            bins = np.arange(0, 181, bin_width)
+            binned_data_arg = np.digitize(df['DM-stars angle'][df['Relaxation kappa'] < 0.4], bins=bins)
+            bin_medians     = np.stack([np.percentile(df['Relaxation time'][df['Relaxation kappa'] < 0.4][binned_data_arg == i], q=[5, 16, 50, 84, 95]) for i in range(1, len(bins))])
+            #print(bin_medians)
+        
+            # Plot average line for total sample
+            #ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor='k', alpha=0.2, zorder=6)
+            #ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor='r', alpha=0.2, zorder=6)
+            ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=1, c='r', ls='-', zorder=101, label=r'$\bar{\kappa}_{\mathrm{co}}^{*}<0.4$')
+        
+        
+        #-------------
+        # Plotting hist
+        #bins = np.arange(0, 181, 30)
+        #ax_hist.hist(df['DM-stars angle'], bins=bins, log=False, facecolor='none', linewidth=1, edgecolor='k', histtype='step', alpha=1)
+        #ax_hist.hist(df['DM-stars angle'][df['Relaxation morph'] == 'LTG → LTG'], bins=bins, log=False, facecolor='none', linewidth=1, edgecolor='C0', histtype='step', alpha=1)
+        #ax_hist.hist(df['DM-stars angle'][df['Relaxation morph'] == 'ETG → ETG'], bins=bins, log=False, facecolor='none', linewidth=1, edgecolor='C1', histtype='step', alpha=1)
+        
+        
+        #-------------
+        # Plotting average kappa
+        
+        # Bin hist data, find sigma percentiles
+        bin_width = 15
+        bins = np.arange(0, 181, bin_width)
+        binned_data_arg = np.digitize(df['DM-stars angle'], bins=bins)
+        bin_medians     = np.stack([np.percentile(df['Relaxation kappa'][binned_data_arg == i], q=[5, 16, 50, 84, 95]) for i in range(1, len(bins))])
+        
+        ### Plot upper, median, and lower sigma
+        #ax_line.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor='k', alpha=0.2, zorder=6)
+        ax_line.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor='k', alpha=0.2, zorder=6)
+        ax_line.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=1, c='k', ls='-', zorder=7)
+        
+        
+        #-------------
+        ### Formatting
+        ax_scatter.set_ylabel('$t_{\mathrm{relax}}$ (Gyr)')
+        #ax_hist.set_ylabel('Count')
+        ax_line.set_ylabel(r'$\bar{\kappa}_{\mathrm{co}}^{*}$')
+        ax_line.set_xlabel('Average stellar-DM misalignment angle')
+        
+        if set_plot_halo_misangle_log:
+            ax_scatter.set_yscale('log')
+            ax_scatter.set_ylim(0.1, 10)
+            ax_scatter.set_yticks([0.1, 1, 10])
+            ax_scatter.set_yticklabels(['0.1', '1', '10'])
+        else:
+            ax_scatter.set_ylim(0, 6)
+            ax_scatter.set_yticks(np.arange(0, 6.1, 1))
+        #ax_hist.set_yscale('log')
+        #ax_hist.set_ylim(bottom=0)
+        ax_line.set_ylim(0.1, 0.6)
+        ax_line.set_yticks(np.arange(0.2, 0.61, 0.2))
+        ax_scatter.set_xlim(0, 180)
+        ax_scatter.set_xticks(np.arange(0, 180.1, 30))
+        for ax in [ax_scatter, ax_line]:
+            ax.minorticks_on()
+            ax.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
+            ax.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
+            
+        #-----------
+        ### title
+        if plot_annotate:
+            ax_scatter.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
+        
+        #------------
+        # Legend
+        ax_scatter.legend(loc='best', frameon=False, labelspacing=0.1, handlelength=1)
+    
+        #------------
+        ### other
+        #plt.tight_layout()
+    
+        #-----------
+        # savefig
+        if savefig:
+            if savefig_txt == 'manual':
+                savefig_txt = input('\n  -> Enter savefig_txt:   ')
+            plt.savefig("%s/halo_misangle_relaxtime/trelax_halomisangle_trelax_%s_%s.%s" %(fig_dir, len(misalignment_tree.keys()), savefig_txt, file_format), format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/halo_misangle_relaxtime/trelax_halomisangle_trelax_%s_%s.%s" %(fig_dir, len(misalignment_tree.keys()), savefig_txt, file_format)) 
+        if showfig:
+            plt.show()
+        plt.close()
+    
+    
     
     #-------------------------
     ### OLD PLOTS
@@ -9902,4 +10135,5 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
 #_create_galaxy_tree()  
 _analyse_tree()
 #=============================
+
     

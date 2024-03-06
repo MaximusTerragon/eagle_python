@@ -1717,6 +1717,7 @@ ID_list = [443962, 17386687, 37720520, 74948378, 102011598, 236121860, 239192401
 #ID_list = [198707313, 248944532]
 # paper plots:
 ID_list = [453139689, 251899973]
+ID_list = [251899973]
 
 def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                          #--------------------------
@@ -1792,7 +1793,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                            plot_ttorque         = True,     
                          #==================================================================================
                          showfig        = True,
-                         savefig        = True,
+                         savefig        = False,
                            file_format  = 'pdf',
                            savefig_txt  = 'trelax-2gy-DM-paper', 
                          #--------------------------
@@ -2276,12 +2277,13 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                 
                 
                 
-                ##
+                
                 #print('remove ####')
                 #print('mass   rad   radsf.  ellip.  vcirc.  tdyn.  ttorque')
                 #for mass_ii, r_ii, rsf_ii, ellip_ii, vcirc_ii, tdyn_ii, ttorque_ii in zip(galaxy_tree['%s' %GalaxyID]['other']['1.0_hmr']['tot_mass'], galaxy_tree['%s' %GalaxyID]['rad'], galaxy_tree['%s' %GalaxyID]['rad_sf'], galaxy_tree['%s' %GalaxyID]['ellip'], galaxy_tree['%s' %GalaxyID]['other']['1.0_hmr']['vcirc'], galaxy_tree['%s' %GalaxyID]['other']['1.0_hmr']['tdyn'], galaxy_tree['%s' %GalaxyID]['other']['1.0_hmr']['ttorque']):
                 #    print('%.2e | %.2f | %.2f | %.2f |±| %.1f |±| %.3f | %.3f' %(mass_ii, r_ii, rsf_ii, ellip_ii, vcirc_ii, tdyn_ii, ttorque_ii))
                 
+                    
                 
                 
                 

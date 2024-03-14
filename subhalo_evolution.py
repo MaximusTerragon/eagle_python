@@ -1717,9 +1717,9 @@ ID_list = [443962, 17386687, 37720520, 74948378, 102011598, 236121860, 239192401
 #ID_list = [198707313, 248944532]
 # paper plots:
 ID_list = [453139689, 251899973]
-ID_list = [251899973]
+#ID_list = [251899973]
 
-def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
+def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW',
                          #--------------------------
                          # Individual galaxies
                          GalaxyID_list = ID_list,             # [ None / ID_list ]
@@ -1739,6 +1739,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                            use_angle                = 'stars_gas_sf',
                            plot_dm_angles           = True,            # Whether to add DM-stars, DM-gas_sf
                              use_dm_uncertainties   = False,              # Whether to plot uncertainties or not
+                           plot_halo_angles         = True,              # Plots inner stars to outer gas_sf
                            misangle_threshold       = 30,                # [ 30 / 45 ]  
                            use_uncertainties        = True,              # Whether to plot uncertainties or not
                          #-------------------------------------------
@@ -1976,8 +1977,10 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                     
                     if use_angle == 'stars_gas':
                         angle_label = 'stars$-$gas'
+                        angle_label2 = 'stars$-$gas$ ($>r_{50}$)'
                     elif use_angle == 'stars_gas_sf':
                         angle_label = 'stars$-$gas$_{\mathrm{SF}}$'
+                        angle_label2 = 'stars$-$gas$_{\mathrm{SF}}$ ($>r_{50}$)'
                     elif use_angle == 'gas_sf_gas_nsf':
                         angle_label = 'gas$_{\mathrm{SF}}$$-$gas$_{\mathrm{NSF}}$'
                     elif use_angle == 'stars_dm':
@@ -1992,12 +1995,16 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                         if use_uncertainties:
                             axs[0].fill_between(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.array(galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[:,0], np.array(galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[:,1], alpha=0.25, lw=0, zorder=5, color='k')
                         
+                        if plot_halo_angles:
+                            axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['angle_halo'], alpha=1.0, ms=2, ls='dashdot', lw=0.5, zorder=10, label='%s'%angle_label2, color='m')
+                        
                         if plot_dm_angles:
                             axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['stars_dm']['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj], alpha=1.0, ms=2, ls='dashdot', lw=0.5, zorder=10, label='DM$-$stars', color='r')
                             axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['gas_sf_dm']['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj], alpha=1.0, ms=2, ls=':', lw=0.5, zorder=10, label='DM$-$gas$_{\mathrm{SF}}$', color='b')
                             if use_dm_uncertainties:
                                 axs[0].fill_between(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.array(galaxy_tree['%s' %GalaxyID]['stars_dm']['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[:,0], np.array(galaxy_tree['%s' %GalaxyID]['stars_dm']['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[:,1], alpha=0.25, lw=0, zorder=5, facecolor='r')
                                 axs[0].fill_between(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.array(galaxy_tree['%s' %GalaxyID]['gas_sf_dm']['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[:,0], np.array(galaxy_tree['%s' %GalaxyID]['gas_sf_dm']['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[:,1], alpha=0.25, lw=0, zorder=5, facecolor='b')
+                            
                     if abs_or_proj == 'proj':
                         axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj], alpha=1.0, ms=2, ls=':', lw=0.5, zorder=10, label='%s (projected)'%angle_label)
                         if use_uncertainties:

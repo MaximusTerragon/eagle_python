@@ -8,6 +8,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt 
 import matplotlib.colors as colors
 from matplotlib.ticker import PercentFormatter
+import matplotlib.ticker as mticker
 from matplotlib.lines import Line2D
 import astropy.units as u
 from astropy.cosmology import z_at_value, FlatLambdaCDM
@@ -2261,6 +2262,8 @@ def _manual_plot_misalignment_z(Lookbacktime_array         = [7.94, 7.32, 6.65, 
                                   ETG_counter_array        = [3.8, 4.7, 4.8, 5.4, 6.8, 7.2, 8.9, 8.5, 9.5, 9.4],
                                   ETG_counter_err_array    = [0.6, 0.7, 0.7, 0.8, 0.9, 0.9, 1.1, 1.1, 1.1, 1.2],
                                 #--------------------------
+                                set_log_plot = True,
+                                #--------------------------
                                 showfig       = True,
                                 savefig       = True,
                                   file_format = 'pdf',
@@ -2291,10 +2294,16 @@ def _manual_plot_misalignment_z(Lookbacktime_array         = [7.94, 7.32, 6.65, 
     axs.set_xlim(0, 8)
     axs.set_xlabel('Lookback time (Gyr)')
     axs.invert_xaxis()
-    axs.set_ylim(0, 100)
-    axs.set_yticks(np.arange(0, 101, 20))
+    if set_log_plot:
+        axs.set_yscale('log')
+        #axs.set_yticklabels(['1', '10', '100'])
+        axs.yaxis.set_major_formatter(mticker.ScalarFormatter())
+    else:
+        axs.set_ylim(0, 100)
+        axs.set_yticks(np.arange(0, 101, 20))
     axs.set_ylabel('Percentage of galaxies')
     axs.minorticks_on()
+    
     
     
     #-----------
@@ -2324,12 +2333,19 @@ def _manual_plot_misalignment_z(Lookbacktime_array         = [7.94, 7.32, 6.65, 
     legend_elements.append(Line2D([-10], [-8], marker=' ', linestyle=':', linewidth=1, color='k'))
     legend_labels.append('ETG')
     legend_colors.append('k')  
+    if set_log_plot:
+        legend_elements.append(Line2D([-10], [-10], marker=' ', color='w'))
+        legend_labels.append(' ')
+        legend_colors.append('w')
     for line_name, line_color in zip(['Aligned', 'Misaligned', 'Counter-rotating'], ['b', 'r', 'indigo']):
         legend_elements.append(Line2D([-10], [-10], marker=' ', color='w'))
         legend_labels.append(line_name)
         legend_colors.append(line_color)
     
-    axs.legend(handles=legend_elements, labels=legend_labels, loc=[0.6, 0.65], frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=1)
+    if set_log_plot:
+        axs.legend(handles=legend_elements, labels=legend_labels, loc='lower right', ncol = 2, columnspacing = 0.2, frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=1)
+    else:
+        axs.legend(handles=legend_elements, labels=legend_labels, loc=[0.6, 0.65], frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=1)
     
     
     #-----------
@@ -2338,6 +2354,9 @@ def _manual_plot_misalignment_z(Lookbacktime_array         = [7.94, 7.32, 6.65, 
     
     #-----------
     # Savefig   
+    if set_log_plot:
+        savefig_txt = 'log_' + savefig_txt
+    
     if savefig:
         plt.savefig("%s/misalignment_distributions_z/L100_ALL_combined_misalignment_summary_%s.%s" %(fig_dir, savefig_txt, file_format), format=file_format, bbox_inches='tight', dpi=600)    
         print("\n  SAVED: %s/misalignment_distributions_z/L100_combined_misalignment_summary_%s.%s" %(fig_dir, savefig_txt, file_format))
@@ -3070,10 +3089,9 @@ def _plot_misalignment_distribution_timescale(csv_tree = 'L100_galaxy_tree_',
 #_manual_plot_misalignment_double()
 
 #_plot_misalignment_z()
-#_manual_plot_misalignment_z()
+_manual_plot_misalignment_z()
 
-# not finished:
-#_plot_misalignment_distribution_timescale()
+#_plot_misalignment_distribution_timescale()    NOT FINISHED
 #===========================
 
 
@@ -3092,7 +3110,7 @@ def _plot_misalignment_distribution_timescale(csv_tree = 'L100_galaxy_tree_',
 #       SNIP MISALIGNMENTS
 #_plot_misalignment(csv_sample = 'L100_188_all_sample_misalignment_9.5', csv_output = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_', use_angle = 'stars_gas_sf', ETG_or_LTG = 'ETG', cluster_or_field   = 'both', use_proj_angle     = False, add_observational  = None)
 #_plot_misalignment(csv_sample = 'L100_188_all_sample_misalignment_9.5', csv_output = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_', use_angle = 'stars_gas_sf', ETG_or_LTG = 'LTG', cluster_or_field   = 'both', use_proj_angle     = False, add_observational  = None)
-_plot_misalignment(csv_sample = 'L100_188_all_sample_misalignment_9.5', csv_output = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_', use_angle = 'stars_gas_sf', ETG_or_LTG = 'both', cluster_or_field   = 'both', use_proj_angle     = False, add_observational  = None)
+#_plot_misalignment(csv_sample = 'L100_188_all_sample_misalignment_9.5', csv_output = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_', use_angle = 'stars_gas_sf', ETG_or_LTG = 'both', cluster_or_field   = 'both', use_proj_angle     = False, add_observational  = None)
 
 
 #_plot_misalignment_double(csv_sample = 'L100_188_all_sample_misalignment_9.5', csv_output = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_', use_angle = 'stars_gas_sf', ETG_or_LTG = 'both', cluster_or_field   = 'both', use_proj_angle     = True, add_observational  = None)

@@ -2133,8 +2133,9 @@ def galaxy_gif(csv_sample = False,              # False, Whether to read in exis
 
 
 ### for interesting galaxies:
-galaxy_gif(GalaxyID_List = np.arange(251899973, 251900039+1, 1), mask_sgn=False, savefig_txt='_gif1', showfig=False, savefig=True)
-galaxy_gif(GalaxyID_List = np.arange(453139689, 453139755+1, 1), mask_sgn=False, savefig_txt='_gif2', showfig=False, savefig=True)
+#galaxy_gif(GalaxyID_List = np.arange(251899973, 251900039+1, 1), mask_sgn=False, savefig_txt='_gif1', showfig=False, savefig=True)
+#galaxy_gif(GalaxyID_List = np.arange(453139689, 453139755+1, 1), mask_sgn=False, savefig_txt='_gif2', showfig=False, savefig=True)
+galaxy_gif(GalaxyID_List = np.arange(65296039, 65296039+66+1, 1), mask_sgn=False, savefig_txt='_gif3', showfig=False, savefig=True)
 
 
 

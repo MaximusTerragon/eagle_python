@@ -3,11 +3,14 @@ from snip_timescales import _analyse_tree
 
 
 
+                misangle_threshold = 20,
+                  peak_misangle    = 30, 
 
 
 #================================================================  
 # _50particles
-_analyse_tree(load_csv_file = False, csv_file = False,
+print('\t_50particles')
+_analyse_tree(load_csv_file = False, csv_file = True, csv_name = '50particles',
                 min_particles      = 50,
                 min_stelmass       = None, 
                 latency_time       = 0.1, 
@@ -19,7 +22,8 @@ _analyse_tree(load_csv_file = False, csv_file = False,
                   morph_limits     = [0.4, 0.4])
                   
 # _100particles
-_analyse_tree(load_csv_file = False, csv_file = False,
+print('\t_100particles')
+_analyse_tree(load_csv_file = False, csv_file = True, csv_name = '100particles',
                 min_particles      = 100,
                 min_stelmass       = None, 
                 latency_time       = 0.1, 
@@ -33,7 +37,8 @@ _analyse_tree(load_csv_file = False, csv_file = False,
                   
 #================================================================             
 # _noLatency
-_analyse_tree(load_csv_file = False, csv_file = False,
+print('\t_noLatency')
+_analyse_tree(load_csv_file = False, csv_file = True, csv_name = 'noLatency',
                 min_particles      = 20,
                 min_stelmass       = None, 
                 latency_time       = None, 
@@ -45,7 +50,8 @@ _analyse_tree(load_csv_file = False, csv_file = False,
                   morph_limits     = [0.4, 0.4])
                   
 # _highLatency
-_analyse_tree(load_csv_file = False, csv_file = False,
+print('\t_highLatency')
+_analyse_tree(load_csv_file = False, csv_file = True, csv_name = 'highLatency',
                 min_particles      = 20,
                 min_stelmass       = None, 
                 latency_time       = 0.2, 
@@ -57,7 +63,8 @@ _analyse_tree(load_csv_file = False, csv_file = False,
                   morph_limits     = [0.4, 0.4])
                   
 # _veryhighLatency
-_analyse_tree(load_csv_file = False, csv_file = False,
+print('\t_veryhighLatency')
+_analyse_tree(load_csv_file = False, csv_file = True, csv_name = 'veryhighLatency',
                 min_particles      = 20,
                 min_stelmass       = None, 
                 latency_time       = 0.5, 
@@ -71,7 +78,8 @@ _analyse_tree(load_csv_file = False, csv_file = False,
 
 #================================================================       
 # _normalLatency_anyMergers_anyMorph
-_analyse_tree(load_csv_file = False, csv_file = False,
+print('\t_normalLatency_anyMergers_anyMorph')
+_analyse_tree(load_csv_file = False, csv_file = True, csv_name = 'normalLatency_anyMergers_anyMorph',
                 min_particles      = 20,
                 min_stelmass       = None, 
                 latency_time       = 0.1, 
@@ -83,7 +91,8 @@ _analyse_tree(load_csv_file = False, csv_file = False,
                   morph_limits     = [0.4, 0.4])
                   
 # _normalLatency_anyMergers_hardMorph
-_analyse_tree(load_csv_file = False, csv_file = False,
+print('\t_normalLatency_anyMergers_hardMorph')
+_analyse_tree(load_csv_file = False, csv_file = True, csv_name = 'normalLatency_anyMergers_hardMorph',
                 min_particles      = 20,
                 min_stelmass       = None, 
                 latency_time       = 0.1, 
@@ -97,7 +106,8 @@ _analyse_tree(load_csv_file = False, csv_file = False,
                   
 #--------------------------------------------------------------    
 # _normalLatency_anyMergers_LTG
-_analyse_tree(load_csv_file = False, csv_file = False,
+print('\t_normalLatency_anyMergers_LTG')
+_analyse_tree(load_csv_file = False, csv_file = True, csv_name = 'normalLatency_anyMergers_LTG',
                 min_particles      = 20,
                 min_stelmass       = None, 
                 latency_time       = 0.1, 
@@ -109,7 +119,8 @@ _analyse_tree(load_csv_file = False, csv_file = False,
                   morph_limits     = [0.4, 0.4])
                   
 # _normalLatency_anyMergers_ETG
-_analyse_tree(load_csv_file = False, csv_file = False,
+print('\t_normalLatency_anyMergers_ETG')
+_analyse_tree(load_csv_file = False, csv_file = True, csv_name = 'normalLatency_anyMergers_ETG',
                 min_particles      = 20,
                 min_stelmass       = None, 
                 latency_time       = 0.1, 
@@ -121,7 +132,8 @@ _analyse_tree(load_csv_file = False, csv_file = False,
                   morph_limits     = [0.4, 0.4])
                   
 # _normalLatency_anyMergers_hardLTG
-_analyse_tree(load_csv_file = False, csv_file = False,
+print('\t_normalLatency_anyMergers_hardLTG')
+_analyse_tree(load_csv_file = False, csv_file = True, csv_name = 'normalLatency_anyMergers_hardLTG',
                 min_particles      = 20,
                 min_stelmass       = None, 
                 latency_time       = 0.1, 
@@ -133,7 +145,8 @@ _analyse_tree(load_csv_file = False, csv_file = False,
                   morph_limits     = [0.35, 0.45])
                   
 # _normalLatency_anyMergers_hardETG
-_analyse_tree(load_csv_file = False, csv_file = False,
+print('\t_normalLatency_anyMergers_hardETG')
+_analyse_tree(load_csv_file = False, csv_file = True, csv_name = 'normalLatency_anyMergers_hardETG',
                 min_particles      = 20,
                 min_stelmass       = None, 
                 latency_time       = 0.1, 
@@ -147,7 +160,8 @@ _analyse_tree(load_csv_file = False, csv_file = False,
                   
 #--------------------------------------------------------------    
 # _normalLatency_anyMergers_LTG-LTG
-_analyse_tree(load_csv_file = False, csv_file = False,
+print('\t_normalLatency_anyMergers_LTG-LTG')
+_analyse_tree(load_csv_file = False, csv_file = True, csv_name = 'normalLatency_anyMergers_LTG-LTG',
                 min_particles      = 20,
                 min_stelmass       = None, 
                 latency_time       = 0.1, 
@@ -159,7 +173,8 @@ _analyse_tree(load_csv_file = False, csv_file = False,
                   morph_limits     = [0.4, 0.4])
                   
 # _normalLatency_anyMergers_ETG-ETG
-_analyse_tree(load_csv_file = False, csv_file = False,
+print('\t_normalLatency_anyMergers_ETG-ETG')
+_analyse_tree(load_csv_file = False, csv_file = True, csv_name = 'normalLatency_anyMergers_ETG-ETG',
                 min_particles      = 20,
                 min_stelmass       = None, 
                 latency_time       = 0.1, 
@@ -171,7 +186,8 @@ _analyse_tree(load_csv_file = False, csv_file = False,
                   morph_limits     = [0.4, 0.4])
                   
 # _normalLatency_anyMergers_hardLTG-LTG
-_analyse_tree(load_csv_file = False, csv_file = False,
+print('\t_normalLatency_anyMergers_hardLTG-LTG')
+_analyse_tree(load_csv_file = False, csv_file = True, csv_name = 'normalLatency_anyMergers_hardLTG-LTG',
                 min_particles      = 20,
                 min_stelmass       = None, 
                 latency_time       = 0.1, 
@@ -183,7 +199,8 @@ _analyse_tree(load_csv_file = False, csv_file = False,
                   morph_limits     = [0.35, 0.45])
                   
 # _normalLatency_anyMergers_hardETG-ETG
-_analyse_tree(load_csv_file = False, csv_file = False,
+print('\t_normalLatency_anyMergers_hardETG-ETG')
+_analyse_tree(load_csv_file = False, csv_file = True, csv_name = 'normalLatency_anyMergers_hardETG-ETG',
                 min_particles      = 20,
                 min_stelmass       = None, 
                 latency_time       = 0.1, 
@@ -197,7 +214,8 @@ _analyse_tree(load_csv_file = False, csv_file = False,
                   
 #================================================================      
 # _normalLatency_anyMergers_anyMorph_1010
-_analyse_tree(load_csv_file = False, csv_file = False,
+print('\t_normalLatency_anyMergers_anyMorph_1010')
+_analyse_tree(load_csv_file = False, csv_file = True, csv_name = 'normalLatency_anyMergers_anyMorph_1010',
                 min_particles      = 20,
                 min_stelmass       = 10**10, 
                 latency_time       = 0.1, 
@@ -210,103 +228,6 @@ _analyse_tree(load_csv_file = False, csv_file = False,
                   
                   
 
-# _normalLatency_normalMergers_anyMorph_1010
-_analyse_tree(load_csv_file = False, csv_file = False,
-                min_particles      = 20,
-                min_stelmass       = 10**10, 
-                latency_time       = 0.1, 
-                  time_extra       = 0.1, 
-                  time_no_misangle = 0.1,  
-                use_merger_criteria = True,
-                  min_stellar_ratio   = 0.1,       max_stellar_ratio   = 1/0.1,     # [ value ] -> set to 0 if we dont care, set to 999 if we dont care
-                  min_gas_ratio       = None,      max_gas_ratio       = None,      # [ None / value ]
-                  max_merger_pre      = 0.5,       max_merger_post     = 0.5,       # [0.2 + 0.5 / Gyr] -/+ max time to closest merger from point of misalignment
-                relaxation_morph   = ['LTG-LTG', 'ETG-ETG', 'LTG-ETG', 'ETG-LTG', 'other'],
-                misalignment_morph = ['LTG', 'ETG'],
-                  morph_limits     = [0.4, 0.4])
-                  
-# _normalLatency_normalMergers_Major_anyMorph_1010
-_analyse_tree(load_csv_file = False, csv_file = False,
-                min_particles      = 20,
-                min_stelmass       = 10**10, 
-                latency_time       = 0.1, 
-                  time_extra       = 0.1, 
-                  time_no_misangle = 0.1,  
-                use_merger_criteria = True,
-                  min_stellar_ratio   = 0.3,       max_stellar_ratio   = 1/0.3,     # [ value ] -> set to 0 if we dont care, set to 999 if we dont care
-                  min_gas_ratio       = None,      max_gas_ratio       = None,      # [ None / value ]
-                  max_merger_pre      = 0.5,       max_merger_post     = 0.5,       # [0.2 + 0.5 / Gyr] -/+ max time to closest merger from point of misalignment
-                relaxation_morph   = ['LTG-LTG', 'ETG-ETG', 'LTG-ETG', 'ETG-LTG', 'other'],
-                misalignment_morph = ['LTG', 'ETG'],
-                  morph_limits     = [0.4, 0.4])
-                  
-# _normalLatency_strictMergers_anyMorph_1010
-_analyse_tree(load_csv_file = False, csv_file = False,
-                min_particles      = 20,
-                min_stelmass       = 10**10, 
-                latency_time       = 0.1, 
-                  time_extra       = 0.1, 
-                  time_no_misangle = 0.1,  
-                use_merger_criteria = True,
-                  min_stellar_ratio   = 0.1,       max_stellar_ratio   = 1/0.1,     # [ value ] -> set to 0 if we dont care, set to 999 if we dont care
-                  min_gas_ratio       = None,      max_gas_ratio       = None,      # [ None / value ]
-                  max_merger_pre      = 0.2,       max_merger_post     = 0.2,       # [0.2 + 0.5 / Gyr] -/+ max time to closest merger from point of misalignment
-                relaxation_morph   = ['LTG-LTG', 'ETG-ETG', 'LTG-ETG', 'ETG-LTG', 'other'],
-                misalignment_morph = ['LTG', 'ETG'],
-                  morph_limits     = [0.4, 0.4])
-                  
-# _normalLatency_strictMergers_Major_anyMorph_1010
-_analyse_tree(load_csv_file = False, csv_file = False,
-                min_particles      = 20,
-                min_stelmass       = 10**10, 
-                latency_time       = 0.1, 
-                  time_extra       = 0.1, 
-                  time_no_misangle = 0.1,  
-                use_merger_criteria = True,
-                  min_stellar_ratio   = 0.3,       max_stellar_ratio   = 1/0.3,     # [ value ] -> set to 0 if we dont care, set to 999 if we dont care
-                  min_gas_ratio       = None,      max_gas_ratio       = None,      # [ None / value ]
-                  max_merger_pre      = 0.2,       max_merger_post     = 0.2,       # [0.2 + 0.5 / Gyr] -/+ max time to closest merger from point of misalignment
-                relaxation_morph   = ['LTG-LTG', 'ETG-ETG', 'LTG-ETG', 'ETG-LTG', 'other'],
-                misalignment_morph = ['LTG', 'ETG'],
-                  morph_limits     = [0.4, 0.4])
-                  
-# _normalLatency_verystrictMergers_anyMorph_1010
-_analyse_tree(load_csv_file = False, csv_file = False,
-                min_particles      = 20,
-                min_stelmass       = 10**10, 
-                latency_time       = 0.1, 
-                  time_extra       = 0.1, 
-                  time_no_misangle = 0.1,  
-                use_merger_criteria = True,
-                  min_stellar_ratio   = 0.1,       max_stellar_ratio   = 1/0.1,     # [ value ] -> set to 0 if we dont care, set to 999 if we dont care
-                  min_gas_ratio       = None,      max_gas_ratio       = None,      # [ None / value ]
-                  max_merger_pre      = 0.1,       max_merger_post     = 0.1,       # [0.2 + 0.5 / Gyr] -/+ max time to closest merger from point of misalignment
-                relaxation_morph   = ['LTG-LTG', 'ETG-ETG', 'LTG-ETG', 'ETG-LTG', 'other'],
-                misalignment_morph = ['LTG', 'ETG'],
-                  morph_limits     = [0.4, 0.4])
-                  
-# _normalLatency_verystrictMergers_Major_anyMorph_1010
-_analyse_tree(load_csv_file = False, csv_file = False,
-                min_particles      = 20,
-                min_stelmass       = 10**10, 
-                latency_time       = 0.1, 
-                  time_extra       = 0.1, 
-                  time_no_misangle = 0.1,  
-                use_merger_criteria = True,
-                  min_stellar_ratio   = 0.3,       max_stellar_ratio   = 1/0.3,     # [ value ] -> set to 0 if we dont care, set to 999 if we dont care
-                  min_gas_ratio       = None,      max_gas_ratio       = None,      # [ None / value ]
-                  max_merger_pre      = 0.1,       max_merger_post     = 0.1,       # [0.2 + 0.5 / Gyr] -/+ max time to closest merger from point of misalignment
-                relaxation_morph   = ['LTG-LTG', 'ETG-ETG', 'LTG-ETG', 'ETG-LTG', 'other'],
-                misalignment_morph = ['LTG', 'ETG'],
-                  morph_limits     = [0.4, 0.4])
-                  
-
-                  
-                  
-                  
-                  
-                  
-                  
                   
                   
                   

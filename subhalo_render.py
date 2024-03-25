@@ -1645,7 +1645,7 @@ def galaxy_gif(csv_sample = False,              # False, Whether to read in exis
                     axis                = False,                             # Plot small axis below galaxy
                     #--------------------------
                     # Particle properties
-                    gif_array           = ['stars', 'gas', 'gas_sf'],          # USE THIS
+                    gif_array           = ['stars', 'gas_sf', 'gas'],          # USE THIS
                     stars               = False,
                     gas                 = False,
                     gas_sf              = False,
@@ -1653,10 +1653,10 @@ def galaxy_gif(csv_sample = False,              # False, Whether to read in exis
                     dark_matter         = False,
                     black_holes         = False,
                     #=====================================================
-                    showfig       = True,
+                    showfig       = False,
                     savefig       = True,
                       savefig_txt = '',                # added txt to append to end of savefile
-                      file_format = 'png',
+                      file_format = 'jpeg',
                     #--------------------------
                     print_progress = False,
                     print_galaxy   = True,
@@ -1951,10 +1951,10 @@ def galaxy_gif(csv_sample = False,              # False, Whether to read in exis
                     vels_axis = -1*vels[:,2]    
                 
                 if part_type == 'stars':
-                    alpha = 0.25
+                    alpha = 0.33
                 else:
-                    alpha = 0.5
-                ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=0.5, alpha=alpha, c=vels_axis, zorder=4, cmap=colormap, norm=norm)
+                    alpha = 0.6
+                ax.scatter(coords[:,0], coords[:,1], coords[:,2], s=0.7, alpha=alpha, c=vels_axis, zorder=4, cmap=colormap, norm=norm)
                  
         def plot_spin_vector(dict_name, part_type, rad, color, debug=False):
             # Plot formatting
@@ -2071,9 +2071,6 @@ def galaxy_gif(csv_sample = False,              # False, Whether to read in exis
                 ax.view_init(0, 90)
         
         
-            # Annotate
-            if i == 0:
-                ax.text(0, -55, 50, r'SnapNum = %i    $\psi_{\mathrm{3D}}$ = %.1f    $r_{50}$ = %.1f pkpc' %(SnapNum, subhalo.mis_angles['stars_gas_sf_angle'][0], subhalo.halfmass_rad), size=10, c='w')
             
             
             # Formatting 
@@ -2088,11 +2085,25 @@ def galaxy_gif(csv_sample = False,              # False, Whether to read in exis
             #ax.tick_params(axis='x', colors='grey')
             ax.tick_params(axis='y', colors='grey')
             ax.tick_params(axis='z', colors='grey')
+            
+            # Annotate
+            if parttype_i == 'stars':
+                ax.text(0, 0, 41, 'STARS', size=12, c='grey', ha='center')
+            if parttype_i == 'gas':
+                ax.text(0, 0, 41, 'GAS', size=12, c='grey', ha='center')
+            if parttype_i == 'gas_sf':
+                ax.text(0, 0, 41, 'STAR-FORMING GAS', size=12, c='grey', ha='center')
+                
+            #if i == 0:
+            #    ax.text(0, 0, 50, r'SnapNum = %i          $\psi_{\mathrm{3D}}$ = %.1f          $r_{50}$ = %.1f pkpc          $M_*$ = %.1e $\mathrm{M}_{\ocirc}$' %(SnapNum, subhalo.mis_angles['stars_gas_sf_angle'][0], subhalo.halfmass_rad, subhalo.masses['stars'][0]), size=15, c='w', ha='center')
+            #if i == 1:
+            #    ax.text(0, 0, 50, r'SnapNum = %i          $\psi_{\mathrm{3D}}$ = %.1f          $r_{50}$ = %.1f pkpc          $M_*$ = %.1e $\mathrm{M}_{\ocirc}$' %(SnapNum, subhalo.mis_angles['stars_gas_sf_angle'][0], subhalo.halfmass_rad, subhalo.masses['stars'][0]), size=15, c='w', ha='center')
+                
         
         
-        
-        plt.subplots_adjust(wspace=0, hspace=0)
-        plt.tight_layout()
+        plt.suptitle(r'SnapNum = %i          $\psi_{\mathrm{3D}}$ = %.1f          $r_{50}$ = %.1f pkpc          $M_*$ = %.1e $\mathrm{M}_{\mathrm{sol}}$' %(SnapNum, subhalo.mis_angles['stars_gas_sf_angle'][0], subhalo.halfmass_rad, subhalo.masses['stars'][0]), size=15, c='w', ha='center')
+        plt.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=-0.2, hspace=-0.3)
+        plt.tight_layout(pad=-9, h_pad=None, w_pad=None, rect=None)
         
         # Savefig
         if print_progress:
@@ -2116,7 +2127,7 @@ def galaxy_gif(csv_sample = False,              # False, Whether to read in exis
             particle_txt += '_bh'
         
         if savefig:
-            plt.savefig("%s/individual_render/GIF/L%s_%s_%s_gif_ID%s_sgn%s_%s_%s_%s.%s" %(fig_dir, mySims[0][1], savefig_txt, SnapNum, GalaxyID, mask_sgn, SnapNum, particle_txt, savefig_txt, file_format), metadata=metadata_plot, format=file_format, dpi=600)    
+            plt.savefig("%s/individual_render/GIF/L%s_%s_%s_gif_ID%s_sgn%s_%s_%s_%s.%s" %(fig_dir, mySims[0][1], savefig_txt, SnapNum, GalaxyID, mask_sgn, SnapNum, particle_txt, savefig_txt, file_format), metadata=metadata_plot, format=file_format, dpi=800)    
             print('\n  SAVED:%s/individual_render/GIF/L%s_%s_%s_gif_ID%s_sgn%s_%s_%s_%s.%s' %(fig_dir, mySims[0][1], savefig_txt, SnapNum, GalaxyID, mask_sgn, SnapNum, particle_txt, savefig_txt, file_format))
         if showfig:
             plt.show()
@@ -2135,7 +2146,7 @@ def galaxy_gif(csv_sample = False,              # False, Whether to read in exis
 ### for interesting galaxies:
 #galaxy_gif(GalaxyID_List = np.arange(251899973, 251900039+1, 1), mask_sgn=False, savefig_txt='_gif1', showfig=False, savefig=True)
 #galaxy_gif(GalaxyID_List = np.arange(453139689, 453139755+1, 1), mask_sgn=False, savefig_txt='_gif2', showfig=False, savefig=True)
-galaxy_gif(GalaxyID_List = np.arange(65296039, 65296039+66+1, 1), mask_sgn=False, savefig_txt='_gif3', showfig=False, savefig=True)
+#galaxy_gif(GalaxyID_List = np.arange(65296039, 65296039+66+1, 1), mask_sgn=False, savefig_txt='_gif3', showfig=False, savefig=True)
 
 
 

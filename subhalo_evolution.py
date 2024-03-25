@@ -1703,23 +1703,50 @@ def _plot_evolution_old(csv_output = 'L100_evolution_ID401467650_RadProj_Err__st
 #--------------------
 # Will plot evolution of single galaxy but with improved formatting for poster/presentation and with outflows/inflows
 # SAVED: /plots/individual_evolution/
-# All:
-#ID_list = [108988077, 479647060, 21721896, 390595970, 401467650, 182125463, 192213531, 24276812, 116404995, 239808134, 215988755, 86715463, 6972011, 475772617, 374037507, 429352532, 441434976, 1361598, 1403994, 10421872, 17879310, 21200847, 21532243, 21659372, 24053428, 182125501, 274449295, 462956130, 462956130]
-# interesting:
-#ID_list = [1361598, 1403994, 10421872, 17879310, 21200847, 21532243, 21659372, 24053428, 182125501, 274449295, 462956130, 462956130]
-# tim:
-#ID_list = [349651696, 462956130, 182125516]
-# co-co relaxations, >135 angles
-ID_list = [443962, 17386687, 37720520, 74948378, 102011598, 236121860, 239192401, 239568811, 303860577, 323164883, 327004290, 349651696, 374037537, 401953578, 390652869, 271560499, 239520114, 65296062, 86568202, 470037125]
-# long trelax >2 GYR
-#ID_list = [115659946, 203653117, 216029810, 251900011, 273987842, 300443124, 453139727, 463220955, 390652869, 137732479, 208235276, 370237257, 239924249, 208272775, 334237852, 350073611, 92395081, 175434605, 264298155, 470037125, 444435190]
+
+# >135 coco misalignments:
+#ID_list = [ 17386687 ,  37720520 ,  74948378 ,  135239884 ,  188624071 ,  236121865 ,  239192401 ,  323164883 ,  327004290 ,  349651696 ,  374037537 ,  271560500 ,  65296062 ,  89535725 ]
+#savefig_txt = '_135_coco'
+
+# >2 Gyr relaxations:
+#ID_list = [ 21263579 ,  55908430 ,  102310984 ,  115659946 ,  135239884 ,  137982097 ,  216029816 ,  221925469 ,  236121865 ,  251900012 ,  273987844 ,  356381666 ,  370249945 ,  453139727 ,  470931663 ,  41296132 ,  412184257 ,  137732481 ,  144504424 ,  208235278 ,  285055028 ,  370237257 ,  405504442 ,  89535725 ,  188808381 ,  306747955 ,  239924250 ,  7770818 ,  179554468 ,  334237852 ,  350073611 ,  123869114 ,  141978869 ,  301364232 ,  338706467 ]
+#savefig_txt = '_2Gyr_trelax'
+
+# >20 dyn:
+#ID_list = [ 236121865 ,  370249945 ]
+#savefig_txt = '_20tdyn'
+
+# >10 ttorque:
+#ID_list = [ 115659946 ,  236121865 ]
+#savefig_txt = '_10ttorque'
+
+# Very long relaxation not in sample:
+#ID_list = [ 390652813 ]
+#savefig_txt = '_no_relax'
+
+# Counter-co relaxations
+#ID_list = [ 1403975 ,  21263579 ,  24505422 ,  36750110 ,  37369065 ,  40756078 ,  62169202 ,  76176824 ,  79158351 ,  97916397 ,  108325557 ,  116001910 ,  118757268 ,  123500698 ,  137982097 ,  160678664 ,  166924669 ,  251900012 ,  254502308 ,  292085097 ,  295427090 ,  329515561 ,  353171639 ,  371187752 ,  401467691 ,  437494497 ,  474142539 ,  72480364 ]
+#savefig_txt = 'counter-co'
+
+# Example misalignments, short, long, complex
+#ID_list = [349651640]
+#misalignment_loc = [[145, 150], [151, 153], [158, 160], [165, 168]]
+#savefig_txt = '_short_misalignment'
+#ID_list = [453139689]
+#misalignment_loc = [[163, 195]]
+#savefig_txt = '_long_misalignment'
+#ID_list = [251899973]
+#misalignment_loc = [[144, 148], [162, 183]]
+#savefig_txt = '_complex_misalignment'
+
 # Casanueva galaxies:
 #ID_list = [198707313, 248944532]
-# paper plots:
-ID_list = [453139689, 251899973]
-#ID_list = [251899973]
 
-def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW',
+# paper plots:
+#ID_list = [453139689, 251899973, 65296105]
+#savefig_txt = '_2Gyr_trelax_paper'
+
+def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                          #--------------------------
                          # Individual galaxies
                          GalaxyID_list = ID_list,             # [ None / ID_list ]
@@ -1736,11 +1763,13 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW',
                            use_hmr_general          = '2.0',    # [ 1.0 / 2.0 / aperture]      Used for stelmass | APERTURE NOT AVAILABLE FOR sfr ssfr
                            use_hmr_angle            = 1.0,           # [ 1.0 / 2.0 ]                Used for misangle, inc angle, com, counts
                            abs_or_proj              = 'abs',             # [ 'both' / 'abs' / 'proj' ]
+                             highlight_unstable     = False,                # [ False / [[start snap - last snap], [start snap - last snap], ... ]. will colour in red the misalignments
                            use_angle                = 'stars_gas_sf',
                            plot_dm_angles           = True,            # Whether to add DM-stars, DM-gas_sf
                              use_dm_uncertainties   = False,              # Whether to plot uncertainties or not
                            plot_halo_angles         = True,              # Plots inner stars to outer gas_sf
-                           misangle_threshold       = 30,                # [ 30 / 45 ]  
+                           misangle_threshold       = 20,                # [ 20 / 30 / 45 ]  
+                             peak_misangle          = 30,                # [ 30 / 45 ]  
                            use_uncertainties        = True,              # Whether to plot uncertainties or not
                          #-------------------------------------------
                          # Merger settings
@@ -1755,7 +1784,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW',
                            plot_stelmassloss    = False,
                            plot_bh_acc          = False,
                            plot_bh_acc_instant  = False,
-                           plot_sfr             = False,
+                           plot_sfr             = True,
                          # Masses   [ Msun ]
                            plot_halomass        = False,
                            plot_stelmass        = True,
@@ -1794,9 +1823,9 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW',
                            plot_ttorque         = True,     
                          #==================================================================================
                          showfig        = True,
-                         savefig        = False,
+                         savefig        = True,
                            file_format  = 'pdf',
-                           savefig_txt  = 'trelax-2gy-DM-paper', 
+                           savefig_txt  = savefig_txt, 
                          #--------------------------
                          print_progress = False,
                          debug = False):
@@ -1901,13 +1930,17 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW',
     #================================================ 
     # Loop over all galaxies
     print('Searching for Galaxies matching ID...')
-    for GalaxyID in tqdm(galaxy_tree.keys()):
+    GalaxyID_list_galaxy_tree = []
+    for GalaxyID in galaxy_tree.keys():
         
         # If we are looking at individual galaxies, filter them out
         if GalaxyID_list != None:
             if int(GalaxyID) not in GalaxyID_list_extract:
                 continue
+            else:
+                GalaxyID_list_galaxy_tree.append(GalaxyID)
     
+    for GalaxyID in tqdm(GalaxyID_list_galaxy_tree):
         #------------------------
         # Default graphs: [ angles, massrate, mass, ssfr, radius, kappa, Z, edd, lbol ]
         plot_height_ratios = []
@@ -1977,10 +2010,10 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW',
                     
                     if use_angle == 'stars_gas':
                         angle_label = 'stars$-$gas'
-                        angle_label2 = 'stars$-$gas$ ($>r_{50}$)'
+                        angle_label2 = 'stars$-$gas$\n($>r_{50}$)'
                     elif use_angle == 'stars_gas_sf':
                         angle_label = 'stars$-$gas$_{\mathrm{SF}}$'
-                        angle_label2 = 'stars$-$gas$_{\mathrm{SF}}$ ($>r_{50}$)'
+                        angle_label2 = 'stars$-$gas$_{\mathrm{SF}}$\n($>r_{50}$)'
                     elif use_angle == 'gas_sf_gas_nsf':
                         angle_label = 'gas$_{\mathrm{SF}}$$-$gas$_{\mathrm{NSF}}$'
                     elif use_angle == 'stars_dm':
@@ -1991,12 +2024,12 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW',
                         angle_label = 'DM$-$gas$_{\mathrm{SF}}$'
                     
                     if abs_or_proj == 'abs':
-                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj], alpha=1.0, ms=2, ls='-', lw=0.5, zorder=10, label='%s'%angle_label, color='k')
+                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj], alpha=1.0, ms=2, ls='-', lw=0.5, zorder=100, label='%s'%angle_label, color='k')
                         if use_uncertainties:
                             axs[0].fill_between(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.array(galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[:,0], np.array(galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[:,1], alpha=0.25, lw=0, zorder=5, color='k')
                         
                         if plot_halo_angles:
-                            axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['angle_halo'], alpha=1.0, ms=2, ls='dashdot', lw=0.5, zorder=10, label='%s'%angle_label2, color='m')
+                            axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['angle_halo'], alpha=0.8, ms=2, ls='-', lw=0.5, zorder=10, label='%s'%angle_label2, color='g')
                         
                         if plot_dm_angles:
                             axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['stars_dm']['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj], alpha=1.0, ms=2, ls='dashdot', lw=0.5, zorder=10, label='DM$-$stars', color='r')
@@ -2004,6 +2037,14 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW',
                             if use_dm_uncertainties:
                                 axs[0].fill_between(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.array(galaxy_tree['%s' %GalaxyID]['stars_dm']['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[:,0], np.array(galaxy_tree['%s' %GalaxyID]['stars_dm']['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[:,1], alpha=0.25, lw=0, zorder=5, facecolor='r')
                                 axs[0].fill_between(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.array(galaxy_tree['%s' %GalaxyID]['gas_sf_dm']['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[:,0], np.array(galaxy_tree['%s' %GalaxyID]['gas_sf_dm']['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[:,1], alpha=0.25, lw=0, zorder=5, facecolor='b')
+                        
+                        if highlight_unstable:
+                            for (start_i, stop_i) in highlight_unstable:
+                                # Mask out the instability
+                                mask = np.where(np.logical_and(start_i <= np.array(galaxy_tree['%s' %GalaxyID]['SnapNum']),  np.array(galaxy_tree['%s' %GalaxyID]['SnapNum']) <= stop_i))
+                                axs[i].plot(np.array(galaxy_tree['%s' %GalaxyID]['Lookbacktime'])[mask], np.array(galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj])[mask], alpha=0.6, ms=1, ls='-', lw=3.5, zorder=30)
+                                
+                                
                             
                     if abs_or_proj == 'proj':
                         axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj], alpha=1.0, ms=2, ls=':', lw=0.5, zorder=10, label='%s (projected)'%angle_label)
@@ -2048,6 +2089,8 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW',
                 #axs[i].text(8, 185, 'GalaxyID: %s' %str(GalaxyID), fontsize=8)
                 axs[i].axhspan(0, misangle_threshold, alpha=0.15, ec=None, fc='grey')
                 axs[i].axhspan(180-misangle_threshold, 180, alpha=0.15, ec=None, fc='grey')
+                axs[i].axhspan(0, peak_misangle, alpha=0.15, ec=None, fc='grey')
+                axs[i].axhspan(180-peak_misangle, 180, alpha=0.15, ec=None, fc='grey')
                 #axs[0].grid(lw=0.3)
                 #axs[0].grid(lw=0.3)
                 
@@ -2067,7 +2110,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW',
                             axs[i].axvline(time_i, c='grey', ls='--', lw=0.6, alpha=0.9, zorder=1)
                             metadata_ratios.append(max(ratio_i))
                             metadata_gas_ratios.append(gas_i[np.argmax(ratio_i)])
-                            #axs[i].text(time_i+0.1, 163, '%.2f' %max(ratio_i), color='grey', fontsize=7, zorder=999)
+                            axs[i].text(time_i+0.7, 163, '%.2f' %max(ratio_i), color='grey', fontsize=7, zorder=999)
                             #axs[i].text(time_i+0.2, 151, '%.2f' %gas_i[np.argmax(ratio_i)], color='blue', fontsize=7, zorder=999)
             
             # Plot 11

@@ -1610,14 +1610,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                   # Mergers
                   # Processed after sample, applied to first index_misaligned rather than entire misalignment
                   use_alt_merger_criteria = False,
-                    half_window         = 0.2,      # [ 0.2 / +/-Gyr ] window centred on first misaligned snap to look for mergers
+                    half_window         = 0.3,      # [ 0.2 / +/-Gyr ] window centred on first misaligned snap to look for mergers
                     min_ratio           = 0.1,   
                     merger_lookback_time = 2,       # Gyr, number of years to check for peak stellar mass
-                    
-                    
-                  use_alt_relaxation_morph   = False,     #['ETG-ETG'],
-                    
-                    
+                  use_alt_relaxation_morph   = False,     # False / ['ETG-ETG'],
+                  #====================================================================================================
                     
                   # Plot histogram of sample we ended up selecting
                   _plot_sample_hist             = False,
@@ -1625,19 +1622,23 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                     
                   #-----------------------------
                   # Plot timescale histogram with current sample
-                  _plot_timescale_histogram     = False,   
-                    set_bin_limit_trelax                = 6,        # [ None / Gyr ]
+                  _plot_timescale_histogram     = True,   
+                    set_bin_limit_trelax                = 5,        # [ None / Gyr ]
                     set_bin_width_trelax                = 0.25,     # [ 0.25 / Gyr ]
                       set_plot_percentage               = True,
                       set_plot_relaxation_type          = True,     # SET TO FALSE IF BELOW TRUE. Stack histogram types   
                       set_plot_histogram_log              = False,    # set yaxis as log
                         add_inset                       = True,     # whether to have smaller second plot
-                  _plot_tdyn_histogram          = False,
-                    set_bin_limit_tdyn                  = 28,       # [ None / multiples ]
+                        add_inset_bestfit               = True,
+                    set_thist_ymax_trelax               = 0.45,             # yaxis max
+                  _plot_tdyn_histogram          = True,
+                    set_bin_limit_tdyn                  = 32,       # [ None / multiples ]
                     set_bin_width_tdyn                  = 1,        # [ multiples ]
-                  _plot_ttorque_histogram       = False,
+                    set_thist_ymax_tdyn                 = 0.35,             # yaxis max
+                  _plot_ttorque_histogram       = True,
                     set_bin_limit_ttorque               = 12,       # [ None / multiples ]
                     set_bin_width_ttorque               = 0.5,      # [ multiples ]
+                    set_thist_ymax_ttorque              = 0.35,             # yaxis max
                 
                   #-----------------------------
                   # Plot stacked misalignments based on current sample
@@ -1679,14 +1680,14 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                   #-----------------------------
                   # Will plot scatter of number of mergers with relaxation time, suited for 1010 sample and above
                   _plot_merger_count_trelax     = False,
-                    set_min_merger_trelax               = 0.5,          # [ Gyr ] min relaxation time, as we dont care about short relaxers
+                    set_min_merger_trelax               = 0,          # [ Gyr ] min relaxation time, as we dont care about short relaxers
                     set_plot_merger_count_lim           = 0.1,          # stellar ratio (will also pick reciprocal)
                     add_plot_merger_count_gas           = True,         # will colour by gas ratio
                       set_plot_merger_count_log         = True,
                   _plot_merger_count_tdyn       = False,
-                    set_min_merger_tdyn                 = 5,          # [ trelax/dyn ] min relaxation time, as we dont care about short relaxers
+                    set_min_merger_tdyn                 = 0,          # [ trelax/dyn ] min relaxation time, as we dont care about short relaxers
                   _plot_merger_count_ttorque    = False,
-                    set_min_merger_ttorque              = 1.5,          # [ trelax/torque ] min relaxation time, as we dont care about short relaxers
+                    set_min_merger_ttorque              = 0,          # [ trelax/torque ] min relaxation time, as we dont care about short relaxers
                     
                   #-----------------------------
                   # Average halo misalignment with relaxtime
@@ -1708,20 +1709,21 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                     set_misanglepre_type                = ['co-co', 'co-counter'],           # [ 'co-co', 'co-counter' ]  or False
                   
                   #-----------------------------
-                  # Will use use_alt_merger_criteria from earlier to find mergers
-                  _plot_origins                 = True,
-                    set_origins_morph                   = ['LTG-LTG', 'ETG-ETG', 'LTG-ETG', 'ETG-LTG'],
+                  # Plots stacked bar chart. Will use use_alt_merger_criteria from earlier to find mergers
+                  _plot_origins                 = False,
+                    use_only_start_morph                = True,          # use only ETG - and LTG - 
+                    set_origins_morph                   = ['ETG-ETG', 'ETG-LTG', 'LTG-ETG', 'LTG-LTG'],
                     
                   
                   #-----------------------------
                   # General formatting
                   showfig       = True,
-                  savefig       = False,    
+                  savefig       = True,    
                     file_format = 'pdf',
                     savefig_txt = 'txt',     # [ 'manual' / txt ] 'manual' will prompt txt before saving
               #====================================================================================================
-              load_csv_file  = '_normalLatency_anyMergers_anyMorph_',     # [ 'file_name' / False ] load existing misalignment tree  '_20Thresh_30peak_normalLatency_anyMergers_anyMorph_' '_20Thresh_normalLatency_anyMergers_anyMorph_' '_normalLatency_anyMergers_anyMorph_'
-                plot_annotate  = False,    #  [ False / 'ETG → ETG' r'ETG ($\bar{\kappa}_{\mathrm{co}}^{\mathrm{*}} < 0.35$)'  ]                   # string of text or False / 'ETG' 
+              load_csv_file  = '_20Thresh_30Peak_normalLatency_anyMergers_LTG-LTG',     # [ 'file_name' / False ] load existing misalignment tree                                                                     '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph'                                                                                                                           '_20Thresh_30Peak_normalLatency_anyMergers_hardMorph'                                                                                                            '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_ETG-ETG'                                                                                                                         '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010' 
+                plot_annotate  = 'LTG → LTG',    #  [ False / 'ETG → ETG' r'ETG ($\bar{\kappa}_{\mathrm{co}}^{\mathrm{*}} < 0.35$)'  ]                   # string of text or False / 'ETG' 
               #====================================================================================================
                   print_progress = False,
                   debug = False):
@@ -3105,47 +3107,62 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 else:
                     index_merger_locations = [] 
                 relaxation_time_entry    = float(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_dict['misalignment_locations']['misalign']['index'][misindex_i]]) - float(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_dict['misalignment_locations']['relax']['index'][misindex_i]])
-                misalignment_tree['%s' %ID_i].update({'index_m': index_misalignment_start,       # last before misaligned
-                                                      'index_r': index_misalignment_end,        # first relaxed (so +1 when we use a range eg. [index_m:index_r+1])
+                misalignment_tree['%s' %ID_i].update({'index_s': index_misalignment_start,       # last in stable regime
+                                                      'index_r': index_misalignment_end,        # first back in stable regime (so +1 when we use a range eg. [index_m:index_r+1])
                                                       'index_merger': index_merger_locations,   # index of merger that meets criteria
                                                       'relaxation_time': relaxation_time_entry})
-                
-                relaxation_tdyn_entry    = misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
-                relaxation_ttorque_entry = misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+                relaxation_tdyn_entry    = misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
+                relaxation_ttorque_entry = misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
                 misalignment_tree['%s' %ID_i].update({'relaxation_tdyn': relaxation_tdyn_entry,
                                                       'relaxation_ttorque': relaxation_ttorque_entry})
                 
                                                                                              
                 # Find relaxation type
-                if (misalignment_tree['%s' %ID_i]['%s' %use_angle][misalignment_tree['%s' %ID_i]['index_m']] < misangle_threshold) and (misalignment_tree['%s' %ID_i]['%s' %use_angle][misalignment_tree['%s' %ID_i]['index_r']] < misangle_threshold):
+                if (misalignment_tree['%s' %ID_i]['%s' %use_angle][misalignment_tree['%s' %ID_i]['index_s']] < misangle_threshold) and (misalignment_tree['%s' %ID_i]['%s' %use_angle][misalignment_tree['%s' %ID_i]['index_r']] < misangle_threshold):
                     misalignment_tree['%s' %ID_i].update({'relaxation_type': 'co-co'})    
-                elif (misalignment_tree['%s' %ID_i]['%s' %use_angle][misalignment_tree['%s' %ID_i]['index_m']] < misangle_threshold) and (misalignment_tree['%s' %ID_i]['%s' %use_angle][misalignment_tree['%s' %ID_i]['index_r']] > (180-misangle_threshold)):
+                elif (misalignment_tree['%s' %ID_i]['%s' %use_angle][misalignment_tree['%s' %ID_i]['index_s']] < misangle_threshold) and (misalignment_tree['%s' %ID_i]['%s' %use_angle][misalignment_tree['%s' %ID_i]['index_r']] > (180-misangle_threshold)):
                     misalignment_tree['%s' %ID_i].update({'relaxation_type': 'co-counter'})    
-                elif (misalignment_tree['%s' %ID_i]['%s' %use_angle][misalignment_tree['%s' %ID_i]['index_m']] > (180-misangle_threshold)) and (misalignment_tree['%s' %ID_i]['%s' %use_angle][misalignment_tree['%s' %ID_i]['index_r']] < misangle_threshold):
+                elif (misalignment_tree['%s' %ID_i]['%s' %use_angle][misalignment_tree['%s' %ID_i]['index_s']] > (180-misangle_threshold)) and (misalignment_tree['%s' %ID_i]['%s' %use_angle][misalignment_tree['%s' %ID_i]['index_r']] < misangle_threshold):
                     misalignment_tree['%s' %ID_i].update({'relaxation_type': 'counter-co'})    
-                elif (misalignment_tree['%s' %ID_i]['%s' %use_angle][misalignment_tree['%s' %ID_i]['index_m']] > (180-misangle_threshold)) and (misalignment_tree['%s' %ID_i]['%s' %use_angle][misalignment_tree['%s' %ID_i]['index_r']] > (180-misangle_threshold)):
+                elif (misalignment_tree['%s' %ID_i]['%s' %use_angle][misalignment_tree['%s' %ID_i]['index_s']] > (180-misangle_threshold)) and (misalignment_tree['%s' %ID_i]['%s' %use_angle][misalignment_tree['%s' %ID_i]['index_r']] > (180-misangle_threshold)):
                     misalignment_tree['%s' %ID_i].update({'relaxation_type': 'counter-counter'})    
+                
+                
+                # Find first truely misaligned snip, if none return first back
+                if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
+                    # relax to co-
+                    index_m = np.where(np.array(misalignment_tree['%s' %ID_i][use_angle]) > (0 if peak_misangle == None else peak_misangle))[0][0]
+                elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
+                    # relax to counter-
+                    index_m = np.where((180-np.array(misalignment_tree['%s' %ID_i][use_angle])) > (0 if peak_misangle == None else peak_misangle))[0][0]
+                elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
+                    # relax to co-
+                    index_m = np.where(np.array(misalignment_tree['%s' %ID_i][use_angle]) > (0 if peak_misangle == None else peak_misangle))[0][0]
+                elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
+                    # relax to counter-
+                    index_m = np.where((180-np.array(misalignment_tree['%s' %ID_i][use_angle])) > (0 if peak_misangle == None else peak_misangle))[0][0]
+                misalignment_tree['%s' %ID_i].update({'index_m': index_m})
                 
                 
                 # Find index of peak misalignment from where it relaxes to (-co or -counter)
                 if (misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_r']] < misangle_threshold):
                     # relax to co-
-                    misalignment_tree['%s' %ID_i].update({'index_peak': misalignment_tree['%s' %ID_i]['index_m'] + np.argmax(np.array(misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))})
-                    misalignment_tree['%s' %ID_i].update({'angle_peak': np.max(np.array(misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))})
+                    misalignment_tree['%s' %ID_i].update({'index_peak': misalignment_tree['%s' %ID_i]['index_s'] + np.argmax(np.array(misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))})
+                    misalignment_tree['%s' %ID_i].update({'angle_peak': np.max(np.array(misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))})
                 elif (misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_r']] > (180-misangle_threshold)):
                     # relax to counter-
-                    misalignment_tree['%s' %ID_i].update({'index_peak': misalignment_tree['%s' %ID_i]['index_m'] + np.argmax(180 - np.array(misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))})
-                    misalignment_tree['%s' %ID_i].update({'angle_peak': np.max(180 - np.array(misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))})
+                    misalignment_tree['%s' %ID_i].update({'index_peak': misalignment_tree['%s' %ID_i]['index_s'] + np.argmax(180 - np.array(misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))})
+                    misalignment_tree['%s' %ID_i].update({'angle_peak': np.max(180 - np.array(misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))})
                 
             
                 # Find relaxation morphology type (ETG-ETG)
-                if (np.mean(np.array(misalignment_tree['%s' %ID_i]['kappa_stars'][0:misalignment_tree['%s' %ID_i]['index_m']+1])) > morph_limits[1]) and (np.mean(np.array(misalignment_tree['%s' %ID_i]['kappa_stars'][misalignment_tree['%s' %ID_i]['index_r']:])) > morph_limits[1]):
+                if (np.mean(np.array(misalignment_tree['%s' %ID_i]['kappa_stars'][0:misalignment_tree['%s' %ID_i]['index_s']+1])) > morph_limits[1]) and (np.mean(np.array(misalignment_tree['%s' %ID_i]['kappa_stars'][misalignment_tree['%s' %ID_i]['index_r']:])) > morph_limits[1]):
                     misalignment_tree['%s' %ID_i].update({'relaxation_morph': 'LTG-LTG'})   
-                elif (np.mean(np.array(misalignment_tree['%s' %ID_i]['kappa_stars'][0:misalignment_tree['%s' %ID_i]['index_m']+1])) > morph_limits[1]) and (np.mean(np.array(misalignment_tree['%s' %ID_i]['kappa_stars'][misalignment_tree['%s' %ID_i]['index_r']:])) < morph_limits[0]):
+                elif (np.mean(np.array(misalignment_tree['%s' %ID_i]['kappa_stars'][0:misalignment_tree['%s' %ID_i]['index_s']+1])) > morph_limits[1]) and (np.mean(np.array(misalignment_tree['%s' %ID_i]['kappa_stars'][misalignment_tree['%s' %ID_i]['index_r']:])) < morph_limits[0]):
                     misalignment_tree['%s' %ID_i].update({'relaxation_morph': 'LTG-ETG'})  
-                elif (np.mean(np.array(misalignment_tree['%s' %ID_i]['kappa_stars'][0:misalignment_tree['%s' %ID_i]['index_m']+1])) < morph_limits[0]) and (np.mean(np.array(misalignment_tree['%s' %ID_i]['kappa_stars'][misalignment_tree['%s' %ID_i]['index_r']:])) > morph_limits[1]):
+                elif (np.mean(np.array(misalignment_tree['%s' %ID_i]['kappa_stars'][0:misalignment_tree['%s' %ID_i]['index_s']+1])) < morph_limits[0]) and (np.mean(np.array(misalignment_tree['%s' %ID_i]['kappa_stars'][misalignment_tree['%s' %ID_i]['index_r']:])) > morph_limits[1]):
                     misalignment_tree['%s' %ID_i].update({'relaxation_morph': 'ETG-LTG'})  
-                elif (np.mean(np.array(misalignment_tree['%s' %ID_i]['kappa_stars'][0:misalignment_tree['%s' %ID_i]['index_m']+1])) < morph_limits[0]) and (np.mean(np.array(misalignment_tree['%s' %ID_i]['kappa_stars'][misalignment_tree['%s' %ID_i]['index_r']:])) < morph_limits[0]):
+                elif (np.mean(np.array(misalignment_tree['%s' %ID_i]['kappa_stars'][0:misalignment_tree['%s' %ID_i]['index_s']+1])) < morph_limits[0]) and (np.mean(np.array(misalignment_tree['%s' %ID_i]['kappa_stars'][misalignment_tree['%s' %ID_i]['index_r']:])) < morph_limits[0]):
                     misalignment_tree['%s' %ID_i].update({'relaxation_morph': 'ETG-ETG'})  
                 else:
                     misalignment_tree['%s' %ID_i].update({'relaxation_morph': 'other'})   
@@ -3166,8 +3183,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                     print('\n\t\t\tADDED TO SAMPLE | Duration: %.2f Gyr' %relaxation_time_entry)
                     plot_misangle_accepted_window.append(misalignment_tree['%s' %ID_i][use_angle])
                     plot_misangle_accepted_window_t.append(misalignment_tree['%s' %ID_i]['Lookbacktime'])
-                    plot_misangle_accepted_misangle.append(misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
-                    plot_misangle_accepted_misangle_t.append(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+                    plot_misangle_accepted_misangle.append(misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
+                    plot_misangle_accepted_misangle_t.append(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
                 
         
             # PLot final misalignment selection        
@@ -3207,19 +3224,15 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
         savefig_txt = load_csv_file
     
-    # Extract specific misalignment
-    """ 
+
+    """ # Extract list of IDs matching criteria
+    collect_IDs = []
     for ID_i in misalignment_tree.keys():
-        if int(ID_i) in range(251899973, 251899973+80):
-            print('Found misalignment: ', ID_i)
-            print('\t%.2f Gyr' %misalignment_tree['%s' %ID_i]['relaxation_time'])
-            print('\t%.2f trelax/tdyn' %misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
-            print('\t%.2f trelax/ttorque' %misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
-            print('\t%s' %misalignment_tree['%s' %ID_i]['relaxation_morph'])
-            print('\t%.2f peak offset angle' %misalignment_tree['%s' %ID_i]['angle_peak'])
-            for i, time_i, angle_i in zip(np.arange(0, len(misalignment_tree['%s' %ID_i]['Lookbacktime'])), misalignment_tree['%s' %ID_i]['Lookbacktime'], misalignment_tree['%s' %ID_i]['stars_gas_sf']):
-                print('\t\t%.2f\t%.1f' %(time_i, angle_i), misalignment_tree['%s' %ID_i]['merger_ratio_stars'][i], misalignment_tree['%s' %ID_i]['merger_ratio_gas'][i], misalignment_tree['%s' %ID_i]['sfmass'][i])
-            print(' ')
+        if misalignment_tree['%s' %ID_i]['relaxation_ttorque'] > 5:
+            collect_IDs.append(ID_i)
+    print('-------------------------------------------')
+    print('Number of >5 ttorque relaxations:  ', len(collect_IDs))
+    print(collect_IDs)
     """
     
     # Apply a merger criteria
@@ -3232,16 +3245,6 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
     
         misalignment_tree = misalignment_tree_new
         misalignment_tree_new = 0
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
     # Apply a merger criteria
     if use_alt_merger_criteria:
@@ -3260,7 +3263,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         tally_sample = len(misalignment_tree.keys())
         for ID_i in misalignment_tree.keys():
             """  
-            index_merger_window = np.where(np.absolute(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']+1]) < half_window)[0]
+            index_merger_window = np.where(np.absolute(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']+1]) < half_window)[0]
     
             meets_criteria = False
             for merger_i in np.array(misalignment_tree['%s' %ID_i]['merger_ratio_stars'])[index_merger_window]:
@@ -3275,7 +3278,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 
             #---------------------------------------------------------
             # Find location of begin of misalignment in merger tree
-            (row_i, snap_i) = np.where(GalaxyID_tree == int(misalignment_tree['%s' %ID_i]['GalaxyID'][misalignment_tree['%s' %ID_i]['index_m']+1]))
+            (row_i, snap_i) = np.where(GalaxyID_tree == int(misalignment_tree['%s' %ID_i]['GalaxyID'][misalignment_tree['%s' %ID_i]['index_s']+1]))
             row_mask  = row_i[0]
             snap_mask = snap_i[0]
             
@@ -3378,7 +3381,23 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         print('                 ...major:   %i\t%.2f %%' %(tally_major, (tally_major*100/tally_sample)))
         print('                 ...minor:   %i\t%.2f %%' %(tally_minor, (tally_minor*100/tally_sample)))
         
-        
+    
+    # Extract specific misalignment
+    for ID_i in misalignment_tree.keys():
+        if int(ID_i) in range(251899973, 251899973+80):            
+            print('Found misalignment: %s\tLookbacktime: %.2f' %(ID_i, misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']]))
+            print('\t%s' %misalignment_tree['%s' %ID_i]['relaxation_type'])
+            print('\t%.2f Gyr' %misalignment_tree['%s' %ID_i]['relaxation_time'])
+            print('\t%.2f trelax/tdyn' %misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+            print('\t%.2f trelax/ttorque' %misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            print('\t%s' %misalignment_tree['%s' %ID_i]['relaxation_morph'])
+            print('\t%.2f peak offset angle' %misalignment_tree['%s' %ID_i]['angle_peak'])
+            print('\t%.2e Stellar mass, %.2e gas mass, %.1f pkpc hmr' %(misalignment_tree['%s' %ID_i]['stelmass'][misalignment_tree['%s' %ID_i]['index_s']+1], misalignment_tree['%s' %ID_i]['gasmass'][misalignment_tree['%s' %ID_i]['index_s']+1], misalignment_tree['%s' %ID_i]['rad'][misalignment_tree['%s' %ID_i]['index_s']+1]))
+            for i, time_i, snap_i, angle_i in zip(np.arange(0, len(misalignment_tree['%s' %ID_i]['Lookbacktime'])), misalignment_tree['%s' %ID_i]['Lookbacktime'], misalignment_tree['%s' %ID_i]['SnapNum'], misalignment_tree['%s' %ID_i]['stars_gas_sf']):
+                print('\t\t%.2f\t%i\t%.1f' %(time_i, snap_i, angle_i), misalignment_tree['%s' %ID_i]['merger_ratio_stars'][i], misalignment_tree['%s' %ID_i]['merger_ratio_gas'][i], misalignment_tree['%s' %ID_i]['sfmass'][i])
+            print(' ')
+    
+    
     #------------------------------------------------ 
     plt.close()
     # Summary and K-S KS test
@@ -3437,55 +3456,55 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             
             if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
                 summary_dict['trelax']['co-co'].append(misalignment_tree['%s' %ID_i]['relaxation_time']) 
-                summary_dict['tdyn']['co-co'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
-                summary_dict['ttorque']['co-co'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+                summary_dict['tdyn']['co-co'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+                summary_dict['ttorque']['co-co'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
                 summary_dict['ID']['co-co'].append(ID_i)
             elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
                 summary_dict['trelax']['co-counter'].append(misalignment_tree['%s' %ID_i]['relaxation_time']) 
-                summary_dict['tdyn']['co-counter'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
-                summary_dict['ttorque']['co-counter'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+                summary_dict['tdyn']['co-counter'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+                summary_dict['ttorque']['co-counter'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
                 summary_dict['ID']['co-counter'].append(ID_i)
             elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
                 summary_dict['trelax']['counter-co'].append(misalignment_tree['%s' %ID_i]['relaxation_time']) 
-                summary_dict['tdyn']['counter-co'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
-                summary_dict['ttorque']['counter-co'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+                summary_dict['tdyn']['counter-co'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+                summary_dict['ttorque']['counter-co'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
                 summary_dict['ID']['counter-co'].append(ID_i) 
             elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
                 summary_dict['trelax']['counter-counter'].append(misalignment_tree['%s' %ID_i]['relaxation_time']) 
-                summary_dict['tdyn']['counter-counter'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
-                summary_dict['ttorque']['counter-counter'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+                summary_dict['tdyn']['counter-counter'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+                summary_dict['ttorque']['counter-counter'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
                 summary_dict['ID']['counter-counter'].append(ID_i) 
             
             if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-ETG':
                 summary_dict['trelax']['ETG-ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']) 
-                summary_dict['tdyn']['ETG-ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
-                summary_dict['ttorque']['ETG-ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+                summary_dict['tdyn']['ETG-ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+                summary_dict['ttorque']['ETG-ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
                 summary_dict['ID']['ETG-ETG'].append(ID_i)
             elif misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'LTG-LTG':
                 summary_dict['trelax']['LTG-LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']) 
-                summary_dict['tdyn']['LTG-LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
-                summary_dict['ttorque']['LTG-LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+                summary_dict['tdyn']['LTG-LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+                summary_dict['ttorque']['LTG-LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
                 summary_dict['ID']['LTG-LTG'].append(ID_i)
             elif misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-LTG':
                 summary_dict['trelax']['ETG-LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']) 
-                summary_dict['tdyn']['ETG-LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
-                summary_dict['ttorque']['ETG-LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+                summary_dict['tdyn']['ETG-LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+                summary_dict['ttorque']['ETG-LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
                 summary_dict['ID']['ETG-LTG'].append(ID_i)
             elif misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'LTG-ETG':
                 summary_dict['trelax']['LTG-ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']) 
-                summary_dict['tdyn']['LTG-ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
-                summary_dict['ttorque']['LTG-ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+                summary_dict['tdyn']['LTG-ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+                summary_dict['ttorque']['LTG-ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
                 summary_dict['ID']['LTG-ETG'].append(ID_i)
                 
             if misalignment_tree['%s' %ID_i]['misalignment_morph'] == 'ETG':
                 summary_dict['trelax']['ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']) 
-                summary_dict['tdyn']['ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
-                summary_dict['ttorque']['ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+                summary_dict['tdyn']['ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+                summary_dict['ttorque']['ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
                 summary_dict['ID']['ETG'].append(ID_i)
             elif misalignment_tree['%s' %ID_i]['misalignment_morph'] == 'LTG':
                 summary_dict['trelax']['LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']) 
-                summary_dict['tdyn']['LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
-                summary_dict['ttorque']['LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+                summary_dict['tdyn']['LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+                summary_dict['ttorque']['LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
                 summary_dict['ID']['LTG'].append(ID_i)
         
 
@@ -3601,7 +3620,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
     GalaxyID is first ID in window of misalignment.
     Arrays contain no missing entries
 
-    Mergers searched for from first misaligned, to first relax
+    Mergers searched for from first misaligned [index_m+1], to first relax [index_r] -> for range from relax to relax do [index_m:index_r+1]
+    Values specified for general (eg. stelmass) use_hmr_general (typically 2.0)
 
     'GalaxyID'				-
     'SnapNum'				-
@@ -3614,9 +3634,9 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
     'gasmass'				- [ Msun ]
     'sfmass'				- [ Msun ]
     'nsfmass'				- [ Msun ]				
-    'dmmass'				- [ Msun ]
+    'dmmass'				- [ Msun ] in 30pkpc
 
-    'sf'					- [ Msun/yr]
+    'sfr'					- [ Msun/yr]
     'ssfr'					- [ /yr ]
 
     'stars_l'               - [ pkpc/kms-1 ]
@@ -3629,29 +3649,44 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
     'kappa_stars'			-
     'kappa_gas'				-
     'kappa_sf'				-
-    #'kappa_nsf'			-
-    #'ellip'					-
-    #'triax'					-
-    #'disp_ani'				-
-    #'disc_to_total'			-
-    #'rot_to_disp_ratio'		-
+    'kappa_nsf'				-
+    'ellip'					-
+    'triax'					-
+    'disp_ani'				-
+    'disc_to_total'			-
+    'rot_to_disp_ratio'		-
 
     'rad'					- [ pkpc ]
     'radproj'				- [ pkpc ]
-    #'rad_sf'				- [ pkpc ]
+    'rad_sf'				- [ pkpc ]
 
-    #'vcirc'				- [ km/s ]
-    #'tdyn'					- [ Gyr ]
-    #'ttorque'				- [ Gyr ] 
+    'vcirc'					- [ km/s ]
+    'tdyn'					- [ Gyr ]
+    'ttorque'				- [ Gyr ] 
 
-    'inflow_rate'			- [ Msun/yr ]
-    'outflow_rate'			- [ Msun/yr ]
-    'stelmassloss_rate'		- [ Msun/yr ]
-    's_inflow_rate'			- [ /yr ]
-    's_outflow_rate'		- [ /yr ]
-    'inflow_Z'				-
-    'outflow_Z'				-
-    'insitu_Z'				-
+
+    'inflow_mass_1hmr'			- [ Msun ]
+    'inflow_mass_2hmr'			- [ Msun ]
+    'outflow_mass_1hmr'			- [ Msun ]
+    'outflow_mass_2hmr'			- [ Msun ]
+    'insitu_mass_1hmr'			- [ Msun ]
+    'insitu_mass_2hmr'			- [ Msun ]
+    'inflow_rate_1hmr'			- [ Msun/yr ]
+    'inflow_rate_2hmr'			- [ Msun/yr ]
+    'outflow_rate_1hmr'			- [ Msun/yr ]
+    'outflow_rate_2hmr'			- [ Msun/yr ]
+    'stelmassloss_rate_1hmr'	- [ Msun/yr ]
+    'stelmassloss_rate_2hmr'	- [ Msun/yr ]
+    's_inflow_rate_1hmr'		- [ /yr ]
+    's_inflow_rate_2hmr'		- [ /yr ]
+    's_outflow_rate_1hmr'		- [ /yr ]
+    's_outflow_rate_2hmr'		- [ /yr ]
+    'inflow_Z_1hmr'				-
+    'inflow_Z_2hmr'				-
+    'outflow_Z_1hmr'			-
+    'outflow_Z_2hmr'			-
+    'insitu_Z_1hmr'				-
+    'insitu_Z_2hmr'				-
 
     'bh_mass'				- [ Msun ]
     'bh_mdot_av'			- [ Msun/yr ]
@@ -3661,6 +3696,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
 
     'stars_gas_sf'			- all in degrees
     'stars_gas_sf_err'		-
+    'stars_gas_sf_halo'		- inner stars vs outer gas_sf
     'stars_dm'				- not checked for inclination
     'stars_dm_err'			-
     'gas_dm'				- not checked for inclination
@@ -3672,17 +3708,20 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
     'merger_ratio_gas'		- ^
 
     # single values:
-    'index_m'				- Last before misaligned, adjusted for current window
-    'index_r'				- First to be relaxed
+    'index_s'				- Last before leaving stable regime, adjusted for current window
+    'index_m'				- First index to be misaligned by more than 30 degrees
+    'index_r'				- First to be relaxed back in stable regime
     'index_merger' 			- Index of mergers that met locations. Use this to sample 'merger_ratio_stars'
     'relaxation_time' 		- [ Gyr ] Time between index_m and index_r
-	'relaxation_tdyn'		- [fraction] trelax/tdyn between index_m and index_r
-	'relaxation_ttorque'	- [fraction] trelax/ttorque between index_m and index_r
+    'relaxation_tdyn'		- [fraction] trelax/tdyn between index_m and index_r
+    'relaxation_ttorque'	- [fraction] trelax/ttorque between index_m and index_r
     'relaxation_type'		- co-co, counter-counter, co-counter, counter-co
     'relaxation_morph'		- ETG-ETG, LTG-LTG, ETG-LTG, LTG-ETG, other					BASED OFF MORPH_LIMITS
     'misalignment_morph'	- ETG, LTG, other
-    'angle_peak'			- peak misalignment angle from where it relaxes to (-co, -counter)
+    'angle_peak'			- peak misalignment angle from where it relaxes to (-co (0 deg), -counter (180 deg))
     'index_peak'			- index of the above w.r.t array
+	
+    
     """
     if csv_file: 
         # Converting numpy arrays to lists. When reading, may need to simply convert list back to np.array() (easy)
@@ -3781,7 +3820,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         # Gather data, average stelmass over misalignment
         stelmass_plot = []
         for ID_i in misalignment_tree.keys():
-            stelmass_plot.append(np.log10(np.mean(misalignment_tree['%s' %ID_i]['stelmass'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])))
+            stelmass_plot.append(np.log10(np.mean(misalignment_tree['%s' %ID_i]['stelmass'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])))
         
         #-------------
         ### Plotting
@@ -3826,7 +3865,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         co_counter_array      = []
         counter_co_array      = []
         counter_counter_array = []
-        #collect_array         = []
+        collect_array         = []
         for ID_i in misalignment_tree.keys():
             relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
         
@@ -3840,13 +3879,15 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 counter_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
                 
                 
-            #if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
-            #    if misalignment_tree['%s' %ID_i]['angle_peak'] > 135:
-            #        collect_array.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
-                
-        print('\nMax trelax:  %.2f Gyr' %max(relaxationtime_plot))  
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
+                if misalignment_tree['%s' %ID_i]['angle_peak'] > 135:
+                    collect_array.append(ID_i)
+        
+        #print('-------------------------------------------------------------')
         #print('Number of >135 co-co misalignments: ', len(collect_array))
         #print(collect_array)
+        print('\nMax trelax:  %.2f Gyr' %max(relaxationtime_plot))  
+        
         
         #-------------
         ### Plotting
@@ -3892,7 +3933,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         #-------------
         ### Inset second axes
         if add_inset:
-            axins = axs.inset_axes([0.4, 0.2, 0.5, 0.6])
+            axins = axs.inset_axes([0.45, 0.2, 0.5, 0.6])
             
             axins.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax), histtype='bar', edgecolor='none', facecolor='k', alpha=0.1)
             bin_count, _, _ = axins.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax), histtype='bar', edgecolor='k', facecolor='none', lw=0.7, alpha=1.0)
@@ -3900,14 +3941,25 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             print('bin_count of hist:', bin_count)
             
             axins.set_yscale('log')
-            axins.set_ylim(0.0002, 0.55)
+            axins.set_ylim(0.0002, set_thist_ymax_trelax)
             axins.set_xlim(0, set_bin_limit_trelax)
             axins.set_xticks(np.arange(0, set_bin_limit_trelax+0.1, step=1))
             axins.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)', fontsize = 5)
             if set_plot_percentage:
                 axins.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
                 axins.set_ylabel('Percentage of misalignments', fontsize=5)
+                
+                
+            #-----------
+            # Best-fit data
+            mask = np.where(np.array(bin_count) > 0)[0]
+            slope, intercept, r_value, p_value, std_err = stats.linregress(np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax)[mask][1:], np.log10(np.array(bin_count)[mask])[1:])
+            print('Best fit line: \tfrac = %.2f x 10^(%.2f t)' %(10**intercept, slope))
             
+            if add_inset_bestfit:
+                axins.plot([0.1 , 5], [(10**intercept) * (10**(slope*0.1)), (10**intercept) * (10**(slope*5))], lw=0.7, ls='--', alpha=0.8, c='purple', label='best-fit')
+                #axins.legend(loc='upper right', frameon=False, labelspacing=0.1, handlelength=0, labelcolor='linecolor')
+        
         
         #-----------
         ### General formatting
@@ -3923,7 +3975,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             axs.set_ylabel('Percentage of misalignments')
         else:
             axs.set_ylabel('Number of misalignments')
-        axs.set_ylim(0, 0.55)
+        axs.set_ylim(0, set_thist_ymax_trelax)
         
         
         #-----------
@@ -4134,7 +4186,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         #-------------
         ### Inset second axes
         if add_inset:
-            axins = axs.inset_axes([0.4, 0.2, 0.5, 0.6])
+            axins = axs.inset_axes([0.45, 0.2, 0.5, 0.6])
             
             axins.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, set_bin_limit_tdyn+set_bin_width_tdyn, set_bin_width_tdyn), histtype='bar', edgecolor='none', facecolor='k', alpha=0.1)
             bin_count, _, _ = axins.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, set_bin_limit_tdyn+set_bin_width_tdyn, set_bin_width_tdyn), histtype='bar', edgecolor='k', facecolor='none', lw=0.7, alpha=1.0)
@@ -4142,13 +4194,24 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             print('bin_count of hist:', bin_count)
             
             axins.set_yscale('log')
-            axins.set_ylim(0.0002, 0.55)
+            axins.set_ylim(0.0002, set_thist_ymax_tdyn)
             axins.set_xlim(0, set_bin_limit_tdyn)
             axins.set_xticks(np.arange(0, set_bin_limit_tdyn+0.1, step=4))
             axins.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{dyn}}$', fontsize=5)
             if set_plot_percentage:
                 axins.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
                 axins.set_ylabel('Percentage of misalignments', fontsize=5)
+                
+            #-------------
+            # Best-fit data
+            mask = np.where(np.array(bin_count) > 0)[0]
+            slope, intercept, r_value, p_value, std_err = stats.linregress(np.arange(0, set_bin_limit_tdyn+set_bin_width_tdyn, set_bin_width_tdyn)[mask][1:], np.log10(np.array(bin_count)[mask])[1:])
+            print('Best fit line: \tfrac = %.2f x 10^(%.2f t)' %(10**intercept, slope))
+            
+            if add_inset_bestfit:
+                axins.plot([0.1 , 50], [(10**intercept) * (10**(slope*0.1)), (10**intercept) * (10**(slope*50))], lw=0.7, ls='--', alpha=0.8, c='purple', label='best-fit')
+                #axins.legend(loc='upper right', frameon=False, labelspacing=0.1, handlelength=0, labelcolor='linecolor')
+            
             
         #-----------
         ### General formatting
@@ -4164,7 +4227,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             axs.set_ylabel('Percentage of misalignments')
         else:
             axs.set_ylabel('Number of misalignments')
-        axs.set_ylim(0, 0.55)
+        axs.set_ylim(0, set_thist_ymax_tdyn)
     
         
         #-----------
@@ -4371,7 +4434,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         #-------------
         ### Inset second axes
         if add_inset:
-            axins = axs.inset_axes([0.4, 0.2, 0.5, 0.6])
+            axins = axs.inset_axes([0.45, 0.2, 0.5, 0.6])
             
             axins.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, set_bin_limit_ttorque+set_bin_width_ttorque, set_bin_width_ttorque), histtype='bar', edgecolor='none', facecolor='k', alpha=0.1)
             bin_count, _, _ = axins.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, set_bin_limit_ttorque+set_bin_width_ttorque, set_bin_width_ttorque), histtype='bar', edgecolor='k', facecolor='none', lw=0.7, alpha=1.0)
@@ -4379,14 +4442,25 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             print('bin_count of hist:', bin_count)
             
             axins.set_yscale('log')
-            axins.set_ylim(0.0002, 0.55)
+            axins.set_ylim(0.0002, set_thist_ymax_ttorque)
             axins.set_xlim(0, set_bin_limit_ttorque)
             axins.set_xticks(np.arange(0, set_bin_limit_ttorque+0.1, step=2))
             axins.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{torque}}$', fontsize=5)
             if set_plot_percentage:
                 axins.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
                 axins.set_ylabel('Percentage of misalignments', fontsize=5)
-                
+            
+            #-------------
+            # Best-fit data
+            mask = np.where(np.array(bin_count) > 0)[0]
+            slope, intercept, r_value, p_value, std_err = stats.linregress(np.arange(0, set_bin_limit_ttorque+set_bin_width_ttorque, set_bin_width_ttorque)[mask][1:], np.log10(np.array(bin_count)[mask])[1:])
+            print('Best fit line: \tfrac = %.2f x 10^(%.2f t)' %(10**intercept, slope))
+            
+            if add_inset_bestfit:
+                axins.plot([0.1 , 25], [(10**intercept) * (10**(slope*0.1)), (10**intercept) * (10**(slope*25))], lw=0.7, ls='--', alpha=0.8, c='purple', label='best-fit')
+                #axins.legend(loc='upper right', frameon=False, labelspacing=0.1, handlelength=0, labelcolor='linecolor')
+            
+            
         #-----------
         ### General formatting
         # Axis labels
@@ -4401,7 +4475,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             axs.set_ylabel('Percentage of misalignments')
         else:
             axs.set_ylabel('Number of misalignments')
-        axs.set_ylim(0, 0.55)
+        axs.set_ylim(0, set_thist_ymax_ttorque)
     
         
         #-----------
@@ -4588,11 +4662,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
             time_collect.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
             if set_plot_type == 'time':
-                timeaxis_plot = -1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']])
+                timeaxis_plot = -1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']])
             elif set_plot_type == 'raw_time':
                 timeaxis_plot = np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - (0)
             elif set_plot_type == 'snap':
-                timeaxis_plot = np.array(misalignment_tree['%s' %ID_i]['SnapNum']) - misalignment_tree['%s' %ID_i]['SnapNum'][misalignment_tree['%s' %ID_i]['index_m']]
+                timeaxis_plot = np.array(misalignment_tree['%s' %ID_i]['SnapNum']) - misalignment_tree['%s' %ID_i]['SnapNum'][misalignment_tree['%s' %ID_i]['index_s']]
             elif set_plot_type == 'raw_snap':
                 timeaxis_plot = np.array(misalignment_tree['%s' %ID_i]['SnapNum']) - (0)
             
@@ -4689,7 +4763,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             if len(stats_lines['co-co']['time']) != 0:
                 line_color='C0'
                 line_color='k'
-                bins = np.arange((-1*np.median(diff_co_co))+0.01, 6.09, np.median(diff_co_co))
+                bins = np.arange((-1*np.median(diff_co_co))+0.01, 5.09, np.median(diff_co_co))
             
                 # Create mask that is essentially the bins
                 digitized = np.digitize(np.array(stats_lines['co-co']['time']), bins=bins)
@@ -4721,11 +4795,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 axs.plot(bins[0:mask_median+1]+np.median(diff_co_co), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
                 axs.plot(bins[0:mask_upper+1]+np.median(diff_co_co), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
                 axs.plot(bins[0:mask_lower+1]+np.median(diff_co_co), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
-                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+                #axs.fill_between(np.arange(-0.249, 5.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
             if len(stats_lines['co-counter']['time']) != 0:
                 line_color='C2'
                 line_color='k'
-                bins = np.arange((-1*np.median(diff_co_counter))+0.01, 6.09, np.median(diff_co_counter))
+                bins = np.arange((-1*np.median(diff_co_counter))+0.01, 5.09, np.median(diff_co_counter))
             
                 # Create mask that is essentially the bins
                 digitized = np.digitize(np.array(stats_lines['co-counter']['time']), bins=bins)
@@ -4757,11 +4831,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 axs.plot(bins[0:mask_median+1]+np.median(diff_co_counter), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
                 axs.plot(bins[0:mask_upper+1]+np.median(diff_co_counter), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
                 axs.plot(bins[0:mask_lower+1]+np.median(diff_co_counter), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
-                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+                #axs.fill_between(np.arange(-0.249, 5.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
             if len(stats_lines['counter-counter']['time']) != 0:
                 line_color='C1'
                 line_color='k'
-                bins = np.arange((-1*np.median(diff_counter_counter))+0.01, 6.09, np.median(diff_counter_counter))
+                bins = np.arange((-1*np.median(diff_counter_counter))+0.01, 5.09, np.median(diff_counter_counter))
             
                 # Create mask that is essentially the bins
                 digitized = np.digitize(np.array(stats_lines['counter-counter']['time']), bins=bins)
@@ -4793,11 +4867,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 axs.plot(bins[0:mask_median+1]+np.median(diff_counter_counter), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
                 axs.plot(bins[0:mask_upper+1]+np.median(diff_counter_counter), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
                 axs.plot(bins[0:mask_lower+1]+np.median(diff_counter_counter), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
-                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+                #axs.fill_between(np.arange(-0.249, 5.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
             if len(stats_lines['counter-co']['time']) != 0:
                 line_color='C3'
                 line_color='k'
-                bins = np.arange((-1*np.median(diff_counter_co))+0.01, 6.09, np.median(diff_counter_co))
+                bins = np.arange((-1*np.median(diff_counter_co))+0.01, 5.09, np.median(diff_counter_co))
             
                 # Create mask that is essentially the bins
                 digitized = np.digitize(np.array(stats_lines['counter-co']['time']), bins=bins)
@@ -4829,12 +4903,14 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 axs.plot(bins[0:mask_median+1]+np.median(diff_counter_co), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
                 axs.plot(bins[0:mask_upper+1]+np.median(diff_counter_co), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
                 axs.plot(bins[0:mask_lower+1]+np.median(diff_counter_co), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
-                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+                #axs.fill_between(np.arange(-0.249, 5.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
                      
         #-----------
         # Add threshold
-        axs.axhspan(0, misangle_threshold, alpha=0.25, ec=None, fc='grey')
-        axs.axhspan(180-misangle_threshold, 180, alpha=0.25, ec=None, fc='grey')
+        axs.axhspan(0, misangle_threshold, alpha=0.15, ec=None, fc='grey')
+        axs.axhspan(180-misangle_threshold, 180, alpha=0.15, ec=None, fc='grey')
+        axs.axhspan(0, peak_misangle, alpha=0.15, ec=None, fc='grey')
+        axs.axhspan(180-peak_misangle, 180, alpha=0.15, ec=None, fc='grey')
         
         
         #ßfor ID_i in ID_plot:
@@ -5001,11 +5077,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             
             ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
             if set_plot_type == 'time':
-                timeaxis_plot = -1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']])
+                timeaxis_plot = -1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']])
             elif set_plot_type == 'raw_time':
                 timeaxis_plot = np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - (0)
             elif set_plot_type == 'snap':
-                timeaxis_plot = np.array(misalignment_tree['%s' %ID_i]['SnapNum']) - misalignment_tree['%s' %ID_i]['SnapNum'][misalignment_tree['%s' %ID_i]['index_m']]
+                timeaxis_plot = np.array(misalignment_tree['%s' %ID_i]['SnapNum']) - misalignment_tree['%s' %ID_i]['SnapNum'][misalignment_tree['%s' %ID_i]['index_s']]
             elif set_plot_type == 'raw_snap':
                 timeaxis_plot = np.array(misalignment_tree['%s' %ID_i]['SnapNum']) - (0)
             
@@ -5022,10 +5098,6 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                     ax = ax_co_co
                     diff_co_co.append(timeaxis_plot[1]-timeaxis_plot[0])
                     
-                    # collect IDs of weird relaxations
-                    #if max(misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if set_plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)]) > 135:
-                    #    ID_collect.append(ID_i)
-                        
                 elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
                     line_color='C2'
                     append_angle = 170
@@ -5077,7 +5149,6 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 c     = lighten_color(line_color, 0.7*(misalignment_tree['%s' %ID_i]['relaxation_time'])**(-0.5)) 
                 
                 
-                
             ax.plot(timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if set_plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if set_plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], lw=0.3, c=c, alpha=alpha)       # c=scalarMap.to_rgba(misalignment_tree['%s' %ID_i]['relaxation_time'])
             
             ### Annotate
@@ -5095,9 +5166,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                             scatter_s.append(50*(ratio_i[np.argmax(np.array(ratio_i))])**0.5)
         
         print('-------------------------------------------------------------')
-        #print('  List of IDs with co-co relax but max(angle) > 135:  ', len(ID_collect))
-        print('  List of >2 Gyr trelax ', len(ID_collect))
-        print(ID_collect)
+        #print('  List of >2 Gyr trelax ', len(ID_collect))
+        #print(ID_collect)
         
         #--------------
         # Find mean/median and 1 sigma behaviour for each relaxation type
@@ -5105,7 +5175,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             if len(stats_lines['co-co']['time']) != 0:
                 line_color='C0'
                 line_color='k'
-                bins = np.arange((-1*np.median(diff_co_co))+0.01, 6.09, np.median(diff_co_co))
+                bins = np.arange((-1*np.median(diff_co_co))+0.01, 5.09, np.median(diff_co_co))
                 
                 # Create mask that is essentially the bins
                 digitized = np.digitize(np.array(stats_lines['co-co']['time']), bins=bins)
@@ -5141,7 +5211,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             if len(stats_lines['co-counter']['time']) != 0:
                 line_color='C2'
                 line_color='k'
-                bins = np.arange((-1*np.median(diff_co_counter))+0.01, 6.09, np.median(diff_co_counter))
+                bins = np.arange((-1*np.median(diff_co_counter))+0.01, 5.09, np.median(diff_co_counter))
                 
                 # Create mask that is essentially the bins
                 digitized = np.digitize(np.array(stats_lines['co-counter']['time']), bins=bins)
@@ -5177,7 +5247,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             if len(stats_lines['counter-counter']['time']) != 0:
                 line_color='C1'
                 line_color='k'
-                bins = np.arange((-1*np.median(diff_counter_counter))+0.01, 6.09, np.median(diff_counter_counter))
+                bins = np.arange((-1*np.median(diff_counter_counter))+0.01, 5.09, np.median(diff_counter_counter))
                 
                 # Create mask that is essentially the bins
                 digitized = np.digitize(np.array(stats_lines['counter-counter']['time']), bins=bins)
@@ -5213,7 +5283,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             if len(stats_lines['counter-co']['time']) != 0:
                 line_color='C3'
                 line_color='k'
-                bins = np.arange((-1*np.median(diff_counter_co))+0.01, 6.09, np.median(diff_counter_co))
+                bins = np.arange((-1*np.median(diff_counter_co))+0.01, 5.09, np.median(diff_counter_co))
                 
                 # Create mask that is essentially the bins
                 digitized = np.digitize(np.array(stats_lines['counter-co']['time']), bins=bins)
@@ -5251,8 +5321,10 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         #-----------
         # Add threshold
         for ax in [ax_co_co, ax_co_counter, ax_counter_counter, ax_counter_co]:
-            ax.axhspan(0, misangle_threshold, alpha=0.25, ec=None, fc='grey')
-            ax.axhspan(180-misangle_threshold, 180, alpha=0.25, ec=None, fc='grey')
+            ax.axhspan(0, misangle_threshold, alpha=0.15, ec=None, fc='grey')
+            ax.axhspan(180-misangle_threshold, 180, alpha=0.15, ec=None, fc='grey')
+            ax.axhspan(0, peak_misangle, alpha=0.15, ec=None, fc='grey')
+            ax.axhspan(180-peak_misangle, 180, alpha=0.15, ec=None, fc='grey')
         
         
         #-----------
@@ -5427,7 +5499,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             
             ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
             time_collect.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
-            timeaxis_plot = (-1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']]))/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+            timeaxis_plot = (-1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']]))/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
             
             
             #-------------
@@ -5525,7 +5597,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             if len(stats_lines['co-co']['time']) != 0:
                 line_color='C0'
                 line_color='k'
-                bins = np.arange((-1*np.median(diff_co_co))+0.01, 28.09, np.median(diff_co_co))
+                bins = np.arange((-1*np.median(diff_co_co))+0.01, 32.09, np.median(diff_co_co))
             
                 # Create mask that is essentially the bins
                 digitized = np.digitize(np.array(stats_lines['co-co']['time']), bins=bins)
@@ -5558,11 +5630,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 axs.plot(bins[0:mask_median+1]+np.median(diff_co_co), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
                 axs.plot(bins[0:mask_upper+1]+np.median(diff_co_co), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
                 axs.plot(bins[0:mask_lower+1]+np.median(diff_co_co), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
-                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+                #axs.fill_between(np.arange(-0.249, 5.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
             if len(stats_lines['co-counter']['time']) != 0:
                 line_color='C2'
                 line_color='k'
-                bins = np.arange((-1*np.median(diff_co_counter))+0.01, 28.09, np.median(diff_co_counter))
+                bins = np.arange((-1*np.median(diff_co_counter))+0.01, 32.09, np.median(diff_co_counter))
             
                 # Create mask that is essentially the bins
                 digitized = np.digitize(np.array(stats_lines['co-counter']['time']), bins=bins)
@@ -5594,11 +5666,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 axs.plot(bins[0:mask_median+1]+np.median(diff_co_counter), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
                 axs.plot(bins[0:mask_upper+1]+np.median(diff_co_counter), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
                 axs.plot(bins[0:mask_lower+1]+np.median(diff_co_counter), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
-                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+                #axs.fill_between(np.arange(-0.249, 5.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
             if len(stats_lines['counter-counter']['time']) != 0:
                 line_color='C1'
                 line_color='k'
-                bins = np.arange((-1*np.median(diff_counter_counter))+0.01, 28.09, np.median(diff_counter_counter))
+                bins = np.arange((-1*np.median(diff_counter_counter))+0.01, 32.09, np.median(diff_counter_counter))
             
                 # Create mask that is essentially the bins
                 digitized = np.digitize(np.array(stats_lines['counter-counter']['time']), bins=bins)
@@ -5630,11 +5702,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 axs.plot(bins[0:mask_median+1]+np.median(diff_counter_counter), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
                 axs.plot(bins[0:mask_upper+1]+np.median(diff_counter_counter), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
                 axs.plot(bins[0:mask_lower+1]+np.median(diff_counter_counter), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
-                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+                #axs.fill_between(np.arange(-0.249, 5.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
             if len(stats_lines['counter-co']['time']) != 0:
                 line_color='C3'
                 line_color='k'
-                bins = np.arange((-1*np.median(diff_counter_co))+0.01, 28.09, np.median(diff_counter_co))
+                bins = np.arange((-1*np.median(diff_counter_co))+0.01, 32.09, np.median(diff_counter_co))
             
                 # Create mask that is essentially the bins
                 digitized = np.digitize(np.array(stats_lines['counter-co']['time']), bins=bins)
@@ -5666,12 +5738,14 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 axs.plot(bins[0:mask_median+1]+np.median(diff_counter_co), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
                 axs.plot(bins[0:mask_upper+1]+np.median(diff_counter_co), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
                 axs.plot(bins[0:mask_lower+1]+np.median(diff_counter_co), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
-                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+                #axs.fill_between(np.arange(-0.249, 5.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
                      
         #-----------
         # Add threshold
-        axs.axhspan(0, misangle_threshold, alpha=0.25, ec=None, fc='grey')
-        axs.axhspan(180-misangle_threshold, 180, alpha=0.25, ec=None, fc='grey')
+        axs.axhspan(0, misangle_threshold, alpha=0.15, ec=None, fc='grey')
+        axs.axhspan(180-misangle_threshold, 180, alpha=0.15, ec=None, fc='grey')
+        axs.axhspan(0, peak_misangle, alpha=0.15, ec=None, fc='grey')
+        axs.axhspan(180-peak_misangle, 180, alpha=0.15, ec=None, fc='grey')
         
         
         #-----------
@@ -5817,7 +5891,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 continue
             
             ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
-            timeaxis_plot = (-1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']]))/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+            timeaxis_plot = (-1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']]))/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
             
             #-------------
             # Plot stacked
@@ -5865,7 +5939,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             
             #-------------
             # pick out long relaxersß
-            if misalignment_tree['%s' %ID_i]['relaxation_tdyn'] > 20:
+            if misalignment_tree['%s' %ID_i]['relaxation_tdyn'] > 10:
                 ID_collect.append(ID_i)
                             
             
@@ -5905,8 +5979,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
         print('-------------------------------------------------------------')
         #print('  List of IDs with co-co relax but max(angle) > 135:  ', len(ID_collect))
-        print('  List of >20 trelax/tdyn ', len(ID_collect))
-        print(ID_collect)
+        #print('  List of >10 trelax/tdyn ', len(ID_collect))
+        #print(ID_collect)
         
         #--------------
         # Find mean/median and 1 sigma behaviour for each relaxation type
@@ -5914,7 +5988,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             if len(stats_lines['co-co']['time']) != 0:
                 line_color='C0'
                 line_color='k'
-                bins = np.arange((-1*np.median(diff_co_co))+0.01, 28.09, np.median(diff_co_co))
+                bins = np.arange((-1*np.median(diff_co_co))+0.01, 32.09, np.median(diff_co_co))
             
                 # Create mask that is essentially the bins
                 digitized = np.digitize(np.array(stats_lines['co-co']['time']), bins=bins)
@@ -5946,11 +6020,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 ax_co_co.plot(bins[0:mask_median+1]+np.median(diff_co_co), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
                 ax_co_co.plot(bins[0:mask_upper+1]+np.median(diff_co_co), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
                 ax_co_co.plot(bins[0:mask_lower+1]+np.median(diff_co_co), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
-                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+                #axs.fill_between(np.arange(-0.249, 5.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
             if len(stats_lines['co-counter']['time']) != 0:
                 line_color='C2'
                 line_color='k'
-                bins = np.arange((-1*np.median(diff_co_counter))+0.01, 28.09, np.median(diff_co_counter))
+                bins = np.arange((-1*np.median(diff_co_counter))+0.01, 32.09, np.median(diff_co_counter))
             
                 # Create mask that is essentially the bins
                 digitized = np.digitize(np.array(stats_lines['co-counter']['time']), bins=bins)
@@ -5983,11 +6057,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 ax_co_counter.plot(bins[0:mask_median+1]+np.median(diff_co_counter), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
                 ax_co_counter.plot(bins[0:mask_upper+1]+np.median(diff_co_counter), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
                 ax_co_counter.plot(bins[0:mask_lower+1]+np.median(diff_co_counter), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
-                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+                #axs.fill_between(np.arange(-0.249, 5.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
             if len(stats_lines['counter-counter']['time']) != 0:
                 line_color='C1'
                 line_color='k'
-                bins = np.arange((-1*np.median(diff_counter_counter))+0.01, 28.09, np.median(diff_counter_counter))
+                bins = np.arange((-1*np.median(diff_counter_counter))+0.01, 32.09, np.median(diff_counter_counter))
             
                 # Create mask that is essentially the bins
                 digitized = np.digitize(np.array(stats_lines['counter-counter']['time']), bins=bins)
@@ -6020,11 +6094,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 ax_counter_counter.plot(bins[0:mask_median+1]+np.median(diff_counter_counter), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
                 ax_counter_counter.plot(bins[0:mask_upper+1]+np.median(diff_counter_counter), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
                 ax_counter_counter.plot(bins[0:mask_lower+1]+np.median(diff_counter_counter), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
-                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+                #axs.fill_between(np.arange(-0.249, 5.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
             if len(stats_lines['counter-co']['time']) != 0:
                 line_color='C3'
                 line_color='k'
-                bins = np.arange((-1*np.median(diff_counter_co))+0.01, 28.09, np.median(diff_counter_co))
+                bins = np.arange((-1*np.median(diff_counter_co))+0.01, 32.09, np.median(diff_counter_co))
             
                 # Create mask that is essentially the bins
                 digitized = np.digitize(np.array(stats_lines['counter-co']['time']), bins=bins)
@@ -6056,13 +6130,15 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 ax_counter_co.plot(bins[0:mask_median+1]+np.median(diff_counter_co), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
                 ax_counter_co.plot(bins[0:mask_upper+1]+np.median(diff_counter_co), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
                 ax_counter_co.plot(bins[0:mask_lower+1]+np.median(diff_counter_co), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
-                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+                #axs.fill_between(np.arange(-0.249, 5.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
                 
         #-----------
         # Add threshold
         for ax in [ax_co_co, ax_co_counter, ax_counter_counter, ax_counter_co]:
-            ax.axhspan(0, misangle_threshold, alpha=0.25, ec=None, fc='grey')
-            ax.axhspan(180-misangle_threshold, 180, alpha=0.25, ec=None, fc='grey')
+            ax.axhspan(0, misangle_threshold, alpha=0.15, ec=None, fc='grey')
+            ax.axhspan(180-misangle_threshold, 180, alpha=0.15, ec=None, fc='grey')
+            ax.axhspan(0, peak_misangle, alpha=0.15, ec=None, fc='grey')
+            ax.axhspan(180-peak_misangle, 180, alpha=0.15, ec=None, fc='grey')
         
         
         #-----------
@@ -6222,7 +6298,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             
             ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
             time_collect.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
-            timeaxis_plot = (-1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']]))/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+            timeaxis_plot = (-1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']]))/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
             
             
             #-------------
@@ -6352,7 +6428,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 axs.plot(bins[0:mask_median+1]+np.median(diff_co_co), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
                 axs.plot(bins[0:mask_upper+1]+np.median(diff_co_co), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
                 axs.plot(bins[0:mask_lower+1]+np.median(diff_co_co), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
-                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+                #axs.fill_between(np.arange(-0.249, 5.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
             if len(stats_lines['co-counter']['time']) != 0:
                 line_color='C2'
                 line_color='k'
@@ -6388,7 +6464,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 axs.plot(bins[0:mask_median+1]+np.median(diff_co_counter), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
                 axs.plot(bins[0:mask_upper+1]+np.median(diff_co_counter), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
                 axs.plot(bins[0:mask_lower+1]+np.median(diff_co_counter), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
-                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+                #axs.fill_between(np.arange(-0.249, 5.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
             if len(stats_lines['counter-counter']['time']) != 0:
                 line_color='C1'
                 line_color='k'
@@ -6424,7 +6500,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 axs.plot(bins[0:mask_median+1]+np.median(diff_counter_counter), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
                 axs.plot(bins[0:mask_upper+1]+np.median(diff_counter_counter), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
                 axs.plot(bins[0:mask_lower+1]+np.median(diff_counter_counter), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
-                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+                #axs.fill_between(np.arange(-0.249, 5.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
             if len(stats_lines['counter-co']['time']) != 0:
                 line_color='C3'
                 line_color='k'
@@ -6460,12 +6536,14 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 axs.plot(bins[0:mask_median+1]+np.median(diff_counter_co), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
                 axs.plot(bins[0:mask_upper+1]+np.median(diff_counter_co), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
                 axs.plot(bins[0:mask_lower+1]+np.median(diff_counter_co), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
-                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+                #axs.fill_between(np.arange(-0.249, 5.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
                      
         #-----------
         # Add threshold
-        axs.axhspan(0, misangle_threshold, alpha=0.25, ec=None, fc='grey')
-        axs.axhspan(180-misangle_threshold, 180, alpha=0.25, ec=None, fc='grey')
+        axs.axhspan(0, misangle_threshold, alpha=0.15, ec=None, fc='grey')
+        axs.axhspan(180-misangle_threshold, 180, alpha=0.15, ec=None, fc='grey')
+        axs.axhspan(0, peak_misangle, alpha=0.15, ec=None, fc='grey')
+        axs.axhspan(180-peak_misangle, 180, alpha=0.15, ec=None, fc='grey')
         
         
         #-----------
@@ -6611,7 +6689,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 continue
             
             ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
-            timeaxis_plot = (-1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']]))/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+            timeaxis_plot = (-1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']]))/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
             
             #-------------
             # Plot stacked
@@ -6660,7 +6738,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             
             #-------------
             # pick out long relaxersß
-            if misalignment_tree['%s' %ID_i]['relaxation_ttorque'] > 10:
+            if misalignment_tree['%s' %ID_i]['relaxation_ttorque'] > 5:
                 ID_collect.append(ID_i)
                             
             
@@ -6700,8 +6778,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
         print('-------------------------------------------------------------')
         #print('  List of IDs with co-co relax but max(angle) > 135:  ', len(ID_collect))
-        print('  List of >10 trelax/ttorque ', len(ID_collect))
-        print(ID_collect)
+        #print('  List of >5 trelax/ttorque ', len(ID_collect))
+        #print(ID_collect)
         
         #--------------
         # Find mean/median and 1 sigma behaviour for each relaxation type
@@ -6742,7 +6820,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 ax_co_co.plot(bins[0:mask_median+1]+np.median(diff_co_co), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
                 ax_co_co.plot(bins[0:mask_upper+1]+np.median(diff_co_co), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
                 ax_co_co.plot(bins[0:mask_lower+1]+np.median(diff_co_co), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
-                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+                #axs.fill_between(np.arange(-0.249, 5.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
             if len(stats_lines['co-counter']['time']) != 0:
                 line_color='C2'
                 line_color='k'
@@ -6778,7 +6856,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 ax_co_counter.plot(bins[0:mask_median+1]+np.median(diff_co_counter), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
                 ax_co_counter.plot(bins[0:mask_upper+1]+np.median(diff_co_counter), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
                 ax_co_counter.plot(bins[0:mask_lower+1]+np.median(diff_co_counter), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
-                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+                #axs.fill_between(np.arange(-0.249, 5.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
             if len(stats_lines['counter-counter']['time']) != 0:
                 line_color='C1'
                 line_color='k'
@@ -6814,7 +6892,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 ax_counter_counter.plot(bins[0:mask_median+1]+np.median(diff_counter_counter), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
                 ax_counter_counter.plot(bins[0:mask_upper+1]+np.median(diff_counter_counter), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
                 ax_counter_counter.plot(bins[0:mask_lower+1]+np.median(diff_counter_counter), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
-                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+                #axs.fill_between(np.arange(-0.249, 5.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
             if len(stats_lines['counter-co']['time']) != 0:
                 line_color='C3'
                 line_color='k'
@@ -6850,13 +6928,15 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 ax_counter_co.plot(bins[0:mask_median+1]+np.median(diff_counter_co), np.array(median_array)[0:mask_median+1], color=line_color, ls='-', lw=1, zorder=100)
                 ax_counter_co.plot(bins[0:mask_upper+1]+np.median(diff_counter_co), np.array(median_upper)[0:mask_upper+1], color=line_color, ls='--', lw=1, zorder=100)
                 ax_counter_co.plot(bins[0:mask_lower+1]+np.median(diff_counter_co), np.array(median_lower)[0:mask_lower+1], color=line_color, ls='--', lw=1, zorder=100)
-                #axs.fill_between(np.arange(-0.249, 6.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
+                #axs.fill_between(np.arange(-0.249, 5.09, 0.125)+(0.5*0.125), median_lower, median_upper, color=line_color, lw=0, alpha=0.15, zorder=5)
                 
         #-----------
         # Add threshold
         for ax in [ax_co_co, ax_co_counter, ax_counter_counter, ax_counter_co]:
-            ax.axhspan(0, misangle_threshold, alpha=0.25, ec=None, fc='grey')
-            ax.axhspan(180-misangle_threshold, 180, alpha=0.25, ec=None, fc='grey')
+            ax.axhspan(0, misangle_threshold, alpha=0.15, ec=None, fc='grey')
+            ax.axhspan(180-misangle_threshold, 180, alpha=0.15, ec=None, fc='grey')
+            ax.axhspan(0, peak_misangle, alpha=0.15, ec=None, fc='grey')
+            ax.axhspan(180-peak_misangle, 180, alpha=0.15, ec=None, fc='grey')
         
         
         #-----------
@@ -8211,7 +8291,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         # Stats
         res = stats.spearmanr(relaxationtime_plot, mergercount_plot)
         print('\n--------------------------------------')
-        print('Size of merger count sample: ', len(ID_plot))
+        print('Size of merger count sample: ', len([i for i in mergercount_plot if i > 0]))
         print('NUMBER OF MERGERS > 0.1 - RELAXATION TIME SPEARMAN:')
         print('   ρ:       %.2f' %res.correlation)
         print('   p-value: %s' %res.pvalue)
@@ -8323,7 +8403,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         # Stats
         res = stats.spearmanr(relaxationtime_plot, mergercount_plot)
         print('\n--------------------------------------')
-        print('Size of merger count sample: ', len(ID_plot))
+        print('Size of merger count sample: ', len([i for i in mergercount_plot if i > 0]))
         print('NUMBER OF MERGERS > 0.1 - RELAXATION TDYN SPEARMAN:')
         print('   ρ:       %.2f' %res.correlation)
         print('   p-value: %s' %res.pvalue)
@@ -8437,7 +8517,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         # Stats
         res = stats.spearmanr(relaxationtime_plot, mergercount_plot)
         print('\n--------------------------------------')
-        print('Size of merger count sample: ', len(ID_plot))
+        print('Size of merger count sample: ', len([i for i in mergercount_plot if i > 0]))
         print('NUMBER OF MERGERS > 0.1 - RELAXATION TTORQUE SPEARMAN:')
         print('   ρ:       %.2f' %res.correlation)
         print('   p-value: %s' %res.pvalue)
@@ -8531,10 +8611,10 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 relaxationmorph_plot.append('other')
             
             # Collect average kappa during misalignment
-            relaxationkappa_plot.append(np.mean(misalignment_tree['%s' %ID_i]['kappa_stars'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+            relaxationkappa_plot.append(np.mean(misalignment_tree['%s' %ID_i]['kappa_stars'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
             
             # Collect average stellar-DM misalignment angle
-            halomisangle_plot.append(np.mean(misalignment_tree['%s' %ID_i]['stars_dm'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+            halomisangle_plot.append(np.mean(misalignment_tree['%s' %ID_i]['stars_dm'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
             
                             
         # Collect data into dataframe
@@ -8568,40 +8648,35 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         bin_width = 15
         bins = np.arange(0, 181, bin_width)
         binned_data_arg = np.digitize(df['DM-stars angle'], bins=bins)
-        bin_medians     = np.stack([np.percentile(df['Relaxation time'][binned_data_arg == i], q=[5, 16, 50, 84, 95]) for i in range(1, len(bins))])
+        bin_medians     = np.stack([np.percentile(df['Relaxation time'][binned_data_arg == i], q=[16, 50, 84]) for i in range(1, len(bins))])
         print(bin_medians)
         
         # Plot average line for total sample
-        #ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor='k', alpha=0.2, zorder=6)
-        ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor='k', alpha=0.2, zorder=6)
-        #ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,1], lw=1, c='k', ls='--', zorder=101)
-        ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=1, c='k', ls='-', zorder=101, label='sample')
-        #ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,3], lw=1, c='k', ls='--', zorder=101)
+        ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,2], facecolor='k', alpha=0.2, zorder=6)
+        ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,1], lw=1, c='k', ls='-', zorder=101, label='sample')
         
         if add_plot_halo_morph_median:
             # Bin hist data, find sigma percentiles
             bin_width = 15
             bins = np.arange(0, 181, bin_width)
             binned_data_arg = np.digitize(df['DM-stars angle'][df['Relaxation kappa'] > 0.4], bins=bins)
-            bin_medians     = np.stack([np.percentile(df['Relaxation time'][df['Relaxation kappa'] > 0.4][binned_data_arg == i], q=[5, 16, 50, 84, 95]) for i in range(1, len(bins))])
+            bin_medians     = np.stack([np.percentile(df['Relaxation time'][df['Relaxation kappa'] > 0.4][binned_data_arg == i], q=[16, 50, 84]) for i in range(1, len(bins))])
             #print(bin_medians)
         
             # Plot average line for total sample
-            #ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor='k', alpha=0.2, zorder=6)
-            #ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor='b', alpha=0.2, zorder=6)
-            ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=1, c='b', ls='-', zorder=101, label=r'$\bar{\kappa}_{\mathrm{co}}^{*}>0.4$')
+            #ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,2], facecolor='b', alpha=0.2, zorder=6)
+            ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,1], lw=1, c='b', ls='-', zorder=101, label=r'$\bar{\kappa}_{\mathrm{co}}^{*}>0.4$')
         
             # Bin hist data, find sigma percentiles
             bin_width = 15
             bins = np.arange(0, 181, bin_width)
             binned_data_arg = np.digitize(df['DM-stars angle'][df['Relaxation kappa'] < 0.4], bins=bins)
-            bin_medians     = np.stack([np.percentile(df['Relaxation time'][df['Relaxation kappa'] < 0.4][binned_data_arg == i], q=[5, 16, 50, 84, 95]) for i in range(1, len(bins))])
+            bin_medians     = np.stack([np.percentile(df['Relaxation time'][df['Relaxation kappa'] < 0.4][binned_data_arg == i], q=[16, 50, 84]) for i in range(1, len(bins))])
             #print(bin_medians)
         
             # Plot average line for total sample
-            #ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor='k', alpha=0.2, zorder=6)
-            #ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor='r', alpha=0.2, zorder=6)
-            ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=1, c='r', ls='-', zorder=101, label=r'$\bar{\kappa}_{\mathrm{co}}^{*}<0.4$')
+            #ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,2], facecolor='r', alpha=0.2, zorder=6)
+            ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,1], lw=1, c='r', ls='-', zorder=101, label=r'$\bar{\kappa}_{\mathrm{co}}^{*}<0.4$')
         
         
         #-------------
@@ -8619,12 +8694,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         bin_width = 15
         bins = np.arange(0, 181, bin_width)
         binned_data_arg = np.digitize(df['DM-stars angle'], bins=bins)
-        bin_medians     = np.stack([np.percentile(df['Relaxation kappa'][binned_data_arg == i], q=[5, 16, 50, 84, 95]) for i in range(1, len(bins))])
+        bin_medians     = np.stack([np.percentile(df['Relaxation kappa'][binned_data_arg == i], q=[16, 50, 84]) for i in range(1, len(bins))])
         
         ### Plot upper, median, and lower sigma
-        #ax_line.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor='k', alpha=0.2, zorder=6)
-        ax_line.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor='k', alpha=0.2, zorder=6)
-        ax_line.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=1, c='k', ls='-', zorder=7)
+        ax_line.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,2], facecolor='k', alpha=0.2, zorder=6)
+        ax_line.plot(bins[:-1]+(bin_width/2), bin_medians[:,1], lw=1, c='k', ls='-', zorder=7)
         
         
         #-------------
@@ -8705,10 +8779,10 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 relaxationmorph_plot.append('other')
             
             # Collect average kappa during misalignment
-            relaxationkappa_plot.append(np.mean(misalignment_tree['%s' %ID_i]['kappa_stars'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+            relaxationkappa_plot.append(np.mean(misalignment_tree['%s' %ID_i]['kappa_stars'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
             
             # Collect average stellar-DM misalignment angle
-            halomisangle_plot.append(np.mean(misalignment_tree['%s' %ID_i]['stars_dm'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+            halomisangle_plot.append(np.mean(misalignment_tree['%s' %ID_i]['stars_dm'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
             
                             
         # Collect data into dataframe
@@ -8742,40 +8816,35 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         bin_width = 15
         bins = np.arange(0, 181, bin_width)
         binned_data_arg = np.digitize(df['DM-stars angle'], bins=bins)
-        bin_medians     = np.stack([np.percentile(df['Relaxation time'][binned_data_arg == i], q=[5, 16, 50, 84, 95]) for i in range(1, len(bins))])
+        bin_medians     = np.stack([np.percentile(df['Relaxation time'][binned_data_arg == i], q=[16, 50, 84]) for i in range(1, len(bins))])
         print(bin_medians)
         
         # Plot average line
-        #ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor='k', alpha=0.2, zorder=6)
-        ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor='k', alpha=0.2, zorder=6)
-        #ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,1], lw=1, c='k', ls='--', zorder=101)
-        ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=1, c='k', ls='-', zorder=101, label='sample')
-        #ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,3], lw=1, c='k', ls='--', zorder=101)
+        ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,2], facecolor='k', alpha=0.2, zorder=6)
+        ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,1], lw=1, c='k', ls='-', zorder=101, label='sample')
         
         if add_plot_halo_morph_median:
             # Bin hist data, find sigma percentiles
             bin_width = 15
             bins = np.arange(0, 181, bin_width)
             binned_data_arg = np.digitize(df['DM-stars angle'][df['Relaxation kappa'] > 0.4], bins=bins)
-            bin_medians     = np.stack([np.percentile(df['Relaxation time'][df['Relaxation kappa'] > 0.4][binned_data_arg == i], q=[5, 16, 50, 84, 95]) for i in range(1, len(bins))])
+            bin_medians     = np.stack([np.percentile(df['Relaxation time'][df['Relaxation kappa'] > 0.4][binned_data_arg == i], q=[16, 50, 84]) for i in range(1, len(bins))])
             #print(bin_medians)
         
             # Plot average line for total sample
-            #ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor='k', alpha=0.2, zorder=6)
-            #ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor='b', alpha=0.2, zorder=6)
-            ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=1, c='b', ls='-', zorder=101, label=r'$\bar{\kappa}_{\mathrm{co}}^{*}>0.4$')
+            #ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,2], facecolor='b', alpha=0.2, zorder=6)
+            ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,1], lw=1, c='b', ls='-', zorder=101, label=r'$\bar{\kappa}_{\mathrm{co}}^{*}>0.4$')
         
             # Bin hist data, find sigma percentiles
             bin_width = 15
             bins = np.arange(0, 181, bin_width)
             binned_data_arg = np.digitize(df['DM-stars angle'][df['Relaxation kappa'] < 0.4], bins=bins)
-            bin_medians     = np.stack([np.percentile(df['Relaxation time'][df['Relaxation kappa'] < 0.4][binned_data_arg == i], q=[5, 16, 50, 84, 95]) for i in range(1, len(bins))])
+            bin_medians     = np.stack([np.percentile(df['Relaxation time'][df['Relaxation kappa'] < 0.4][binned_data_arg == i], q=[16, 50, 84]) for i in range(1, len(bins))])
             #print(bin_medians)
         
             # Plot average line for total sample
-            #ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor='k', alpha=0.2, zorder=6)
-            #ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor='r', alpha=0.2, zorder=6)
-            ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=1, c='r', ls='-', zorder=101, label=r'$\bar{\kappa}_{\mathrm{co}}^{*}<0.4$')
+            #ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,2], facecolor='r', alpha=0.2, zorder=6)
+            ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,1], lw=1, c='r', ls='-', zorder=101, label=r'$\bar{\kappa}_{\mathrm{co}}^{*}<0.4$')
         
         
         #-------------
@@ -8793,12 +8862,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         bin_width = 15
         bins = np.arange(0, 181, bin_width)
         binned_data_arg = np.digitize(df['DM-stars angle'], bins=bins)
-        bin_medians     = np.stack([np.percentile(df['Relaxation kappa'][binned_data_arg == i], q=[5, 16, 50, 84, 95]) for i in range(1, len(bins))])
+        bin_medians     = np.stack([np.percentile(df['Relaxation kappa'][binned_data_arg == i], q=[16, 50, 84]) for i in range(1, len(bins))])
         
         ### Plot upper, median, and lower sigma
-        #ax_line.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor='k', alpha=0.2, zorder=6)
-        ax_line.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor='k', alpha=0.2, zorder=6)
-        ax_line.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=1, c='k', ls='-', zorder=7)
+        ax_line.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,2], facecolor='k', alpha=0.2, zorder=6)
+        ax_line.plot(bins[:-1]+(bin_width/2), bin_medians[:,1], lw=1, c='k', ls='-', zorder=7)
         
         
         #-------------
@@ -8876,10 +8944,10 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 relaxationmorph_plot.append('other')
             
             # Collect average kappa during misalignment
-            relaxationkappa_plot.append(np.mean(misalignment_tree['%s' %ID_i]['kappa_stars'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+            relaxationkappa_plot.append(np.mean(misalignment_tree['%s' %ID_i]['kappa_stars'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
             
             # Collect average stellar-DM misalignment angle
-            halomisangle_plot.append(np.mean(misalignment_tree['%s' %ID_i]['stars_dm'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+            halomisangle_plot.append(np.mean(misalignment_tree['%s' %ID_i]['stars_dm'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
             
                             
         # Collect data into dataframe
@@ -8912,40 +8980,35 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         bin_width = 15
         bins = np.arange(0, 181, bin_width)
         binned_data_arg = np.digitize(df['DM-stars angle'], bins=bins)
-        bin_medians     = np.stack([np.percentile(df['Relaxation time'][binned_data_arg == i], q=[5, 16, 50, 84, 95]) for i in range(1, len(bins))])
+        bin_medians     = np.stack([np.percentile(df['Relaxation time'][binned_data_arg == i], q=[16, 50, 84]) for i in range(1, len(bins))])
         print(bin_medians)
         
         # Plot average line
-        #ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor='k', alpha=0.2, zorder=6)
-        ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor='k', alpha=0.2, zorder=6)
-        #ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,1], lw=1, c='k', ls='--', zorder=101)
-        ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=1, c='k', ls='-', zorder=101)
-        #ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,3], lw=1, c='k', ls='--', zorder=101)
+        ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,2], facecolor='k', alpha=0.2, zorder=6)
+        ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,1], lw=1, c='k', ls='-', zorder=101)
         
         if add_plot_halo_morph_median:
             # Bin hist data, find sigma percentiles
             bin_width = 15
             bins = np.arange(0, 181, bin_width)
             binned_data_arg = np.digitize(df['DM-stars angle'][df['Relaxation kappa'] > 0.4], bins=bins)
-            bin_medians     = np.stack([np.percentile(df['Relaxation time'][df['Relaxation kappa'] > 0.4][binned_data_arg == i], q=[5, 16, 50, 84, 95]) for i in range(1, len(bins))])
+            bin_medians     = np.stack([np.percentile(df['Relaxation time'][df['Relaxation kappa'] > 0.4][binned_data_arg == i], q=[16, 50, 84]) for i in range(1, len(bins))])
             #print(bin_medians)
         
             # Plot average line for total sample
-            #ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor='k', alpha=0.2, zorder=6)
-            #ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor='b', alpha=0.2, zorder=6)
-            ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=1, c='b', ls='-', zorder=101, label=r'$\bar{\kappa}_{\mathrm{co}}^{*}>0.4$')
+            #ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,2], facecolor='b', alpha=0.2, zorder=6)
+            ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,1], lw=1, c='b', ls='-', zorder=101, label=r'$\bar{\kappa}_{\mathrm{co}}^{*}>0.4$')
         
             # Bin hist data, find sigma percentiles
             bin_width = 15
             bins = np.arange(0, 181, bin_width)
             binned_data_arg = np.digitize(df['DM-stars angle'][df['Relaxation kappa'] < 0.4], bins=bins)
-            bin_medians     = np.stack([np.percentile(df['Relaxation time'][df['Relaxation kappa'] < 0.4][binned_data_arg == i], q=[5, 16, 50, 84, 95]) for i in range(1, len(bins))])
+            bin_medians     = np.stack([np.percentile(df['Relaxation time'][df['Relaxation kappa'] < 0.4][binned_data_arg == i], q=[16, 50, 84]) for i in range(1, len(bins))])
             #print(bin_medians)
         
             # Plot average line for total sample
-            #ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor='k', alpha=0.2, zorder=6)
-            #ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor='r', alpha=0.2, zorder=6)
-            ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=1, c='r', ls='-', zorder=101, label=r'$\bar{\kappa}_{\mathrm{co}}^{*}<0.4$')
+            #ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,2], facecolor='r', alpha=0.2, zorder=6)
+            ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,1], lw=1, c='r', ls='-', zorder=101, label=r'$\bar{\kappa}_{\mathrm{co}}^{*}<0.4$')
             
         
         #-------------
@@ -8963,12 +9026,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         bin_width = 15
         bins = np.arange(0, 181, bin_width)
         binned_data_arg = np.digitize(df['DM-stars angle'], bins=bins)
-        bin_medians     = np.stack([np.percentile(df['Relaxation kappa'][binned_data_arg == i], q=[5, 16, 50, 84, 95]) for i in range(1, len(bins))])
+        bin_medians     = np.stack([np.percentile(df['Relaxation kappa'][binned_data_arg == i], q=[16, 50, 84]) for i in range(1, len(bins))])
         
         ### Plot upper, median, and lower sigma
-        #ax_line.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor='k', alpha=0.2, zorder=6)
-        ax_line.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor='k', alpha=0.2, zorder=6)
-        ax_line.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=1, c='k', ls='-', zorder=7)
+        ax_line.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,2], facecolor='k', alpha=0.2, zorder=6)
+        ax_line.plot(bins[:-1]+(bin_width/2), bin_medians[:,1], lw=1, c='k', ls='-', zorder=7)
         
         
         #-------------
@@ -9048,10 +9110,10 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 relaxationmorph_plot.append('other')
             
             # Collect average kappa during misalignment
-            relaxationkappa_plot.append(np.mean(misalignment_tree['%s' %ID_i]['kappa_stars'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+            relaxationkappa_plot.append(np.mean(misalignment_tree['%s' %ID_i]['kappa_stars'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
             
             # Collect average stellar-DM misalignment angle
-            halomisangle_plot.append(np.mean(misalignment_tree['%s' %ID_i]['stars_dm'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+            halomisangle_plot.append(np.mean(misalignment_tree['%s' %ID_i]['stars_dm'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
             
                             
         # Collect data into dataframe
@@ -9262,7 +9324,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             
             
             # Collect average stellar-DM misangle before misalignment.
-            halomisangle_plot.append(np.mean(misalignment_tree['%s' %ID_i]['stars_dm'][0:misalignment_tree['%s' %ID_i]['index_m']+1]))
+            halomisangle_plot.append(np.mean(misalignment_tree['%s' %ID_i]['stars_dm'][0:misalignment_tree['%s' %ID_i]['index_s']+1]))
             ID_plot.append(ID_i)
             if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-ETG':
                 relaxationmorph_plot.append('ETG → ETG')
@@ -9357,9 +9419,303 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
     #-------------------------
     # Plots stacked histograms for different morphologies, and fraction caused by major, minor, or other origins
     if _plot_origins:
+        # Loading mergertree file to establish windows
+        f = h5py.File(tree_dir + 'Snip100_MainProgenitorTrees.hdf5', 'r')
+        GalaxyID_tree             = np.array(f['Histories']['GalaxyID'])
+        DescendantID_tree         = np.array(f['Histories']['DescendantID'])
+        Lookbacktime_tree         = np.array(f['Snapnum_Index']['LookbackTime'])
+        StellarMass_tree          = np.array(f['Histories']['StellarMass'])
+        GasMass_tree              = np.array(f['Histories']['GasMass'])
+        f.close()
         
+        tally_minor = []
+        tally_major = []
+        tally_other = []
+        for ID_i in misalignment_tree.keys():
+            
+            if misalignment_tree['%s' %ID_i]['relaxation_morph'] not in set_origins_morph:
+                continue
+                
+            
+            #---------------------------------------------------------
+            # Find location of begin of misalignment in merger tree
+            (row_i, snap_i) = np.where(GalaxyID_tree == int(misalignment_tree['%s' %ID_i]['GalaxyID'][misalignment_tree['%s' %ID_i]['index_s']+1]))
+            row_mask  = row_i[0]
+            snap_mask = snap_i[0]
+            
+            # Find window limits of mergers [SnapNum_merger_min:SnapNum_merger_max]
+            SnapNum_merger_min = 1 + np.where(Lookbacktime_tree >= (Lookbacktime_tree[snap_i] + half_window))[0][-1]
+            if len(np.where(Lookbacktime_tree <= (Lookbacktime_tree[snap_i] - half_window))[0]) > 0:
+                SnapNum_merger_max = np.where(Lookbacktime_tree <= (Lookbacktime_tree[snap_i] - half_window))[0][0]
+            else:
+                SnapNum_merger_max = snap_mask
+            
+            # List of all elligible descendants
+            GalaxyID_list       = np.array(GalaxyID_tree)[row_mask, SnapNum_merger_min:SnapNum_merger_max]
+            
+
+            merger_ID_array_array    = []
+            merger_ratio_array_array = []
+            merger_gas_array_array   = []
+            for SnapNum_i, GalaxyID_i in zip(np.arange(SnapNum_merger_min, SnapNum_merger_max+1), GalaxyID_list):
+                if int(GalaxyID_i) == -1:
+                    continue
+                
+                merger_mask = [i for i in np.where(np.array(DescendantID_tree)[:,int(SnapNum_i-1)] == GalaxyID_i)[0] if i != row_mask]
+                
+                # If misalignment found, its position is given by i in merger_mask, SnapNum_i
+                merger_ID_array    = []
+                merger_ratio_array = []
+                merger_gas_array   = []
+                if len(merger_mask) > 0:
+                    # find peak stelmass of those galaxies
+                    for mask_i in merger_mask:
+                        # Find last snap up to 2 Gyr ago
+                        SnapNum_merger = np.where(Lookbacktime_tree >= (Lookbacktime_tree[SnapNum_i] + merger_lookback_time))[0][-1]
+                
+                        # Find largest stellar mass of this satellite, per method of Rodriguez-Gomez et al. 2015, Qu et al. 2017 (see crain2017)
+                        mass_mask = np.argmax(StellarMass_tree[mask_i][int(SnapNum_merger-100):int(SnapNum_i)]) + (SnapNum_merger-100)
+                
+                        # Extract secondary properties
+                        primary_stelmass   = StellarMass_tree[row_mask][mass_mask]
+                        primary_gasmass    = GasMass_tree[row_mask][mass_mask]
+                        component_stelmass = StellarMass_tree[mask_i][mass_mask]
+                        component_gasmass  = GasMass_tree[mask_i][mass_mask]
+                
+                        if primary_stelmass <= 0.0:
+                            # Adjust stelmass
+                            primary_stelmass   = math.nan
+                            primary_gasmass    = math.nan
+                    
     
-    
+                        # Find ratios
+                        merger_ratio = component_stelmass / primary_stelmass 
+                        if merger_ratio > 1:
+                            merger_ratio = 1/merger_ratio
+                        gas_ratio    = (primary_gasmass + component_gasmass) / (primary_stelmass + component_stelmass)
+
+                        # Append
+                        merger_ID_array.append(GalaxyID_tree[mask_i][int(SnapNum_i-1)])
+                        merger_ratio_array.append(merger_ratio)
+                        merger_gas_array.append(gas_ratio)
+                        
+                merger_ID_array_array.append(merger_ID_array)
+                merger_ratio_array_array.append(merger_ratio_array)
+                merger_gas_array_array.append(merger_gas_array)      
+            if debug:
+                print(misalignment_tree['%s' %ID_i]['SnapNum'])
+                print(misalignment_tree['%s' %ID_i]['merger_ratio_stars'])
+                for snap_i, star_i in zip(np.arange(SnapNum_merger_min, SnapNum_merger_max+1), merger_ratio_array_array):
+                    print(snap_i, star_i)
+                    
+                
+            merger_count = 0
+            for merger_i in merger_ratio_array_array:
+                if len(merger_i) > 0:
+                    if (max(merger_i) > min_ratio):
+                        if merger_count == 0:
+                            if 0.3 > max(merger_i) > 0.1:
+                                tally_minor.append(misalignment_tree['%s' %ID_i]['relaxation_morph'])
+                            if max(merger_i) > 0.3:
+                                tally_major.append(misalignment_tree['%s' %ID_i]['relaxation_morph'])
+                        merger_count += 1
+            if merger_count == 0:
+                tally_other.append(misalignment_tree['%s' %ID_i]['relaxation_morph'])
+                        
+        
+        print('\n======================================')
+        print('Using merger criteria, half_window = %.1f Gyr, min_ratio = %.1f' %(half_window, min_ratio))
+        print('\tmajor ', len(tally_major))
+        print('\tminor ', len(tally_minor))
+        print('\tother ', len(tally_other))
+        print('\ttotal ', (len(tally_major)+len(tally_minor)+len(tally_other)))
+        
+        
+        # left with tallo_minor = ['ETG-ETG', 'LTG-ETG', 'ETG-ETG', etc..]
+        plot_dict = {'ETG-ETG': {}, 'LTG-ETG': {}, 'ETG-LTG': {}, 'LTG-LTG': {}}
+        for dict_i in plot_dict.keys():
+            plot_dict[dict_i] = {'array': [],
+                                 'major': [],
+                                 'minor': [],
+                                 'other': []}
+        
+        for morph_i in set_origins_morph:
+            plot_dict['%s' %morph_i]['major'] = len([i for i in tally_major if i == morph_i])
+            plot_dict['%s' %morph_i]['minor'] = len([i for i in tally_minor if i == morph_i])
+            plot_dict['%s' %morph_i]['other'] = len([i for i in tally_other if i == morph_i])
+            
+            temp_array = []
+            temp_array.extend([i for i in tally_major if i == morph_i])
+            temp_array.extend([i for i in tally_minor if i == morph_i])
+            temp_array.extend([i for i in tally_other if i == morph_i])
+            plot_dict['%s' %morph_i]['array'] = temp_array
+            
+            
+            
+        #---------------------
+        ### Plotting
+        if not use_only_start_morph:
+            #-----------
+            # Plotting ongoing fraction histogram
+            fig, ((ax_ETG_ETG, ax_ETG_LTG), (ax_LTG_ETG, ax_LTG_LTG), (ax_spare_1, ax_spare_2)) = plt.subplots(3, 2, figsize=[10/3, 10/3], gridspec_kw={'height_ratios': [1, 1, 0.1]}, sharex=True, sharey=False)
+            plt.subplots_adjust(wspace=0, hspace=0)
+            
+            #-----------
+            # Add pie plots
+            for morph_i in set_origins_morph:
+                y = np.array([plot_dict['%s' %morph_i]['other'], plot_dict['%s' %morph_i]['minor'], plot_dict['%s' %morph_i]['major']])
+                mylabels = ['%s' %(' ' if plot_dict['%s' %morph_i]['other'] == 0 else plot_dict['%s' %morph_i]['other']), '%s' %(' ' if plot_dict['%s' %morph_i]['minor'] == 0 else plot_dict['%s' %morph_i]['minor']), '%s' %(' ' if plot_dict['%s' %morph_i]['major'] == 0 else plot_dict['%s' %morph_i]['major'])]
+            
+                if morph_i == 'ETG-ETG':
+                    ax_ETG_ETG.pie(y, labels = mylabels, startangle = 90)
+                    ax_ETG_ETG.set_title('ETG → ETG', loc='center', pad=0, fontsize=8)
+                if morph_i == 'ETG-LTG':
+                    ax_ETG_LTG.pie(y, labels = mylabels, startangle = 90)
+                    ax_ETG_LTG.set_title('ETG → LTG', loc='center', pad=0, fontsize=8)
+                if morph_i == 'LTG-ETG':
+                    ax_LTG_ETG.pie(y, labels = mylabels, startangle = 90)
+                    ax_spare_1.set_title('\nLTG → ETG', loc='center', y=-1, fontsize=8)
+                if morph_i == 'LTG-LTG':
+                    ax_LTG_LTG.pie(y, labels = mylabels, startangle = 90)
+                    ax_spare_2.set_title('\nLTG → LTG', loc='center', y=-1, fontsize=8)
+            ax_spare_1.axis('off')
+            ax_spare_2.axis('off')
+        
+                
+            #------------
+            # Add legend
+            legend_labels   = []
+            legend_elements = []
+            legend_colors   = []
+
+            legend_labels.append('Major\nmerger')
+            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+            legend_colors.append('C2')
+            legend_labels.append('Minor\nmerger')
+            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+            legend_colors.append('C1')
+            legend_labels.append('Other')
+            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+            legend_colors.append('C0')
+        
+            ax_LTG_LTG.legend(handles=legend_elements, labels=legend_labels, loc='lower left', bbox_to_anchor=(0.9, 0.7), labelspacing=1, frameon=False, labelcolor=legend_colors, handlelength=0, ncol=1)
+            
+            #-----------
+            # savefig
+            if savefig:
+                if savefig_txt == 'manual':
+                    savefig_txt = input('\n  -> Enter savefig_txt:   ')
+                plt.savefig("%s/misangle_origins/origins_%s_%s.%s" %(fig_dir, len(tally_major)+len(tally_minor), savefig_txt, file_format), format=file_format, bbox_inches='tight', dpi=600)    
+                print("\n  SAVED: %s/misangle_origins/origins_%s_%s.%s" %(fig_dir, len(tally_major)+len(tally_minor), savefig_txt, file_format)) 
+            if showfig:
+                plt.show()
+            plt.close()
+            
+        else:
+            #-----------
+            # Plotting ongoing fraction histogram
+            fig, (ax_ETG, ax_LTG) = plt.subplots(1, 2, figsize=[10/3, 2.5], sharex=True, sharey=False)
+            plt.subplots_adjust(wspace=0, hspace=0)
+            
+            #-----------
+            # Add pie plots
+            for morph_i in ['ETG', 'LTG']:
+                
+                y = np.array([plot_dict['%s-ETG' %morph_i]['other']+plot_dict['%s-LTG' %morph_i]['other'], plot_dict['%s-ETG' %morph_i]['minor']+plot_dict['%s-LTG' %morph_i]['minor'], plot_dict['%s-ETG' %morph_i]['major']+plot_dict['%s-LTG' %morph_i]['major']])
+                mylabels = ['%s' %(' ' if y[0] == 0 else y[0]), '%s' %(' ' if y[1] == 0 else y[1]), '%s' %(' ' if y[2] == 0 else y[2])]
+                
+                if morph_i == 'ETG':
+                    ax_ETG.pie(y, labels = mylabels, startangle = 90)
+                    ax_ETG.set_title('ETG', loc='center', pad=0, fontsize=8)
+                if morph_i == 'LTG':
+                    ax_LTG.pie(y, labels = mylabels, startangle = 90)
+                    ax_LTG.set_title('LTG', loc='center', pad=0, fontsize=8)
+            
+                
+            #------------
+            # Add legend
+            legend_labels   = []
+            legend_elements = []
+            legend_colors   = []
+
+            legend_labels.append('Major\nmerger')
+            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+            legend_colors.append('C2')
+            legend_labels.append('Minor\nmerger')
+            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+            legend_colors.append('C1')
+            legend_labels.append('Other')
+            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+            legend_colors.append('C0')
+        
+            ax_LTG.legend(handles=legend_elements, labels=legend_labels, loc='center left', bbox_to_anchor=(0.9, 0.5), labelspacing=1, frameon=False, labelcolor=legend_colors, handlelength=0, ncol=1)
+            
+            #-----------
+            # savefig
+            if savefig:
+                if savefig_txt == 'manual':
+                    savefig_txt = input('\n  -> Enter savefig_txt:   ')
+                plt.savefig("%s/misangle_origins/origins_altmorph_%s_%s.%s" %(fig_dir, len(tally_major)+len(tally_minor), savefig_txt, file_format), format=file_format, bbox_inches='tight', dpi=600)    
+                print("\n  SAVED: %s/misangle_origins/origins_altmorph_%s_%s.%s" %(fig_dir, len(tally_major)+len(tally_minor), savefig_txt, file_format)) 
+            if showfig:
+                plt.show()
+            plt.close()
+        
+        
+        
+        """# Plotting ongoing fraction histogram
+        fig, axs = plt.subplots(1, 1, figsize=[2.5, 2.5], sharex=True, sharey=False)
+        plt.subplots_adjust(wspace=0.4, hspace=0.4)
+        
+        
+        #------------
+        # plotting bar
+        bottom = np.zeros(4)
+        weight_counts = {
+            'Major': np.array([plot_dict['ETG-ETG']['major']/len(plot_dict['ETG-ETG']['array']), plot_dict['LTG-ETG']['major']/len(plot_dict['LTG-ETG']['array']), plot_dict['ETG-LTG']['major']/len(plot_dict['ETG-LTG']['array']), plot_dict['LTG-LTG']['major']/len(plot_dict['LTG-LTG']['array'])]),
+            'Minor': np.array([plot_dict['ETG-ETG']['minor']/len(plot_dict['ETG-ETG']['array']), plot_dict['LTG-ETG']['minor']/len(plot_dict['LTG-ETG']['array']), plot_dict['ETG-LTG']['minor']/len(plot_dict['ETG-LTG']['array']), plot_dict['LTG-LTG']['minor']/len(plot_dict['LTG-LTG']['array'])]),
+            'Other': np.array([plot_dict['ETG-ETG']['other']/len(plot_dict['ETG-ETG']['array']), plot_dict['LTG-ETG']['other']/len(plot_dict['LTG-ETG']['array']), plot_dict['ETG-LTG']['other']/len(plot_dict['ETG-LTG']['array']), plot_dict['LTG-LTG']['other']/len(plot_dict['LTG-LTG']['array'])])}
+        bar_x = []
+        for morph_i in set_origins_morph:
+            if morph_i == 'ETG-ETG':
+                bar_x.append('ETG →\nETG')
+            if morph_i == 'LTG-ETG':
+                bar_x.append('LTG →\nETG')
+            if morph_i == 'ETG-LTG':
+                bar_x.append('ETG →\nLTG')
+            if morph_i == 'LTG-LTG':
+                bar_x.append('LTG →\nLTG')
+              
+        for boolean, weight_count in weight_counts.items():
+            axs.bar(bar_x, weight_count, width=0.5, bottom=bottom, edgecolor='none', alpha=0.5, label=boolean)
+            axs.bar(bar_x, weight_count, width=0.5, bottom=bottom, facecolor='none', edgecolor='k', alpha=0.9, lw=0.7)
+            bottom += weight_count
+        
+        
+        #-------------
+        ### Formatting
+        axs.set_xlabel('Relaxation type')
+        axs.set_ylabel('Percentage of misalignments')
+        #axs.set_ylim(0, 1)
+        axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
+        #axs.minorticks_on()
+        axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
+        #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
+        
+        
+        #-----------
+        ### title
+        if plot_annotate:
+            axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
+        
+        
+        #------------
+        # Legend
+        axs.legend(loc='center left', bbox_to_anchor=(1, 0.5), frameon=False, labelspacing=0.1, handlelength=0.5)
+        """
+        
+        
+        
     
     #-------------------------
     ### OLD PLOTS
@@ -9379,17 +9735,17 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         ID_plot     = []
         for ID_i in misalignment_tree.keys():
             # Find index of peak misalignment from where it relaxes to (-co or -counter)
-            all_angles = np.array(misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+            all_angles = np.array(misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
             index_peak = misalignment_tree['%s' %ID_i]['index_peak']
             angle_peak = misalignment_tree['%s' %ID_i]['angle_peak']
             
             angles_plot.append(angle_peak)
-            #angles_plot.append(misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_peak])
+            #angles_plot.append(misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][index_peak])
             err_plot_l.append(misalignment_tree['%s' %ID_i]['%s_err' %use_angle][index_peak][0] - misalignment_tree['%s' %ID_i][use_angle][index_peak])
             err_plot_u.append(misalignment_tree['%s' %ID_i]['%s_err' %use_angle][index_peak][1] - misalignment_tree['%s' %ID_i][use_angle][index_peak])
             relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
             
-            other_plot.append(np.average(np.array(misalignment_tree['%s' %ID_i][plot_delta_color][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']]), weights=np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']-1:misalignment_tree['%s' %ID_i]['index_r']-1]) - np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']])))
+            other_plot.append(np.average(np.array(misalignment_tree['%s' %ID_i][plot_delta_color][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']]), weights=np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']-1:misalignment_tree['%s' %ID_i]['index_r']-1]) - np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']])))
             ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
             
         
@@ -9502,47 +9858,47 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             
                 if plot_spearman_x == 'inflow_rate':
                     # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
-                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
 
-                    x_array.append(np.mean(misalignment_tree['%s' %ID_i]['inflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                    x_array.append(np.mean(misalignment_tree['%s' %ID_i]['inflow_rate'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
                 elif plot_spearman_x == 'outflow_rate':
                     # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
-                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
 
-                    x_array.append(np.mean(misalignment_tree['%s' %ID_i]['outflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                    x_array.append(np.mean(misalignment_tree['%s' %ID_i]['outflow_rate'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
                 
                 elif plot_spearman_x == 'inflow_cum':
                     # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
-                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
 
-                    x_array.append(np.sum(misalignment_tree['%s' %ID_i]['inflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                    x_array.append(np.sum(misalignment_tree['%s' %ID_i]['inflow_rate'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
                 elif plot_spearman_x == 'outflow_cum':
                     # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
-                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
 
-                    x_array.append(np.sum(misalignment_tree['%s' %ID_i]['outflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                    x_array.append(np.sum(misalignment_tree['%s' %ID_i]['outflow_rate'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
                 
                 elif plot_spearman_x == 's_inflow_rate':
                     # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
-                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
 
-                    x_array.append(np.mean(misalignment_tree['%s' %ID_i]['s_inflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                    x_array.append(np.mean(misalignment_tree['%s' %ID_i]['s_inflow_rate'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
                 elif plot_spearman_x == 's_outflow_rate':
                     # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
-                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
 
-                    x_array.append(np.mean(misalignment_tree['%s' %ID_i]['s_outflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                    x_array.append(np.mean(misalignment_tree['%s' %ID_i]['s_outflow_rate'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
                 
                 elif plot_spearman_x == 'number_of_mergers':
                     # count mergers during relaxation
                     check = 0
-                    for merger_i in misalignment_tree['%s' %ID_i]['merger_ratio_stars'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]:
+                    for merger_i in misalignment_tree['%s' %ID_i]['merger_ratio_stars'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]:
                         if len(merger_i) > 0:
                             if max(merger_i) > 0.1:
                                 check += 1
@@ -9552,53 +9908,53 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 if plot_spearman_x in ['angle_peak', 'relaxation_time', 'relaxation_type', 'relaxation_morph', 'misalignment_morph']:
                     x_array.append(misalignment_tree['%s' %ID_i]['%s' %plot_spearman_x]) 
                 else:
-                    x_array.append(np.mean(misalignment_tree['%s' %ID_i]['%s' %plot_spearman_x][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+                    x_array.append(np.mean(misalignment_tree['%s' %ID_i]['%s' %plot_spearman_x][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
                 
             if (plot_spearman_y not in misalignment_tree['%s' %ID_i].keys()) or (plot_spearman_y == 'inflow_rate') or (plot_spearman_y == 'outflow_rate') or (plot_spearman_y == 's_inflow_rate') or (plot_spearman_x == 's_outflow_rate'):
             
                 if plot_spearman_y == 'inflow_rate':
                     # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
-                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
 
-                    y_array.append(np.mean(misalignment_tree['%s' %ID_i]['inflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                    y_array.append(np.mean(misalignment_tree['%s' %ID_i]['inflow_rate'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
                 elif plot_spearman_y == 'outflow_rate':
                     # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
-                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
 
-                    y_array.append(np.mean(misalignment_tree['%s' %ID_i]['outflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                    y_array.append(np.mean(misalignment_tree['%s' %ID_i]['outflow_rate'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
                 
                 elif plot_spearman_y == 'inflow_cum':
                     # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
-                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
 
-                    y_array.append(np.sum(misalignment_tree['%s' %ID_i]['inflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                    y_array.append(np.sum(misalignment_tree['%s' %ID_i]['inflow_rate'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
                 elif plot_spearman_y == 'outflow_cum':
                     # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
-                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
 
-                    y_array.append(np.sum(misalignment_tree['%s' %ID_i]['outflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                    y_array.append(np.sum(misalignment_tree['%s' %ID_i]['outflow_rate'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
                 
                 elif plot_spearman_y == 's_inflow_rate':
                     # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
-                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
 
-                    y_array.append(np.mean(misalignment_tree['%s' %ID_i]['s_inflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                    y_array.append(np.mean(misalignment_tree['%s' %ID_i]['s_inflow_rate'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
                 elif plot_spearman_y == 's_outflow_rate':
                     # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
-                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+                    index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                    index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
 
-                    y_array.append(np.mean(misalignment_tree['%s' %ID_i]['s_outflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                    y_array.append(np.mean(misalignment_tree['%s' %ID_i]['s_outflow_rate'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
                 
                 elif plot_spearman_y == 'number_of_mergers':
                     # count mergers during relaxation
                     check = 0
-                    for merger_i in misalignment_tree['%s' %ID_i]['merger_ratio_stars'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]:
+                    for merger_i in misalignment_tree['%s' %ID_i]['merger_ratio_stars'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]:
                         if len(merger_i) > 0:
                             if max(merger_i) > 0.1:
                                 check += 1
@@ -9608,54 +9964,54 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 if plot_spearman_y in ['angle_peak', 'relaxation_time', 'relaxation_type', 'relaxation_morph', 'misalignment_morph']:
                     y_array.append(misalignment_tree['%s' %ID_i]['%s' %plot_spearman_y]) 
                 else:
-                    y_array.append(np.mean(misalignment_tree['%s' %ID_i]['%s' %plot_spearman_y][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+                    y_array.append(np.mean(misalignment_tree['%s' %ID_i]['%s' %plot_spearman_y][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
                     
             if plot_spearman_c != None:
                 if (plot_spearman_c not in misalignment_tree['%s' %ID_i].keys()) or (plot_spearman_c == 'inflow_rate') or (plot_spearman_c == 'outflow_rate') or (plot_spearman_c == 's_inflow_rate') or (plot_spearman_x == 's_outflow_rate'):
                 
                     if plot_spearman_c == 'inflow_rate':
                         # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                        index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
-                        index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+                        index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                        index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
 
-                        c_array.append(np.mean(misalignment_tree['%s' %ID_i]['inflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                        c_array.append(np.mean(misalignment_tree['%s' %ID_i]['inflow_rate'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
                     elif plot_spearman_c == 'outflow_rate':
                         # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                        index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
-                        index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+                        index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                        index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
 
-                        c_array.append(np.mean(misalignment_tree['%s' %ID_i]['outflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                        c_array.append(np.mean(misalignment_tree['%s' %ID_i]['outflow_rate'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
                     
                     elif plot_spearman_c == 'inflow_cum':
                         # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                        index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
-                        index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+                        index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                        index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
 
-                        c_array.append(np.sum(misalignment_tree['%s' %ID_i]['inflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                        c_array.append(np.sum(misalignment_tree['%s' %ID_i]['inflow_rate'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
                     elif plot_spearman_c == 'outflow_cum':
                         # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                        index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
-                        index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+                        index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                        index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
 
-                        c_array.append(np.sum(misalignment_tree['%s' %ID_i]['outflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                        c_array.append(np.sum(misalignment_tree['%s' %ID_i]['outflow_rate'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
                     
                     elif plot_spearman_c == 's_inflow_rate':
                         # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                        index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
-                        index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+                        index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                        index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
 
-                        c_array.append(np.mean(misalignment_tree['%s' %ID_i]['s_inflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                        c_array.append(np.mean(misalignment_tree['%s' %ID_i]['s_inflow_rate'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
                     elif plot_spearman_c == 's_outflow_rate':
                         # Find indexes within misalignment for which AT LEAST inflow_skip time has passed:
-                        index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
-                        index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])
+                        index_start = np.where(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][0] <= -inflow_skip)[0][0]
+                        index_stop  = len(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
 
-                        c_array.append(np.mean(misalignment_tree['%s' %ID_i]['s_outflow_rate'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
+                        c_array.append(np.mean(misalignment_tree['%s' %ID_i]['s_outflow_rate'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][index_start:index_stop]))
                     
                     elif plot_spearman_c == 'number_of_mergers':
                         # count mergers during relaxation
                         check = 0
-                        for merger_i in misalignment_tree['%s' %ID_i]['merger_ratio_stars'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]:
+                        for merger_i in misalignment_tree['%s' %ID_i]['merger_ratio_stars'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]:
                             if len(merger_i) > 0:
                                 if max(merger_i) > 0.1:
                                     check += 1
@@ -9665,7 +10021,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                     if plot_spearman_c in ['angle_peak', 'relaxation_time', 'relaxation_type', 'relaxation_morph', 'misalignment_morph']:
                         c_array.append(misalignment_tree['%s' %ID_i]['%s' %plot_spearman_c]) 
                     else:
-                        c_array.append(np.mean(misalignment_tree['%s' %ID_i]['%s' %plot_spearman_c][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+                        c_array.append(np.mean(misalignment_tree['%s' %ID_i]['%s' %plot_spearman_c][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
                 
         
         #-------------
@@ -10134,7 +10490,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
             
             # Average the dynamical time and ellip
-            dyntime_plot.append(np.mean(np.array(misalignment_tree['%s' %ID_i]['relaxation_tdyn'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])))
+            dyntime_plot.append(np.mean(np.array(misalignment_tree['%s' %ID_i]['relaxation_tdyn'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])))
             
             ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
             
@@ -10212,8 +10568,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
             
             # Average the dynamical time and ellip
-            dyntime_plot.append(np.mean(np.array(misalignment_tree['%s' %ID_i]['relaxation_tdyn'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])))
-            ellip_plot.append(np.mean(np.array(misalignment_tree['%s' %ID_i]['ellip'][misalignment_tree['%s' %ID_i]['index_m']:misalignment_tree['%s' %ID_i]['index_r']+1])))
+            dyntime_plot.append(np.mean(np.array(misalignment_tree['%s' %ID_i]['relaxation_tdyn'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])))
+            ellip_plot.append(np.mean(np.array(misalignment_tree['%s' %ID_i]['ellip'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])))
             
             ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
             

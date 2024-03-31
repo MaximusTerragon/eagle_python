@@ -192,7 +192,7 @@ def _plot_stellar_mass_function(csv_sample = 'L100_27_all_sample_misalignment_9.
     def _plot_stellar_mass_func(debug=False):
         
         # Graph initialising and base formatting
-        fig, axs = plt.subplots(1, 1, figsize=[10/3, 3], sharex=True, sharey=False)
+        fig, axs = plt.subplots(1, 1, figsize=[10/3, 2], sharex=True, sharey=False)
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
     
     
@@ -348,10 +348,10 @@ def _plot_stellar_mass_function(csv_sample = 'L100_27_all_sample_misalignment_9.
         #-----------
         # Axis formatting
         plt.xlim(9, 12.5)
-        plt.ylim(-5, -0.5)
-        plt.yticks(np.arange(-5, 0, 0.5))
-        plt.xlabel(r'log$_{10}$ M$_{*}$ [M$_{\odot}$]')
-        plt.ylabel(r'log$_{10}$ dn/dlog$_{10}$(M$_{*}$) [cMpc$^{-3}$]')
+        plt.ylim(-5, -1.5)
+        plt.yticks(np.arange(-5, -1.4, 0.5))
+        plt.xlabel(r'log$_{10}$ M$_{*}$ (M$_{\odot}$)')
+        plt.ylabel(r'log$_{10}$ dn/dlog$_{10}$(M$_{*}$)'+'\n'+'(cMpc$^{-3}$)')
         plt.xticks(np.arange(9, 12.5, 0.5))
           
         #-----------  
@@ -475,10 +475,10 @@ def _plot_stellar_mass_function_snip(snipshot_in = 188,
 
 #===========================
 #_plot_stellar_mass_function()
-#_plot_stellar_mass_function(use_angle = 'stars_gas_sf')
+_plot_stellar_mass_function(use_angle = 'stars_gas_sf')
 #_plot_stellar_mass_function(use_angle = 'stars_dm')
 
-_plot_stellar_mass_function_snip()
+#_plot_stellar_mass_function_snip()
 #===========================
 
 

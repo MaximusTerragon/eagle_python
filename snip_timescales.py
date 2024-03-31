@@ -1613,7 +1613,12 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                     half_window         = 0.3,      # [ 0.2 / +/-Gyr ] window centred on first misaligned snap to look for mergers
                     min_ratio           = 0.1,   
                     merger_lookback_time = 2,       # Gyr, number of years to check for peak stellar mass
+                    
                   use_alt_relaxation_morph   = False,     # False / ['ETG-ETG'],
+                  
+                  use_alt_min_trelax    = False,    # [ False / Gyr ]
+                  use_alt_min_tdyn      = False,
+                  use_alt_min_ttorque   = False,
                   #====================================================================================================
                     
                   # Plot histogram of sample we ended up selecting
@@ -1622,23 +1627,23 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                     
                   #-----------------------------
                   # Plot timescale histogram with current sample
-                  _plot_timescale_histogram     = True,   
+                  _plot_timescale_histogram     = False,   
                     set_bin_limit_trelax                = 5,        # [ None / Gyr ]
                     set_bin_width_trelax                = 0.25,     # [ 0.25 / Gyr ]
-                      set_plot_percentage               = True,
+                      set_plot_percentage               = False,
                       set_plot_relaxation_type          = True,     # SET TO FALSE IF BELOW TRUE. Stack histogram types   
                       set_plot_histogram_log              = False,    # set yaxis as log
                         add_inset                       = True,     # whether to have smaller second plot
                         add_inset_bestfit               = True,
-                    set_thist_ymax_trelax               = 0.45,             # yaxis max
-                  _plot_tdyn_histogram          = True,
+                    set_thist_ymax_trelax               = 100,             # 0.45 / 500  yaxis max
+                  _plot_tdyn_histogram          = False,
                     set_bin_limit_tdyn                  = 32,       # [ None / multiples ]
                     set_bin_width_tdyn                  = 1,        # [ multiples ]
-                    set_thist_ymax_tdyn                 = 0.35,             # yaxis max
-                  _plot_ttorque_histogram       = True,
+                    set_thist_ymax_tdyn                 = 80,             # 0.35 / 400 yaxis max
+                  _plot_ttorque_histogram       = False,
                     set_bin_limit_ttorque               = 12,       # [ None / multiples ]
                     set_bin_width_ttorque               = 0.5,      # [ multiples ]
-                    set_thist_ymax_ttorque              = 0.35,             # yaxis max
+                    set_thist_ymax_ttorque              = 80,             # 0.35 / 400 yaxis max
                 
                   #-----------------------------
                   # Plot stacked misalignments based on current sample
@@ -1694,7 +1699,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                   _plot_halo_misangle_trelax    = False,
                     set_halo_trelax_resolution          = 0,        # [ Gyr ] min filter applied to ALL, to avoid resolution limits 
                     set_min_halo_trelax                 = 0,          # [ Gyr ] min relaxation time, as we dont care about short relaxers
-                      add_plot_halo_morph_median        = False,
+                      add_plot_halo_morph_median        = True,
                       set_plot_halo_misangle_log        = True,
                   _plot_halo_misangle_tdyn      = False,
                     set_min_halo_tdyn                   = 0,          # [ trealx/dyn ] min relaxation time, as we dont care about short relaxers
@@ -1718,12 +1723,13 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                   #-----------------------------
                   # General formatting
                   showfig       = True,
-                  savefig       = True,    
+                  savefig       = False,    
                     file_format = 'pdf',
                     savefig_txt = 'txt',     # [ 'manual' / txt ] 'manual' will prompt txt before saving
               #====================================================================================================
-              load_csv_file  = '_20Thresh_30Peak_normalLatency_anyMergers_LTG-LTG',     # [ 'file_name' / False ] load existing misalignment tree                                                                     '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph'                                                                                                                           '_20Thresh_30Peak_normalLatency_anyMergers_hardMorph'                                                                                                            '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_ETG-ETG'                                                                                                                         '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010' 
-                plot_annotate  = 'LTG → LTG',    #  [ False / 'ETG → ETG' r'ETG ($\bar{\kappa}_{\mathrm{co}}^{\mathrm{*}} < 0.35$)'  ]                   # string of text or False / 'ETG' 
+              load_csv_file  = '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph',     # [ 'file_name' / False ] load existing misalignment tree                                                                     '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph'                                                                                                                           '_20Thresh_30Peak_normalLatency_anyMergers_hardMorph'                                                                                                            '_20Thresh_30Peak_normalLatency_anyMergers_ETG-ETG'                                                                                                                         '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010' 
+              
+                plot_annotate  = False,    #  [ False / 'ETG → ETG' r'ETG ($\bar{\kappa}_{\mathrm{co}}^{\mathrm{*}} < 0.35$)'  ]      '$t_{\mathrm{relax}}>3\bar{t}_{\mathrm{torque}}$'             # string of text or False / 'ETG' 
               #====================================================================================================
                   print_progress = False,
                   debug = False):
@@ -3246,6 +3252,36 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         misalignment_tree = misalignment_tree_new
         misalignment_tree_new = 0
     
+    # Apply a min trelax criteria
+    if use_alt_min_trelax:
+        misalignment_tree_new = {}
+        for ID_i in misalignment_tree.keys():
+            
+            if misalignment_tree['%s' %ID_i]['relaxation_time'] > use_alt_min_trelax:
+                misalignment_tree_new['%s' %ID_i] = misalignment_tree['%s' %ID_i]
+    
+        misalignment_tree = misalignment_tree_new
+        misalignment_tree_new = 0
+    if use_alt_min_tdyn:
+        misalignment_tree_new = {}
+        for ID_i in misalignment_tree.keys():
+            
+            if misalignment_tree['%s' %ID_i]['relaxation_tdyn'] > use_alt_min_tdyn:
+                misalignment_tree_new['%s' %ID_i] = misalignment_tree['%s' %ID_i]
+    
+        misalignment_tree = misalignment_tree_new
+        misalignment_tree_new = 0
+    if use_alt_min_ttorque:
+        misalignment_tree_new = {}
+        for ID_i in misalignment_tree.keys():
+            
+            if misalignment_tree['%s' %ID_i]['relaxation_ttorque'] > use_alt_min_ttorque:
+                misalignment_tree_new['%s' %ID_i] = misalignment_tree['%s' %ID_i]
+    
+        misalignment_tree = misalignment_tree_new
+        misalignment_tree_new = 0
+    
+    
     # Apply a merger criteria
     if use_alt_merger_criteria:
         # Loading mergertree file to establish windows
@@ -3381,7 +3417,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         print('                 ...major:   %i\t%.2f %%' %(tally_major, (tally_major*100/tally_sample)))
         print('                 ...minor:   %i\t%.2f %%' %(tally_minor, (tally_minor*100/tally_sample)))
         
-    
+    """ 
     # Extract specific misalignment
     for ID_i in misalignment_tree.keys():
         if int(ID_i) in range(251899973, 251899973+80):            
@@ -3396,7 +3432,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             for i, time_i, snap_i, angle_i in zip(np.arange(0, len(misalignment_tree['%s' %ID_i]['Lookbacktime'])), misalignment_tree['%s' %ID_i]['Lookbacktime'], misalignment_tree['%s' %ID_i]['SnapNum'], misalignment_tree['%s' %ID_i]['stars_gas_sf']):
                 print('\t\t%.2f\t%i\t%.1f' %(time_i, snap_i, angle_i), misalignment_tree['%s' %ID_i]['merger_ratio_stars'][i], misalignment_tree['%s' %ID_i]['merger_ratio_gas'][i], misalignment_tree['%s' %ID_i]['sfmass'][i])
             print(' ')
-    
+    """
     
     #------------------------------------------------ 
     plt.close()
@@ -3560,12 +3596,15 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         print('   trelax > 1 Gyr:\t%i\t%.2f%%   |    trelax > 2 Gyr:\t%i\t%.2f%%' %((np.array(summary_dict['trelax']['array']) > 1).sum(), 100*(np.array(summary_dict['trelax']['array']) > 1).sum()/len(misalignment_tree.keys()), (np.array(summary_dict['trelax']['array']) > 2).sum(), 100*(np.array(summary_dict['trelax']['array']) > 2).sum()/len(misalignment_tree.keys())))
         print('      ETG: %i   LTG: %i\t        | ETG: %i   LTG: %i\t' %((np.array(summary_dict['trelax']['ETG']) > 1).sum(), (np.array(summary_dict['trelax']['LTG']) > 1).sum(), (np.array(summary_dict['trelax']['ETG']) > 2).sum(), (np.array(summary_dict['trelax']['LTG']) > 2).sum()))
         print('  ETG-ETG: %i   LTG-LTG: %i\t\t    | ETG-ETG: %i   LTG-LTG: %i\t' %((np.array(summary_dict['trelax']['ETG-ETG']) > 1).sum(), (np.array(summary_dict['trelax']['LTG-LTG']) > 1).sum(), (np.array(summary_dict['trelax']['ETG-ETG']) > 2).sum(), (np.array(summary_dict['trelax']['LTG-LTG']) > 2).sum()))
+        print('  ETG-LTG: %i   LTG-ETG: %i\t\t    | ETG-LTG: %i   LTG-ETG: %i\t' %((np.array(summary_dict['trelax']['ETG-LTG']) > 1).sum(), (np.array(summary_dict['trelax']['LTG-ETG']) > 1).sum(), (np.array(summary_dict['trelax']['ETG-LTG']) > 2).sum(), (np.array(summary_dict['trelax']['LTG-ETG']) > 2).sum()))
         print('   tdyn   > 10   :\t%i\t%.2f%%   |    tdyn   > 20   :\t%i\t%.2f%%' %((np.array(summary_dict['tdyn']['array']) > 10).sum(), 100*(np.array(summary_dict['tdyn']['array']) > 10).sum()/len(misalignment_tree.keys()), (np.array(summary_dict['tdyn']['array']) > 20).sum(), 100*(np.array(summary_dict['tdyn']['array']) > 20).sum()/len(misalignment_tree.keys())))
         print('      ETG: %i   LTG: %i\t\t\t        | ETG: %i   LTG: %i\t' %((np.array(summary_dict['tdyn']['ETG']) > 10).sum(), (np.array(summary_dict['tdyn']['LTG']) > 10).sum(), (np.array(summary_dict['tdyn']['ETG']) > 20).sum(), (np.array(summary_dict['tdyn']['LTG']) > 20).sum()))
         print('  ETG-ETG: %i   LTG-LTG: %i\t\t    | ETG-ETG: %i   LTG-LTG: %i\t' %((np.array(summary_dict['tdyn']['ETG-ETG']) > 10).sum(), (np.array(summary_dict['tdyn']['LTG-LTG']) > 10).sum(), (np.array(summary_dict['tdyn']['ETG-ETG']) > 20).sum(), (np.array(summary_dict['tdyn']['LTG-LTG']) > 20).sum()))
-        print('   torque > 5   :\t%i\t%.2f%%    |    torque > 10   :\t%i\t%.2f%%' %((np.array(summary_dict['ttorque']['array']) > 5).sum(), 100*(np.array(summary_dict['ttorque']['array']) > 5).sum()/len(misalignment_tree.keys()), (np.array(summary_dict['ttorque']['array']) > 10).sum(), 100*(np.array(summary_dict['ttorque']['array']) > 10).sum()/len(misalignment_tree.keys())))
-        print('      ETG: %i   LTG: %i\t\t\t        | ETG: %i   LTG: %i\t' %((np.array(summary_dict['ttorque']['ETG']) > 5).sum(), (np.array(summary_dict['ttorque']['LTG']) > 5).sum(), (np.array(summary_dict['ttorque']['ETG']) > 10).sum(), (np.array(summary_dict['ttorque']['LTG']) > 10).sum()))
-        print('  ETG-ETG: %i   LTG-LTG: %i\t\t    | ETG-ETG: %i   LTG-LTG: %i\t' %((np.array(summary_dict['ttorque']['ETG-ETG']) > 5).sum(), (np.array(summary_dict['ttorque']['LTG-LTG']) > 5).sum(), (np.array(summary_dict['ttorque']['ETG-ETG']) > 10).sum(), (np.array(summary_dict['ttorque']['LTG-LTG']) > 10).sum()))
+        print('  ETG-LTG: %i   LTG-ETG: %i\t\t    | ETG-LTG: %i   LTG-ETG: %i\t' %((np.array(summary_dict['tdyn']['ETG-LTG']) > 10).sum(), (np.array(summary_dict['tdyn']['LTG-ETG']) > 10).sum(), (np.array(summary_dict['tdyn']['ETG-LTG']) > 20).sum(), (np.array(summary_dict['tdyn']['LTG-ETG']) > 20).sum()))
+        print('   torque > 3   :\t%i\t%.2f%%    |    torque > 5   :\t%i\t%.2f%%' %((np.array(summary_dict['ttorque']['array']) > 3).sum(), 100*(np.array(summary_dict['ttorque']['array']) > 3).sum()/len(misalignment_tree.keys()), (np.array(summary_dict['ttorque']['array']) > 5).sum(), 100*(np.array(summary_dict['ttorque']['array']) > 5).sum()/len(misalignment_tree.keys())))
+        print('      ETG: %i   LTG: %i\t\t\t        | ETG: %i   LTG: %i\t' %((np.array(summary_dict['ttorque']['ETG']) > 3).sum(), (np.array(summary_dict['ttorque']['LTG']) > 3).sum(), (np.array(summary_dict['ttorque']['ETG']) > 5).sum(), (np.array(summary_dict['ttorque']['LTG']) > 5).sum()))
+        print('  ETG-ETG: %i   LTG-LTG: %i\t\t    | ETG-ETG: %i   LTG-LTG: %i\t' %((np.array(summary_dict['ttorque']['ETG-ETG']) > 3).sum(), (np.array(summary_dict['ttorque']['LTG-LTG']) > 3).sum(), (np.array(summary_dict['ttorque']['ETG-ETG']) > 5).sum(), (np.array(summary_dict['ttorque']['LTG-LTG']) > 5).sum()))
+        print('  ETG-LTG: %i   LTG-ETG: %i\t\t    | ETG-LTG: %i   LTG-ETG: %i\t' %((np.array(summary_dict['ttorque']['ETG-LTG']) > 3).sum(), (np.array(summary_dict['ttorque']['LTG-ETG']) > 3).sum(), (np.array(summary_dict['ttorque']['ETG-LTG']) > 5).sum(), (np.array(summary_dict['ttorque']['LTG-ETG']) > 5).sum()))
         print(' ')
         print('Relaxation timescales:')
         print('   (Gyr)     all    ETG    LTG  ETG-ETG  LTG-LTG  ETG-LTG  LTG-ETG')
@@ -3830,6 +3869,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         axs.hist(stelmass_plot, bins=np.arange(9.0, 12+set_bin_width_mass, set_bin_width_mass), histtype='bar', edgecolor='none', facecolor='b', alpha=0.1)
         axs.hist(stelmass_plot, bins=np.arange(9.0, 12+set_bin_width_mass, set_bin_width_mass), histtype='bar', edgecolor='b', facecolor='none', alpha=1.0)
         
+        print('Median stellar mass: \t%.2e.' %(10**np.median(stelmass_plot)))
+        
         #-------------
         ### Formatting
         axs.set_xlabel(r'log$_{10}$ M$_{*}$ ($2r_{50}$) [M$_{\odot}$]')
@@ -3935,19 +3976,27 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         if add_inset:
             axins = axs.inset_axes([0.45, 0.2, 0.5, 0.6])
             
-            axins.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax), histtype='bar', edgecolor='none', facecolor='k', alpha=0.1)
-            bin_count, _, _ = axins.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax), histtype='bar', edgecolor='k', facecolor='none', lw=0.7, alpha=1.0)
+            if set_plot_percentage:
+                axins.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax), histtype='bar', edgecolor='none', facecolor='k', alpha=0.1)
+                bin_count, _, _ = axins.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax), histtype='bar', edgecolor='k', facecolor='none', lw=0.7, alpha=1.0)
+            else: 
+                axins.hist(relaxationtime_plot, bins=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax), histtype='bar', edgecolor='none', facecolor='k', alpha=0.1)
+                bin_count, _, _ = axins.hist(relaxationtime_plot, bins=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax), histtype='bar', edgecolor='k', facecolor='none', lw=0.7, alpha=1.0)
             
             print('bin_count of hist:', bin_count)
             
             axins.set_yscale('log')
-            axins.set_ylim(0.0002, set_thist_ymax_trelax)
             axins.set_xlim(0, set_bin_limit_trelax)
             axins.set_xticks(np.arange(0, set_bin_limit_trelax+0.1, step=1))
             axins.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)', fontsize = 5)
             if set_plot_percentage:
+                axins.set_ylim(0.0002, set_thist_ymax_trelax)
                 axins.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
                 axins.set_ylabel('Percentage of misalignments', fontsize=5)
+            else:
+                axins.set_ylim(0.5, set_thist_ymax_trelax)
+                axins.set_ylabel('Number of misalignments', fontsize=5)
+                
                 
                 
             #-----------
@@ -4188,19 +4237,27 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         if add_inset:
             axins = axs.inset_axes([0.45, 0.2, 0.5, 0.6])
             
-            axins.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, set_bin_limit_tdyn+set_bin_width_tdyn, set_bin_width_tdyn), histtype='bar', edgecolor='none', facecolor='k', alpha=0.1)
-            bin_count, _, _ = axins.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, set_bin_limit_tdyn+set_bin_width_tdyn, set_bin_width_tdyn), histtype='bar', edgecolor='k', facecolor='none', lw=0.7, alpha=1.0)
+            if set_plot_percentage:
+                axins.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, set_bin_limit_tdyn+set_bin_width_tdyn, set_bin_width_tdyn), histtype='bar', edgecolor='none', facecolor='k', alpha=0.1)
+                bin_count, _, _ = axins.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, set_bin_limit_tdyn+set_bin_width_tdyn, set_bin_width_tdyn), histtype='bar', edgecolor='k', facecolor='none', lw=0.7, alpha=1.0)
+            else:
+                axins.hist(relaxationtime_plot, bins=np.arange(0, set_bin_limit_tdyn+set_bin_width_tdyn, set_bin_width_tdyn), histtype='bar', edgecolor='none', facecolor='k', alpha=0.1)
+                bin_count, _, _ = axins.hist(relaxationtime_plot, bins=np.arange(0, set_bin_limit_tdyn+set_bin_width_tdyn, set_bin_width_tdyn), histtype='bar', edgecolor='k', facecolor='none', lw=0.7, alpha=1.0)
             
             print('bin_count of hist:', bin_count)
             
             axins.set_yscale('log')
-            axins.set_ylim(0.0002, set_thist_ymax_tdyn)
             axins.set_xlim(0, set_bin_limit_tdyn)
             axins.set_xticks(np.arange(0, set_bin_limit_tdyn+0.1, step=4))
             axins.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{dyn}}$', fontsize=5)
+            
             if set_plot_percentage:
+                axins.set_ylim(0.0002, set_thist_ymax_tdyn)
                 axins.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
                 axins.set_ylabel('Percentage of misalignments', fontsize=5)
+            else:
+                axins.set_ylim(0.5, set_thist_ymax_tdyn)
+                axins.set_ylabel('Number of misalignments', fontsize=5)
                 
             #-------------
             # Best-fit data
@@ -4436,18 +4493,25 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         if add_inset:
             axins = axs.inset_axes([0.45, 0.2, 0.5, 0.6])
             
-            axins.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, set_bin_limit_ttorque+set_bin_width_ttorque, set_bin_width_ttorque), histtype='bar', edgecolor='none', facecolor='k', alpha=0.1)
-            bin_count, _, _ = axins.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, set_bin_limit_ttorque+set_bin_width_ttorque, set_bin_width_ttorque), histtype='bar', edgecolor='k', facecolor='none', lw=0.7, alpha=1.0)
+            if set_plot_percentage:
+                axins.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, set_bin_limit_ttorque+set_bin_width_ttorque, set_bin_width_ttorque), histtype='bar', edgecolor='none', facecolor='k', alpha=0.1)
+                bin_count, _, _ = axins.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, set_bin_limit_ttorque+set_bin_width_ttorque, set_bin_width_ttorque), histtype='bar', edgecolor='k', facecolor='none', lw=0.7, alpha=1.0)
+            else:
+                axins.hist(relaxationtime_plot, bins=np.arange(0, set_bin_limit_ttorque+set_bin_width_ttorque, set_bin_width_ttorque), histtype='bar', edgecolor='none', facecolor='k', alpha=0.1)
+                bin_count, _, _ = axins.hist(relaxationtime_plot, bins=np.arange(0, set_bin_limit_ttorque+set_bin_width_ttorque, set_bin_width_ttorque), histtype='bar', edgecolor='k', facecolor='none', lw=0.7, alpha=1.0)
             
             print('bin_count of hist:', bin_count)
             
             axins.set_yscale('log')
-            axins.set_ylim(0.0002, set_thist_ymax_ttorque)
             axins.set_xlim(0, set_bin_limit_ttorque)
             axins.set_xticks(np.arange(0, set_bin_limit_ttorque+0.1, step=2))
             axins.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{torque}}$', fontsize=5)
             if set_plot_percentage:
+                axins.set_ylim(0.0002, set_thist_ymax_ttorque)
                 axins.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
+                axins.set_ylabel('Percentage of misalignments', fontsize=5)
+            else:
+                axins.set_ylim(0.5, set_thist_ymax_ttorque)
                 axins.set_ylabel('Percentage of misalignments', fontsize=5)
             
             #-------------
@@ -7628,6 +7692,32 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
         bin_width = 15
         bins = np.arange(set_plot_offset_range[0], set_plot_offset_range[1]+1, bin_width)
+        c = 'k'
+        
+        # Bin hist data, find sigma percentiles
+        binned_data_arg = np.digitize(df['Peak misalignment angle'], bins=bins)
+        bin_medians     = np.stack([np.percentile(df['Relaxation time'][binned_data_arg == i], q=[5, 16, 50, 84, 95]) for i in range(1, len(bins))])
+        #print(bin_medians)
+        
+        #-------------------
+        ### Plot scatter
+        ax.scatter(df['Peak misalignment angle'], df['Relaxation time'], s=0.05, c='darkgrey', edgecolor='k', marker='.', alpha=1, zorder=20)
+        
+        ### Plot upper, median, and lower sigma
+        #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor=c, alpha=0.15, zorder=5)
+        ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor=c, alpha=0.35, zorder=6)
+        #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,2], bin_medians[:,3], facecolor=c, alpha=0.9, zorder=7, label=offset_morph_i)
+        ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls='-', zorder=99, label='sample')
+        #ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls=':')
+        
+        
+        ### Plot histograms
+        ax_histx.hist(df['Peak misalignment angle'], bins=bins, log=True, facecolor='none', linewidth=1, edgecolor=c, histtype='step', alpha=1)
+        ax_histx.hist(df['Peak misalignment angle'], bins=bins, log=True, facecolor=c, linewidth=1, edgecolor='none', alpha=0.1)
+        
+        ax_histy.hist(df['Relaxation time'], bins=np.arange(0, 3.1, 0.125), log=True, orientation='horizontal', facecolor='none', linewidth=1, edgecolor=c, histtype='step', alpha=0.8)
+        ax_histy.hist(df['Relaxation time'], bins=np.arange(0, 3.1, 0.125), log=True, orientation='horizontal', facecolor=c, linewidth=1, edgecolor='none', alpha=0.1)
+        
         #-------------
         ### Plot by morphology
         for offset_morph_i in set_offset_morphs:
@@ -7635,9 +7725,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             if offset_morph_i == 'ETG-ETG':
                 offset_morph_i = 'ETG → ETG'
                 c = 'r'
+                ls = '--'
             elif offset_morph_i == 'LTG-LTG':
                 offset_morph_i = 'LTG → LTG'
                 c = 'b'
+                ls = 'dashdot'
             
             # Dataframe of morphs matching this
             df_morph = df.loc[df['Morphology'] == offset_morph_i]
@@ -7649,21 +7741,21 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             
             #-------------------
             ### Plot scatter
-            ax.scatter(df_morph['Peak misalignment angle'], df_morph['Relaxation time'], s=0.05, c=c, marker='.', alpha=1, zorder=1)
+            #ax.scatter(df_morph['Peak misalignment angle'], df_morph['Relaxation time'], s=0.05, c=c, marker='.', alpha=1, zorder=1)
             
             ### Plot upper, median, and lower sigma
             #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor=c, alpha=0.15, zorder=5)
-            ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor=c, alpha=0.35, zorder=6)
+            #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor=c, alpha=0.35, zorder=6)
             #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,2], bin_medians[:,3], facecolor=c, alpha=0.9, zorder=7, label=offset_morph_i)
-            ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.8, c=c, ls='-', label=offset_morph_i, zorder=7)
+            ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls=ls, label=offset_morph_i, zorder=99, alpha=0.9)
             #ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls=':')
             
             
             ### Plot histograms
-            ax_histx.hist(df_morph['Peak misalignment angle'], bins=bins, log=True, facecolor='none', linewidth=1, edgecolor=c, histtype='step', alpha=1)
+            ax_histx.hist(df_morph['Peak misalignment angle'], bins=bins, log=True, facecolor='none', linewidth=0.7, edgecolor=c, histtype='step', alpha=0.8)
             #ax_histx.hist(df_morph['Peak misalignment angle'], bins=bins, log=True, facecolor=c, linewidth=1, edgecolor='none', alpha=0.1)
             
-            ax_histy.hist(df_morph['Relaxation time'], bins=np.arange(0, 3.1, 0.125), log=True, orientation='horizontal', facecolor='none', linewidth=1, edgecolor=c, histtype='step', alpha=0.8)
+            ax_histy.hist(df_morph['Relaxation time'], bins=np.arange(0, 3.1, 0.125), log=True, orientation='horizontal', facecolor='none', linewidth=0.7, edgecolor=c, histtype='step', alpha=0.8)
             #ax_histy.hist(df_morph['Relaxation time'], bins=np.arange(0, 3.1, 0.125), log=True, orientation='horizontal', facecolor=c, linewidth=1, edgecolor='none', alpha=0.1)
             
         
@@ -7886,6 +7978,35 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
         bin_width = 15
         bins = np.arange(set_plot_offset_range[0], set_plot_offset_range[1]+1, bin_width)
+        c = 'k'
+        
+        #-------------
+        # Bin hist data, find sigma percentiles
+        binned_data_arg = np.digitize(df['Peak misalignment angle'], bins=bins)
+        bin_medians     = np.stack([np.percentile(df['Relaxation time'][binned_data_arg == i], q=[5, 16, 50, 84, 95]) for i in range(1, len(bins))])
+        #print(bin_medians)
+        
+        #-------------------
+        ### Plot scatter
+        ax.scatter(df['Peak misalignment angle'], df['Relaxation time'], s=0.05, c='darkgrey', edgecolor='k', marker='.', alpha=1, zorder=20)
+        
+        ### Plot upper, median, and lower sigma
+        #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor=c, alpha=0.15, zorder=5)
+        ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor=c, alpha=0.35, zorder=6)
+        #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,2], bin_medians[:,3], facecolor=c, alpha=0.9, zorder=7, label=offset_morph_i)
+        ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls='-', zorder=99, label='sample')
+        #ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls=':')
+        
+        
+        ### Plot histograms
+        ax_histx.hist(df['Peak misalignment angle'], bins=bins, log=True, facecolor='none', linewidth=1, edgecolor=c, histtype='step', alpha=1)
+        ax_histx.hist(df['Peak misalignment angle'], bins=bins, log=True, facecolor=c, linewidth=1, edgecolor='none', alpha=0.1)
+        
+        ax_histy.hist(df['Relaxation time'], bins=np.arange(0, 15.1, 1), log=True, orientation='horizontal', facecolor='none', linewidth=1, edgecolor=c, histtype='step', alpha=0.8)
+        ax_histy.hist(df['Relaxation time'], bins=np.arange(0, 15.1, 1), log=True, orientation='horizontal', facecolor=c, linewidth=1, edgecolor='none', alpha=0.1)
+        
+        
+        
         #-------------
         ### Plot by morphology
         for offset_morph_i in set_offset_morphs:
@@ -7893,9 +8014,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             if offset_morph_i == 'ETG-ETG':
                 offset_morph_i = 'ETG → ETG'
                 c = 'r'
+                ls = '--'
             elif offset_morph_i == 'LTG-LTG':
                 offset_morph_i = 'LTG → LTG'
                 c = 'b'
+                ls = 'dashdot'
             
             # Dataframe of morphs matching this
             df_morph = df.loc[df['Morphology'] == offset_morph_i]
@@ -7907,21 +8030,21 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             
             #-------------------
             ### Plot scatter
-            ax.scatter(df_morph['Peak misalignment angle'], df_morph['Relaxation time'], s=0.05, c=c, marker='.', alpha=1, zorder=1)
+            #ax.scatter(df_morph['Peak misalignment angle'], df_morph['Relaxation time'], s=0.05, c=c, marker='.', alpha=1, zorder=1)
             
             ### Plot upper, median, and lower sigma
             #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor=c, alpha=0.15, zorder=5)
-            ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor=c, alpha=0.35, zorder=6)
+            #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor=c, alpha=0.35, zorder=6)
             #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,2], bin_medians[:,3], facecolor=c, alpha=0.9, zorder=7, label=offset_morph_i)
-            ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.8, c=c, ls='-', label=offset_morph_i, zorder=7)
+            ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls=ls, label=offset_morph_i, zorder=99, alpha=0.9)
             #ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls=':')
             
             
             ### Plot histograms
-            ax_histx.hist(df_morph['Peak misalignment angle'], bins=bins, log=True, facecolor='none', linewidth=1, edgecolor=c, histtype='step', alpha=1)
+            ax_histx.hist(df_morph['Peak misalignment angle'], bins=bins, log=True, facecolor='none', linewidth=0.7, edgecolor=c, histtype='step', alpha=0.8)
             #ax_histx.hist(df_morph['Peak misalignment angle'], bins=bins, log=True, facecolor=c, linewidth=1, edgecolor='none', alpha=0.1)
             
-            ax_histy.hist(df_morph['Relaxation time'], bins=np.arange(0, 15.1, 1), log=True, orientation='horizontal', facecolor='none', linewidth=1, edgecolor=c, histtype='step', alpha=0.8)
+            ax_histy.hist(df_morph['Relaxation time'], bins=np.arange(0, 15.1, 1), log=True, orientation='horizontal', facecolor='none', linewidth=0.7, edgecolor=c, histtype='step', alpha=0.8)
             #ax_histy.hist(df_morph['Relaxation time'], bins=np.arange(0, 15.1, 1), log=True, orientation='horizontal', facecolor=c, linewidth=1, edgecolor='none', alpha=0.1)
             
         
@@ -7934,7 +8057,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         ax_histx.set_ylabel('Count')
         if set_plot_offset_log:
             ax.set_yscale('log')
-            ax.set_ylim(0.3, 25)
+            ax.set_ylim(0.5, 35)
             ax.set_yticks([1, 10])
             ax.set_yticklabels(['1', '10'])
         else:
@@ -8143,6 +8266,33 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
         bin_width = 15
         bins = np.arange(set_plot_offset_range[0], set_plot_offset_range[1]+1, bin_width)
+        c = 'k'
+        
+        #-------------
+        # Bin hist data, find sigma percentiles
+        binned_data_arg = np.digitize(df['Peak misalignment angle'], bins=bins)
+        bin_medians     = np.stack([np.percentile(df['Relaxation time'][binned_data_arg == i], q=[5, 16, 50, 84, 95]) for i in range(1, len(bins))])
+        #print(bin_medians)
+            
+        #-------------------
+        ### Plot scatter
+        ax.scatter(df['Peak misalignment angle'], df['Relaxation time'], s=0.05, c='darkgrey', edgecolor='k', marker='.', alpha=1, zorder=20)
+            
+        ### Plot upper, median, and lower sigma
+        #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor=c, alpha=0.15, zorder=5)
+        ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor=c, alpha=0.35, zorder=6)
+        #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,2], bin_medians[:,3], facecolor=c, alpha=0.9, zorder=7, label=offset_morph_i)
+        ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls='-', zorder=99, label='sample')
+        #ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls=':')
+            
+            
+        ### Plot histograms
+        ax_histx.hist(df['Peak misalignment angle'], bins=bins, log=True, facecolor='none', linewidth=1, edgecolor=c, histtype='step', alpha=1)
+        ax_histx.hist(df['Peak misalignment angle'], bins=bins, log=True, facecolor=c, linewidth=1, edgecolor='none', alpha=0.1)
+            
+        ax_histy.hist(df['Relaxation time'], bins=np.arange(0, 10.1, 1), log=True, orientation='horizontal', facecolor='none', linewidth=1, edgecolor=c, histtype='step', alpha=0.8)
+        ax_histy.hist(df['Relaxation time'], bins=np.arange(0, 10.1, 1), log=True, orientation='horizontal', facecolor=c, linewidth=1, edgecolor='none', alpha=0.1)
+            
         #-------------
         ### Plot by morphology
         for offset_morph_i in set_offset_morphs:
@@ -8150,9 +8300,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             if offset_morph_i == 'ETG-ETG':
                 offset_morph_i = 'ETG → ETG'
                 c = 'r'
+                ls = '--'
             elif offset_morph_i == 'LTG-LTG':
                 offset_morph_i = 'LTG → LTG'
                 c = 'b'
+                ls = 'dashdot'
             
             # Dataframe of morphs matching this
             df_morph = df.loc[df['Morphology'] == offset_morph_i]
@@ -8164,21 +8316,21 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             
             #-------------------
             ### Plot scatter
-            ax.scatter(df_morph['Peak misalignment angle'], df_morph['Relaxation time'], s=0.05, c=c, marker='.', alpha=1, zorder=1)
+            #ax.scatter(df_morph['Peak misalignment angle'], df_morph['Relaxation time'], s=0.05, c=c, marker='.', alpha=1, zorder=1)
             
             ### Plot upper, median, and lower sigma
             #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor=c, alpha=0.15, zorder=5)
-            ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor=c, alpha=0.35, zorder=6)
+            #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor=c, alpha=0.35, zorder=6)
             #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,2], bin_medians[:,3], facecolor=c, alpha=0.9, zorder=7, label=offset_morph_i)
-            ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.8, c=c, ls='-', label=offset_morph_i, zorder=7)
+            ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls=ls, label=offset_morph_i, zorder=99, alpha=0.9)
             #ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls=':')
             
             
             ### Plot histograms
-            ax_histx.hist(df_morph['Peak misalignment angle'], bins=bins, log=True, facecolor='none', linewidth=1, edgecolor=c, histtype='step', alpha=1)
+            ax_histx.hist(df_morph['Peak misalignment angle'], bins=bins, log=True, facecolor='none', linewidth=0.7, edgecolor=c, histtype='step', alpha=0.8)
             #ax_histx.hist(df_morph['Peak misalignment angle'], bins=bins, log=True, facecolor=c, linewidth=1, edgecolor='none', alpha=0.1)
             
-            ax_histy.hist(df_morph['Relaxation time'], bins=np.arange(0, 10.1, 1), log=True, orientation='horizontal', facecolor='none', linewidth=1, edgecolor=c, histtype='step', alpha=0.8)
+            ax_histy.hist(df_morph['Relaxation time'], bins=np.arange(0, 10.1, 1), log=True, orientation='horizontal', facecolor='none', linewidth=0.8, edgecolor=c, histtype='step', alpha=0.8)
             #ax_histy.hist(df_morph['Relaxation time'], bins=np.arange(0, 10.1, 1), log=True, orientation='horizontal', facecolor=c, linewidth=1, edgecolor='none', alpha=0.1)
             
         
@@ -8191,9 +8343,9 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         ax_histx.set_ylabel('Count')
         if set_plot_offset_log:
             ax.set_yscale('log')
-            ax.set_ylim(0.1, 25)
-            ax.set_yticks([0.1, 1, 10])
-            ax.set_yticklabels(['0.1', '1', '10'])
+            ax.set_ylim(0.2, 25)
+            ax.set_yticks([0.2, 1, 10])
+            ax.set_yticklabels(['0.2', '1', '10'])
         else:
             ax.set_ylim(0, 10)
         ax.set_xticks(bins)
@@ -8300,31 +8452,36 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
         #-------------
         # Plotting
-        fig, axs = plt.subplots(1, 1, figsize=[10/3, 2], sharex=True, sharey=False)
+        fig, axs = plt.subplots(1, 1, figsize=[10/3, 1.8], sharex=True, sharey=False)
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
         
         # Normalise colormap
         norm = mpl.colors.Normalize(vmin=0, vmax=1.05, clip=True)
         mapper = cm.ScalarMappable(norm=norm, cmap='viridis')         #cmap=cm.coolwarm), cmap='sauron'
         
-        im1 = axs.scatter(df['Number of mergers'], df['Relaxation time'], c=df['Mean gas ratio'], s=10, norm=norm, cmap='viridis', zorder=99, edgecolors='k', linewidths=0.3)
+        df_0       = df.loc[(df['Number of mergers'] == 0)]
+        df_mergers = df.loc[(df['Number of mergers'] > 0)]
+        
+        im1 = axs.scatter(df_mergers['Relaxation time'], df_mergers['Number of mergers'], c=df_mergers['Mean gas ratio'], s=10, norm=norm, cmap='viridis', zorder=99, edgecolors='k', linewidths=0.3, alpha=0.95)
+        axs.scatter(df_0['Relaxation time'], df_0['Number of mergers'], c='lightgrey', s=10, zorder=99, edgecolors='k', linewidths=0.3, alpha=0.8)
+        
         plt.colorbar(im1, ax=axs, label=r'$\bar{\mu}_{\mathrm{gas}}$', extend='max')
         
         
         #-------------
         ### Formatting
-        axs.set_ylabel('$t_{\mathrm{relax}}$ (Gyr)')
-        axs.set_xlabel('Number of mergers')
+        axs.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)')
+        axs.set_ylabel('Number of mergers' +'\n' + r'($\bar{\mu}_{\mathrm{*}}>0.1$)')
         if set_plot_merger_count_log:
-            axs.set_yscale('log')
-            axs.set_ylim(set_min_merger_trelax-0.15, 6)
-            axs.set_yticks([1, 10])
-            axs.set_yticklabels(['1', '10'])
+            axs.set_xscale('log')
+            axs.set_xlim(0.1, 6)
+            axs.set_xticks([0.1, 1, 10])
+            axs.set_xticklabels(['0.1', '1', '10'])
         else:
-            axs.set_ylim(0.5, 6)
-            axs.set_yticks(np.arange(1, 6.1))
-        axs.set_xlim(-0.3, 3.3)
-        axs.set_xticks(np.arange(0, 3.1, 1))
+            axs.set_xlim(0.5, 6)
+            axs.set_xticks(np.arange(1, 6.1))
+        axs.set_ylim(-0.3, 3.3)
+        axs.set_yticks(np.arange(0, 3.1, 1))
         #axs.minorticks_on()
         axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
         axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
@@ -8332,7 +8489,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
         #-----------
         ### title
-        axs.set_title(r'$\rho$ = %.2f p-value = %.2f' %(res.correlation, res.pvalue), size=7, loc='left', pad=3)
+        axs.set_title(r'$\rho$ = %.2f p-value = %.1e' %(res.correlation, res.pvalue), size=7, loc='left', pad=3)
         if plot_annotate:
             axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
             
@@ -8412,33 +8569,36 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
         #-------------
         # Plotting
-        fig, axs = plt.subplots(1, 1, figsize=[10/3, 2], sharex=True, sharey=False)
+        fig, axs = plt.subplots(1, 1, figsize=[10/3, 1.8], sharex=True, sharey=False)
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
         
         # Normalise colormap
         norm = mpl.colors.Normalize(vmin=0, vmax=1.05, clip=True)
         mapper = cm.ScalarMappable(norm=norm, cmap='viridis')         #cmap=cm.coolwarm), cmap='sauron'
         
-        im1 = axs.scatter(df['Number of mergers'], df['Relaxation time'], c=df['Mean gas ratio'], s=10, norm=norm, cmap='viridis', zorder=99, edgecolors='k', linewidths=0.3)
+        df_0       = df.loc[(df['Number of mergers'] == 0)]
+        df_mergers = df.loc[(df['Number of mergers'] > 0)]
+        
+        im1 = axs.scatter(df_mergers['Relaxation time'], df_mergers['Number of mergers'], c=df_mergers['Mean gas ratio'], s=10, norm=norm, cmap='viridis', zorder=99, edgecolors='k', linewidths=0.3, alpha=0.95)
+        axs.scatter(df_0['Relaxation time'], df_0['Number of mergers'], c='lightgrey', s=10, zorder=99, edgecolors='k', linewidths=0.3, alpha=0.8)
+        
         plt.colorbar(im1, ax=axs, label=r'$\bar{\mu}_{\mathrm{gas}}$', extend='max')
         
         
         #-------------
         ### Formatting
-        axs.set_ylabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{dyn}}$')
-        axs.set_xlabel('Number of mergers')
+        axs.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{dyn}}$')
+        axs.set_ylabel('Number of mergers' +'\n' + r'($\bar{\mu}_{\mathrm{*}}>0.1$)')
         if set_plot_merger_count_log:
-            axs.set_yscale('log')
-            axs.yaxis.set_major_formatter(ticker.ScalarFormatter())
-            axs.yaxis.set_minor_formatter(ticker.ScalarFormatter())
-            #axs.yaxis.set_minor_formatter(NullFormatter())
-            axs.set_ylim(4.5, 25)
+            axs.set_xscale('log')
+            axs.set_xticks([0.1, 1, 10])
+            axs.set_xticklabels(['0.1', '1', '10'])
+            axs.set_xlim(0.6, 25)
         else:
-            axs.set_ylim(3, 20)
-            axs.set_yticks(np.arange(4, 20.1, 4))
-        axs.set_xlabel('Number of mergers')
-        axs.set_xlim(-0.3, 3.3)
-        axs.set_xticks(np.arange(0, 3.1, 1))
+            axs.set_xlim(0, 20)
+            axs.set_xticks(np.arange(4, 20.1, 4))
+        axs.set_ylim(-0.3, 3.3)
+        axs.set_yticks(np.arange(0, 3.1, 1))
         #axs.minorticks_on()
         axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
         axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
@@ -8526,31 +8686,36 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
         #-------------
         # Plotting
-        fig, axs = plt.subplots(1, 1, figsize=[10/3, 2], sharex=True, sharey=False)
+        fig, axs = plt.subplots(1, 1, figsize=[10/3, 1.8], sharex=True, sharey=False)
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
         
         # Normalise colormap
         norm = mpl.colors.Normalize(vmin=0, vmax=1.05, clip=True)
         mapper = cm.ScalarMappable(norm=norm, cmap='viridis')         #cmap=cm.coolwarm), cmap='sauron'
         
-        im1 = axs.scatter(df['Number of mergers'], df['Relaxation time'], c=df['Mean gas ratio'], s=10, norm=norm, cmap='viridis', zorder=99, edgecolors='k', linewidths=0.3)
-        plt.colorbar(im1, ax=axs, label=r'$\bar{\mu}_{\mathrm{gas}}$', extend='max')
+        df_0       = df.loc[(df['Number of mergers'] == 0)]
+        df_mergers = df.loc[(df['Number of mergers'] > 0)]
         
+        im1 = axs.scatter(df_mergers['Relaxation time'], df_mergers['Number of mergers'], c=df_mergers['Mean gas ratio'], s=10, norm=norm, cmap='viridis', zorder=99, edgecolors='k', linewidths=0.3, alpha=0.95)
+        axs.scatter(df_0['Relaxation time'], df_0['Number of mergers'], c='lightgrey', s=10, zorder=99, edgecolors='k', linewidths=0.3, alpha=0.8)
+        
+        plt.colorbar(im1, ax=axs, label=r'$\bar{\mu}_{\mathrm{gas}}$', extend='max')
+    
         
         #-------------
         ### Formatting
-        axs.set_ylabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{torque}}$')
-        axs.set_xlabel('Number of mergers')
+        axs.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{torque}}$')
+        axs.set_ylabel('Number of mergers' +'\n' + r'($\bar{\mu}_{\mathrm{*}}>0.1$)')
         if set_plot_merger_count_log:
-            axs.set_yscale('log')
-            axs.yaxis.set_major_formatter(ticker.ScalarFormatter())
-            axs.yaxis.set_minor_formatter(NullFormatter())
-            axs.set_ylim(1, 15)
+            axs.set_xscale('log')
+            axs.set_xticks([0.1, 1, 10])
+            axs.set_xticklabels(['0.1', '1', '10'])
+            axs.set_xlim(0.6, 15)
         else:
-            axs.set_ylim(0.5, 12)
-            axs.set_yticks(np.arange(2, 12.1, 2))
-        axs.set_xlim(-0.3, 3.3)
-        axs.set_xticks(np.arange(0, 3.1, 1))
+            axs.set_xlim(0.5, 12)
+            axs.set_xticks(np.arange(2, 12.1, 2))
+        axs.set_ylim(-0.3, 3.3)
+        axs.set_yticks(np.arange(0, 3.1, 1))
         #axs.minorticks_on()
         axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
         axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
@@ -8676,7 +8841,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
             # Plot average line for total sample
             #ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,2], facecolor='r', alpha=0.2, zorder=6)
-            ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,1], lw=1, c='r', ls='-', zorder=101, label=r'$\bar{\kappa}_{\mathrm{co}}^{*}<0.4$')
+            ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,1], lw=0.7, c='r', ls='-', zorder=101, label=r'$\bar{\kappa}_{\mathrm{co}}^{*}<0.4$', alpha=0.9)
         
         
         #-------------
@@ -8706,7 +8871,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         ax_scatter.set_ylabel('$t_{\mathrm{relax}}$ (Gyr)')
         #ax_hist.set_ylabel('Count')
         ax_line.set_ylabel(r'$\bar{\kappa}_{\mathrm{co}}^{*}$')
-        ax_line.set_xlabel('Average stellar-DM misalignment angle')
+        ax_line.set_xlabel(r'$\bar{\psi}_{\mathrm{DM-stars}}$ during relaxation')
         
         if set_plot_halo_misangle_log:
             ax_scatter.set_yscale('log')
@@ -8844,7 +9009,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
             # Plot average line for total sample
             #ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,2], facecolor='r', alpha=0.2, zorder=6)
-            ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,1], lw=1, c='r', ls='-', zorder=101, label=r'$\bar{\kappa}_{\mathrm{co}}^{*}<0.4$')
+            ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,1], lw=0.7, c='r', ls='-', zorder=101, label=r'$\bar{\kappa}_{\mathrm{co}}^{*}<0.4$', alpha=0.9)
         
         
         #-------------
@@ -8874,7 +9039,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         ax_scatter.set_ylabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{dyn}}$')
         #ax_hist.set_ylabel('Count')
         ax_line.set_ylabel(r'$\bar{\kappa}_{\mathrm{co}}^{*}$')
-        ax_line.set_xlabel('Average stellar-DM misalignment angle')
+        ax_line.set_xlabel(r'$\bar{\psi}_{\mathrm{DM-stars}}$ during relaxation')
         if set_plot_halo_misangle_log:
             ax_scatter.set_yscale('log')
             ax_scatter.set_ylim(0.3, 25)
@@ -9008,7 +9173,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
             # Plot average line for total sample
             #ax_scatter.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,2], facecolor='r', alpha=0.2, zorder=6)
-            ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,1], lw=1, c='r', ls='-', zorder=101, label=r'$\bar{\kappa}_{\mathrm{co}}^{*}<0.4$')
+            ax_scatter.plot(bins[:-1]+(bin_width/2), bin_medians[:,1], lw=0.7, c='r', ls='-', zorder=101, label=r'$\bar{\kappa}_{\mathrm{co}}^{*}<0.4$', alpha=0.9)
             
         
         #-------------
@@ -9038,7 +9203,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         ax_scatter.set_ylabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{torque}}$')
         #ax_hist.set_ylabel('Count')
         ax_line.set_ylabel(r'$\bar{\kappa}_{\mathrm{co}}^{*}$')
-        ax_line.set_xlabel('Average stellar-DM misalignment angle')
+        ax_line.set_xlabel(r'$\bar{\psi}_{\mathrm{DM-stars}}$ during relaxation')
         if set_plot_halo_misangle_log:
             ax_scatter.set_yscale('log')
             ax_scatter.set_ylim(0.1, 25)
@@ -9347,23 +9512,28 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         
         #-------------
         # Plotting ongoing fraction histogram
-        fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.5], sharex=True, sharey=False)
+        fig, axs = plt.subplots(1, 1, figsize=[10/3, 1.5], sharex=True, sharey=False)
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
         
+        colors = ['orangered', 'orange', 'cornflowerblue', 'mediumblue']
+        
         if set_misanglepre_morph:
-            axs.hist([ETG_ETG_df['DM-stars angle'], ETG_LTG_df['DM-stars angle'], LTG_LTG_df['DM-stars angle'], LTG_ETG_df['DM-stars angle']], weights=(np.ones(len(ETG_ETG_df['GalaxyIDs']))/len(df['GalaxyIDs']), np.ones(len(ETG_LTG_df['GalaxyIDs']))/len(df['GalaxyIDs']), np.ones(len(LTG_LTG_df['GalaxyIDs']))/len(df['GalaxyIDs']), np.ones(len(LTG_ETG_df['GalaxyIDs']))/len(df['GalaxyIDs'])), bins=np.arange(0, 181, 10), histtype='bar', edgecolor='none', alpha=0.5, stacked=True)
-            axs.hist([ETG_ETG_df['DM-stars angle'], ETG_LTG_df['DM-stars angle'], LTG_LTG_df['DM-stars angle'], LTG_ETG_df['DM-stars angle']], weights=(np.ones(len(ETG_ETG_df['GalaxyIDs']))/len(df['GalaxyIDs']), np.ones(len(ETG_LTG_df['GalaxyIDs']))/len(df['GalaxyIDs']), np.ones(len(LTG_LTG_df['GalaxyIDs']))/len(df['GalaxyIDs']), np.ones(len(LTG_ETG_df['GalaxyIDs']))/len(df['GalaxyIDs'])), bins=np.arange(0, 181, 10), histtype='bar', facecolor='none', edgecolor='k', alpha=0.9, lw=0.7, stacked=True)
+            axs.hist([ETG_ETG_df['DM-stars angle'], ETG_LTG_df['DM-stars angle'], LTG_ETG_df['DM-stars angle'], LTG_LTG_df['DM-stars angle']], weights=(np.ones(len(ETG_ETG_df['GalaxyIDs']))/len(df['GalaxyIDs']), np.ones(len(ETG_LTG_df['GalaxyIDs']))/len(df['GalaxyIDs']), np.ones(len(LTG_ETG_df['GalaxyIDs']))/len(df['GalaxyIDs']), np.ones(len(LTG_LTG_df['GalaxyIDs']))/len(df['GalaxyIDs'])), bins=np.arange(0, 181, 10), histtype='bar', edgecolor='none', color = colors, alpha=0.5, stacked=True)
+            hist_n, _, _ = axs.hist([ETG_ETG_df['DM-stars angle'], ETG_LTG_df['DM-stars angle'], LTG_ETG_df['DM-stars angle'], LTG_LTG_df['DM-stars angle']], weights=(np.ones(len(ETG_ETG_df['GalaxyIDs']))/len(df['GalaxyIDs']), np.ones(len(ETG_LTG_df['GalaxyIDs']))/len(df['GalaxyIDs']), np.ones(len(LTG_ETG_df['GalaxyIDs']))/len(df['GalaxyIDs']), np.ones(len(LTG_LTG_df['GalaxyIDs']))/len(df['GalaxyIDs'])), bins=np.arange(0, 181, 10), histtype='bar', facecolor='none', edgecolor='k', alpha=0.9, lw=0.7, stacked=True)
         else:
             axs.hist(df['DM-stars angle'], weights=np.ones(len(df['GalaxyIDs']))/len(df['GalaxyIDs']), bins=np.arange(0, 181, 10), histtype='bar', edgecolor='none', alpha=0.5)
-            axs.hist(df['DM-stars angle'], weights=np.ones(len(df['GalaxyIDs']))/len(df['GalaxyIDs']), bins=np.arange(0, 181, 10), histtype='bar', facecolor='none', edgecolor='k', alpha=0.9, lw=0.7)
+            hist_n, _, _ = axs.hist(df['DM-stars angle'], weights=np.ones(len(df['GalaxyIDs']))/len(df['GalaxyIDs']), bins=np.arange(0, 181, 10), histtype='bar', facecolor='none', edgecolor='k', alpha=0.9, lw=0.7)
             
+        print('Hist bins morphology: ', hist_n)
+        hist_n, _ = np.histogram(df['DM-stars angle'], weights=np.ones(len(df['GalaxyIDs']))/len(df['GalaxyIDs']), bins=np.arange(0, 181, 10), range=(0, 181))
+        print('Hist bins total: ', hist_n)
             
         #-------------
         ### Formatting
-        axs.set_xlabel('Average stellar-DM misalignment angle\npre-misalignment')
+        axs.set_xlabel(r'$\bar{\psi}_{\mathrm{DM-stars}}$ pre-instability')
         axs.set_xlim(0, 180)
         axs.set_xticks(np.arange(0, 181, step=30))
-        axs.set_ylabel('Percentage of misalignments')
+        axs.set_ylabel('Percentage of\nmisalignments')
         axs.set_ylim(0, 0.2)
         axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
         #axs.minorticks_on()
@@ -9381,23 +9551,25 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         legend_elements = []
         legend_labels = []
         legend_colors = []
+        
+        
         if set_misanglepre_morph:
-            if 'co-co' in relaxation_type:
-                legend_labels.append('ETG → ETG')
-                legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-                legend_colors.append('C0')
-            if 'counter-counter' in relaxation_type:
-                legend_labels.append('ETG → LTG')
-                legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-                legend_colors.append('C1')
-            if 'co-counter' in relaxation_type:
-                legend_labels.append('LTG → LTG')
-                legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-                legend_colors.append('C2')
-            if 'counter-co' in relaxation_type:
-                legend_labels.append('LTG → ETG')
-                legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-                legend_colors.append('C3')
+            legend_labels.append('ETG → ETG')
+            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+            legend_colors.append('orangered')
+                
+            legend_labels.append('ETG → LTG')
+            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+            legend_colors.append('orange')
+                
+            legend_labels.append('LTG → ETG')
+            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+            legend_colors.append('cornflowerblue')
+                
+            legend_labels.append('LTG → LTG')
+            legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+            legend_colors.append('mediumblue')
+            
             axs.legend(handles=legend_elements, labels=legend_labels, loc='best', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0)
             
         #------------
@@ -9562,21 +9734,22 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             
             #-----------
             # Add pie plots
+            colors = ['royalblue', 'orange', 'orangered']
             for morph_i in set_origins_morph:
                 y = np.array([plot_dict['%s' %morph_i]['other'], plot_dict['%s' %morph_i]['minor'], plot_dict['%s' %morph_i]['major']])
                 mylabels = ['%s' %(' ' if plot_dict['%s' %morph_i]['other'] == 0 else plot_dict['%s' %morph_i]['other']), '%s' %(' ' if plot_dict['%s' %morph_i]['minor'] == 0 else plot_dict['%s' %morph_i]['minor']), '%s' %(' ' if plot_dict['%s' %morph_i]['major'] == 0 else plot_dict['%s' %morph_i]['major'])]
             
                 if morph_i == 'ETG-ETG':
-                    ax_ETG_ETG.pie(y, labels = mylabels, startangle = 90)
+                    ax_ETG_ETG.pie(y, labels = mylabels, startangle = 90, colors = colors, wedgeprops = {'linewidth': 1, 'edgecolor': 'w'})
                     ax_ETG_ETG.set_title('ETG → ETG', loc='center', pad=0, fontsize=8)
                 if morph_i == 'ETG-LTG':
-                    ax_ETG_LTG.pie(y, labels = mylabels, startangle = 90)
+                    ax_ETG_LTG.pie(y, labels = mylabels, startangle = 90, colors = colors, wedgeprops = {'linewidth': 1, 'edgecolor': 'w'})
                     ax_ETG_LTG.set_title('ETG → LTG', loc='center', pad=0, fontsize=8)
                 if morph_i == 'LTG-ETG':
-                    ax_LTG_ETG.pie(y, labels = mylabels, startangle = 90)
+                    ax_LTG_ETG.pie(y, labels = mylabels, startangle = 90, colors = colors, wedgeprops = {'linewidth': 1, 'edgecolor': 'w'})
                     ax_spare_1.set_title('\nLTG → ETG', loc='center', y=-1, fontsize=8)
                 if morph_i == 'LTG-LTG':
-                    ax_LTG_LTG.pie(y, labels = mylabels, startangle = 90)
+                    ax_LTG_LTG.pie(y, labels = mylabels, startangle = 90, colors = colors, wedgeprops = {'linewidth': 1, 'edgecolor': 'w'})
                     ax_spare_2.set_title('\nLTG → LTG', loc='center', y=-1, fontsize=8)
             ax_spare_1.axis('off')
             ax_spare_2.axis('off')
@@ -9619,16 +9792,18 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             
             #-----------
             # Add pie plots
+            #colors = ['orange', 'cornflowerblue', 'blue']
+            colors = ['royalblue', 'orange', 'orangered']
             for morph_i in ['ETG', 'LTG']:
                 
                 y = np.array([plot_dict['%s-ETG' %morph_i]['other']+plot_dict['%s-LTG' %morph_i]['other'], plot_dict['%s-ETG' %morph_i]['minor']+plot_dict['%s-LTG' %morph_i]['minor'], plot_dict['%s-ETG' %morph_i]['major']+plot_dict['%s-LTG' %morph_i]['major']])
                 mylabels = ['%s' %(' ' if y[0] == 0 else y[0]), '%s' %(' ' if y[1] == 0 else y[1]), '%s' %(' ' if y[2] == 0 else y[2])]
                 
                 if morph_i == 'ETG':
-                    ax_ETG.pie(y, labels = mylabels, startangle = 90)
+                    ax_ETG.pie(y, labels = mylabels, startangle = 90, colors = colors, wedgeprops = {'linewidth': 1, 'edgecolor': 'w'})
                     ax_ETG.set_title('ETG', loc='center', pad=0, fontsize=8)
                 if morph_i == 'LTG':
-                    ax_LTG.pie(y, labels = mylabels, startangle = 90)
+                    ax_LTG.pie(y, labels = mylabels, startangle = 90, colors = colors, wedgeprops = {'linewidth': 1, 'edgecolor': 'w'})
                     ax_LTG.set_title('LTG', loc='center', pad=0, fontsize=8)
             
                 
@@ -9640,13 +9815,13 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
 
             legend_labels.append('Major\nmerger')
             legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-            legend_colors.append('C2')
+            legend_colors.append('orangered')
             legend_labels.append('Minor\nmerger')
             legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-            legend_colors.append('C1')
-            legend_labels.append('Other')
+            legend_colors.append('orange')
+            legend_labels.append('other')
             legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-            legend_colors.append('C0')
+            legend_colors.append('royalblue')
         
             ax_LTG.legend(handles=legend_elements, labels=legend_labels, loc='center left', bbox_to_anchor=(0.9, 0.5), labelspacing=1, frameon=False, labelcolor=legend_colors, handlelength=0, ncol=1)
             

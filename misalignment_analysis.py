@@ -1022,8 +1022,3 @@ def _analysis_misalignment_minor(csv_sample = 'L100_19_minor_sample_misalignment
 
 #===========================
 
-
-
-
-
-

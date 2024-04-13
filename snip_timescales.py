@@ -1635,15 +1635,15 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                       set_plot_histogram_log              = False,    # set yaxis as log
                         add_inset                       = True,     # whether to have smaller second plot
                         add_inset_bestfit               = True,
-                    set_thist_ymax_trelax               = 100,             # 0.45 / 500  yaxis max
+                    set_thist_ymax_trelax               = 0.45,             # 0.45 / 500  yaxis max
                   _plot_tdyn_histogram          = False,
                     set_bin_limit_tdyn                  = 32,       # [ None / multiples ]
                     set_bin_width_tdyn                  = 1,        # [ multiples ]
-                    set_thist_ymax_tdyn                 = 80,             # 0.35 / 400 yaxis max
+                    set_thist_ymax_tdyn                 = 0.35,             # 0.35 / 400 yaxis max
                   _plot_ttorque_histogram       = False,
                     set_bin_limit_ttorque               = 12,       # [ None / multiples ]
                     set_bin_width_ttorque               = 0.5,      # [ multiples ]
-                    set_thist_ymax_ttorque              = 80,             # 0.35 / 400 yaxis max
+                    set_thist_ymax_ttorque              = 0.35,             # 0.35 / 400 yaxis max
                 
                   #-----------------------------
                   # Plot stacked misalignments based on current sample
@@ -1719,6 +1719,12 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                     use_only_start_morph                = True,          # use only ETG - and LTG - 
                     set_origins_morph                   = ['ETG-ETG', 'ETG-LTG', 'LTG-ETG', 'LTG-LTG'],
                     
+                  #-----------------------------
+                  _plot_timescale_gas_histogram = False,
+                    set_gashist_type                    = ['co-co'],
+                    set_gashist_min_trelax              = 0.5,
+                      add_plot_gas_morph_median         = False,
+                  
                   
                   #-----------------------------
                   # General formatting
@@ -2677,7 +2683,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                     continue
                 if print_checks:
                     print('    MET STEL MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_stelmass == None else min_stelmass), (math.nan if max_stelmass == None else max_stelmass)))
-            
+                window_stelmass_1hmr = galaxy_tree['%s' %GalaxyID]['stars']['1.0_hmr']['mass'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
+                
 
                 # Check gasmass
                 check = []
@@ -2695,7 +2702,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                     continue
                 if print_checks:
                     print('    MET GAS MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_gasmass == None else min_gasmass), (math.nan if max_gasmass == None else max_gasmass)))
-            
+                window_gasmass_1hmr = galaxy_tree['%s' %GalaxyID]['gas']['1.0_hmr']['mass'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
+                
             
                 # Check gasmass sf
                 check = []
@@ -2713,7 +2721,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                     continue
                 if print_checks:
                     print('    MET SF MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_sfmass == None else min_sfmass), (math.nan if max_sfmass == None else max_sfmass)))
-            
+                window_sfmass_1hmr = galaxy_tree['%s' %GalaxyID]['gas_sf']['1.0_hmr']['mass'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
+                
             
                 # Check gasmass nsf
                 check = []
@@ -3028,8 +3037,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                                                         'SubGroupNum': galaxy_tree['%s' %GalaxyID]['SubGroupNum'][index_start:index_stop],
                                                         'halomass': galaxy_tree['%s' %GalaxyID]['halomass'][index_start:index_stop],
                                                         'stelmass': window_stelmass,
+                                                        'stelmass_1hmr': window_stelmass_1hmr,
                                                         'gasmass': window_gasmass,
+                                                        'gasmass_1hmr': window_gasmass_1hmr,
                                                         'sfmass': window_sfmass,
+                                                        'sfmass_1hmr': window_sfmass_1hmr,
                                                         'nsfmass': window_nsfmass,
                                                         'dmmass': galaxy_tree['%s' %GalaxyID]['dm']['ap_mass'][index_start:index_stop],
                                                                                                                  
@@ -8776,10 +8788,10 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 relaxationmorph_plot.append('other')
             
             # Collect average kappa during misalignment
-            relaxationkappa_plot.append(np.mean(misalignment_tree['%s' %ID_i]['kappa_stars'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+            relaxationkappa_plot.append(np.mean(misalignment_tree['%s' %ID_i]['kappa_stars'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1]))
             
             # Collect average stellar-DM misalignment angle
-            halomisangle_plot.append(np.mean(misalignment_tree['%s' %ID_i]['stars_dm'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+            halomisangle_plot.append(np.mean(misalignment_tree['%s' %ID_i]['stars_dm'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1]))
             
                             
         # Collect data into dataframe
@@ -8804,7 +8816,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         norm = mpl.colors.Normalize(vmin=0.15, vmax=0.65, clip=True)
         mapper = cm.ScalarMappable(norm=norm, cmap='Spectral')         #cmap=cm.coolwarm), cmap='sauron'
         
-        im1 = ax_scatter.scatter(df['DM-stars angle'], df['Relaxation time'], c=df['Relaxation kappa'], s=2, norm=norm, cmap='Spectral', zorder=99, edgecolors='k', linewidths=0.1, alpha=1)
+        im1 = ax_scatter.scatter(df['DM-stars angle'], df['Relaxation time'], c=df['Relaxation kappa'], s=1.5, norm=norm, cmap='Spectral', zorder=99, edgecolors='k', linewidths=0.1, alpha=1)
+        #im1 = ax_scatter.scatter(df['DM-stars angle'], df['Relaxation time'], c=df['Relaxation kappa'], s=1.5, norm=norm, cmap='Spectral', zorder=99, alpha=0.8)
         plt.colorbar(im1, ax=ax_scatter, label=r'$\bar{\kappa}_{\mathrm{co}}^{*}$', extend='both', pad=0.025)
         
         
@@ -8944,10 +8957,10 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 relaxationmorph_plot.append('other')
             
             # Collect average kappa during misalignment
-            relaxationkappa_plot.append(np.mean(misalignment_tree['%s' %ID_i]['kappa_stars'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+            relaxationkappa_plot.append(np.mean(misalignment_tree['%s' %ID_i]['kappa_stars'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1]))
             
             # Collect average stellar-DM misalignment angle
-            halomisangle_plot.append(np.mean(misalignment_tree['%s' %ID_i]['stars_dm'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+            halomisangle_plot.append(np.mean(misalignment_tree['%s' %ID_i]['stars_dm'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1]))
             
                             
         # Collect data into dataframe
@@ -8972,7 +8985,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         norm = mpl.colors.Normalize(vmin=0.15, vmax=0.65, clip=True)
         mapper = cm.ScalarMappable(norm=norm, cmap='Spectral')         #cmap=cm.coolwarm), cmap='sauron'
         
-        im1 = ax_scatter.scatter(df['DM-stars angle'], df['Relaxation time'], c=df['Relaxation kappa'], s=2, norm=norm, cmap='Spectral', zorder=99, edgecolors='k', linewidths=0.1, alpha=1)
+        im1 = ax_scatter.scatter(df['DM-stars angle'], df['Relaxation time'], c=df['Relaxation kappa'], s=1.5, norm=norm, cmap='Spectral', zorder=99, edgecolors='k', linewidths=0.1, alpha=1)
+        #im1 = ax_scatter.scatter(df['DM-stars angle'], df['Relaxation time'], c=df['Relaxation kappa'], s=1.5, norm=norm, cmap='Spectral', zorder=99, alpha=0.8)
         plt.colorbar(im1, ax=ax_scatter, label=r'$\bar{\kappa}_{\mathrm{co}}^{*}$', extend='both', pad=0.025)
         
         
@@ -9109,10 +9123,10 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 relaxationmorph_plot.append('other')
             
             # Collect average kappa during misalignment
-            relaxationkappa_plot.append(np.mean(misalignment_tree['%s' %ID_i]['kappa_stars'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+            relaxationkappa_plot.append(np.mean(misalignment_tree['%s' %ID_i]['kappa_stars'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1]))
             
             # Collect average stellar-DM misalignment angle
-            halomisangle_plot.append(np.mean(misalignment_tree['%s' %ID_i]['stars_dm'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+            halomisangle_plot.append(np.mean(misalignment_tree['%s' %ID_i]['stars_dm'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1]))
             
                             
         # Collect data into dataframe
@@ -9137,7 +9151,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         norm = mpl.colors.Normalize(vmin=0.15, vmax=0.65, clip=True)
         mapper = cm.ScalarMappable(norm=norm, cmap='Spectral')         #cmap=cm.coolwarm), cmap='sauron'
         
-        im1 = ax_scatter.scatter(df['DM-stars angle'], df['Relaxation time'], c=df['Relaxation kappa'], s=2, norm=norm, cmap='Spectral', zorder=99, edgecolors='k', linewidths=0.1, alpha=1)
+        #im1 = ax_scatter.scatter(df['DM-stars angle'], df['Relaxation time'], c=df['Relaxation kappa'], s=1.5, norm=norm, cmap='Spectral', zorder=99, edgecolors='k', linewidths=0.1, alpha=1)
+        im1 = ax_scatter.scatter(df['DM-stars angle'], df['Relaxation time'], c=df['Relaxation kappa'], s=1.5, norm=norm, cmap='Spectral', zorder=99, alpha=0.8)
         plt.colorbar(im1, ax=ax_scatter, label=r'$\bar{\kappa}_{\mathrm{co}}^{*}$', extend='both', pad=0.025)
         
         #--------------
@@ -9275,10 +9290,10 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 relaxationmorph_plot.append('other')
             
             # Collect average kappa during misalignment
-            relaxationkappa_plot.append(np.mean(misalignment_tree['%s' %ID_i]['kappa_stars'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+            relaxationkappa_plot.append(np.mean(misalignment_tree['%s' %ID_i]['kappa_stars'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1]))
             
             # Collect average stellar-DM misalignment angle
-            halomisangle_plot.append(np.mean(misalignment_tree['%s' %ID_i]['stars_dm'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
+            halomisangle_plot.append(np.mean(misalignment_tree['%s' %ID_i]['stars_dm'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1]))
             
                             
         # Collect data into dataframe
@@ -9890,7 +9905,221 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         """
         
         
+    #-------------------------
+    # Plot timescale histogram of current criteria
+    if _plot_timescale_gas_histogram:
+        # Gather data
+        relaxationtime_plot  = []
+        relaxationtype_plot  = []
+        relaxationkappa_plot = []
+        gas_fraction_array   = []
+        gassf_fraction_array = []
+        ID_plot              = []
+        for ID_i in misalignment_tree.keys():
+            
+            if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_gashist_min_trelax:
+                continue
         
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] in set_gashist_type:
+                
+                ID_plot.append(ID_i)
+                relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+                
+                if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
+                    relaxationtype_plot.append('C0')
+                if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
+                    relaxationtype_plot.append('C1')
+                if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
+                    relaxationtype_plot.append('C2')
+                if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
+                    relaxationtype_plot.append('C3')
+                    
+                
+                # take average gas fraction while unstable
+                gas_fraction_array.append(np.mean(np.divide(np.array(misalignment_tree['%s' %ID_i]['gasmass_1hmr'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1], np.array(misalignment_tree['%s' %ID_i]['stelmass_1hmr'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1])))
+                gassf_fraction_array.append(np.mean(np.divide(np.array(misalignment_tree['%s' %ID_i]['sfmass_1hmr'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1], np.array(misalignment_tree['%s' %ID_i]['stelmass_1hmr'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1])))
+                
+                # Collect average kappa during misalignment
+                relaxationkappa_plot.append(np.mean(misalignment_tree['%s' %ID_i]['kappa_stars'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1]))
+                
+                
+        # Collect data into dataframe
+        df = pd.DataFrame(data={'Relaxation time': relaxationtime_plot, 'Relaxation kappa': relaxationkappa_plot, 'Relaxation type': relaxationtype_plot, 'Gas fraction': gas_fraction_array, 'SF fraction': gassf_fraction_array, 'GalaxyIDs': ID_plot})
+
+        
+        #-------------
+        ### Plotting scatter
+        fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.5], sharex=True, sharey=False)
+        plt.subplots_adjust(wspace=0.4, hspace=0.4)
+        
+        
+        #-------------
+        # Colourbar for kappa
+        norm = mpl.colors.Normalize(vmin=0.15, vmax=0.65, clip=True)
+        mapper = cm.ScalarMappable(norm=norm, cmap='Spectral')         #cmap=cm.coolwarm), cmap='sauron'
+        
+        im1 = axs.scatter(df['Gas fraction'], df['Relaxation time'], c=df['Relaxation kappa'], s=1.5, norm=norm, cmap='Spectral', zorder=99, edgecolors='k', linewidths=0.1, alpha=1)
+        plt.colorbar(im1, ax=axs, label=r'$\bar{\kappa}_{\mathrm{co}}^{*}$', extend='both', pad=0.025)
+        
+        
+        #---------------
+        # Bin hist data, find sigma percentiles
+        bin_width = 0.1
+        bins = np.arange(0, 1.1, bin_width)
+        binned_data_arg = np.digitize(df['Gas fraction'], bins=bins)
+        bin_medians     = np.stack([np.percentile(df['Relaxation time'][binned_data_arg == i], q=[16, 50, 84]) for i in range(1, len(bins))])
+        print(bin_medians)
+        
+        # Plot average line for total sample
+        axs.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,2], facecolor='k', alpha=0.2, zorder=6)
+        axs.plot(bins[:-1]+(bin_width/2), bin_medians[:,1], lw=1, c='k', ls='-', zorder=101, label='sample')
+        
+        if add_plot_gas_morph_median:
+            # Bin hist data, find sigma percentiles
+            binned_data_arg = np.digitize(df['Gas fraction'][df['Relaxation kappa'] > 0.4], bins=bins)
+            bin_medians     = np.stack([np.percentile(df['Relaxation time'][df['Relaxation kappa'] > 0.4][binned_data_arg == i], q=[16, 50, 84]) for i in range(1, len(bins))])
+            #print(bin_medians)
+        
+            # Plot average line for total sample
+            #axs.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,2], facecolor='b', alpha=0.2, zorder=6)
+            axs.plot(bins[:-1]+(bin_width/2), bin_medians[:,1], lw=1, c='b', ls='-', zorder=101, label=r'$\bar{\kappa}_{\mathrm{co}}^{*}>0.4$')
+        
+            # Bin hist data, find sigma percentiles
+            binned_data_arg = np.digitize(df['Gas fraction'][df['Relaxation kappa'] < 0.4], bins=bins)
+            bin_medians     = np.stack([np.percentile(df['Relaxation time'][df['Relaxation kappa'] < 0.4][binned_data_arg == i], q=[16, 50, 84]) for i in range(1, len(bins))])
+            #print(bin_medians)
+        
+            # Plot average line for total sample
+            #axs.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,2], facecolor='r', alpha=0.2, zorder=6)
+            axs.plot(bins[:-1]+(bin_width/2), bin_medians[:,1], lw=0.7, c='r', ls='-', zorder=101, label=r'$\bar{\kappa}_{\mathrm{co}}^{*}<0.4$', alpha=0.9)
+        
+        #-------------
+        ### Formatting
+        axs.set_ylabel('$t_{\mathrm{relax}}$ (Gyr)')
+        axs.set_xlabel('$f_{\mathrm{gas}}$')
+        axs.set_ylim(0, 4.5)
+        axs.set_yticks(np.arange(0, 4.1, 1))
+        axs.set_xlim(0, 1.1)
+        axs.set_xticks(np.arange(0, 1.11, 0.2))
+        axs.minorticks_on()
+        axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
+        axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
+        
+        #-----------
+        ### title
+        if plot_annotate:
+            axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
+            
+        #-----------
+        ### other
+        plt.tight_layout()
+        
+        #-----------
+        ### Savefig
+        savefig_txt_2 = savefig_txt    
+                         
+        if savefig:
+            if savefig_txt == 'manual':
+                savefig_txt = input('\n  -> Enter savefig_txt:   ')
+            plt.savefig("%s/time_spent_misaligned_gas/scatter_trelax_gas_%s_stacked%s_percentage%s_%s.%s" %(fig_dir, len(misalignment_tree.keys()), set_plot_relaxation_type, set_plot_percentage, savefig_txt_2, file_format), format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/time_spent_misaligned_gas/scatter_trelax_gas_%s_stacked%s_percentage%s_%s.%s" %(fig_dir, len(misalignment_tree.keys()), set_plot_relaxation_type, set_plot_percentage, savefig_txt_2, file_format)) 
+        if showfig:
+            plt.show()
+        plt.close()
+
+
+        #===================================================================================
+        gas_1_df = df.loc[(df['Gas fraction'] < 0.2)]
+        gas_2_df = df.loc[(df['Gas fraction'] > 0.2) & (df['Gas fraction'] < 0.5)]
+        gas_3_df = df.loc[(df['Gas fraction'] > 0.5)]
+        
+        
+        #print('-------------------------------------------------------------')
+        print('Number of coco relaxations: ', len(ID_plot))
+        print('\tGas fractions:')
+        print('\t0.0 - 0.2:    ', len(gas_1_df))
+        print('\t0.2 - 0.5:    ', len(gas_2_df))
+        print('\t0.5 +    :    ', len(gas_3_df))
+        
+        
+        #-------------
+        ### Plotting
+        fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.5], sharex=True, sharey=False)
+        plt.subplots_adjust(wspace=0.4, hspace=0.4)
+                
+        if set_bin_limit_trelax == None:
+            set_bin_limit_trelax = math.ceil(max(relaxationtime_plot))
+        if set_plot_histogram_log:
+            set_plot_relaxation_type = False 
+        
+        #-------------
+        ### Plot histogram
+        axs.hist(gas_1_df['Relaxation time'], weights=np.ones(len(gas_1_df['Relaxation time']))/len(gas_1_df['Relaxation time']), bins=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax), histtype='step', facecolor='none', alpha=0.9, lw=1.0)
+        axs.hist(gas_2_df['Relaxation time'], weights=np.ones(len(gas_2_df['Relaxation time']))/len(gas_2_df['Relaxation time']), bins=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax), histtype='step', facecolor='none', alpha=0.9, lw=1.0)
+        axs.hist(gas_3_df['Relaxation time'], weights=np.ones(len(gas_3_df['Relaxation time']))/len(gas_3_df['Relaxation time']), bins=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax), histtype='step', facecolor='none', alpha=0.9, lw=1.0)
+        
+        
+        # Find bin values (sqrt N)
+        hist_n, _ = np.histogram(relaxationtime_plot, bins=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax), range=(0, set_bin_limit_trelax))
+            
+        
+        #-----------
+        ### General formatting
+        # Axis labels
+        axs.set_yscale('log')
+        axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
+        axs.set_xlim(0, set_bin_limit_trelax)
+        axs.set_xticks(np.arange(0, set_bin_limit_trelax+0.1, step=1))
+        axs.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)')
+        axs.set_ylabel('Percentage of misalignments')
+        axs.set_ylim(bottom=0.001)
+        
+        
+        #-----------
+        ### Legend
+        legend_elements = []
+        legend_labels = []
+        legend_colors = []
+        
+        legend_labels.append(r'$0.2<f_{\mathrm{gas}}$')
+        legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+        legend_colors.append('C0')
+        
+        legend_labels.append(r'$0.2<f_{\mathrm{gas}}<0.5$')
+        legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+        legend_colors.append('C1')
+        
+        legend_labels.append(r'$f_{\mathrm{gas}}>0.5$')
+        legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+        legend_colors.append('C2')
+        
+        ncol=1
+        axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0, ncol=ncol)
+        
+        
+        #-----------
+        ### title
+        if plot_annotate:
+            axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
+            
+        #-----------
+        ### other
+        plt.tight_layout()
+        
+        
+        #-----------
+        ### Savefig
+        savefig_txt_2 = savefig_txt    
+                         
+        if savefig:
+            if savefig_txt == 'manual':
+                savefig_txt = input('\n  -> Enter savefig_txt:   ')
+            plt.savefig("%s/time_spent_misaligned_gas/%strelax_gas_%s_stacked%s_percentage%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), set_plot_relaxation_type, set_plot_percentage, savefig_txt_2, file_format), format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/time_spent_misaligned_gas/%strelax_gas_%s_stacked%s_percentage%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), set_plot_relaxation_type, set_plot_percentage, savefig_txt_2, file_format)) 
+        if showfig:
+            plt.show()
+        plt.close()
+    
     
     #-------------------------
     ### OLD PLOTS
@@ -10819,7 +11048,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
 
 #=============================
 #_create_galaxy_tree()  
-_analyse_tree()
+#_analyse_tree()
 #=============================
 
 

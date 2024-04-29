@@ -9936,8 +9936,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                     
                 
                 # take average gas fraction while unstable
-                gas_fraction_array.append(np.mean(np.divide(np.array(misalignment_tree['%s' %ID_i]['gasmass_1hmr'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1], np.array(misalignment_tree['%s' %ID_i]['stelmass_1hmr'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1])))
-                gassf_fraction_array.append(np.mean(np.divide(np.array(misalignment_tree['%s' %ID_i]['sfmass_1hmr'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1], np.array(misalignment_tree['%s' %ID_i]['stelmass_1hmr'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1])))
+                gas_fraction_array.append(np.mean(np.divide(np.array(misalignment_tree['%s' %ID_i]['gasmass_1hmr'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1], np.array(misalignment_tree['%s' %ID_i]['gasmass_1hmr'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1] + np.array(misalignment_tree['%s' %ID_i]['stelmass_1hmr'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1])))
+                gassf_fraction_array.append(np.mean(np.divide(np.array(misalignment_tree['%s' %ID_i]['sfmass_1hmr'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1], np.array(misalignment_tree['%s' %ID_i]['sfmass_1hmr'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1] + np.array(misalignment_tree['%s' %ID_i]['stelmass_1hmr'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1])))
                 
                 # Collect average kappa during misalignment
                 relaxationkappa_plot.append(np.mean(misalignment_tree['%s' %ID_i]['kappa_stars'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1]))
@@ -9996,7 +9996,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         #-------------
         ### Formatting
         axs.set_ylabel('$t_{\mathrm{relax}}$ (Gyr)')
-        axs.set_xlabel('$f_{\mathrm{gas}}$')
+        axs.set_xlabel('$f_{\mathrm{gas}}(<r_{50})$')
         axs.set_ylim(0, 4.5)
         axs.set_yticks(np.arange(0, 4.1, 1))
         axs.set_xlim(0, 1.1)

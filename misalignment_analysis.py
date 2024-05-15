@@ -487,7 +487,8 @@ def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misali
                                                                'gas_sf_gas_nsf',       # gas_sf_gas_nsf
                                                                'stars_dm',
                                                                'gas_dm',
-                                                               'gas_sf_dm'],           
+                                                               'gas_sf_dm',
+                                                               'gas_nsf_dm'],           
                                         spin_hmr            = np.array([1.0, 2.0]),          # multiples of hmr for which to find spin
                                         find_uncertainties  = True,                    # whether to find 2D and 3D uncertainties
                                         rad_projected       = False,                     # whether to use rad in projection or 3D
@@ -1019,6 +1020,7 @@ def _analysis_misalignment_minor(csv_sample = 'L100_19_minor_sample_misalignment
 #    _sample_misalignment(snapNum = int(snap_i), galaxy_mass_min    = 10**(9.5), galaxy_mass_max    = 10**(15))
 #    _analysis_misalignment_distribution(csv_sample = 'L100_' + str(int(snap_i)) + '_all_sample_misalignment_9.5')
     
+_analysis_misalignment_distribution(csv_sample = 'L100_' + str(188) + '_all_sample_misalignment_9.5', csv_name = 'plusNSF')
 
 #===========================
 

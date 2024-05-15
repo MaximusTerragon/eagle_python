@@ -349,7 +349,7 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         
         
         #print(subhalo.coms['adjust'][0])
-        #print(subhalo.coms['stars'][0])
+        #print(subhalo.coms['stars'][0])s
         
         
         
@@ -2135,7 +2135,7 @@ def galaxy_gif(csv_sample = False,              # False, Whether to read in exis
 
 
 #--------------      
-#galaxy_render()
+galaxy_render()
 
 #galaxy_map()
 

@@ -1,5 +1,6 @@
 import h5py
 import numpy as np
+import scipy
 from scipy import stats
 import math
 import random
@@ -3997,6 +3998,38 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             
             print('bin_count of hist:', bin_count)
             
+            # Add uncertainty 
+            raise Exception('do below')
+            
+            
+            
+            #should be able to use bin_count here i think...
+            
+            if set_plot_percentage:
+                axs.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax), histtype='bar', edgecolor='none', facecolor='k', alpha=0.1)
+                bin_count, _, _ = axs.hist(relaxationtime_plot, weights=np.ones(len(relaxationtime_plot))/len(relaxationtime_plot), bins=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax), histtype='bar', edgecolor='k', facecolor='none', alpha=1.0)
+        
+                # Add poisson errors to each bin (sqrt N)
+                hist_n, _ = np.histogram(relaxationtime_plot, bins=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax), range=(0, set_bin_limit_trelax))
+                axs.errorbar(np.arange(set_bin_width_trelax/2, set_bin_limit_trelax+0.5*set_bin_width_trelax, set_bin_width_trelax), hist_n/len(relaxationtime_plot), xerr=None, yerr=np.sqrt(hist_n)/len(relaxationtime_plot), ecolor='k', ls='none', capsize=2, elinewidth=1.0, markeredgewidth=1, alpha=0.9)
+            else:
+                axs.hist(relaxationtime_plot, bins=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax), histtype='bar', edgecolor='none', facecolor='k', alpha=0.1)
+                bin_count, _, _ = axs.hist(relaxationtime_plot, bins=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax), histtype='bar', edgecolor='k', facecolor='none', alpha=1.0)
+        
+                # Add poisson errors to each bin (sqrt N)
+                hist_n, _ = np.histogram(relaxationtime_plot, bins=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax), range=(0, set_bin_limit_trelax))
+                axs.errorbar(np.arange(set_bin_width_trelax/2, set_bin_limit_trelax+0.5*set_bin_width_trelax, set_bin_width_trelax), hist_n, xerr=None, yerr=np.sqrt(hist_n), ecolor='k', ls='none', capsize=2, elinewidth=1.0, markeredgewidth=1, alpha=0.9)
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
             axins.set_yscale('log')
             axins.set_xlim(0, set_bin_limit_trelax)
             axins.set_xticks(np.arange(0, set_bin_limit_trelax+0.1, step=1))
@@ -4014,8 +4047,30 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             #-----------
             # Best-fit data
             mask = np.where(np.array(bin_count) > 0)[0]
-            slope, intercept, r_value, p_value, std_err = stats.linregress(np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax)[mask][1:], np.log10(np.array(bin_count)[mask])[1:])
+            yerr = np.sqrt(np.array(bin_count))[mask]
+            
+            print('bin_count, error:')
+            print(bin_count)
+            print(yerr)
+            
+            #slope, intercept, r_value, p_value, std_err = stats.linregress(np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax)[mask][1:], np.log10(np.array(bin_count)[mask])[1:])
+            
+            
+            # Define linear bestfit
+            def func(x, a, b):
+                return (a*x) + b
+            
+            popt, pcov = scipy.optimize.curve_fit(f=func, xdata=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax)[mask][1:]. ydata=set_bin_width_trelax)[mask][1:], np.log10(np.array(bin_count)[mask])[1:], sigma=yerr)
+            print('\nauhbbebofjn', popt)
+            slope = popt[0]
+            intercept = popt[1]
+            
+            
+
             print('Best fit line: \tfrac = %.2f x 10^(%.2f t)' %(10**intercept, slope))
+            
+            
+            
             
             if add_inset_bestfit:
                 axins.plot([0.1 , 5], [(10**intercept) * (10**(slope*0.1)), (10**intercept) * (10**(slope*5))], lw=0.7, ls='--', alpha=0.8, c='purple', label='best-fit')

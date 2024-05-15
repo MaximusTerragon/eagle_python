@@ -1709,8 +1709,8 @@ def _plot_evolution_old(csv_output = 'L100_evolution_ID401467650_RadProj_Err__st
 #savefig_txt = '_135_coco'
 
 # >2 Gyr relaxations:
-#ID_list = [ 21263579 ,  55908430 ,  102310984 ,  115659946 ,  135239884 ,  137982097 ,  216029816 ,  221925469 ,  236121865 ,  251900012 ,  273987844 ,  356381666 ,  370249945 ,  453139727 ,  470931663 ,  41296132 ,  412184257 ,  137732481 ,  144504424 ,  208235278 ,  285055028 ,  370237257 ,  405504442 ,  89535725 ,  188808381 ,  306747955 ,  239924250 ,  7770818 ,  179554468 ,  334237852 ,  350073611 ,  123869114 ,  141978869 ,  301364232 ,  338706467 ]
-#savefig_txt = '_2Gyr_trelax'
+ID_list = [ 21263579 ,  55908430 ,  102310984 ,  115659946 ,  135239884 ,  137982097 ,  216029816 ,  221925469 ,  236121865 ,  251900012 ,  273987844 ,  356381666 ,  370249945 ,  453139727 ,  470931663 ,  41296132 ,  412184257 ,  137732481 ,  144504424 ,  208235278 ,  285055028 ,  370237257 ,  405504442 ,  89535725 ,  188808381 ,  306747955 ,  239924250 ,  7770818 ,  179554468 ,  334237852 ,  350073611 ,  123869114 ,  141978869 ,  301364232 ,  338706467 ]
+savefig_txt = '_2Gyr_trelax'
 
 # >20 dyn:
 #ID_list = [ 236121865 ,  370249945 ]
@@ -1783,7 +1783,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                            plot_outflow         = True,
                            plot_stelmassloss    = False,
                            plot_bh_acc          = False,
-                           plot_bh_acc_instant  = False,
+                           plot_bh_acc_instant  = True,
                            plot_sfr             = True,
                          # Masses   [ Msun ]
                            plot_halomass        = False,
@@ -1791,7 +1791,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                            plot_gasmass         = False,
                            plot_sfmass          = True,
                            plot_nsfmass         = False,
-                           plot_bhmass          = False,
+                           plot_bhmass          = True,
                          # sSFR     [ /yr ]
                            plot_ssfr            = False,
                          # l of stars (specific angular momentum or spin) [ pkpc/kms-1 ]
@@ -1813,9 +1813,9 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                            plot_Z_outflow       = False,
                            plot_Z_insitu        = False,
                          # Eddington    [ ]
-                           plot_edd             = False,
+                           plot_edd             = True,
                          # Luminosity   [ erg/s ]
-                           plot_lbol            = False,
+                           plot_lbol            = True,
                          # Disc velocity    [ km/s ]
                            plot_vcirc           = False,
                          # Torquing time    [ Gyr ]
@@ -1823,7 +1823,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                            plot_ttorque         = True,     
                          #==================================================================================
                          showfig        = True,
-                         savefig        = True,
+                         savefig        = False,
                            file_format  = 'pdf',
                            savefig_txt  = savefig_txt, 
                          #--------------------------
@@ -2215,7 +2215,8 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                 ### Formatting
                 #axs[i].set_ylabel('$\mathrm{log_{10}}(\mathrm{M}/\mathrm{M}_{\odot})$')
                 axs[i].set_ylabel('$\mathrm{log_{10}}M$ $(\mathrm{M}_{\odot})$')
-                axs[i].set_ylim(bottom=8.5, top=11.5)
+                #axs[i].set_ylim(bottom=8.5, top=11.5)
+                axs[i].set_ylim(bottom=5.5, top=11.5)
                 ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major', labelbottom=False, labeltop=False)
                 ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='minor')
                 
@@ -2413,7 +2414,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
             # Plot 8
             if plot_names_i == 'edd':
                 # Plot data in galaxy_tree():
-                axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['bh']['edd'])), alpha=1.0, lw=1, c='purple')
+                axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['bh']['edd'])), alpha=1.0, lw=0.7, c='purple')
                 
                 #---------------------
                 ### Formatting
@@ -2438,7 +2439,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
             # Plot 9
             if plot_names_i == 'lbol':
                 # Plot data in galaxy_tree():
-                axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['bh']['lbol'])), alpha=1.0, lw=1, c='purple')
+                axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['bh']['lbol'])), alpha=1.0, lw=0.7, c='purple')
                 
                 #---------------------
                 ### Formatting

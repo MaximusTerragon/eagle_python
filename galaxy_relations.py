@@ -335,7 +335,7 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
                        misangle_threshold = 30,             # what we classify as misaligned
                        #--------------------------
                        showfig       = True,
-                       savefig       = True,
+                       savefig       = False,
                          file_format = 'pdf',
                          savefig_txt = '_fraction',
                        #--------------------------
@@ -617,9 +617,10 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
                             xlabel = 'Stellar mass'
                             value_x.append(np.log10(np.array(all_general['%s' %GalaxyID]['stelmass'])))
                             
-                            ylabel = 'sSFR [ yr-1 ]'
+                            ylabel = 'gassf / stelmass + gassf'
                             #value_y.append(3.154e+7*np.array(all_general['%s' %GalaxyID]['ap_sfr']))
-                            value_y.append(np.divide(3.154e+7*np.array(all_general['%s' %GalaxyID]['ap_sfr']), np.array(all_general['%s' %GalaxyID]['stelmass'])))
+                            #value_y.append(np.divide(3.154e+7*np.array(all_general['%s' %GalaxyID]['ap_sfr']), np.array(all_general['%s' %GalaxyID]['stelmass'])))
+                            value_y.append(np.divide(all_general['%s' %GalaxyID]['gasmass_sf'], all_general['%s' %GalaxyID]['gasmass_sf'] + all_general['%s' %GalaxyID]['stelmass']))
                             
                             clabel = 'kappa'
                             value_c.append(all_general['%s' %GalaxyID]['kappa_stars'])
@@ -648,11 +649,12 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
                             xlabel = 'stellar mass'
                             value_x.append(np.log10(np.array(all_masses['%s' %GalaxyID]['stars'][value_mask_masses])))
                             
-                            ylabel = 'ETG fraction in bin'
-                            value_y.append(all_general['%s' %GalaxyID]['kappa_stars'])
+                            ylabel = 'gassf / stelmass + gassf'
+                            #value_y.append(all_general['%s' %GalaxyID]['kappa_stars'])
+                            value_y.append(np.divide(np.array(all_masses['%s' %GalaxyID]['gas_sf'][value_mask_masses]), np.array(all_masses['%s' %GalaxyID]['gas_sf'][value_mask_masses]) + np.array(all_masses['%s' %GalaxyID]['stars'][value_mask_masses])))
                             
-                            #clabel = 'kappa'
-                            #value_c.append(all_general['%s' %GalaxyID]['kappa_stars'])
+                            clabel = 'kappa'
+                            value_c.append(all_general['%s' %GalaxyID]['kappa_stars'])
                             
                             #value_s.append(math.nan)
                             #========================================================
@@ -722,8 +724,8 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
         # Axis labels
         axs.set_xlim(9, 11.5)
         #axs.set_xticks(np.arange(0, 181, step=30))
-        axs.set_ylim(0, 1)
-        #axs.set_yscale('log')
+        axs.set_ylim(0.01, 1)
+        axs.set_yscale('log')
         axs.set_xlabel(xlabel)
         axs.set_ylabel(ylabel)
         #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='both', width=0.8, length=2)

@@ -1,9 +1,9 @@
-from snip_timescales import _analyse_tree
+from snip_timescales_tree import _analyse_tree
 
 
 #================================================================       
 # _normalLatency_anyMergers_anyMorph
-print('\t_20Thresh_30Peak_normalLatency_anyMergers_anyMorph')
+print('\n\n\t_20Thresh_30Peak_normalLatency_anyMergers_anyMorph')
 _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Peak_normalLatency_anyMergers_anyMorph',
                 min_particles      = 20,
                 min_stelmass       = None, 
@@ -18,7 +18,7 @@ _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Pea
                   morph_limits     = [0.4, 0.4])
                   
 # _normalLatency_anyMergers_hardMorph
-print('\t_20Thresh_30Peak_normalLatency_anyMergers_hardMorph')
+print('\n\n\t_20Thresh_30Peak_normalLatency_anyMergers_hardMorph')
 _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Peak_normalLatency_anyMergers_hardMorph',
                 min_particles      = 20,
                 min_stelmass       = None, 
@@ -35,7 +35,7 @@ _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Pea
                   
 #--------------------------------------------------------------    
 # _normalLatency_anyMergers_LTG
-print('\t_20Thresh_30Peak_normalLatency_anyMergers_LTG')
+print('\n\n\t_20Thresh_30Peak_normalLatency_anyMergers_LTG')
 _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Peak_normalLatency_anyMergers_LTG',
                 min_particles      = 20,
                 min_stelmass       = None, 
@@ -50,7 +50,7 @@ _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Pea
                   morph_limits     = [0.4, 0.4])
                   
 # _normalLatency_anyMergers_ETG
-print('\t_20Thresh_30Peak_normalLatency_anyMergers_ETG')
+print('\n\n\t_20Thresh_30Peak_normalLatency_anyMergers_ETG')
 _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Peak_normalLatency_anyMergers_ETG',
                 min_particles      = 20,
                 min_stelmass       = None, 
@@ -65,7 +65,7 @@ _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Pea
                   morph_limits     = [0.4, 0.4])
                   
 # _normalLatency_anyMergers_hardLTG
-print('\t_20Thresh_30Peak_normalLatency_anyMergers_hardLTG')
+print('\n\n\t_20Thresh_30Peak_normalLatency_anyMergers_hardLTG')
 _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Peak_normalLatency_anyMergers_hardLTG',
                 min_particles      = 20,
                 min_stelmass       = None, 
@@ -80,7 +80,7 @@ _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Pea
                   morph_limits     = [0.35, 0.45])
                   
 # _normalLatency_anyMergers_hardETG
-print('\t_20Thresh_30Peak_normalLatency_anyMergers_hardETG')
+print('\n\n\t_20Thresh_30Peak_normalLatency_anyMergers_hardETG')
 _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Peak_normalLatency_anyMergers_hardETG',
                 min_particles      = 20,
                 min_stelmass       = None, 
@@ -97,7 +97,7 @@ _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Pea
                   
 #--------------------------------------------------------------    
 # _normalLatency_anyMergers_LTG-LTG
-print('\t_20Thresh_30Peak_normalLatency_anyMergers_LTG-LTG')
+print('\n\n\t_20Thresh_30Peak_normalLatency_anyMergers_LTG-LTG')
 _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Peak_normalLatency_anyMergers_LTG-LTG',
                 min_particles      = 20,
                 min_stelmass       = None, 
@@ -112,7 +112,7 @@ _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Pea
                   morph_limits     = [0.4, 0.4])
                   
 # _normalLatency_anyMergers_ETG-ETG
-print('\t_20Thresh_30Peak_normalLatency_anyMergers_ETG-ETG')
+print('\n\n\t_20Thresh_30Peak_normalLatency_anyMergers_ETG-ETG')
 _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Peak_normalLatency_anyMergers_ETG-ETG',
                 min_particles      = 20,
                 min_stelmass       = None, 
@@ -127,7 +127,7 @@ _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Pea
                   morph_limits     = [0.4, 0.4])
                   
 # _normalLatency_anyMergers_hardLTG-LTG
-print('\t_20Thresh_30Peak_normalLatency_anyMergers_hardLTG-LTG')
+print('\n\n\t_20Thresh_30Peak_normalLatency_anyMergers_hardLTG-LTG')
 _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Peak_normalLatency_anyMergers_hardLTG-LTG',
                 min_particles      = 20,
                 min_stelmass       = None, 
@@ -142,7 +142,7 @@ _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Pea
                   morph_limits     = [0.35, 0.45])
                   
 # _normalLatency_anyMergers_hardETG-ETG
-print('\t_20Thresh_30Peak_normalLatency_anyMergers_hardETG-ETG')
+print('\n\n\t_20Thresh_30Peak_normalLatency_anyMergers_hardETG-ETG')
 _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Peak_normalLatency_anyMergers_hardETG-ETG',
                 min_particles      = 20,
                 min_stelmass       = None, 
@@ -159,7 +159,7 @@ _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Pea
 
 #================================================================  
 # _50particles
-print('\t_20Thresh_30Peak_50particles')
+print('\n\n\t_20Thresh_30Peak_50particles')
 _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Peak_50particles',
                 min_particles      = 50,
                 min_stelmass       = None, 
@@ -174,7 +174,7 @@ _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Pea
                   morph_limits     = [0.4, 0.4])
                   
 # _100particles
-print('\t_20Thresh_30Peak_100particles')
+print('\n\n\t_20Thresh_30Peak_100particles')
 _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Peak_100particles',
                 min_particles      = 100,
                 min_stelmass       = None, 
@@ -191,7 +191,7 @@ _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Pea
                   
 #================================================================             
 # _noLatency
-print('\t_20Thresh_30Peak_noLatency')
+print('\n\n\t_20Thresh_30Peak_noLatency')
 _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Peak_noLatency',
                 min_particles      = 20,
                 min_stelmass       = None, 
@@ -206,7 +206,7 @@ _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Pea
                   morph_limits     = [0.4, 0.4])
                   
 # _highLatency
-print('\t_20Thresh_30Peak_highLatency')
+print('\n\n\t_20Thresh_30Peak_highLatency')
 _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Peak_highLatency',
                 min_particles      = 20,
                 min_stelmass       = None, 
@@ -221,7 +221,7 @@ _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Pea
                   morph_limits     = [0.4, 0.4])
                   
 # _veryhighLatency
-print('\t_20Thresh_30Peak_veryhighLatency')
+print('\n\n\t_20Thresh_30Peak_veryhighLatency')
 _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Peak_veryhighLatency',
                 min_particles      = 20,
                 min_stelmass       = None, 
@@ -238,7 +238,7 @@ _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Pea
                   
 #================================================================      
 # _normalLatency_anyMergers_anyMorph_1010
-print('\t_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010')
+print('\n\n\t_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010')
 _analyse_tree(load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010',
                 min_particles      = 20,
                 min_stelmass       = 10**10, 

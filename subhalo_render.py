@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib.cm as cm
 import mpl_toolkits.mplot3d.art3d as art3d
+from scipy import stats
 from matplotlib.widgets import Button
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.patches import Circle
@@ -1606,6 +1607,333 @@ def galaxy_map(csv_sample = False,              # False, Whether to read in exis
 # counter-rotators
 ID_list = [95543294, 92357662, 89446165, 85281325, 82927744, 76110618, 58413057, 55795862, 55498617, 45564872, 40532736, 37720510, 37183699, 271611, 24492215, 21659331, 157786415, 153276029, 148038083, 144498089, 141671882, 14111024, 138496085, 1361557, 135310460, 135143499, 128867308, 113008138, 105237562, 104152191]
 ID_list = [37445]
+ID_list = [76176792, 97916384, 329515524, 62169152, 24505389, 251899973]
+# Will color particles based on line of sight velocity, mass-weighted in a grids
+# SAVED:%s/individual_render/
+def galaxy_velocity_map(csv_sample = False,              # False, Whether to read in existing list of galaxies  
+                    #--------------------------
+                    mySims = [('RefL0012N0188', 12)],
+                    GalaxyID_List = ID_list,
+                    #--------------------------
+                    # Galaxy extraction properties
+                    kappa_rad            = 30,          # calculate kappa for this radius [pkpc]
+                    viewing_angle        = 0,           # Keep as 0
+                    #--------------------------
+                    # Visualisation properties
+                    boxradius           = 30,                           # size of box of render [kpc], 'rad', 'tworad'
+                    particles           = 1000000,                         # number of random particles to plot
+                    aperture_rad        = 30,                           # calculations radius limit [pkpc]
+                    trim_rad            = np.array([30]),           # largest radius in pkpc to plot | 2.0_hmr, rad_projected=True
+                    align_rad           = '1hmr',                          # 2hmr, 1hmr, False/Value
+                    mask_sgn            = False,                        # False = plot all nearby subhalos too
+                    viewing_axis        = 'x',                          # Which axis to view galaxy from.  DEFAULT 'z'
+                    #=====================================================
+                    # Misalignments we want extracted and at which radii  
+                    angle_selection     = ['stars_gas_sf'],           
+                    spin_hmr            = np.array([1.0]),                  # multiples of hmr for which to find spin. Will plot lowest value
+                    rad_projected       = False,                            # whether to use rad in projection or 3D
+                    #--------------------------
+                    # Plot options
+                    resolution          = 0.7,             # kpc
+                    map_limits          = 30,              # kpc
+                    cmap                = 'sauron',      # 'sauron' or 'coolwarm'
+                    vmin_vmax           = 200,              # 80 for better visual, 300 normally
+                      add_hmr_circle    = True,         # will add HMR that original misalignment found in
+                    #=====================================================
+                    showfig       = True,
+                    savefig       = True,
+                      savefig_txt = '',                # added txt to append to end of savefile
+                      file_format = 'pdf',
+                    #--------------------------
+                    print_progress = False,
+                    print_galaxy   = True,
+                    debug = False):
+
+
+    #=========================================
+    # Properties that don't change
+    register_sauron_colormap()
+    spin_vector_rad      = spin_hmr[0]
+    min_inclination      = 0           # Minimum inclination toward viewing axis [deg] DEFAULT 0
+    find_uncertainties   = False       # whether to find 2D and 3D uncertainties
+    com_min_distance     = 10000       # [pkpc] min distance between sfgas and stars.  DEFAULT 2.0 
+    min_particles        = 0           # Minimum gas sf particles to use galaxy.  DEFAULT 100
+    orientate_to_axis    ='z'          # Keep as z
+                  
+    if print_progress:
+        print('Extracting GroupNum, SubGroupNum, SnapNum lists')
+        time_start = time.time()
+        
+    
+    #-----------------------------------------
+    # adjust mySims for serpens
+    if (answer == '2') or (answer == '3') or (answer == '4'):
+        mySims = [('RefL0100N1504', 100)]
+    
+
+    #-----------------------------------------
+    # Use IDs and such from sample
+    if csv_sample:
+        # Load sample csv
+        if print_progress:
+            print('Loading initial sample')
+            time_start = time.time()
+        
+    
+        # Loading sample
+        dict_new = json.load(open('%s/%s.csv' %(sample_dir, csv_sample), 'r'))
+    
+    
+        # Extract GroupNum etc.
+        GroupNum_List       = np.array(dict_new['GroupNum'])
+        SubGroupNum_List    = np.array(dict_new['SubGroupNum'])
+        GalaxyID_List       = np.array(dict_new['GalaxyID'])
+        SnapNum_List        = np.array(dict_new['SnapNum'])
+        Redshift_List       = np.array(dict_new['Redshift'])
+        HaloMass_List       = np.array(dict_new['halo_mass'])
+        Centre_List         = np.array(dict_new['centre'])
+        MorphoKinem_List    = np.array(dict_new['MorphoKinem'])
+        sample_input        = dict_new['sample_input']
+        mySims              = sample_input['mySims']
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+        if debug:
+            print(sample_input)
+            print(GroupNum_List)
+            print(SubGroupNum_List)
+            print(GalaxyID_List)
+            print(SnapNum_List)
+       
+        print('\n===================')
+        print('SAMPLE LOADED:\n  %s\n  GalaxyIDs: %s' %(mySims[0][0], GalaxyID_List))
+        print('  SAMPLE LENGTH: ', len(GroupNum_List))
+        print('===================')
+        
+    # If no csv_sample given, use GalaxyID_List
+    else:
+        # If using snipshots...
+        if answer == '3':
+            # Extract GroupNum, SubGroupNum, and Snap for each ID
+            GroupNum_List    = []
+            SubGroupNum_List = []
+            SnapNum_List     = []
+            Redshift_List    = []
+            HaloMass_List    = []
+            Centre_List      = []
+            MorphoKinem_List = []
+            
+            for galID in GalaxyID_List:
+                gn, sgn, snap, z, halomass_i, centre_i, morphkinem_i = ConvertID_snip(tree_dir, galID, mySims)
+    
+                # Append to arrays
+                GroupNum_List.append(gn)
+                SubGroupNum_List.append(sgn)
+                SnapNum_List.append(snap)
+                Redshift_List.append(z)
+                HaloMass_List.append(halomass_i) 
+                Centre_List.append(centre_i)
+                MorphoKinem_List.append(morphkinem_i)
+            
+            if debug:
+                print(GroupNum_List)
+                print(SubGroupNum_List)
+                print(GalaxyID_List)
+                print(SnapNum_List)
+        
+        # Else...
+        else:
+            # Extract GroupNum, SubGroupNum, and Snap for each ID
+            GroupNum_List    = []
+            SubGroupNum_List = []
+            SnapNum_List     = []
+            Redshift_List    = []
+            HaloMass_List    = []
+            Centre_List      = []
+            MorphoKinem_List = []
+         
+            for galID in GalaxyID_List:
+                gn, sgn, snap, z, halomass_i, centre_i, morphkinem_i = ConvertID(galID, mySims)
+    
+                # Append to arrays
+                GroupNum_List.append(gn)
+                SubGroupNum_List.append(sgn)
+                SnapNum_List.append(snap)
+                Redshift_List.append(z)
+                HaloMass_List.append(halomass_i) 
+                Centre_List.append(centre_i)
+                MorphoKinem_List.append(morphkinem_i)
+            
+            if debug:
+                print(GroupNum_List)
+                print(SubGroupNum_List)
+                print(GalaxyID_List)
+                print(SnapNum_List)
+            
+        print('\n===================')
+        print('SAMPLE INPUT:\n  %s\n  GalaxyIDs: %s' %(mySims[0][0], GalaxyID_List))
+        print('  SAMPLE LENGTH: ', len(GroupNum_List))
+        print('===================')
+        
+              
+    if print_progress:
+        print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+
+    # Run analysis for each individual galaxy in loaded sample
+    for GroupNum, SubGroupNum, GalaxyID, SnapNum, Redshift, HaloMass, Centre_i, MorphoKinem in tqdm(zip(GroupNum_List, SubGroupNum_List, GalaxyID_List, SnapNum_List, Redshift_List, HaloMass_List, Centre_List, MorphoKinem_List), total=len(GroupNum_List)):
+        
+        #-----------------------------
+        if print_progress:
+            print('Extracting particle data Subhalo_Extract()')
+            time_start = time.time()
+            
+
+        # Initial extraction of galaxy particle data
+        galaxy = Subhalo_Extract(mySims, dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, Centre_i, HaloMass, aperture_rad, viewing_axis, MorphoKinem, mask_sgn = mask_sgn)
+        GroupNum = galaxy.gn
+        
+        #-----------------------------
+        # Begin subhalo analysis
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+            print('Running particle data analysis Subhalo_Analysis()')
+            time_start = time.time()
+       
+        # Set spin_rad here
+        if rad_projected == True:
+            spin_rad = np.array(spin_hmr) * galaxy.halfmass_rad_proj
+            spin_hmr_tmp = spin_hmr
+        
+            # Reduce spin_rad array if value exceeds aperture_rad_in... means not all dictionaries will have same number of array spin values
+            spin_rad_in_tmp = [x for x in spin_rad if x <= aperture_rad]
+            spin_hmr_in_tmp = [x for x in spin_hmr if x*galaxy.halfmass_rad_proj <= aperture_rad]
+            
+            # Ensure min. rad is >1 pkpc
+            spin_rad_in = [x for x in spin_rad_in_tmp if x >= 1.0]
+            spin_hmr_in = [x for x in spin_hmr_in_tmp if x*galaxy.halfmass_rad_proj >= 1.0]
+        
+            if len(spin_hmr_in) != len(spin_hmr_tmp):
+                print('Capped spin_rad: %.2f - %.2f - %.2f HMR | Min/Max %.2f / %.2f pkpc' %(min(spin_hmr_in), (max(spin_hmr_in) - min(spin_hmr_in))/(len(spin_hmr_in) - 1), max(spin_hmr_in), min(spin_rad_in), max(spin_rad_in)))
+        elif rad_projected == False:
+            spin_rad = np.array(spin_hmr) * galaxy.halfmass_rad
+            spin_hmr_tmp = spin_hmr
+        
+            # Reduce spin_rad array if value exceeds aperture_rad_in... means not all dictionaries will have same number of array spin values
+            spin_rad_in_tmp = [x for x in spin_rad if x <= aperture_rad]
+            spin_hmr_in_tmp = [x for x in spin_hmr if x*galaxy.halfmass_rad <= aperture_rad]
+            
+            # Ensure min. rad is >1 pkpc
+            spin_rad_in = [x for x in spin_rad_in_tmp if x >= 1.0]
+            spin_hmr_in = [x for x in spin_hmr_in_tmp if x*galaxy.halfmass_rad >= 1.0]
+        
+            if len(spin_hmr_in) != len(spin_hmr_tmp):
+                print('Capped spin_rad: %.2f - %.2f - %.2f HMR | Min/Max %.2f / %.2f pkpc' %(min(spin_hmr_in), (max(spin_hmr_in) - min(spin_hmr_in))/(len(spin_hmr_in) - 1), max(spin_hmr_in), min(spin_rad_in), max(spin_rad_in)))  
+        
+        # Set align_rad
+        if align_rad == '1hmr':
+            if rad_projected:
+                align_rad_in = 1*galaxy.halfmass_rad_proj
+            else:
+                align_rad_in = 1*galaxy.halfmass_rad
+        elif align_rad == '2hmr':
+            if rad_projected:
+                align_rad_in = 2*galaxy.halfmass_rad_proj
+            else:
+                align_rad_in = 2*galaxy.halfmass_rad
+        else:
+            align_rad_in = align_rad
+        
+        # If we want the original values, enter 0 for viewing angle
+        subhalo = Subhalo_Analysis(mySims, GroupNum, SubGroupNum, GalaxyID, SnapNum, galaxy.MorphoKinem, galaxy.halfmass_rad, galaxy.halfmass_rad_proj, galaxy.halo_mass, galaxy.data_nil, 
+                                            viewing_axis,
+                                            aperture_rad,
+                                            kappa_rad, 
+                                            trim_rad, 
+                                            align_rad_in,              #align_rad = False
+                                            orientate_to_axis,
+                                            viewing_angle,
+                                            
+                                            angle_selection,        
+                                            spin_rad_in,
+                                            spin_hmr_in,
+                                            find_uncertainties,
+                                            rad_projected,
+                                            
+                                            com_min_distance,
+                                            min_particles,                                            
+                                            min_inclination)
+                
+        if print_galaxy:
+            print('|Combined particle properties within %s pkpc:' %aperture_rad)
+            print('|%s| |ID:   %s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA (*/g/gsf):  %.2f  %.2f  %.2f' %(SnapNum, str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad, subhalo.general['kappa_stars'], subhalo.general['kappa_gas'], subhalo.general['kappa_gas_sf'])) 
+        
+        print(' ')
+        print('  3D misangle:  ', subhalo.mis_angles['stars_gas_sf_angle'])
+        print('  2D misangle:  ', subhalo.mis_angles_proj['x']['stars_gas_sf_angle'])
+        
+        
+        #===========================================
+        # creating graph
+        fig, (ax_stars, ax_gas) = plt.subplots(nrows=1, ncols=2, figsize=[12, 5], gridspec_kw={'width_ratios': [1, 1]}, sharex=True, sharey=True)
+        plt.subplots_adjust(wspace=0.1, hspace=0.1)
+        
+        # Find number of pixels along histogram
+        pixel = math.ceil(map_limits*2 / resolution)
+        
+        # Plotting mass-weighted velocity graph
+        for parttype_i, axs in zip(['stars', 'gas_sf'], [ax_stars, ax_gas]):
+            
+            masses = subhalo.data['%s' %str(trim_rad[-1])]['%s' %parttype_i]['Mass']
+            coords = subhalo.data['%s' %str(trim_rad[-1])]['%s' %parttype_i]['Coordinates']
+            vel    = subhalo.data['%s' %str(trim_rad[-1])]['%s' %parttype_i]['Velocity']
+            
+            coords_y = np.array(coords[:,1])
+            coords_z = np.array(coords[:,2])
+            vel_x    = np.array(-1*vel[:,0])
+            
+            #-------------------
+            # Histogram to find counts in each bin
+            counts, xbins, ybins = np.histogram2d(coords_z, coords_y, bins=(pixel, pixel), range=[[-map_limits, map_limits], [-map_limits, map_limits]])
+            
+            # Histogram to find total mass-weighted velocity in those bins, and account for number of values in each bin
+            vel_weighted, _, _, _ = stats.binned_statistic_2d(coords_z, coords_y, vel_x*masses/np.mean(masses), statistic='mean', bins=(xbins, ybins), range=[[-map_limits, map_limits], [-map_limits, map_limits]])
+            
+            im = axs.pcolormesh(xbins, ybins, vel_weighted, cmap=cmap, vmin=-vmin_vmax, vmax=vmin_vmax)
+            
+            # Formatting
+            axs.set_xlim(-map_limits, map_limits)
+            axs.set_ylim(-map_limits, map_limits)
+            axs.set_title('%s'%(parttype_i if parttype_i == 'stars' else 'gas SF') + ' ($<30$ pkpc)')
+            axs.set_xlabel('[pkpc]')
+            axs.set_ylabel('[pkpc]')
+            axs.set_facecolor('k')
+            #axs.set_box_aspect(1)
+        
+            if add_hmr_circle:
+                # Add hmr
+                circle = plt.Circle((0,0), galaxy.halfmass_rad, color='w', fill=False)
+                axs.add_patch(circle)
+        
+        
+        # Add colorbar
+        fig.subplots_adjust(right=0.8)
+        cbar_ax = fig.add_axes([0.83, 0.15, 0.015, 0.7])
+        plt.colorbar(im, cax=cbar_ax, label='mass-weighted mean velocity', extend='both', pad=0)
+        
+        plt.suptitle('GalaxyID (z=0): %s' %GalaxyID)
+        
+        
+        if savefig:
+            plt.savefig("%s/individual_render/velocity_map/L%s_velocitymaphist_ID%s_%s.%s" %(fig_dir, mySims[0][1], GalaxyID, savefig_txt, file_format), format=file_format, bbox_inches='tight', dpi=600)    
+            print('\n  SAVED:%s/individual_render/velocity_map/L%s_velocitymaphist_ID%s_%s.%s' %(fig_dir, mySims[0][1], GalaxyID, savefig_txt, file_format))
+        if showfig:
+            plt.show()
+        plt.close()
+
+
+#====================================
+# counter-rotators
+ID_list = [95543294, 92357662, 89446165, 85281325, 82927744, 76110618, 58413057, 55795862, 55498617, 45564872, 40532736, 37720510, 37183699, 271611, 24492215, 21659331, 157786415, 153276029, 148038083, 144498089, 141671882, 14111024, 138496085, 1361557, 135310460, 135143499, 128867308, 113008138, 105237562, 104152191]
+ID_list = [37445]
 # Will color particles based on line of sight velocity 
 # SAVED:%s/individual_render/
 def galaxy_gif(csv_sample = False,              # False, Whether to read in existing list of galaxies  
@@ -2135,9 +2463,10 @@ def galaxy_gif(csv_sample = False,              # False, Whether to read in exis
 
 
 #--------------      
-galaxy_render()
+#galaxy_render()
 
 #galaxy_map()
+galaxy_velocity_map()
 
 #galaxy_gif()
 #---------------

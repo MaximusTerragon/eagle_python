@@ -2977,6 +2977,29 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                                                         'insitu_Z_1hmr': galaxy_tree['%s' %GalaxyID]['gas']['1.0_hmr']['insitu_Z'][index_start:index_stop],
                                                         'insitu_Z_2hmr': galaxy_tree['%s' %GalaxyID]['gas']['2.0_hmr']['insitu_Z'][index_start:index_stop],
                                                                                                                  
+                                                        'inflow_sf_mass_1hmr': galaxy_tree['%s' %GalaxyID]['gas_sf']['1.0_hmr']['inflow_mass'][index_start:index_stop],
+                                                        'inflow_sf_mass_2hmr': galaxy_tree['%s' %GalaxyID]['gas_sf']['2.0_hmr']['inflow_mass'][index_start:index_stop],
+                                                        'outflow_sf_mass_1hmr': galaxy_tree['%s' %GalaxyID]['gas_sf']['1.0_hmr']['outflow_mass'][index_start:index_stop],
+                                                        'outflow_sf_mass_2hmr': galaxy_tree['%s' %GalaxyID]['gas_sf']['2.0_hmr']['outflow_mass'][index_start:index_stop],
+                                                        'insitu_sf_mass_1hmr': galaxy_tree['%s' %GalaxyID]['gas_sf']['1.0_hmr']['insitu_mass'][index_start:index_stop],
+                                                        'insitu_sf_mass_2hmr': galaxy_tree['%s' %GalaxyID]['gas_sf']['2.0_hmr']['insitu_mass'][index_start:index_stop],
+                                                        'inflow_sf_rate_1hmr': galaxy_tree['%s' %GalaxyID]['gas_sf']['1.0_hmr']['inflow_rate'][index_start:index_stop],
+                                                        'inflow_sf_rate_2hmr': galaxy_tree['%s' %GalaxyID]['gas_sf']['2.0_hmr']['inflow_rate'][index_start:index_stop],
+                                                        'outflow_sf_rate_1hmr': galaxy_tree['%s' %GalaxyID]['gas_sf']['1.0_hmr']['outflow_rate'][index_start:index_stop],
+                                                        'outflow_sf_rate_2hmr': galaxy_tree['%s' %GalaxyID]['gas_sf']['2.0_hmr']['outflow_rate'][index_start:index_stop],
+                                                        'stelmassloss_sf_rate_1hmr': galaxy_tree['%s' %GalaxyID]['gas_sf']['1.0_hmr']['stelmassloss_rate'][index_start:index_stop],
+                                                        'stelmassloss_sf_rate_2hmr': galaxy_tree['%s' %GalaxyID]['gas_sf']['2.0_hmr']['stelmassloss_rate'][index_start:index_stop],
+                                                        's_inflow_sf_rate_1hmr': np.divide(np.array(galaxy_tree['%s' %GalaxyID]['gas_sf']['1.0_hmr']['inflow_rate'][index_start:index_stop]), np.array(galaxy_tree['%s' %GalaxyID]['gas_sf']['1.0_hmr']['mass'][index_start:index_stop])),
+                                                        's_inflow_sf_rate_2hmr': np.divide(np.array(galaxy_tree['%s' %GalaxyID]['gas_sf']['2.0_hmr']['inflow_rate'][index_start:index_stop]), np.array(galaxy_tree['%s' %GalaxyID]['gas_sf']['2.0_hmr']['mass'][index_start:index_stop])),
+                                                        's_outflow_sf_rate_1hmr': np.divide(np.array(galaxy_tree['%s' %GalaxyID]['gas_sf']['1.0_hmr']['outflow_rate'][index_start:index_stop]), np.array(galaxy_tree['%s' %GalaxyID]['gas_sf']['1.0_hmr']['mass'][index_start:index_stop])),
+                                                        's_outflow_sf_rate_2hmr': np.divide(np.array(galaxy_tree['%s' %GalaxyID]['gas_sf']['2.0_hmr']['outflow_rate'][index_start:index_stop]), np.array(galaxy_tree['%s' %GalaxyID]['gas_sf']['2.0_hmr']['mass'][index_start:index_stop])),
+                                                        'inflow_Z_sf_1hmr': galaxy_tree['%s' %GalaxyID]['gas_sf']['1.0_hmr']['inflow_Z'][index_start:index_stop],
+                                                        'inflow_Z_sf_2hmr': galaxy_tree['%s' %GalaxyID]['gas_sf']['2.0_hmr']['inflow_Z'][index_start:index_stop],
+                                                        'outflow_Z_sf_1hmr': galaxy_tree['%s' %GalaxyID]['gas_sf']['1.0_hmr']['outflow_Z'][index_start:index_stop],
+                                                        'outflow_Z_sf_2hmr': galaxy_tree['%s' %GalaxyID]['gas_sf']['2.0_hmr']['outflow_Z'][index_start:index_stop],
+                                                        'insitu_Z_sf_1hmr': galaxy_tree['%s' %GalaxyID]['gas_sf']['1.0_hmr']['insitu_Z'][index_start:index_stop],
+                                                        'insitu_Z_sf_2hmr': galaxy_tree['%s' %GalaxyID]['gas_sf']['2.0_hmr']['insitu_Z'][index_start:index_stop],
+                                                                                                                 
                                                         'bh_mass': galaxy_tree['%s' %GalaxyID]['bh']['mass'][index_start:index_stop],
                                                         'bh_mdot_av': galaxy_tree['%s' %GalaxyID]['bh']['mdot'][index_start:index_stop],
                                                         'bh_mdot_inst': galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant'][index_start:index_stop],
@@ -3133,7 +3156,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
     print('Number of >5 ttorque relaxations:  ', len(collect_IDs))
     print(collect_IDs)
     """
-    
+    '''
     # Apply a morph criteria
     if use_alt_relaxation_morph:
         misalignment_tree_new = {}
@@ -3308,7 +3331,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
         print('        Number of mergers:   %i\t%.2f %%' %(tally_minor+tally_major, (tally_minor+tally_major)*100/tally_sample))
         print('                 ...major:   %i\t%.2f %%' %(tally_major, (tally_major*100/tally_sample)))
         print('                 ...minor:   %i\t%.2f %%' %(tally_minor, (tally_minor*100/tally_sample)))
-        
+    '''
+     
     """ 
     # Extract specific misalignment
     for ID_i in misalignment_tree.keys():

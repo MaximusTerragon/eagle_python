@@ -10464,6 +10464,7 @@ def _plot_timescale_accretion_histogram_trelax(misalignment_tree, misalignment_i
                         inflow_radius                     = 1.0,                # HMR to use
                         inflow_limits                     = [5, 10],            # [ < lower - upper < Msun/yr ] e.g. [5, 10] means <5, 5-10, 10+
                         use_gas_type                      = 'gas',                  # [ 'gas' / 'gas_sf' ]
+                        use_only_centrals                 = True,           # Use only centrals      
                       #--------------------
                       # General formatting
                       set_bin_limit_trelax                = 5,        # [ None / Gyr ]
@@ -10512,6 +10513,12 @@ def _plot_timescale_accretion_histogram_trelax(misalignment_tree, misalignment_i
         # Ensure we actually have inflow to consider
         if misalignment_tree['%s' %ID_i]['relaxation_time'] < ignore_trelax_inflow:
             continue
+            
+        # If we only want centrals, select
+        sgn = np.array(misalignment_tree['%s' %ID_i]['SubGroupNum'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']])
+        if use_only_centrals:
+            if not np.all(sgn == 0):
+                continue
             
         # Ensure we have at least 1 snapshot that we can evaluate
         mask_inflow = (np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']] - np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']] > ignore_trelax_inflow)
@@ -10566,6 +10573,8 @@ def _plot_timescale_accretion_histogram_trelax(misalignment_tree, misalignment_i
     
     print('-------------------------------------------------------------')
     print('Number of relaxations: ', len(ID_plot))
+    if use_only_centrals:
+        print('  Using only - CENTRALS -:')
     print('\tInflow rates %s [ Msun/yr ]:'%use_gas_type)
     print('\t0  - %i:    %i' %(inflow_limits[0], len(inflow_1_df)))
     print('\t%i - %i:    %i' %(inflow_limits[0], inflow_limits[1], len(inflow_2_df)))
@@ -10679,6 +10688,8 @@ def _plot_timescale_accretion_histogram_trelax(misalignment_tree, misalignment_i
     #-----------
     ### title
     plot_annotate = ''
+    if use_only_centrals:
+        plot_annotate = plot_annotate + 'centrals'
     if len(set_hist_type) < 4:
         if 'co-co' in set_hist_type:
             plot_annotate = plot_annotate + 'co → co'
@@ -10703,6 +10714,8 @@ def _plot_timescale_accretion_histogram_trelax(misalignment_tree, misalignment_i
         savefig_txt = savefig_txt_in + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
         savefig_txt = savefig_txt + '_%i'%inflow_radius
         
+        if use_only_centrals:
+            savefig_txt = savefig_txt + '_centrals'
         if len(set_hist_type) == 4:
             savefig_txt = savefig_txt + '_allpaths'
             
@@ -10725,6 +10738,7 @@ def _plot_timescale_accretion_histogram_tdyn(misalignment_tree, misalignment_inp
                         inflow_radius                     = 1.0,                # HMR to use
                         inflow_limits                     = [5, 10],            # [ < lower - upper < Msun/yr ] e.g. [5, 10] means <5, 5-10, 10+
                         use_gas_type                      = 'gas',                  # [ 'gas' / 'gas_sf' ]
+                        use_only_centrals                 = True,           # Use only centrals      
                       #--------------------
                       # General formatting
                       set_bin_limit_tdyn                  = 35,       # [ None / multiples ]
@@ -10773,6 +10787,12 @@ def _plot_timescale_accretion_histogram_tdyn(misalignment_tree, misalignment_inp
         # Ensure we actually have inflow to consider
         if misalignment_tree['%s' %ID_i]['relaxation_time'] < ignore_trelax_inflow:
             continue
+            
+        # If we only want centrals, select
+        sgn = np.array(misalignment_tree['%s' %ID_i]['SubGroupNum'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']])
+        if use_only_centrals:
+            if not np.all(sgn == 0):
+                continue
             
         # Ensure we have at least 1 snapshot that we can evaluate
         mask_inflow = (np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']] - np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']] > ignore_trelax_inflow)
@@ -10828,6 +10848,8 @@ def _plot_timescale_accretion_histogram_tdyn(misalignment_tree, misalignment_inp
     
     print('-------------------------------------------------------------')
     print('Number of relaxations: ', len(ID_plot))
+    if use_only_centrals:
+        print('  Using only - CENTRALS -:')
     print('\tInflow rates %s [ Msun/yr ]:'%use_gas_type)
     print('\t0  - %i:    %i' %(inflow_limits[0], len(inflow_1_df)))
     print('\t%i - %i:    %i' %(inflow_limits[0], inflow_limits[1], len(inflow_2_df)))
@@ -10941,6 +10963,8 @@ def _plot_timescale_accretion_histogram_tdyn(misalignment_tree, misalignment_inp
     #-----------
     ### title
     plot_annotate = ''
+    if use_only_centrals:
+        plot_annotate = plot_annotate + 'centrals'
     if len(set_hist_type) < 4:
         if 'co-co' in set_hist_type:
             plot_annotate = plot_annotate + 'co → co'
@@ -10964,6 +10988,8 @@ def _plot_timescale_accretion_histogram_tdyn(misalignment_tree, misalignment_inp
         savefig_txt = savefig_txt_in + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
         savefig_txt = savefig_txt + '_%i'%inflow_radius
 
+        if use_only_centrals:
+            savefig_txt = savefig_txt + '_centrals'
         if len(set_hist_type) == 4:
             savefig_txt = savefig_txt + '_allpaths'
             
@@ -10986,6 +11012,7 @@ def _plot_timescale_accretion_histogram_ttorque(misalignment_tree, misalignment_
                         inflow_radius                     = 1.0,                # HMR to use
                         inflow_limits                     = [5, 10],            # [ < lower - upper < Msun/yr ] e.g. [5, 10] means <5, 5-10, 10+
                         use_gas_type                      = 'gas',                  # [ 'gas' / 'gas_sf' ]
+                        use_only_centrals                 = True,           # Use only centrals      
                       #--------------------
                       # General formatting
                       set_bin_limit_ttorque               = 12,       # [ None / multiples ]
@@ -11034,6 +11061,12 @@ def _plot_timescale_accretion_histogram_ttorque(misalignment_tree, misalignment_
         # Ensure we actually have inflow to consider
         if misalignment_tree['%s' %ID_i]['relaxation_time'] < ignore_trelax_inflow:
             continue
+            
+        # If we only want centrals, select
+        sgn = np.array(misalignment_tree['%s' %ID_i]['SubGroupNum'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']])
+        if use_only_centrals:
+            if not np.all(sgn == 0):
+                continue
             
         # Ensure we have at least 1 snapshot that we can evaluate
         mask_inflow = (np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']] - np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']] > ignore_trelax_inflow)
@@ -11089,6 +11122,8 @@ def _plot_timescale_accretion_histogram_ttorque(misalignment_tree, misalignment_
     
     print('-------------------------------------------------------------')
     print('Number of relaxations: ', len(ID_plot))
+    if use_only_centrals:
+        print('  Using only - CENTRALS -:')
     print('\tInflow rates %s [ Msun/yr ]:'%use_gas_type)
     print('\t0  - %i:    %i' %(inflow_limits[0], len(inflow_1_df)))
     print('\t%i - %i:    %i' %(inflow_limits[0], inflow_limits[1], len(inflow_2_df)))
@@ -11202,6 +11237,8 @@ def _plot_timescale_accretion_histogram_ttorque(misalignment_tree, misalignment_
     #-----------
     ### title
     plot_annotate = ''
+    if use_only_centrals:
+        plot_annotate = plot_annotate + 'centrals'
     if len(set_hist_type) < 4:
         if 'co-co' in set_hist_type:
             plot_annotate = plot_annotate + 'co → co'
@@ -11226,6 +11263,8 @@ def _plot_timescale_accretion_histogram_ttorque(misalignment_tree, misalignment_
         savefig_txt = savefig_txt_in + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
         savefig_txt = savefig_txt + '_%i'%inflow_radius
 
+        if use_only_centrals:
+            savefig_txt = savefig_txt + '_centrals'
         if len(set_hist_type) == 4:
             savefig_txt = savefig_txt + '_allpaths'
             
@@ -12024,8 +12063,1130 @@ def _plot_timescale_specaccretion_histogram_ttorque(misalignment_tree, misalignm
     plt.close()
 
 
+#-------------------------
+# Plots histogram of stel mass (average) vs relax time.
+def _plot_timescale_stelmass_histogram_trelax(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
+                      #==============================================
+                      # Plot options
+                      set_hist_type                       = ['enter below'],          # which paths to use
+                      set_hist_min_trelax                 = 0.25,                # [ 0.25 / 0 ] removing low resolution
+                        stelmass_limits                   = [10, 11],         # [ < lower - upper < ] e.g. [12.5, 14] means <10**12.5, 10**12.5-10**14, >10**14
+                      use_only_centrals                   = False,                   # Whether to only use centrals
+                      #--------------------
+                      # General formatting
+                      set_bin_limit_trelax                = 5,        # [ None / Gyr ]
+                      set_bin_width_trelax                = 0.25,     # [ 0.25 / Gyr ]
+                      set_plot_histogram_log              = False,    # set yaxis as log
+                        add_plot_errorbars                = True,
+                      #==============================================
+                      showfig       = True,
+                      savefig       = False,    
+                        file_format   = 'pdf',
+                        savefig_txt = '',            # [ '' / 'any text' / 'manual' ] 'manual' will prompt txt before saving
+                      #-----------------------------
+                      debug = False):
+                      
+    #-------------------------
+    # Average timescales from input (for use in metadata)
+    mean_timescale   = np.mean(np.array(summary_dict['trelax']['array']))
+    median_timescale = np.median(np.array(summary_dict['trelax']['array']))
+    std_timescale    = np.std(np.array(summary_dict['trelax']['array']))
+    # Average tdyn
+    mean_tdyn   = np.mean(np.array(summary_dict['tdyn']['array']))
+    median_tdyn = np.median(np.array(summary_dict['tdyn']['array']))
+    std_tdyn    = np.std(np.array(summary_dict['tdyn']['array']))
+    # Average ttorque
+    mean_ttorque   = np.mean(np.array(summary_dict['ttorque']['array']))
+    median_ttorque = np.median(np.array(summary_dict['ttorque']['array']))
+    std_ttorque    = np.std(np.array(summary_dict['ttorque']['array']))
+    
+    #-------------------------
+    relaxation_type    = misalignment_input['relaxation_type']
+    relaxation_morph   = misalignment_input['relaxation_morph']
+    misalignment_morph = misalignment_input['misalignment_morph']
+    morph_limits       = misalignment_input['morph_limits']
+    peak_misangle      = misalignment_input['peak_misangle']
+    min_trelax         = misalignment_input['min_trelax']        
+    max_trelax         = misalignment_input['max_trelax'] 
+    use_angle          = misalignment_input['use_angle']
+    misangle_threshold = misalignment_input['misangle_threshold']
+    time_extra         = misalignment_input['time_extra']
+    #------------------------- 
+    
+    
+    #==========================================================================
+    # Gather data
+    relaxationtime_plot  = []
+    relaxationtype_plot  = []
+    relaxationmorph_plot = []
+    subgroupnum_class    = []
+    stelmass_plot        = []
+    ID_plot              = []
+    for ID_i in misalignment_tree.keys():
+        
+        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_hist_min_trelax:
+            continue
+    
+        if misalignment_tree['%s' %ID_i]['relaxation_type'] in set_hist_type:
+            
+            ID_plot.append(ID_i)
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
+                relaxationtype_plot.append('C0')
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
+                relaxationtype_plot.append('C1')
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
+                relaxationtype_plot.append('C2')
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
+                relaxationtype_plot.append('C3')
+            
+            # find subgroupnum, and classify as following:  central: all==0, satellite: all>0, mixed: ones that change
+            sgn = np.array(misalignment_tree['%s' %ID_i]['SubGroupNum'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']])
+            if np.all(sgn == 0):
+                subgroupnum_class.append('central')
+            elif np.all(sgn > 0):
+                subgroupnum_class.append('satellite')
+            else:
+                subgroupnum_class.append('mixed')
+            
+            # Find halo mass
+            stelmass_plot.append(np.mean(misalignment_tree['%s' %ID_i]['stelmass'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']]))           
+                            
+            # Collect morphology
+            if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-ETG':
+                relaxationmorph_plot.append('ETG → ETG')
+            elif misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'LTG-LTG':
+                relaxationmorph_plot.append('LTG → LTG')
+            elif misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'LTG-ETG':
+                relaxationmorph_plot.append('LTG → ETG')
+            elif misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-LTG':
+                relaxationmorph_plot.append('ETG → LTG')
+            else:
+                relaxationmorph_plot.append('other')
+            
+    print('  Using sample: ', len(ID_plot))
+    
+    # Collect data into dataframe
+    df = pd.DataFrame(data={'Relaxation time': relaxationtime_plot, 'Relaxation morph': relaxationmorph_plot, 'Relaxation type': relaxationtype_plot, 'Occupation': subgroupnum_class, 'Stellar mass': stelmass_plot, 'GalaxyIDs': ID_plot})
+    
+    #===================================================================================
+    if use_only_centrals:
+        stelmass_1_df = df.loc[(df['Stellar mass'] < 10**stelmass_limits[0]) & (df['Occupation'] == 'central')]
+        stelmass_2_df = df.loc[(df['Stellar mass'] > 10**stelmass_limits[0]) & (df['Stellar mass'] < 10**stelmass_limits[1]) & (df['Occupation'] == 'central')]
+        stelmass_3_df = df.loc[(df['Stellar mass'] > 10**stelmass_limits[1]) & (df['Occupation'] == 'central')]
+    else:
+        stelmass_1_df = df.loc[(df['Stellar mass'] < 10**stelmass_limits[0])]
+        stelmass_2_df = df.loc[(df['Stellar mass'] > 10**stelmass_limits[0]) & (df['Stellar mass'] < 10**stelmass_limits[1])]
+        stelmass_3_df = df.loc[(df['Stellar mass'] > 10**stelmass_limits[1])]
+    
+    
+    print('-------------------------------------------------------------')
+    print('Number of relaxations: ', len(ID_plot))
+    if use_only_centrals:
+        print('  Using only - CENTRALS -:')
+    print('\tStellar mass thresholds:')
+    print('\t10e9.0 - 10e%s:    %i' %(stelmass_limits[0], len(stelmass_1_df)))
+    print('\t10e%.1f - 10e%s:    %i' %(stelmass_limits[0], stelmass_limits[1], len(stelmass_2_df)))
+    print('\t10e%s +        :    %i' %(stelmass_limits[1], len(stelmass_3_df)))
+    
+    print('-------')
+    print('Medians:       [ Gyr ]')
+    print('10e11.0 - 10e%s:    %.2f' %(stelmass_limits[0], np.median(stelmass_1_df['Relaxation time'])))
+    print('10e%.1f - 10e%s:    %.2f' %(stelmass_limits[0], stelmass_limits[1], np.median(stelmass_2_df['Relaxation time'])))
+    print('10e%s +        :    %.2f' %(stelmass_limits[1], np.median(stelmass_3_df['Relaxation time'])))
+    
+
+    
+    #---------------
+    # KS test
+    #print('-------------')
+    res = stats.ks_2samp(stelmass_1_df['Relaxation time'], stelmass_2_df['Relaxation time'])
+    print('KS-test:     lowest stelmass range - middle stelmass range')
+    print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(stelmass_1_df.index) + len(stelmass_2_df.index))/(len(stelmass_1_df.index)*len(stelmass_2_df.index))))))
+    print('   p-value: %s' %res.pvalue)
+    res = stats.ks_2samp(stelmass_2_df['Relaxation time'], stelmass_3_df['Relaxation time'])
+    print('KS-test:     middle stelmass range - highest stelmass range')
+    print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(stelmass_2_df.index) + len(stelmass_3_df.index))/(len(stelmass_2_df.index)*len(stelmass_3_df.index))))))
+    print('   p-value: %s' %res.pvalue)
+    res = stats.ks_2samp(stelmass_1_df['Relaxation time'], stelmass_3_df['Relaxation time'])
+    print('KS-test:     lowest stelmass range - highest stelmass range')
+    print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(stelmass_1_df.index) + len(stelmass_3_df.index))/(len(stelmass_1_df.index)*len(stelmass_3_df.index))))))
+    print('   p-value: %s' %res.pvalue)
+    
+    
+    #-------------
+    ### Plotting
+    fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.1], sharex=True, sharey=False)
+    plt.subplots_adjust(wspace=0.4, hspace=0.4)
+            
+    if set_bin_limit_trelax == None:
+        set_bin_limit_trelax = math.ceil(max(relaxationtime_plot))
+    if set_plot_histogram_log:
+        set_plot_relaxation_type = False 
+    
+    #-------------
+    ### Plot histogram
+    cmap = cm.get_cmap('Oranges')
+    c1 = cmap(0.4)
+    c2 = cmap(0.7)
+    c3 = cmap(1.0)
+    for stelmass_df, plot_color in zip([stelmass_1_df, stelmass_2_df, stelmass_3_df], [c1, c2, c3]):
+        # Add hist
+        axs.hist(stelmass_df['Relaxation time'], weights=np.ones(len(stelmass_df['Relaxation time']))/len(stelmass_df['Relaxation time']), bins=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax), histtype='step', facecolor='none', alpha=0.9, lw=1, edgecolor=plot_color)
+        hist_n, _ = np.histogram(stelmass_df['Relaxation time'], bins=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax), range=(0, set_bin_limit_trelax))
+        
+        # Add error bars
+        if add_plot_errorbars:
+            axs.errorbar(np.arange(set_bin_width_trelax/2, set_bin_limit_trelax, set_bin_width_trelax), hist_n/np.sum(hist_n), xerr=None, yerr=np.sqrt(hist_n)/np.sum(hist_n), ecolor=plot_color, ls='none', capsize=1, elinewidth=0.7, markeredgewidth=0.7, alpha=0.3)
+        
+    
+    
+    #-----------
+    ### General formatting
+    # Axis labels
+    axs.set_yscale('log')
+    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
+    axs.set_xlim(0, set_bin_limit_trelax)
+    axs.set_xticks(np.arange(0, set_bin_limit_trelax+0.1, step=1))
+    axs.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)')
+    axs.set_ylabel('Percentage of\nmisalignments')
+    axs.set_ylim(bottom=0.001)
+    
+    
+    #-----------
+    ### Legend
+    legend_elements = []
+    legend_labels = []
+    legend_colors = []
+    
+    legend_labels.append(r'$M_{\mathrm{*}}$' + '/M$_{\odot}$' + r'$<10^{%s}$' %(stelmass_limits[0]))
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append(c1)
+    
+    legend_labels.append(r'$10^{%s}<M_{\mathrm{*}}$'%(stelmass_limits[0]) + '/M$_{\odot}$' + r'$<10^{%s}$' %(stelmass_limits[1]))
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append(c2)
+
+    legend_labels.append(r'$M_{\mathrm{*}}$/M$_{\odot}$$>10^{%s}$'%(stelmass_limits[1]))
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append(c3)
+    
+    ncol=1
+    axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0, ncol=ncol)
+    
+    
+    #-----------
+    ### title
+    if (len(set_hist_type) < 4) or use_only_centrals:
+        plot_annotate = ''
+    if use_only_centrals:
+        plot_annotate = ''
+        plot_annotate = plot_annotate + 'centrals'
+    if len(set_hist_type) < 4:
+        if 'co-co' in set_hist_type:
+            plot_annotate = plot_annotate + 'co → co'
+        if 'counter-counter' in set_hist_type:
+            plot_annotate = plot_annotate + ', counter → counter'
+        if 'co-counter' in set_hist_type:
+            plot_annotate = plot_annotate + ', co → counter'
+        if 'counter-co' in set_hist_type:
+            plot_annotate = plot_annotate + ', counter → co'
+    if plot_annotate:
+        axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
+        
+    #-----------
+    ### other
+    plt.tight_layout()
+    
+    
+    #-----------
+    ### Savefig  
+                     
+    if savefig:
+        savefig_txt = savefig_txt_in + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
+
+        if use_only_centrals:
+            savefig_txt = savefig_txt + '_centrals'
+        if len(set_hist_type) == 4:
+            savefig_txt = savefig_txt + '_allpaths'
+            
+        plt.savefig("%s/time_spent_misaligned_stelmass/%strelax_halomass_%s_subsample%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), len(ID_plot), savefig_txt, file_format), format=file_format, bbox_inches='tight', dpi=600)    
+        print("\n  SAVED: %s/time_spent_misaligned_stelmass/%strelax_halomass_%s_subsample%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), len(ID_plot), savefig_txt, file_format)) 
+    if showfig:
+        plt.show()
+    plt.close()
+# tdyn
+def _plot_timescale_stelmass_histogram_tdyn(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
+                      #==============================================
+                      # Plot options
+                      set_hist_type                       = ['enter below'],          # which paths to use
+                      set_hist_min_trelax                 = 0.25,                # [ 0.25 / 0 ] removing low resolution
+                        stelmass_limits                   = [10, 11],         # [ < lower - upper < ] e.g. [12.5, 14] means <10**12.5, 10**12.5-10**14, >10**14
+                      use_only_centrals                   = False,                   # Whether to only use centrals
+                      #--------------------
+                      # General formatting
+                      set_bin_limit_tdyn                  = 35,       # [ None / multiples ]
+                      set_bin_width_tdyn                  = 1,        # [ multiples ]
+                      set_plot_histogram_log              = False,    # set yaxis as log
+                        add_plot_errorbars                = True,
+                      #==============================================
+                      showfig       = True,
+                      savefig       = False,    
+                        file_format   = 'pdf',
+                        savefig_txt = '',            # [ '' / 'any text' / 'manual' ] 'manual' will prompt txt before saving
+                      #-----------------------------
+                      debug = False):
+                      
+    #-------------------------
+    # Average timescales from input (for use in metadata)
+    mean_timescale   = np.mean(np.array(summary_dict['trelax']['array']))
+    median_timescale = np.median(np.array(summary_dict['trelax']['array']))
+    std_timescale    = np.std(np.array(summary_dict['trelax']['array']))
+    # Average tdyn
+    mean_tdyn   = np.mean(np.array(summary_dict['tdyn']['array']))
+    median_tdyn = np.median(np.array(summary_dict['tdyn']['array']))
+    std_tdyn    = np.std(np.array(summary_dict['tdyn']['array']))
+    # Average ttorque
+    mean_ttorque   = np.mean(np.array(summary_dict['ttorque']['array']))
+    median_ttorque = np.median(np.array(summary_dict['ttorque']['array']))
+    std_ttorque    = np.std(np.array(summary_dict['ttorque']['array']))
+    
+    #-------------------------
+    relaxation_type    = misalignment_input['relaxation_type']
+    relaxation_morph   = misalignment_input['relaxation_morph']
+    misalignment_morph = misalignment_input['misalignment_morph']
+    morph_limits       = misalignment_input['morph_limits']
+    peak_misangle      = misalignment_input['peak_misangle']
+    min_trelax         = misalignment_input['min_trelax']        
+    max_trelax         = misalignment_input['max_trelax'] 
+    use_angle          = misalignment_input['use_angle']
+    misangle_threshold = misalignment_input['misangle_threshold']
+    time_extra         = misalignment_input['time_extra']
+    #------------------------- 
+    
+    
+    #==========================================================================
+    # Gather data
+    relaxationtime_plot  = []
+    relaxationtype_plot  = []
+    relaxationmorph_plot = []
+    subgroupnum_class    = []
+    stelmass_plot        = []
+    ID_plot              = []
+    for ID_i in misalignment_tree.keys():
+        
+        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_hist_min_trelax:
+            continue
+    
+        if misalignment_tree['%s' %ID_i]['relaxation_type'] in set_hist_type:
+            
+            ID_plot.append(ID_i)
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+            
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
+                relaxationtype_plot.append('C0')
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
+                relaxationtype_plot.append('C1')
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
+                relaxationtype_plot.append('C2')
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
+                relaxationtype_plot.append('C3')
+            
+            # find subgroupnum, and classify as following:  central: all==0, satellite: all>0, mixed: ones that change
+            sgn = np.array(misalignment_tree['%s' %ID_i]['SubGroupNum'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']])
+            if np.all(sgn == 0):
+                subgroupnum_class.append('central')
+            elif np.all(sgn > 0):
+                subgroupnum_class.append('satellite')
+            else:
+                subgroupnum_class.append('mixed')
+            
+            # Find halo mass
+            stelmass_plot.append(np.mean(misalignment_tree['%s' %ID_i]['stelmass'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']]))           
+                            
+            # Collect morphology
+            if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-ETG':
+                relaxationmorph_plot.append('ETG → ETG')
+            elif misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'LTG-LTG':
+                relaxationmorph_plot.append('LTG → LTG')
+            elif misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'LTG-ETG':
+                relaxationmorph_plot.append('LTG → ETG')
+            elif misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-LTG':
+                relaxationmorph_plot.append('ETG → LTG')
+            else:
+                relaxationmorph_plot.append('other')
+            
+    print('  Using sample: ', len(ID_plot))
+    
+    # Collect data into dataframe
+    df = pd.DataFrame(data={'Relaxation time': relaxationtime_plot, 'Relaxation morph': relaxationmorph_plot, 'Relaxation type': relaxationtype_plot, 'Occupation': subgroupnum_class, 'Stellar mass': stelmass_plot, 'GalaxyIDs': ID_plot})
+    
+    #===================================================================================
+    if use_only_centrals:
+        stelmass_1_df = df.loc[(df['Stellar mass'] < 10**stelmass_limits[0]) & (df['Occupation'] == 'central')]
+        stelmass_2_df = df.loc[(df['Stellar mass'] > 10**stelmass_limits[0]) & (df['Stellar mass'] < 10**stelmass_limits[1]) & (df['Occupation'] == 'central')]
+        stelmass_3_df = df.loc[(df['Stellar mass'] > 10**stelmass_limits[1]) & (df['Occupation'] == 'central')]
+    else:
+        stelmass_1_df = df.loc[(df['Stellar mass'] < 10**stelmass_limits[0])]
+        stelmass_2_df = df.loc[(df['Stellar mass'] > 10**stelmass_limits[0]) & (df['Stellar mass'] < 10**stelmass_limits[1])]
+        stelmass_3_df = df.loc[(df['Stellar mass'] > 10**stelmass_limits[1])]
+    
+    
+    print('-------------------------------------------------------------')
+    print('Number of relaxations: ', len(ID_plot))
+    if use_only_centrals:
+        print('  Using only - CENTRALS -:')
+    print('\tStellar mass thresholds:')
+    print('\t10e9.0 - 10e%s:    %i' %(stelmass_limits[0], len(stelmass_1_df)))
+    print('\t10e%.1f - 10e%s:    %i' %(stelmass_limits[0], stelmass_limits[1], len(stelmass_2_df)))
+    print('\t10e%s +        :    %i' %(stelmass_limits[1], len(stelmass_3_df)))
+    
+    print('-------')
+    print('Medians:       [ tdyn ]')
+    print('10e11.0 - 10e%s:    %.2f' %(stelmass_limits[0], np.median(stelmass_1_df['Relaxation time'])))
+    print('10e%.1f - 10e%s:    %.2f' %(stelmass_limits[0], stelmass_limits[1], np.median(stelmass_2_df['Relaxation time'])))
+    print('10e%s +        :    %.2f' %(stelmass_limits[1], np.median(stelmass_3_df['Relaxation time'])))
+    
+
+    
+    #---------------
+    # KS test
+    #print('-------------')
+    res = stats.ks_2samp(stelmass_1_df['Relaxation time'], stelmass_2_df['Relaxation time'])
+    print('KS-test:     lowest stelmass range - middle stelmass range')
+    print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(stelmass_1_df.index) + len(stelmass_2_df.index))/(len(stelmass_1_df.index)*len(stelmass_2_df.index))))))
+    print('   p-value: %s' %res.pvalue)
+    res = stats.ks_2samp(stelmass_2_df['Relaxation time'], stelmass_3_df['Relaxation time'])
+    print('KS-test:     middle stelmass range - highest stelmass range')
+    print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(stelmass_2_df.index) + len(stelmass_3_df.index))/(len(stelmass_2_df.index)*len(stelmass_3_df.index))))))
+    print('   p-value: %s' %res.pvalue)
+    res = stats.ks_2samp(stelmass_1_df['Relaxation time'], stelmass_3_df['Relaxation time'])
+    print('KS-test:     lowest stelmass range - highest stelmass range')
+    print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(stelmass_1_df.index) + len(stelmass_3_df.index))/(len(stelmass_1_df.index)*len(stelmass_3_df.index))))))
+    print('   p-value: %s' %res.pvalue)
+    
+    
+    #-------------
+    ### Plotting
+    fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.1], sharex=True, sharey=False)
+    plt.subplots_adjust(wspace=0.4, hspace=0.4)
+            
+    if set_bin_limit_tdyn == None:
+        set_bin_limit_tdyn = math.ceil(max(relaxationtime_plot))
+    if set_plot_histogram_log:
+        set_plot_relaxation_type = False 
+    
+    #-------------
+    ### Plot histogram
+    cmap = cm.get_cmap('Oranges')
+    c1 = cmap(0.4)
+    c2 = cmap(0.7)
+    c3 = cmap(1.0)
+    for stelmass_df, plot_color in zip([stelmass_1_df, stelmass_2_df, stelmass_3_df], [c1, c2, c3]):
+        # Add hist
+        axs.hist(stelmass_df['Relaxation time'], weights=np.ones(len(stelmass_df['Relaxation time']))/len(stelmass_df['Relaxation time']), bins=np.arange(0, set_bin_limit_tdyn+set_bin_width_tdyn, set_bin_width_tdyn), histtype='step', facecolor='none', alpha=0.9, lw=1, edgecolor=plot_color)
+        hist_n, _ = np.histogram(stelmass_df['Relaxation time'], bins=np.arange(0, set_bin_limit_tdyn+set_bin_width_tdyn, set_bin_width_tdyn), range=(0, set_bin_limit_tdyn))
+        
+        # Add error bars
+        if add_plot_errorbars:
+            axs.errorbar(np.arange(set_bin_width_tdyn/2, set_bin_limit_tdyn, set_bin_width_tdyn), hist_n/np.sum(hist_n), xerr=None, yerr=np.sqrt(hist_n)/np.sum(hist_n), ecolor=plot_color, ls='none', capsize=1, elinewidth=0.7, markeredgewidth=0.7, alpha=0.3)
+        
+    
+    
+    #-----------
+    ### General formatting
+    # Axis labels
+    axs.set_yscale('log')
+    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
+    axs.set_xlim(0, set_bin_limit_tdyn)
+    axs.set_xticks(np.arange(0, set_bin_limit_tdyn+0.1, step=2))
+    axs.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{dyn}}$')
+    axs.set_ylabel('Percentage of\nmisalignments')
+    axs.set_ylim(bottom=0.001)
+    
+    
+    #-----------
+    ### Legend
+    legend_elements = []
+    legend_labels = []
+    legend_colors = []
+    
+    legend_labels.append(r'$M_{\mathrm{*}}$' + '/M$_{\odot}$' + r'$<10^{%s}$' %(stelmass_limits[0]))
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append(c1)
+    
+    legend_labels.append(r'$10^{%s}<M_{\mathrm{*}}$'%(stelmass_limits[0]) + '/M$_{\odot}$' + r'$<10^{%s}$' %(stelmass_limits[1]))
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append(c2)
+
+    legend_labels.append(r'$M_{\mathrm{*}}$/M$_{\odot}$$>10^{%s}$'%(stelmass_limits[1]))
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append(c3)
+    
+    ncol=1
+    axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0, ncol=ncol)
+    
+    
+    #-----------
+    ### title
+    if (len(set_hist_type) < 4) or use_only_centrals:
+        plot_annotate = ''
+    if use_only_centrals:
+        plot_annotate = ''
+        plot_annotate = plot_annotate + 'centrals'
+    if len(set_hist_type) < 4:
+        if 'co-co' in set_hist_type:
+            plot_annotate = plot_annotate + 'co → co'
+        if 'counter-counter' in set_hist_type:
+            plot_annotate = plot_annotate + ', counter → counter'
+        if 'co-counter' in set_hist_type:
+            plot_annotate = plot_annotate + ', co → counter'
+        if 'counter-co' in set_hist_type:
+            plot_annotate = plot_annotate + ', counter → co'
+    if plot_annotate:
+        axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
+        
+    #-----------
+    ### other
+    plt.tight_layout()
+    
+    
+    #-----------
+    ### Savefig  
+                     
+    if savefig:
+        savefig_txt = savefig_txt_in + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
+
+        if use_only_centrals:
+            savefig_txt = savefig_txt + '_centrals'
+        if len(set_hist_type) == 4:
+            savefig_txt = savefig_txt + '_allpaths'
+            
+        plt.savefig("%s/time_spent_misaligned_stelmass/%stdyn_halomass_%s_subsample%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), len(ID_plot), savefig_txt, file_format), format=file_format, bbox_inches='tight', dpi=600)    
+        print("\n  SAVED: %s/time_spent_misaligned_stelmass/%stdyn_halomass_%s_subsample%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), len(ID_plot), savefig_txt, file_format)) 
+    if showfig:
+        plt.show()
+    plt.close()
+# ttorque
+def _plot_timescale_stelmass_histogram_ttorque(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
+                      #==============================================
+                      # Plot options
+                      set_hist_type                       = ['enter below'],          # which paths to use
+                      set_hist_min_trelax                 = 0.25,                # [ 0.25 / 0 ] removing low resolution
+                        stelmass_limits                   = [10, 11],         # [ < lower - upper < ] e.g. [12.5, 14] means <10**12.5, 10**12.5-10**14, >10**14
+                      use_only_centrals                   = False,                   # Whether to only use centrals
+                      #--------------------
+                      # General formatting
+                      set_bin_limit_ttorque               = 12,       # [ None / multiples ]
+                      set_bin_width_ttorque               = 0.5,      # [ multiples ]
+                      set_plot_histogram_log              = False,    # set yaxis as log
+                        add_plot_errorbars                = True,
+                      #==============================================
+                      showfig       = True,
+                      savefig       = False,    
+                        file_format   = 'pdf',
+                        savefig_txt = '',            # [ '' / 'any text' / 'manual' ] 'manual' will prompt txt before saving
+                      #-----------------------------
+                      debug = False):
+                      
+    #-------------------------
+    # Average timescales from input (for use in metadata)
+    mean_timescale   = np.mean(np.array(summary_dict['trelax']['array']))
+    median_timescale = np.median(np.array(summary_dict['trelax']['array']))
+    std_timescale    = np.std(np.array(summary_dict['trelax']['array']))
+    # Average tdyn
+    mean_tdyn   = np.mean(np.array(summary_dict['tdyn']['array']))
+    median_tdyn = np.median(np.array(summary_dict['tdyn']['array']))
+    std_tdyn    = np.std(np.array(summary_dict['tdyn']['array']))
+    # Average ttorque
+    mean_ttorque   = np.mean(np.array(summary_dict['ttorque']['array']))
+    median_ttorque = np.median(np.array(summary_dict['ttorque']['array']))
+    std_ttorque    = np.std(np.array(summary_dict['ttorque']['array']))
+    
+    #-------------------------
+    relaxation_type    = misalignment_input['relaxation_type']
+    relaxation_morph   = misalignment_input['relaxation_morph']
+    misalignment_morph = misalignment_input['misalignment_morph']
+    morph_limits       = misalignment_input['morph_limits']
+    peak_misangle      = misalignment_input['peak_misangle']
+    min_trelax         = misalignment_input['min_trelax']        
+    max_trelax         = misalignment_input['max_trelax'] 
+    use_angle          = misalignment_input['use_angle']
+    misangle_threshold = misalignment_input['misangle_threshold']
+    time_extra         = misalignment_input['time_extra']
+    #------------------------- 
+    
+    
+    #==========================================================================
+    # Gather data
+    relaxationtime_plot  = []
+    relaxationtype_plot  = []
+    relaxationmorph_plot = []
+    subgroupnum_class    = []
+    stelmass_plot        = []
+    ID_plot              = []
+    for ID_i in misalignment_tree.keys():
+        
+        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_hist_min_trelax:
+            continue
+    
+        if misalignment_tree['%s' %ID_i]['relaxation_type'] in set_hist_type:
+            
+            ID_plot.append(ID_i)
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
+                relaxationtype_plot.append('C0')
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
+                relaxationtype_plot.append('C1')
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
+                relaxationtype_plot.append('C2')
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
+                relaxationtype_plot.append('C3')
+            
+            # find subgroupnum, and classify as following:  central: all==0, satellite: all>0, mixed: ones that change
+            sgn = np.array(misalignment_tree['%s' %ID_i]['SubGroupNum'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']])
+            if np.all(sgn == 0):
+                subgroupnum_class.append('central')
+            elif np.all(sgn > 0):
+                subgroupnum_class.append('satellite')
+            else:
+                subgroupnum_class.append('mixed')
+            
+            # Find halo mass
+            stelmass_plot.append(np.mean(misalignment_tree['%s' %ID_i]['stelmass'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']]))           
+                            
+            # Collect morphology
+            if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-ETG':
+                relaxationmorph_plot.append('ETG → ETG')
+            elif misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'LTG-LTG':
+                relaxationmorph_plot.append('LTG → LTG')
+            elif misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'LTG-ETG':
+                relaxationmorph_plot.append('LTG → ETG')
+            elif misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-LTG':
+                relaxationmorph_plot.append('ETG → LTG')
+            else:
+                relaxationmorph_plot.append('other')
+            
+    print('  Using sample: ', len(ID_plot))
+    
+    # Collect data into dataframe
+    df = pd.DataFrame(data={'Relaxation time': relaxationtime_plot, 'Relaxation morph': relaxationmorph_plot, 'Relaxation type': relaxationtype_plot, 'Occupation': subgroupnum_class, 'Stellar mass': stelmass_plot, 'GalaxyIDs': ID_plot})
+    
+    #===================================================================================
+    if use_only_centrals:
+        stelmass_1_df = df.loc[(df['Stellar mass'] < 10**stelmass_limits[0]) & (df['Occupation'] == 'central')]
+        stelmass_2_df = df.loc[(df['Stellar mass'] > 10**stelmass_limits[0]) & (df['Stellar mass'] < 10**stelmass_limits[1]) & (df['Occupation'] == 'central')]
+        stelmass_3_df = df.loc[(df['Stellar mass'] > 10**stelmass_limits[1]) & (df['Occupation'] == 'central')]
+    else:
+        stelmass_1_df = df.loc[(df['Stellar mass'] < 10**stelmass_limits[0])]
+        stelmass_2_df = df.loc[(df['Stellar mass'] > 10**stelmass_limits[0]) & (df['Stellar mass'] < 10**stelmass_limits[1])]
+        stelmass_3_df = df.loc[(df['Stellar mass'] > 10**stelmass_limits[1])]
+    
+    
+    print('-------------------------------------------------------------')
+    print('Number of relaxations: ', len(ID_plot))
+    if use_only_centrals:
+        print('  Using only - CENTRALS -:')
+    print('\tStellar mass thresholds:')
+    print('\t10e9.0 - 10e%s:    %i' %(stelmass_limits[0], len(stelmass_1_df)))
+    print('\t10e%.1f - 10e%s:    %i' %(stelmass_limits[0], stelmass_limits[1], len(stelmass_2_df)))
+    print('\t10e%s +        :    %i' %(stelmass_limits[1], len(stelmass_3_df)))
+    
+    print('-------')
+    print('Medians:       [ ttorque ]')
+    print('10e11.0 - 10e%s:    %.2f' %(stelmass_limits[0], np.median(stelmass_1_df['Relaxation time'])))
+    print('10e%.1f - 10e%s:    %.2f' %(stelmass_limits[0], stelmass_limits[1], np.median(stelmass_2_df['Relaxation time'])))
+    print('10e%s +        :    %.2f' %(stelmass_limits[1], np.median(stelmass_3_df['Relaxation time'])))
+    
+
+    
+    #---------------
+    # KS test
+    #print('-------------')
+    res = stats.ks_2samp(stelmass_1_df['Relaxation time'], stelmass_2_df['Relaxation time'])
+    print('KS-test:     lowest stelmass range - middle stelmass range')
+    print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(stelmass_1_df.index) + len(stelmass_2_df.index))/(len(stelmass_1_df.index)*len(stelmass_2_df.index))))))
+    print('   p-value: %s' %res.pvalue)
+    res = stats.ks_2samp(stelmass_2_df['Relaxation time'], stelmass_3_df['Relaxation time'])
+    print('KS-test:     middle stelmass range - highest stelmass range')
+    print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(stelmass_2_df.index) + len(stelmass_3_df.index))/(len(stelmass_2_df.index)*len(stelmass_3_df.index))))))
+    print('   p-value: %s' %res.pvalue)
+    res = stats.ks_2samp(stelmass_1_df['Relaxation time'], stelmass_3_df['Relaxation time'])
+    print('KS-test:     lowest stelmass range - highest stelmass range')
+    print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(stelmass_1_df.index) + len(stelmass_3_df.index))/(len(stelmass_1_df.index)*len(stelmass_3_df.index))))))
+    print('   p-value: %s' %res.pvalue)
+    
+    
+    #-------------
+    ### Plotting
+    fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.1], sharex=True, sharey=False)
+    plt.subplots_adjust(wspace=0.4, hspace=0.4)
+            
+    if set_bin_limit_ttorque == None:
+        set_bin_limit_ttorque = math.ceil(max(relaxationtime_plot))
+    if set_plot_histogram_log:
+        set_plot_relaxation_type = False 
+    
+    #-------------
+    ### Plot histogram
+    cmap = cm.get_cmap('Oranges')
+    c1 = cmap(0.4)
+    c2 = cmap(0.7)
+    c3 = cmap(1.0)
+    for stelmass_df, plot_color in zip([stelmass_1_df, stelmass_2_df, stelmass_3_df], [c1, c2, c3]):
+        # Add hist
+        axs.hist(stelmass_df['Relaxation time'], weights=np.ones(len(stelmass_df['Relaxation time']))/len(stelmass_df['Relaxation time']), bins=np.arange(0, set_bin_limit_ttorque+set_bin_width_ttorque, set_bin_width_ttorque), histtype='step', facecolor='none', alpha=0.9, lw=1, edgecolor=plot_color)
+        hist_n, _ = np.histogram(stelmass_df['Relaxation time'], bins=np.arange(0, set_bin_limit_ttorque+set_bin_width_ttorque, set_bin_width_ttorque), range=(0, set_bin_limit_ttorque))
+        
+        # Add error bars
+        if add_plot_errorbars:
+            axs.errorbar(np.arange(set_bin_width_ttorque/2, set_bin_limit_ttorque, set_bin_width_ttorque), hist_n/np.sum(hist_n), xerr=None, yerr=np.sqrt(hist_n)/np.sum(hist_n), ecolor=plot_color, ls='none', capsize=1, elinewidth=0.7, markeredgewidth=0.7, alpha=0.3)
+        
+    
+    
+    #-----------
+    ### General formatting
+    # Axis labels
+    axs.set_yscale('log')
+    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
+    axs.set_xlim(0, set_bin_limit_ttorque)
+    axs.set_xticks(np.arange(0, set_bin_limit_ttorque+0.1, step=1))
+    axs.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{torque}}$')
+    axs.set_ylabel('Percentage of\nmisalignments')
+    axs.set_ylim(bottom=0.001)
+    
+    
+    #-----------
+    ### Legend
+    legend_elements = []
+    legend_labels = []
+    legend_colors = []
+    
+    legend_labels.append(r'$M_{\mathrm{*}}$' + '/M$_{\odot}$' + r'$<10^{%s}$' %(stelmass_limits[0]))
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append(c1)
+    
+    legend_labels.append(r'$10^{%s}<M_{\mathrm{*}}$'%(stelmass_limits[0]) + '/M$_{\odot}$' + r'$<10^{%s}$' %(stelmass_limits[1]))
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append(c2)
+
+    legend_labels.append(r'$M_{\mathrm{*}}$/M$_{\odot}$$>10^{%s}$'%(stelmass_limits[1]))
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append(c3)
+    
+    ncol=1
+    axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0, ncol=ncol)
+    
+    
+    #-----------
+    ### title
+    if (len(set_hist_type) < 4) or use_only_centrals:
+        plot_annotate = ''
+    if use_only_centrals:
+        plot_annotate = ''
+        plot_annotate = plot_annotate + 'centrals'
+    if len(set_hist_type) < 4:
+        if 'co-co' in set_hist_type:
+            plot_annotate = plot_annotate + 'co → co'
+        if 'counter-counter' in set_hist_type:
+            plot_annotate = plot_annotate + ', counter → counter'
+        if 'co-counter' in set_hist_type:
+            plot_annotate = plot_annotate + ', co → counter'
+        if 'counter-co' in set_hist_type:
+            plot_annotate = plot_annotate + ', counter → co'
+    if plot_annotate:
+        axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
+        
+    #-----------
+    ### other
+    plt.tight_layout()
+    
+    
+    #-----------
+    ### Savefig  
+                     
+    if savefig:
+        savefig_txt = savefig_txt_in + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
+
+        if use_only_centrals:
+            savefig_txt = savefig_txt + '_centrals'
+        if len(set_hist_type) == 4:
+            savefig_txt = savefig_txt + '_allpaths'
+            
+        plt.savefig("%s/time_spent_misaligned_stelmass/%sttorque_halomass_%s_subsample%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), len(ID_plot), savefig_txt, file_format), format=file_format, bbox_inches='tight', dpi=600)    
+        print("\n  SAVED: %s/time_spent_misaligned_stelmass/%sttorque_halomass_%s_subsample%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), len(ID_plot), savefig_txt, file_format)) 
+    if showfig:
+        plt.show()
+    plt.close()
 
 
+#-------------------------
+# Plots scatter and histogram of change in theoretical ttorque and ellip during misalignmnet
+def _plot_morphology_change_ttorque_ellip(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
+                      #==============================================
+                      # Plot options
+                      set_hist_type                       = ['enter below'],          # which paths to use
+                      set_hist_min_trelax                 = 0,                # [ 0.25 / 0 ] removing low resolution
+                      plot_scatter                        = True,
+                      plot_histogram                      = True,
+                        plot_ellip                        = True,       # change in ellip vs trelax
+                        plot_ttorque                      = True,       # change in ttorque theoretical vs trelax
+                        plot_ellip_ttorque                = True,       # change in ellip vs change in ttorque theoretical
+                      #--------------------
+                      # General formatting
+                      set_bin_limit                = 5,        # [ None / fraction ]
+                      set_bin_width                = 0.25,     # [ 0.25 / fraction ]
+                      set_plot_histogram_log              = False,    # set yaxis as log
+                        add_plot_errorbars                = True,
+                      #==============================================
+                      showfig       = True,
+                      savefig       = False,    
+                        file_format   = 'pdf',
+                        savefig_txt = '',            # [ '' / 'any text' / 'manual' ] 'manual' will prompt txt before saving
+                      #-----------------------------
+                      debug = False):
+                      
+    #-------------------------
+    # Average timescales from input (for use in metadata)
+    mean_timescale   = np.mean(np.array(summary_dict['trelax']['array']))
+    median_timescale = np.median(np.array(summary_dict['trelax']['array']))
+    std_timescale    = np.std(np.array(summary_dict['trelax']['array']))
+    # Average tdyn
+    mean_tdyn   = np.mean(np.array(summary_dict['tdyn']['array']))
+    median_tdyn = np.median(np.array(summary_dict['tdyn']['array']))
+    std_tdyn    = np.std(np.array(summary_dict['tdyn']['array']))
+    # Average ttorque
+    mean_ttorque   = np.mean(np.array(summary_dict['ttorque']['array']))
+    median_ttorque = np.median(np.array(summary_dict['ttorque']['array']))
+    std_ttorque    = np.std(np.array(summary_dict['ttorque']['array']))
+    
+    #-------------------------
+    relaxation_type    = misalignment_input['relaxation_type']
+    relaxation_morph   = misalignment_input['relaxation_morph']
+    misalignment_morph = misalignment_input['misalignment_morph']
+    morph_limits       = misalignment_input['morph_limits']
+    peak_misangle      = misalignment_input['peak_misangle']
+    min_trelax         = misalignment_input['min_trelax']        
+    max_trelax         = misalignment_input['max_trelax'] 
+    use_angle          = misalignment_input['use_angle']
+    misangle_threshold = misalignment_input['misangle_threshold']
+    time_extra         = misalignment_input['time_extra']
+    #------------------------- 
+    
+    
+    #==========================================================================
+    # Gather data
+    relaxationtime_plot  = []
+    relaxationtype_plot  = []
+    relaxationmorph_plot = []
+    stelmass_plot        = []
+    delta_torque_plot    = []
+    delta_ellip_plot     = []
+    ID_plot              = []
+    for ID_i in misalignment_tree.keys():
+        
+        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_hist_min_trelax:
+            continue
+    
+        if misalignment_tree['%s' %ID_i]['relaxation_type'] in set_hist_type:
+            
+            ID_plot.append(ID_i)
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
+                relaxationtype_plot.append('C0')
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
+                relaxationtype_plot.append('C1')
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
+                relaxationtype_plot.append('C2')
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
+                relaxationtype_plot.append('C3')
+            
+            
+            # Extract average theretical ttorque and ellip pre-misalignment, and average ttorque and ellip during misalignment
+            ellip_pre = np.mean(misalignment_tree['%s' %ID_i]['ellip'][0:misalignment_tree['%s' %ID_i]['index_s']+1]) 
+            ellip_mid = np.mean(misalignment_tree['%s' %ID_i]['ellip'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']]) 
+            delta_ellip_plot.append(ellip_mid/ellip_pre)        # decrease = more spherical
+            
+            theottorque_pre = np.mean(misalignment_tree['%s' %ID_i]['ttorque'][0:misalignment_tree['%s' %ID_i]['index_s']+1]) 
+            theottorque_mid = np.mean(misalignment_tree['%s' %ID_i]['ttorque'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']]) 
+            delta_torque_plot.append(theottorque_mid/theottorque_pre)       # increase = more spherical possibly
+            
+            """
+            if int(ID_i) in range(453139689, 453139689+100):
+                print(ellip_pre)
+                print(ellip_mid)
+                print(ellip_mid/ellip_pre)
+                print(' ')
+                print(theottorque_pre)
+                print(theottorque_mid)
+                print(theottorque_mid/theottorque_pre)
+            """
+            
+            # Find stellar mass
+            stelmass_plot.append(np.mean(misalignment_tree['%s' %ID_i]['stelmass'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']]))
+            
+                            
+            # Collect morphology
+            if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-ETG':
+                relaxationmorph_plot.append('ETG → ETG')
+            elif misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'LTG-LTG':
+                relaxationmorph_plot.append('LTG → LTG')
+            elif misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'LTG-ETG':
+                relaxationmorph_plot.append('LTG → ETG')
+            elif misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-LTG':
+                relaxationmorph_plot.append('ETG → LTG')
+            else:
+                relaxationmorph_plot.append('other')
+            
+    print('  Using sample: ', len(ID_plot))
+    
+    # Collect data into dataframe
+    df = pd.DataFrame(data={'Relaxation time': relaxationtime_plot, 'Relaxation morph': relaxationmorph_plot, 'Relaxation type': relaxationtype_plot, 'Delta ttorque': delta_torque_plot, 'Delta ellip': delta_ellip_plot, 'Stellar mass': stelmass_plot, 'GalaxyIDs': ID_plot})
+    
+    #===================================================================================
+    print('-------------------------------------------------------------')
+    print('Number of relaxations: ', len(ID_plot))
+    
+    if plot_scatter:
+        if plot_ellip:
+            ## Print statements
+            df_temp1 = df.loc[(df['Relaxation time'] > 1)]
+            df_temp2 = df.loc[(df['Relaxation time'] > 1) & (df['Delta ellip'] < 0.80)]
+            print('  Number of relaxations >1 Gyr:                                      ', len(df_temp1))
+            print('  Number of relaxations >1 Gyr with a delta ellip decrease of >20%:  ', len(df_temp2))
+            #print(df_temp2['GalaxyIDs'])
+            
+            
+            #-------------
+            ### Plotting ellip
+            fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.1], sharex=True, sharey=False)
+            plt.subplots_adjust(wspace=0.4, hspace=0.4)
+        
+            #-----------
+            # Colourbar for kappa
+            #norm = mpl.colors.Normalize(vmin=9, vmax=11, clip=True)
+            #mapper = cm.ScalarMappable(norm=norm, cmap='Spectral')         #cmap=cm.coolwarm), cmap='sauron'
+    
+            #-----------
+            im1 = axs.scatter(df['Delta ellip'], df['Relaxation time'], c='k', s=0.3, zorder=99, edgecolors='k', linewidths=0.3, alpha=0.8)
+            #plt.colorbar(im1, ax=axs, label=r'$M_{*}$ M$_{\odot}$', extend='both', pad=0.025)
+        
+            #-----------
+            ### Formatting
+            axs.set_xlabel(r'$\epsilon_{\mathrm{mis}}/\epsilon_{\mathrm{pre}}$')
+            axs.set_ylabel(r'$t_{\mathrm{relax}}$')
+            #axs.set_xscale('log')
+            #axs.set_xlim(0.4, 3)
+            #axs.set_xticks(     [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3])
+            #axs.set_xticklabels(['0.4', '', '0.6', '', '', '', '1', '2', '3'])
+            axs.set_xlim(0.35, 2.55)
+            axs.set_xticks(np.arange(0.5, 2.55, 0.5))
+            axs.set_yscale('log')
+            axs.set_ylim(0.1, 10)
+            axs.set_yticks([0.1, 1, 10])
+            axs.set_yticklabels(['0.1', '1', '10'])
+        
+            #-----------
+            ### Text
+            axs.text(0.4, 6, '$\leftarrow$ elliptical', color='grey', )
+            axs.text(1.2, 6, r'disky $\rightarrow$', color='grey')
+            axs.axvline(1.0, ls='-', lw=0.7, c='r', alpha=0.3)
+        
+            #-----------
+            ### title
+            if (len(set_hist_type) < 4):
+                plot_annotate = ''
+            if len(set_hist_type) < 4:
+                if 'co-co' in set_hist_type:
+                    plot_annotate = plot_annotate + 'co → co'
+                if 'counter-counter' in set_hist_type:
+                    plot_annotate = plot_annotate + ', counter → counter'
+                if 'co-counter' in set_hist_type:
+                    plot_annotate = plot_annotate + ', co → counter'
+                if 'counter-co' in set_hist_type:
+                    plot_annotate = plot_annotate + ', counter → co'
+            if plot_annotate:
+                axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
+        
+            #-----------
+            ### other
+            plt.tight_layout()
+    
+    
+            #-----------
+            ### Savefig  
+                     
+            if savefig:
+                savefig_txt = savefig_txt_in + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
+
+                if len(set_hist_type) == 4:
+                    savefig_txt = savefig_txt + '_allpaths'
+            
+                plt.savefig("%s/relaxation_time_morph_change/%s_ellipchange_trelax_%s_subsample%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), len(ID_plot), savefig_txt, file_format), format=file_format, bbox_inches='tight', dpi=600)    
+                print("\n  SAVED: %s/relaxation_time_morph_change/%s_ellipchange_trelax_%s_subsample%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), len(ID_plot), savefig_txt, file_format)) 
+            if showfig:
+                plt.show()
+            plt.close()
+        if plot_ttorque:
+            ## Print statements
+            df_temp1 = df.loc[(df['Relaxation time'] > 1)]
+            df_temp2 = df.loc[(df['Relaxation time'] > 1) & (df['Delta ttorque'] > 1.20)]
+            print('  Number of relaxations >1 Gyr:                                       ', len(df_temp1))
+            print('  Number of relaxations >1 Gyr with a delta torque decrease of >20%:  ', len(df_temp2))
+            
+            
+            #-------------
+            ### Plotting ellip
+            fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.1], sharex=True, sharey=False)
+            plt.subplots_adjust(wspace=0.4, hspace=0.4)
+        
+            #-----------
+            # Colourbar for kappa
+            #norm = mpl.colors.Normalize(vmin=9, vmax=11, clip=True)
+            #mapper = cm.ScalarMappable(norm=norm, cmap='Spectral')         #cmap=cm.coolwarm), cmap='sauron'
+    
+            #-----------
+            im1 = axs.scatter(df['Delta ttorque'], df['Relaxation time'], c='k', s=0.3, zorder=99, edgecolors='k', linewidths=0.3, alpha=0.8)
+            #plt.colorbar(im1, ax=axs, label=r'$M_{*}$ M$_{\odot}$', extend='both', pad=0.025)
+        
+            #-----------
+            ### Formatting
+            axs.set_xlabel(r'$\bar{t}_{\mathrm{torque,mis}}/\bar{t}_{\mathrm{torque,pre}}$')
+            axs.set_ylabel(r'$t_{\mathrm{relax}}$')
+            #axs.set_xscale('log')
+            #axs.set_xlim(0.3, 3)
+            #axs.set_xticks(     [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3])
+            #axs.set_xticklabels(['0.3', '', '', '0.6', '', '', '', '1', '2', '3'])
+            axs.set_xlim(0.2, 3.5)
+            axs.set_xticks(np.arange(0.5, 3.51, 0.5))
+            axs.set_yscale('log')
+            axs.set_ylim(0.1, 10)
+            axs.set_yticks([0.1, 1, 10])
+            axs.set_yticklabels(['0.1', '1', '10'])
+        
+            #-----------
+            ### Text
+            axs.text(0.37, 6, '$\leftarrow$ reduced', color='grey')
+            axs.text(1.5, 6, r'extended $\rightarrow$', color='grey')
+            axs.axvline(1.0, ls='-', lw=0.7, c='r', alpha=0.3)
+        
+            #-----------
+            ### title
+            if (len(set_hist_type) < 4):
+                plot_annotate = ''
+            if len(set_hist_type) < 4:
+                if 'co-co' in set_hist_type:
+                    plot_annotate = plot_annotate + 'co → co'
+                if 'counter-counter' in set_hist_type:
+                    plot_annotate = plot_annotate + ', counter → counter'
+                if 'co-counter' in set_hist_type:
+                    plot_annotate = plot_annotate + ', co → counter'
+                if 'counter-co' in set_hist_type:
+                    plot_annotate = plot_annotate + ', counter → co'
+            if plot_annotate:
+                axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
+        
+            #-----------
+            ### other
+            plt.tight_layout()
+    
+    
+            #-----------
+            ### Savefig  
+                     
+            if savefig:
+                savefig_txt = savefig_txt_in + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
+
+                if len(set_hist_type) == 4:
+                    savefig_txt = savefig_txt + '_allpaths'
+            
+                plt.savefig("%s/relaxation_time_morph_change/%s_ttorquechange_trelax_%s_subsample%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), len(ID_plot), savefig_txt, file_format), format=file_format, bbox_inches='tight', dpi=600)    
+                print("\n  SAVED: %s/relaxation_time_morph_change/%s_ttorquechange_trelax_%s_subsample%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), len(ID_plot), savefig_txt, file_format)) 
+            if showfig:
+                plt.show()
+            plt.close()
+        if plot_ellip_ttorque:
+            #-------------
+            ### PRINT STATEMENT AND STATS
+            res = stats.spearmanr(df['Delta ellip'], 1/df['Delta ttorque'], nan_policy='omit')
+            print('   Spearman correlation:    %.5f'%res.correlation, '     p-value:    ', res.pvalue)
+            print('   Standard deviation x:    %.5f'%np.std(df['Delta ellip']))
+            print('   Standard deviation y:    %.5f'%np.std(df['Delta ttorque']))
+            
+            #-----------
+            ### Plotting ellip
+            fig, axs = plt.subplots(1, 1, figsize=[10/3, 3], sharex=True, sharey=False)
+            plt.subplots_adjust(wspace=0.4, hspace=0.4)
+        
+            #-----------
+            # Colourbar for kappa
+            #norm = mpl.colors.Normalize(vmin=9, vmax=11, clip=True)
+            #mapper = cm.ScalarMappable(norm=norm, cmap='Spectral')         #cmap=cm.coolwarm), cmap='sauron'
+    
+            #-----------
+            im1 = axs.scatter(df['Delta ellip'], 1/df['Delta ttorque'], c='k', s=0.3, zorder=99, edgecolors='k', linewidths=0.3, alpha=0.8)
+            #plt.colorbar(im1, ax=axs, label=r'$M_{*}$ M$_{\odot}$', extend='both', pad=0.025)
+        
+            #-----------
+            ### Formatting
+            axs.set_xlabel(r'$\epsilon_{\mathrm{mis}}/\epsilon_{\mathrm{pre}}$')
+            axs.set_ylabel(r'$1/(\bar{t}_{\mathrm{torque,mis}}/\bar{t}_{\mathrm{torque,pre}})$')
+            #axs.set_xscale('log')
+            #axs.set_xlim(0.3, 3)
+            #axs.set_xticks(     [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3])
+            #axs.set_xticklabels(['0.3', '', '', '0.6', '', '', '', '1', '2', '3'])
+            axs.set_xlim(0.2, 2.4)
+            axs.set_xticks(np.arange(0.5, 2.5, 0.5))
+            axs.set_ylim(0.2, 2.4)
+            axs.set_yticks(np.arange(0.5, 2.5, 0.5))
+        
+            #-----------
+            ### Text
+            #axs.text(0.37, 6, '$\leftarrow$ reduced', color='grey')
+            #axs.text(1.5, 6, r'extended $\rightarrow$', color='grey')
+            #axs.axvline(1.0, ls='-', lw=0.7, c='r', alpha=0.3)
+            axs.text(1.48, 2.15, r'$\rho_{\mathrm{spearman}}$ = $%.3f$'%(res.correlation) + '\np-value = $%.1e$' %(res.pvalue))
+            axs.grid(alpha=0.3)
+        
+            #-----------
+            ### title
+            if (len(set_hist_type) < 4):
+                plot_annotate = ''
+            if len(set_hist_type) < 4:
+                if 'co-co' in set_hist_type:
+                    plot_annotate = plot_annotate + 'co → co'
+                if 'counter-counter' in set_hist_type:
+                    plot_annotate = plot_annotate + ', counter → counter'
+                if 'co-counter' in set_hist_type:
+                    plot_annotate = plot_annotate + ', co → counter'
+                if 'counter-co' in set_hist_type:
+                    plot_annotate = plot_annotate + ', counter → co'
+            if plot_annotate:
+                axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
+        
+            #-----------
+            ### other
+            plt.tight_layout()
+    
+    
+            #-----------
+            ### Savefig  
+                     
+            if savefig:
+                savefig_txt = savefig_txt_in + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
+
+                if len(set_hist_type) == 4:
+                    savefig_txt = savefig_txt + '_allpaths'
+            
+                plt.savefig("%s/relaxation_time_morph_change/%s_ellipttorquechange_%s_subsample%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), len(ID_plot), savefig_txt, file_format), format=file_format, bbox_inches='tight', dpi=600)    
+                print("\n  SAVED: %s/relaxation_time_morph_change/%s_ellipttorquechange_%s_subsample%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), len(ID_plot), savefig_txt, file_format)) 
+            if showfig:
+                plt.show()
+            plt.close()
+           
 
 
 #\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -12259,60 +13420,97 @@ if load_csv_file_in == '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010'
 
 
 # PLOTS HISTOGRAM OF GAS INFLOW WITH RELAXATION TIME
-_plot_timescale_accretion_histogram_trelax(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
-                            set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
+"""_plot_timescale_accretion_histogram_trelax(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            set_hist_type                    = ['co-co', 'counter-counter'],
                             set_hist_min_trelax              = 0.25,
                               inflow_radius                  = 2.0,                # HMR to use
                               inflow_limits                  = [5, 10],            # [ < lower - upper < Msun/yr ] e.g. [5, 10] means <5, 5-10, 10+      
-                              use_gas_type                   = 'gas_sf',                  # [ 'gas' / 'gas_sf' ]                                                          
+                              use_gas_type                   = 'gas',                  # [ 'gas' / 'gas_sf' ]        
+                              use_only_centrals              = True,        # Use only centrals                                                        
                             showfig = True,
-                            savefig = True)
-_plot_timescale_accretion_histogram_tdyn(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
-                            set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
+                            savefig = False)"""
+"""_plot_timescale_accretion_histogram_tdyn(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            set_hist_type                    = ['co-co', 'counter-counter'],
                             set_hist_min_trelax              = 0.25,
                               inflow_radius                  = 2.0,                # HMR to use
                               inflow_limits                  = [5, 10],            # [ < lower - upper < Msun/yr ] e.g. [5, 10] means <5, 5-10, 10+   
-                              use_gas_type                   = 'gas_sf',                  # [ 'gas' / 'gas_sf' ]                                                             
+                              use_gas_type                   = 'gas',                  # [ 'gas' / 'gas_sf' ]     
+                              use_only_centrals              = True,        # Use only centrals                                                              
                             showfig = True,
-                            savefig = True)
-_plot_timescale_accretion_histogram_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
-                            set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
+                            savefig = False)"""
+"""_plot_timescale_accretion_histogram_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            set_hist_type                    = ['co-co', 'counter-counter'],
                             set_hist_min_trelax              = 0.25,
                               inflow_radius                  = 2.0,                # HMR to use
                               inflow_limits                  = [5, 10],            # [ < lower - upper < Msun/yr ] e.g. [5, 10] means <5, 5-10, 10+         
-                              use_gas_type                   = 'gas_sf',                  # [ 'gas' / 'gas_sf' ]                                                       
+                              use_gas_type                   = 'gas',                  # [ 'gas' / 'gas_sf' ]   
+                              use_only_centrals              = True,        # Use only centrals                                                          
                             showfig = True,
-                            savefig = True)
+                            savefig = False)"""
                             
                             
 # PLOTS HISTOGRAM OF SPECIFIC GAS INFLOW WITH RELAXATION TIME
-_plot_timescale_specaccretion_histogram_trelax(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+"""_plot_timescale_specaccretion_histogram_trelax(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_hist_min_trelax              = 0.25,
                               inflow_radius                  = 2.0,                # HMR to use
                               inflow_limits                  = [1e-9, 2e-9],            # [ < lower - upper < Msun/yr ] e.g. [5, 10] means <5, 5-10, 10+   
                               use_gas_type                   = 'gas_sf',                  # [ 'gas' / 'gas_sf' ]                              
                             showfig = True,
-                            savefig = True)
-_plot_timescale_specaccretion_histogram_tdyn(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            savefig = False)"""
+"""_plot_timescale_specaccretion_histogram_tdyn(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_hist_min_trelax              = 0.25,
                               inflow_radius                  = 2.0,                # HMR to use
                               inflow_limits                  = [1e-9, 2e-9],            # [ < lower - upper < Msun/yr ] e.g. [5, 10] means <5, 5-10, 10+     
                               use_gas_type                   = 'gas_sf',                  # [ 'gas' / 'gas_sf' ]                                                           
                             showfig = True,
-                            savefig = True)
-_plot_timescale_specaccretion_histogram_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            savefig = False)"""
+"""_plot_timescale_specaccretion_histogram_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_hist_min_trelax              = 0.25,
                               inflow_radius                  = 2.0,                # HMR to use
                               inflow_limits                  = [1e-9, 2e-9],            # [ < lower - upper < Msun/yr ] e.g. [5, 10] means <5, 5-10, 10+   
                               use_gas_type                   = 'gas_sf',                  # [ 'gas' / 'gas_sf' ]                                                             
                             showfig = True,
-                            savefig = True)
+                            savefig = False)"""
 
 
-                            
+# PLOTS HISTOGRAM OF STELLAR MASS WITH RELAXATION TIME
+"""_plot_timescale_stelmass_histogram_trelax(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
+                            set_hist_min_trelax              = 0.25,
+                              use_only_centrals              = False,        # Use only centrals
+                            showfig = True,
+                            savefig = False)      # will auto-rename to _allpath if all 4 set_gashist_type used"""
+"""_plot_timescale_stelmass_histogram_tdyn(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
+                            set_hist_min_trelax              = 0.25,
+                              use_only_centrals              = False,        # Use only centrals
+                            showfig = True,
+                            savefig = False)      # will auto-rename to _allpath if all 4 set_gashist_type used"""
+"""_plot_timescale_stelmass_histogram_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
+                            set_hist_min_trelax              = 0.25,
+                              use_only_centrals              = False,        # Use only centrals
+                            showfig = True,
+                            savefig = False)      # will auto-rename to _allpath if all 4 set_gashist_type used"""
+
+
+# PLOTS HISTOGRAM OF FRACTIONAL CHANGE IN TTORQUE, ELLIP, AND BOTH
+"""_plot_morphology_change_ttorque_ellip(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
+                            set_hist_min_trelax              = 0,
+                            plot_scatter                        = True,
+                            plot_histogram                      = True,
+                              plot_ellip                        = True,       # change in ellip vs trelax
+                              plot_ttorque                      = True,       # change in ttorque theoretical vs trelax
+                              plot_ellip_ttorque                = True,
+                            showfig = True,
+                            savefig = False)      # will auto-rename to _allpath if all 4 set_gashist_type used"""
+
+
+       
 #--------------------------------
 # SUITED FOR 1010 SAMPLE AND ABOVE   
 

@@ -1375,7 +1375,7 @@ class Subhalo_Analysis:
         self.viewing_axis       = viewing_axis                          # 'x', 'y', 'z'
         self.viewing_angle      = viewing_angle                         # [deg]
         
-        self.bh_id, self.bh_mass, self.bh_mdot, self.bh_edd = self._bh_accretion(self.data['bh'], halfmass_rad)     # [Msun]/s of largest BH (subgrid) within 0.5 HMR
+        self.bh_id, self.bh_mass, self.bh_mdot, self.bh_edd = self._bh_accretion(self.data['bh'], halfmass_rad)     # [Msun]/s of largest BH (subgrid) within 1 HMR
         
         #----------------------------------------------------
         # Filling self.general

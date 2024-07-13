@@ -1709,8 +1709,8 @@ def _plot_evolution_old(csv_output = 'L100_evolution_ID401467650_RadProj_Err__st
 #savefig_txt = '_135_coco'
 
 # >2 Gyr relaxations:
-ID_list = [ 21263579 ,  55908430 ,  102310984 ,  115659946 ,  135239884 ,  137982097 ,  216029816 ,  221925469 ,  236121865 ,  251900012 ,  273987844 ,  356381666 ,  370249945 ,  453139727 ,  470931663 ,  41296132 ,  412184257 ,  137732481 ,  144504424 ,  208235278 ,  285055028 ,  370237257 ,  405504442 ,  89535725 ,  188808381 ,  306747955 ,  239924250 ,  7770818 ,  179554468 ,  334237852 ,  350073611 ,  123869114 ,  141978869 ,  301364232 ,  338706467 ]
-savefig_txt = '_2Gyr_trelax'
+#ID_list = [ 21263579 ,  55908430 ,  102310984 ,  115659946 ,  135239884 ,  137982097 ,  216029816 ,  221925469 ,  236121865 ,  251900012 ,  273987844 ,  356381666 ,  370249945 ,  453139727 ,  470931663 ,  41296132 ,  412184257 ,  137732481 ,  144504424 ,  208235278 ,  285055028 ,  370237257 ,  405504442 ,  89535725 ,  188808381 ,  306747955 ,  239924250 ,  7770818 ,  179554468 ,  334237852 ,  350073611 ,  123869114 ,  141978869 ,  301364232 ,  338706467 ]
+#savefig_txt = '_2Gyr_trelax'
 
 # >20 dyn:
 #ID_list = [ 236121865 ,  370249945 ]
@@ -1746,6 +1746,15 @@ savefig_txt = '_2Gyr_trelax'
 #ID_list = [453139689, 251899973, 65296105]
 #savefig_txt = '_2Gyr_trelax_paper'
 
+# AURIGA GALAXIES
+#ID_list = [349869588, 65479759, 200582686, 14435116, 141671870, 280826716, 95589210, 14482957, 33850819, 147906152, 433737821, 467324083, 7582389, 42704061, 377471504, 37808721, 251939360, 277697191, 306562705, 306583243, 437608510, 411956841, 271490834, 353097548, 423252305, 251840829, 475874776, 75941645, 297036450, 58667562]
+#savefig_txt = '_AURIGA_GALAXIES'
+
+# BH ISSUES GALAXIES
+ID_list = [102310942, 236121807, 370249894, 285054970]
+savefig_txt = 'BH_issues'
+
+
 def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                          #--------------------------
                          # Individual galaxies
@@ -1767,7 +1776,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                            use_angle                = 'stars_gas_sf',
                            plot_dm_angles           = True,            # Whether to add DM-stars, DM-gas_sf
                              use_dm_uncertainties   = False,              # Whether to plot uncertainties or not
-                           plot_halo_angles         = True,              # Plots inner stars to outer gas_sf
+                           plot_halo_angles         = False,              # Plots inner stars to outer gas_sf
                            misangle_threshold       = 20,                # [ 20 / 30 / 45 ]  
                              peak_misangle          = 30,                # [ 30 / 45 ]  
                            use_uncertainties        = True,              # Whether to plot uncertainties or not
@@ -1779,12 +1788,12 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                            plot_angles          = True,
                            plot_inclination     = False,
                          # Inflow (gas) [ Msun/yr ]
-                           plot_inflow          = True,
-                           plot_outflow         = True,
+                           plot_inflow          = False,
+                           plot_outflow         = False,
                            plot_stelmassloss    = False,
-                           plot_bh_acc          = False,
+                           plot_bh_acc          = True,
                            plot_bh_acc_instant  = True,
-                           plot_sfr             = True,
+                           plot_sfr             = False,
                          # Masses   [ Msun ]
                            plot_halomass        = False,
                            plot_stelmass        = True,
@@ -1813,14 +1822,14 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                            plot_Z_outflow       = False,
                            plot_Z_insitu        = False,
                          # Eddington    [ ]
-                           plot_edd             = True,
+                           plot_edd             = False,
                          # Luminosity   [ erg/s ]
-                           plot_lbol            = True,
+                           plot_lbol            = False,
                          # Disc velocity    [ km/s ]
                            plot_vcirc           = False,
                          # Torquing time    [ Gyr ]
-                           plot_tdyn            = True,
-                           plot_ttorque         = True,     
+                           plot_tdyn            = False,
+                           plot_ttorque         = False,     
                          #==================================================================================
                          showfig        = True,
                          savefig        = False,
@@ -1995,6 +2004,11 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
         ageticks = ((13.8205298 * u.Gyr) - FlatLambdaCDM(H0=67.77, Om0=0.307, Ob0 = 0.04825).age(redshiftticks)).value
         for i, plot_names_i in enumerate(plot_names):
             
+            print(' printing ID and BH details')
+            for id_iii, bh_mass_i in zip(galaxy_tree['%s' %GalaxyID]['GalaxyID'], galaxy_tree['%s' %GalaxyID]['bh']['mass']):
+                print('  %s  %s' %(id_iii, bh_mass_i))
+            
+            
             ### Formatting
             ax_top = axs[i].twiny()
             if redshift_axis:
@@ -2160,6 +2174,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                         axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['ap_sfr'])), alpha=1.0, lw=0.5, c='orange', ls='dashdot', label='SFR')
                     else:
                         axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(10*np.array(galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_general]['sfr'])), alpha=1.0, lw=0.5, c='orange', ls='dashdot', label='SFR(×$10$)')
+                
                 
                 #---------------------    
                 ### Formatting

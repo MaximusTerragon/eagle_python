@@ -267,6 +267,13 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         print('NSF: ', len(gas_nsf['Mass']))
         """
         
+        
+        print('all BHs in subhalo:')
+        for bh_mass_i, (x_ii, y_ii, z_ii) in zip(galaxy.data_nil['bh']['Mass'], galaxy.data_nil['bh']['Coordinates']):
+            print('  %.1f \t x=%.3f y=%.3f z=%.3f' %(bh_mass_i, x_ii, y_ii, z_ii))
+        
+        
+        
         if debug:
             print(galaxy.gn, galaxy.sgn, galaxy.centre, galaxy.halfmass_rad, galaxy.halfmass_rad_proj)
     
@@ -2466,7 +2473,7 @@ def galaxy_gif(csv_sample = False,              # False, Whether to read in exis
 #galaxy_render()
 
 #galaxy_map()
-galaxy_velocity_map()
+#galaxy_velocity_map()
 
 #galaxy_gif()
 #---------------
@@ -2478,8 +2485,13 @@ galaxy_velocity_map()
 #galaxy_gif(GalaxyID_List = np.arange(65296039, 65296039+66+1, 1), mask_sgn=False, savefig_txt='_gif3', showfig=False, savefig=True)
 
 
-
 ### for counter rotators:
 #galaxy_map(stars=True, showfig= True, savefig= False, align_rad=False, mask_sgn=True, trim_rad=np.array(['1.0_hmr']), viewing_axis = 'z', savefig_txt = '_counter', showfig=False, savefig=True)
 #galaxy_map(gas_sf=True, showfig= True, savefig= False, align_rad=False, mask_sgn=True, trim_rad=np.array(['1.0_hmr']), viewing_axis = 'z',  savefig_txt = '_counter', showfig=False, savefig=True)
-#--------------
+
+
+### for BH visualisation
+galaxy_render(GalaxyID_List = [102310951, 102310952, 102310953],
+                stars=True, gas=False, gas_sf=True, black_holes=True,
+                showfig=False, savefig=True, savefig_txt='BH_issue')
+

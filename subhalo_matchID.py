@@ -36,11 +36,18 @@ ID_list = [16761384, 9982142]
 
 #ID_list = [19250448, 19615775, 18996097, 19845188, 15018060, 17559548, 14227200, 14308492, 15386755, 17611276, 63927060, 15274006, 15233503, 14471018, 15507373, 15214259, 15859420, 15569345, 14195766, 1745906, 17189709, 18281743, 17966783, 14402768, 17552187, 12659357, 18477103, 18445256, 18063592, 17791089, 8396743, 15708288, 15490693, 8283638, 8745475, 18058633, 9430664, 8546955, 9463308, 18153798, 12707838, 8787255, 10655576, 17183688, 18428672, 18359999, 15505664, 9845893, 8894369, 13154469, 9284260, 10751314, 9051081, 8797511, 13747962, 9808391, 14107961, 9788483, 8978301, 17518214, 9599139, 8429144, 13741791, 9766117, 56190924, 9044113, 8640506, 12152678, 13854599, 9014149, 8550656, 247998, 17635406, 9806843, 9805593, 9335719, 9759527, 9194557, 9946987, 9970077, 10375596, 9627417, 9762290, 10195407, 18120450, 8612765, 10108400, 10005162, 9654901, 10145406, 10446679, 17275742, 9396018, 10148850, 11513068, 10422406, 8493458, 8605415, 10304880, 13806265, 9142108, 10791968, 10007497, 10452290, 8578291, 10839221, 10078536, 10189421, 8477086, 10297941, 9409132, 13250441, 10965881, 2412731, 2823428, 2506302, 10805323, 8384309, 2958110, 8649269, 10250787, 8561075, 11334241, 8451343, 8617278, 10332220, 11164348, 10771328, 11349964, 8330576, 4481174, 8902166, 11668259, 8701932, 10246654, 10799409, 2578654, 11759492, 10521504, 11313469, 2821522, 11619654, 2816573, 10043717, 2743609, 11590970, 58282646, 11927781, 8447688, 12017675, 10789799, 12018990, 6681735]
 
+# Auriga galaxies
+#ID_list = [8677914, 8712653, 8799477, 8840875, 8894368, 8905407, 8937439, 9020523, 9114530, 9225417, 9256845, 9352515, 9355439, 9366625, 9380244, 9384896, 9397255, 9620150, 9652693, 9678375, 9744960, 9781462, 9835509, 9915689, 18131526, 18308116, 18356558, 18399452, 18452163, 18475201]
+# Auriga galaxy equivolents in snips
+#ID_list = [349869588, 65479759, 200582686, 14435116, 141671870, 280826716, 95589210, 14482957, 33850819, 147906152, 433737821, 467324083, 7582389, 42704061, 377471504, 37808721, 251939360, 277697191, 306562705, 306583243, 437608510, 411956841, 271490834, 353097548, 423252305, 251840829, 475874776, 75941645, 297036450, 58667562]
+
+ID_list = [251899973]
+
 # When given ID and snip/snap, will try to find closest match ID in snap/snip
 def match_galaxyID(mySims = [('RefL0100N1504', 100)],
                     #--------------------------
                     GalaxyID_List = ID_list,
-                    snap_snip     = 'snap',             # run of above ID
+                    snap_snip     = 'snip',             # run of above ID
                     #--------------------------
                     # Extract galaxies within range
                     CoP_range  = 0.02,                   # Mpc
@@ -192,9 +199,11 @@ def match_galaxyID(mySims = [('RefL0100N1504', 100)],
                         SH.CentreOfPotential_x as x, \
                         SH.CentreOfPotential_y as y, \
                         SH.CentreOfPotential_z as z, \
-                        SH.MassType_Star as mass \
+                        SH.MassType_Star as mass, \
+                        FOF.Group_M_Crit200 as Rcrit \
                        FROM \
-        			     %s_Subhalo as SH \
+        			     %s_Subhalo as SH, \
+        			     %s_FOF as FOF \
                        WHERE \
         			     SH.SnapNum = %s \
                          and ((SH.CentreOfPotential_x > %s) and (SH.CentreOfPotential_x < %s)) \
@@ -202,8 +211,9 @@ def match_galaxyID(mySims = [('RefL0100N1504', 100)],
                          and ((SH.CentreOfPotential_z > %s) and (SH.CentreOfPotential_z < %s)) \
                          and ((SH.MassType_Star > %s) and (SH.MassType_Star < %s)) \
                          and SH.SubGroupNumber <= %s \
+                         and SH.GroupID = FOF.GroupID \
                        ORDER BY \
-        			     mass desc'%(mySims[0][0], snapnum_ref, (CoP_x-CoP_range), (CoP_x+CoP_range), (CoP_y-CoP_range), (CoP_y+CoP_range), (CoP_z-CoP_range), (CoP_z+CoP_range), (stelmass*(1-(mass_range/100))), (stelmass*(1+(mass_range/100))), (SubGroupNum + sub_range))
+        			     mass desc'%(mySims[0][0], mySims[0][0], snapnum_ref, (CoP_x-CoP_range), (CoP_x+CoP_range), (CoP_y-CoP_range), (CoP_y+CoP_range), (CoP_z-CoP_range), (CoP_z+CoP_range), (stelmass*(1-(mass_range/100))), (stelmass*(1+(mass_range/100))), (SubGroupNum + sub_range))
             # Execute query.
             myData = sql.execute_query(con, myQuery)
             
@@ -217,6 +227,7 @@ def match_galaxyID(mySims = [('RefL0100N1504', 100)],
                 CoP_y_match       = np.array(myData['y'])
                 CoP_z_match       = np.array(myData['z'])
                 stelmass_match    = np.array(myData['mass'])
+                FOF_match         = np.array(myData['Rcrit'])
             else:
                 GalaxyID_match    = np.array([np.array([myData])[0][2]])
                 Redshift_match    = np.array([np.array([myData])[0][4]])
@@ -227,6 +238,7 @@ def match_galaxyID(mySims = [('RefL0100N1504', 100)],
                 CoP_y_match       = np.array([np.array([myData])[0][6]])
                 CoP_z_match       = np.array([np.array([myData])[0][7]])
                 stelmass_match    = np.array([np.array([myData])[0][8]])
+                FOF_match         = np.array([np.array([myData])[0][9]])
                     
             # Find distance to CoP
             distance      = np.sqrt((CoP_x_match - CoP_x)**2 + (CoP_y_match - CoP_y)**2 + (CoP_z_match - CoP_z)**2)
@@ -242,11 +254,12 @@ def match_galaxyID(mySims = [('RefL0100N1504', 100)],
             CoP_y_match       = CoP_y_match[mask_sort]
             CoP_z_match       = CoP_z_match[mask_sort]
             stelmass_match    = stelmass_match[mask_sort]
+            FOF_match         = FOF_match[mask_sort]
         
         if print_galaxy:
             print('MATCHES:    %s' %len(GalaxyID_match))
-            for id_i, sn_i, red_i, gn_i, sgn_i, x_i, y_i, z_i, mass_i, d_i in zip(GalaxyID_match, SnapNum_match, Redshift_match, GroupNum_match, SubGroupNum_match, CoP_x_match, CoP_y_match, CoP_z_match, stelmass_match, distance[mask_sort]):
-                print('|%s| %.2f |ID: %s\t|M*: %.2e |CoP:  %.2f %.2f %.2f  | %.3f kpc' %(sn_i, red_i, id_i, mass_i, x_i, y_i, z_i, d_i)) 
+            for id_i, sn_i, red_i, gn_i, sgn_i, x_i, y_i, z_i, mass_i, fof_i, d_i in zip(GalaxyID_match, SnapNum_match, Redshift_match, GroupNum_match, SubGroupNum_match, CoP_x_match, CoP_y_match, CoP_z_match, stelmass_match, FOF_match, distance[mask_sort]):
+                print('|%s| %.2f |ID: %s\t|M*: %.2e |CoP:  %.2f %.2f %.2f  | FOF %.2e | %.3f kpc' %(sn_i, red_i, id_i, mass_i, x_i, y_i, z_i, fof_i, d_i)) 
             
         
         # want 13866056
@@ -256,7 +269,7 @@ def match_galaxyID(mySims = [('RefL0100N1504', 100)],
 
 
 #=========================
-match_galaxyID()
+match_galaxyID(snap_snip='snip')
 
 print('\nID_output:')
 print(ID_output)

@@ -79,7 +79,7 @@ def _extract_tree(csv_tree = 'L100_galaxy_tree_',
     Arrays contain no missing entries
 
     Mergers searched for from first misaligned [index_m+1], to first relax [index_r] -> for range from relax to relax do [index_m:index_r+1]
-    Values specified for general (eg. stelmass) use_hmr_general (typically 2.0)
+	Values specified for general (eg. stelmass) use_hmr_general (typically 2.0)
 
     'GalaxyID'				-
     'SnapNum'				-
@@ -89,8 +89,11 @@ def _extract_tree(csv_tree = 'L100_galaxy_tree_',
     'SubGroupNum'			- 
     'halomass'				- [ Msun ]
     'stelmass'				- [ Msun ]
+    'stelmass_1hmr'			- [ Msun ]
     'gasmass'				- [ Msun ]
+    'gasmass_1hmr'			- [ Msun ]
     'sfmass'				- [ Msun ]
+    'sfmass_1hmr'			- [ Msun ]
     'nsfmass'				- [ Msun ]				
     'dmmass'				- [ Msun ] in 30pkpc
 
@@ -145,8 +148,33 @@ def _extract_tree(csv_tree = 'L100_galaxy_tree_',
     'outflow_Z_2hmr'			-
     'insitu_Z_1hmr'				-
     'insitu_Z_2hmr'				-
+	
+    'inflow_sf_mass_1hmr'			- [ Msun ]
+    'inflow_sf_mass_2hmr'			- [ Msun ]
+    'outflow_sf_mass_1hmr'			- [ Msun ]
+    'outflow_sf_mass_2hmr'			- [ Msun ]
+    'insitu_sf_mass_1hmr'			- [ Msun ]
+    'insitu_sf_mass_2hmr'			- [ Msun ]
+    'inflow_sf_rate_1hmr'			- [ Msun/yr ]
+    'inflow_sf_rate_2hmr'			- [ Msun/yr ]
+    'outflow_sf_rate_1hmr'			- [ Msun/yr ]
+    'outflow_sf_rate_2hmr'			- [ Msun/yr ]
+    'stelmassloss_sf_rate_1hmr'	- [ Msun/yr ]
+    'stelmassloss_sf_rate_2hmr'	- [ Msun/yr ]
+    's_inflow_sf_rate_1hmr'		- [ /yr ]
+    's_inflow_sf_rate_2hmr'		- [ /yr ]
+    's_outflow_sf_rate_1hmr'		- [ /yr ]
+    's_outflow_sf_rate_2hmr'		- [ /yr ]
+    'inflow_Z_sf_1hmr'				-
+    'inflow_Z_sf_2hmr'				-
+    'outflow_Z_sf_1hmr'			-
+    'outflow_Z_sf_2hmr'			-
+    'insitu_Z_sf_1hmr'				-
+    'insitu_Z_sf_2hmr'				-
 
     'bh_mass'				- [ Msun ]
+	'bh_cumlmass'			- [ Msun ]
+	'bh_cumlseeds'			- 
     'bh_mdot_av'			- [ Msun/yr ]
     'bh_mdot_inst'			- [ Msun/yr ]
     'bh_edd'				-
@@ -154,7 +182,7 @@ def _extract_tree(csv_tree = 'L100_galaxy_tree_',
 
     'stars_gas_sf'			- all in degrees
     'stars_gas_sf_err'		-
-    'stars_gas_sf_halo'		- inner stars vs outer gas_sf
+	'stars_gas_sf_halo'		- inner stars vs outer gas_sf
     'stars_dm'				- not checked for inclination
     'stars_dm_err'			-
     'gas_dm'				- not checked for inclination
@@ -167,12 +195,12 @@ def _extract_tree(csv_tree = 'L100_galaxy_tree_',
 
     # single values:
     'index_s'				- Last before leaving stable regime, adjusted for current window
-    'index_m'				- First index to be misaligned by more than 30 degrees
+	'index_m'				- First index to be misaligned by more than 30 degrees
     'index_r'				- First to be relaxed back in stable regime
     'index_merger' 			- Index of mergers that met locations. Use this to sample 'merger_ratio_stars'
     'relaxation_time' 		- [ Gyr ] Time between index_m and index_r
-    'relaxation_tdyn'		- [fraction] trelax/tdyn between index_m and index_r
-    'relaxation_ttorque'	- [fraction] trelax/ttorque between index_m and index_r
+	'relaxation_tdyn'		- [fraction] trelax/tdyn between index_m and index_r
+	'relaxation_ttorque'	- [fraction] trelax/ttorque between index_m and index_r
     'relaxation_type'		- co-co, counter-counter, co-counter, counter-co
     'relaxation_morph'		- ETG-ETG, LTG-LTG, ETG-LTG, LTG-ETG, other					BASED OFF MORPH_LIMITS
     'misalignment_morph'	- ETG, LTG, other

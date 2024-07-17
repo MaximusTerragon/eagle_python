@@ -636,8 +636,8 @@ def _modify_radial_csv(csv_output = '#L12_radial_ID37445_RadProj_Err__stars_gas_
 
 #------------------------------
 # Test read
-def _test_read(csv_sample = 'MOD_L100_199_all_sample_misalignment_10.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
-               csv_output = 'MOD_L100_199_all_sample_misalignment_10.0_RadProj_Err__stars_gas_stars_gas_sf_stars_gas_nsf_gas_sf_gas_nsf_stars_dm_',
+def _test_read(csv_sample = 'L100_195_all_sample_misalignment_9.5',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+               csv_output = 'L100_195_all_sample_misalignment_9.5_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_',
                #--------------------------
                print_progress = False,
                debug = False):
@@ -681,6 +681,34 @@ def _test_read(csv_sample = 'MOD_L100_199_all_sample_misalignment_10.0',     # C
     print('SAMPLE LENGTH: ', len(GalaxyID_List))
     print('OUTPUT LENGTH: ', len(old_general.keys()))
     
+    tally_bigger = 0
+    tally_smaller = 0
+    tally_total_changed = 0
+    for GalaxyID in old_general.keys():
+        if old_general['%s'%GalaxyID]['bh_id_old'] != old_general['%s'%GalaxyID]['bh_id']:
+            #print(old_general['%s'%GalaxyID]['bh_id_old'])
+            #print(old_general['%s'%GalaxyID]['bh_mass_old'])
+            #print(old_general['%s'%GalaxyID]['bh_mdot_old'])
+            #print(old_general['%s'%GalaxyID]['bh_edd_old'])
+            #print('\n  new:')
+            #print(old_general['%s'%GalaxyID]['bh_id'])
+            #print(old_general['%s'%GalaxyID]['bh_mass'])
+            #print(old_general['%s'%GalaxyID]['bh_mdot'])
+            #print(old_general['%s'%GalaxyID]['bh_edd'])
+            #print(old_general['%s'%GalaxyID]['bh_cumlmass'])
+            
+            tally_total_changed += 1
+            
+
+            if old_general['%s'%GalaxyID]['bh_mass_old'] > old_general['%s'%GalaxyID]['bh_mass']:
+                tally_smaller += 1
+            if old_general['%s'%GalaxyID]['bh_mass_old'] < old_general['%s'%GalaxyID]['bh_mass']:
+                tally_bigger += 1
+    
+    print('Number changed (including nan): ', tally_total_changed)
+    print('Number of bigger: ', tally_bigger)
+    print('Number of smaller: ', tally_smaller)
+    
     
     
 #==========================
@@ -692,7 +720,7 @@ def _test_read(csv_sample = 'MOD_L100_199_all_sample_misalignment_10.0',     # C
 
 #_modify_radial_csv()
 
-#_test_read()
+_test_read()
 #==========================
 
 

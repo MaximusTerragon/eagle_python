@@ -1752,7 +1752,7 @@ def _plot_evolution_old(csv_output = 'L100_evolution_ID401467650_RadProj_Err__st
 
 # BH ISSUES GALAXIES
 ID_list = [102310942, 236121807, 370249894, 285054970]
-savefig_txt = 'BH_issues'
+savefig_txt = 'BH_issues_NEW'
 
 
 def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
@@ -1832,7 +1832,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                            plot_ttorque         = False,     
                          #==================================================================================
                          showfig        = True,
-                         savefig        = False,
+                         savefig        = True,
                            file_format  = 'pdf',
                            savefig_txt  = savefig_txt, 
                          #--------------------------
@@ -1997,16 +1997,16 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
         fig, axs = plt.subplots(nrows=len(plot_height_ratios), ncols=1, gridspec_kw={'height_ratios': plot_height_ratios}, figsize=[10/3, 0.5*np.sum(np.array(plot_height_ratios))], sharex=True, sharey=False)
         
         
+        #print(' printing ID and BH details')
+        #for snip_iii, id_iii, bh_mass_i in zip(galaxy_tree['%s' %GalaxyID]['SnapNum'], galaxy_tree['%s' %GalaxyID]['GalaxyID'], galaxy_tree['%s' %GalaxyID]['bh']['mass']):
+        #    print(' %i  %s  %.3E' %(snip_iii, id_iii, bh_mass_i))
+        
         #------------------------
         # Create each graph separately
         # Create redshift axis:
         redshiftticks = [0, 0.1, 0.2, 0.5, 1, 1.5, 2, 5, 10, 20]
         ageticks = ((13.8205298 * u.Gyr) - FlatLambdaCDM(H0=67.77, Om0=0.307, Ob0 = 0.04825).age(redshiftticks)).value
         for i, plot_names_i in enumerate(plot_names):
-            
-            print(' printing ID and BH details')
-            for id_iii, bh_mass_i in zip(galaxy_tree['%s' %GalaxyID]['GalaxyID'], galaxy_tree['%s' %GalaxyID]['bh']['mass']):
-                print('  %s  %s' %(id_iii, bh_mass_i))
             
             
             ### Formatting

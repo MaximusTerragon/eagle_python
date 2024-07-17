@@ -21,7 +21,7 @@ import json
 import time
 from datetime import datetime
 from tqdm import tqdm
-from subhalo_main import Initial_Sample, Subhalo_Extract, Subhalo_Analysis, ConvertID, ConvertID_snip
+from subhalo_main import Initial_Sample, Subhalo_Extract, Subhalo_Analysis, ConvertID, ConvertID_snip, Subhalo_Extract_BH
 import eagleSqlTools as sql
 from graphformat import set_rc_params
 from read_dataset_directories import _assign_directories
@@ -267,10 +267,35 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
         print('NSF: ', len(gas_nsf['Mass']))
         """
         
-        
+        """
         print('all BHs in subhalo:')
-        for bh_mass_i, (x_ii, y_ii, z_ii) in zip(galaxy.data_nil['bh']['Mass'], galaxy.data_nil['bh']['Coordinates']):
+        for bh_mass_i, (x_ii, y_ii, z_ii) in zip(galaxy.data_nil['bh']['BH_Mass'], galaxy.data_nil['bh']['Coordinates']):
+            # only print within 30 pkpc
+            if np.sqrt((x_ii)**2 + (y_ii)**2 + (z_ii)**2) > 50:
+                continue
             print('  %.1f \t x=%.3f y=%.3f z=%.3f' %(bh_mass_i, x_ii, y_ii, z_ii))
+        
+        
+        # Find more accurate BH
+        galaxy_bh = Subhalo_Extract_BH(mySims, dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, Centre_i, aperture_rad, mask_sgn = mask_sgn)
+        print(galaxy_bh.data_bh_new['bh'].keys())
+
+        print('new bh extracted:')
+        for bh_mass_i, (x_ii, y_ii, z_ii) in zip(galaxy_bh.data_bh_new['bh']['BH_Mass'], galaxy_bh.data_bh_new['bh']['Coordinates']):
+            # only print within 30 pkpc
+            if np.sqrt((x_ii)**2 + (y_ii)**2 + (z_ii)**2) > 50:
+                continue
+            print('  %.1f \t x=%.3f y=%.3f z=%.3f' %(bh_mass_i, x_ii, y_ii, z_ii))
+        
+        
+        bh_epsilon = 0.1        # efficiency
+        accretion_rate = galaxy_bh.data_bh_new['bh']['BH_Mdot']
+        bh_mass        = galaxy_bh.data_bh_new['bh']['BH_Mass']           
+        bh_edd         = accretion_rate / (bh_mass * 7e-17 / bh_epsilon)
+        bh_id          = galaxy_bh.data_bh_new['bh']['ParticleIDs']
+        
+        bh_dict = {'bh_mass': bh_mass[0], 'bh_edd': bh_edd[0], 'bh_id': bh_id[0], 'bh_mdot': accretion_rate[0]}
+        """
         
         
         
@@ -349,10 +374,23 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
                                             min_particles,                                            
                                             min_inclination)
                                             
+                                            
                 
         if print_galaxy:
             print('|Combined particle properties within %s pkpc:' %aperture_rad)
             print('|%s| |ID:   %s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f  %.2f  %.2f' %(SnapNum, str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad, subhalo.general['kappa_stars'], subhalo.general['kappa_gas'], subhalo.general['kappa_gas_sf'])) 
+        
+        #print('\tNEW BHS STUFF:')
+        #print(subhalo.general.keys())
+        #print(subhalo.general['bh_mass'])
+        #print(subhalo.general['bh_mdot'])
+        #print(subhalo.general['bh_edd'])
+        #print(subhalo.general['bh_id'])
+        #print(' ')
+        #print(bh_dict['bh_mass'])
+        #print(bh_dict['bh_mdot'])
+        #print(bh_dict['bh_edd'])
+        #print(bh_dict['bh_id'])
         
         
         
@@ -2470,7 +2508,7 @@ def galaxy_gif(csv_sample = False,              # False, Whether to read in exis
 
 
 #--------------      
-#galaxy_render()
+galaxy_render()
 
 #galaxy_map()
 #galaxy_velocity_map()
@@ -2491,7 +2529,7 @@ def galaxy_gif(csv_sample = False,              # False, Whether to read in exis
 
 
 ### for BH visualisation
-galaxy_render(GalaxyID_List = [102310951, 102310952, 102310953],
-                stars=True, gas=False, gas_sf=True, black_holes=True,
-                showfig=False, savefig=True, savefig_txt='BH_issue')
+#galaxy_render(GalaxyID_List = [285054998, 285054999, 285055000],
+#                stars=True, gas=False, gas_sf=True, black_holes=True,
+#                showfig=False, savefig=True, savefig_txt='BH_issue')
 

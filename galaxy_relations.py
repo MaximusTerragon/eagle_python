@@ -314,7 +314,7 @@ Output Parameters
 def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                        csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_',
                        #--------------------------
-                       use_hmr_values = '2.0',            # [ 1.0 / 2.0 / 'aperture' ] value to extract general values from
+                       use_hmr_values = 'aperture',            # [ 1.0 / 2.0 / 'aperture' ] value to extract general values from
                        # CTRL+F -> 'INPUT VALUES HERE' ... and change teh axis
                        #--------------------------
                        # Selection criteria
@@ -335,9 +335,9 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
                        misangle_threshold = 30,             # what we classify as misaligned
                        #--------------------------
                        showfig       = True,
-                       savefig       = False,
+                       savefig       = True,
                          file_format = 'pdf',
-                         savefig_txt = '_fraction',
+                         savefig_txt = 'bh_mass_centrals',
                        #--------------------------
                        print_progress = False,
                        debug = False):
@@ -614,13 +614,17 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
                             # INPUT VALUES HERE     value_x.append(np.log10(np.array(all_general['%s' %GalaxyID]['stelmass'])))
                             legend_label = 'in aperture\nz=0.1'
                             
-                            xlabel = 'Stellar mass'
+                            xlabel = 'Stellarmass'
                             value_x.append(np.log10(np.array(all_general['%s' %GalaxyID]['stelmass'])))
                             
-                            ylabel = 'gassf / stelmass + gassf'
+                            #ylabel = 'gassf / stelmass + gassf'
                             #value_y.append(3.154e+7*np.array(all_general['%s' %GalaxyID]['ap_sfr']))
                             #value_y.append(np.divide(3.154e+7*np.array(all_general['%s' %GalaxyID]['ap_sfr']), np.array(all_general['%s' %GalaxyID]['stelmass'])))
-                            value_y.append(np.divide(all_general['%s' %GalaxyID]['gasmass_sf'], all_general['%s' %GalaxyID]['gasmass_sf'] + all_general['%s' %GalaxyID]['stelmass']))
+                            #value_y.append(np.divide(all_general['%s' %GalaxyID]['gasmass_sf'], all_general['%s' %GalaxyID]['gasmass_sf'] + all_general['%s' %GalaxyID]['stelmass']))
+                            
+                            ylabel = 'CentralBHmass'
+                            value_y.append(np.log10(np.array(all_general['%s' %GalaxyID]['bh_mass'])))
+                            
                             
                             clabel = 'kappa'
                             value_c.append(all_general['%s' %GalaxyID]['kappa_stars'])
@@ -724,8 +728,8 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
         # Axis labels
         axs.set_xlim(9, 11.5)
         #axs.set_xticks(np.arange(0, 181, step=30))
-        axs.set_ylim(0.01, 1)
-        axs.set_yscale('log')
+        axs.set_ylim(5, 10)
+        #axs.set_yscale('log')
         axs.set_xlabel(xlabel)
         axs.set_ylabel(ylabel)
         #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='both', width=0.8, length=2)
@@ -768,14 +772,14 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
 
 
 #===========================    
-_plot_relations()
+#_plot_relations()
 #_plot_relations(ETG_or_LTG = 'ETG')
 #_plot_relations(ETG_or_LTG = 'LTG')
 
 #_plot_relations(ETG_or_LTG = 'ETG')
 #_plot_relations(ETG_or_LTG = 'LTG')
 
-#_plot_relations(csv_sample = 'L100_188_all_sample_misalignment_9.5', csv_output = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_')
+_plot_relations(csv_sample = 'L100_195_all_sample_misalignment_9.5', csv_output = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_')
 
 #===========================
 

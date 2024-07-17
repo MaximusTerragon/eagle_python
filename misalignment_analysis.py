@@ -15,7 +15,7 @@ import json
 import time
 from datetime import datetime
 from tqdm import tqdm
-from subhalo_main import Initial_Sample, Initial_Sample_Snip, Subhalo_Extract, Subhalo_Extract_Basic, Subhalo_Analysis
+from subhalo_main import Initial_Sample, Initial_Sample_Snip, Subhalo_Extract, Subhalo_Extract_Basic, Subhalo_Analysis, Subhalo_Extract_BH
 import eagleSqlTools as sql
 from graphformat import set_rc_params
 from read_dataset_directories import _assign_directories
@@ -817,6 +817,257 @@ def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misali
         """
         
 
+#--------------------------------
+# Reads in a sample file, and does all relevant calculations, and exports as csv file
+# SAVED: /outputs/%s_%s_%s_%s...
+def _analysis_bh_details(csv_sample = 'L100_151_all_sample_misalignment_9.5',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+                         csv_output = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_',
+                         run_direct = 'march_run',      # sub-folder
+                         #--------------------------   
+                         csv_file       = True,             # Will write sample to csv file in sample_dir
+                           csv_name     = '',               # extra stuff at end
+                         #--------------------------
+                         print_progress = False,
+                         print_galaxy   = False,
+                         debug = False):
+                         
+    
+    # Galaxy extraction properties
+    trim_rad = np.array([30]),                 # keep as 100... will be capped by aperture anyway. Doesn't matter
+    align_rad = False,                          # keep on False
+    orientate_to_axis='z',                      # Keep as z
+    viewing_angle = 0,                          # Keep as 0
+    
+    
+    
+    #---------------------------------------------    
+    # Loading sample
+    dict_new = json.load(open('%s/%s.csv' %(sample_dir, csv_sample), 'r'))
+    
+    
+    # Extract GroupNum etc.
+    GroupNum_List       = np.array(dict_new['GroupNum'])
+    SubGroupNum_List    = np.array(dict_new['SubGroupNum'])
+    GalaxyID_List       = np.array(dict_new['GalaxyID'])
+    SnapNum_List        = np.array(dict_new['SnapNum'])
+    Redshift_List       = np.array(dict_new['Redshift'])
+    HaloMass_List       = np.array(dict_new['halo_mass'])
+    Centre_List         = np.array(dict_new['centre'])
+    MorphoKinem_List    = np.array(dict_new['MorphoKinem'])
+    sample_input        = dict_new['sample_input']
+    
+    
+    # Loading old output 
+    csv_output_old = csv_sample + csv_output
+
+    # Loading outputs
+    dict_output_old = json.load(open('%s/%s.csv' %(output_dir + '/' + run_direct, csv_output_old), 'r'))
+    all_general     = dict_output_old['all_general']
+    
+    print('Snipnum:     ', sample_input['snapNum'])
+    print('Len sample1: ', len(np.array(dict_new['GroupNum'])))
+    print('Len output1: ', len(dict_output_old['all_general'].keys()))
+    
+    # Using same outputs as output file
+    output_input_old        = dict_output_old['output_input']
+    angle_selection     = output_input_old['angle_selection']
+    spin_hmr            = output_input_old['spin_hmr']
+    find_uncertainties  = output_input_old['find_uncertainties']
+    rad_projected       = output_input_old['rad_projected']
+    viewing_axis        = output_input_old['viewing_axis']
+    aperture_rad        = output_input_old['aperture_rad']
+    kappa_rad           = output_input_old['kappa_rad']
+    com_min_distance    = output_input_old['com_min_distance']
+    min_particles       = output_input_old['min_particles']
+    min_inclination     = output_input_old['min_inclination']
+    
+    #---------------------------------------------
+    # Empty dictionaries to collect relevant data
+    all_bhs = {}
+    
+    
+    #=================================================================== 
+    # Run analysis for each individual galaxy in loaded sample
+    #tally_i = 0
+    bh_change_id_n = 0
+    for GroupNum, SubGroupNum, GalaxyID, SnapNum, Redshift, HaloMass, Centre, MorphoKinem in tqdm(zip(GroupNum_List, SubGroupNum_List, GalaxyID_List, SnapNum_List, Redshift_List, HaloMass_List, Centre_List, MorphoKinem_List), total=len(GroupNum_List)):
+        
+        #tally_i = tally_i + 1
+        #if tally_i < 65:
+        #    continue
+        
+        
+        # Initial extraction of galaxy particle data
+        galaxy_bh = Subhalo_Extract_BH(sample_input['mySims'], dataDir_dict['%s' %str(SnapNum)], SnapNum, GroupNum, SubGroupNum, Centre, aperture_rad)
+        
+        bh_epsilon = 0.1        # efficiency
+        accretion_rate = galaxy_bh.data_bh_new['bh']['BH_Mdot'][0]
+        bh_mass        = galaxy_bh.data_bh_new['bh']['BH_Mass'][0]         
+        bh_edd         = accretion_rate / (bh_mass * 7e-17 / bh_epsilon)
+        bh_id          = galaxy_bh.data_bh_new['bh']['ParticleIDs'][0]
+        bh_cumlmass    = galaxy_bh.data_bh_new['bh']['BH_CumlAccrMass'][0]
+        bh_cumlseeds   = galaxy_bh.data_bh_new['bh']['BH_CumlNumSeeds'][0]
+        
+        bh_dict = {'bh_mass': bh_mass, 'bh_edd': bh_edd, 'bh_id': bh_id, 'bh_mdot': accretion_rate, 'bh_cumlmass': bh_cumlmass, 'bh_cumlseeds': bh_cumlseeds}
+        
+        if all_general['%s' %GalaxyID]['bh_id'] != bh_id:
+            bh_change_id_n = bh_change_id_n + 1
+        
+        #print('Old central BH:   %.1f     ID:     %s' %(all_general['%s' %GalaxyID]['bh_mass'], all_general['%s' %GalaxyID]['bh_id']))
+        #print('New central BH:   %.1f     ID:     %s' %(bh_mass, bh_id))
+        
+        #--------------------------------
+        # Collecting all relevant particle info for galaxy
+        all_bhs['%s' %str(GalaxyID)]          = bh_dict
+    
+    
+    #=========================================================
+    # Check same length
+    print('Number of BH ID changes: ', bh_change_id_n)
+    if len(all_bhs.keys()) == len(all_general.keys()):
+        print('all_bhs == all_general length')
+    else:
+        raise Exception('Number of BHs extracted is not same as all_general')
+    
+       
+    #=========================================================
+    # Modify _general
+    for GalaxyID in all_general.keys():
+        all_general['%s' %GalaxyID].update({'bh_id_old':   all_general['%s' %GalaxyID]['bh_id'],
+                                            'bh_mass_old': all_general['%s' %GalaxyID]['bh_mass'],
+                                            'bh_mdot_old': all_general['%s' %GalaxyID]['bh_mdot'],
+                                            'bh_edd_old':  all_general['%s' %GalaxyID]['bh_edd']})
+        
+        all_general['%s' %GalaxyID]['bh_id']    = all_bhs['%s' %GalaxyID]['bh_id'] 
+        all_general['%s' %GalaxyID]['bh_mass']  = all_bhs['%s' %GalaxyID]['bh_mass'] 
+        all_general['%s' %GalaxyID]['bh_mdot']  = all_bhs['%s' %GalaxyID]['bh_mdot'] 
+        all_general['%s' %GalaxyID]['bh_edd']   = all_bhs['%s' %GalaxyID]['bh_edd'] 
+        
+        all_general['%s' %GalaxyID].update({'bh_cumlmass': all_bhs['%s' %GalaxyID]['bh_cumlmass']})
+        all_general['%s' %GalaxyID].update({'bh_cumlseeds': all_bhs['%s' %GalaxyID]['bh_cumlseeds']})
+        
+    
+    
+    #------------------------------
+    # Loading other outputs
+    #no all general as we are using it anyway
+    all_flags     = dict_output_old['all_flags']
+    all_l         = dict_output_old['all_l']
+    all_spins     = dict_output_old['all_spins']
+    all_spinshalo     = dict_output_old['all_spinshalo']
+    all_coms     = dict_output_old['all_coms']
+    all_counts     = dict_output_old['all_counts']
+    all_masses     = dict_output_old['all_masses']
+    all_totmass     = dict_output_old['all_totmass']
+    all_sfr     = dict_output_old['all_sfr']
+    all_Z     = dict_output_old['all_Z']
+    all_misangles     = dict_output_old['all_misangles']
+    all_misangleshalo     = dict_output_old['all_misangleshalo']
+    all_misanglesproj     = dict_output_old['all_misanglesproj']
+    all_gasdata     = dict_output_old['all_gasdata']
+    
+            
+    #=====================================
+    # End of individual subhalo loop
+    
+    if csv_file: 
+        # Converting numpy arrays to lists. When reading, may need to simply convert list back to np.array() (easy)
+        class NumpyEncoder(json.JSONEncoder):
+            ''' Special json encoder for numpy types '''
+            def default(self, obj):
+                if isinstance(obj, np.integer):
+                    return int(obj)
+                elif isinstance(obj, np.floating):
+                    return float(obj)
+                elif isinstance(obj, np.ndarray):
+                    return obj.tolist()
+                return json.JSONEncoder.default(self, obj)
+                  
+        
+        # Combining all dictionaries
+        csv_dict = {'all_general': all_general,
+                    'all_l': all_l,
+                    'all_spins': all_spins,
+                    'all_spinshalo': all_spinshalo,
+                    'all_coms': all_coms,
+                    'all_counts': all_counts,
+                    'all_masses': all_masses,
+                    'all_totmass': all_totmass,
+                    'all_sfr': all_sfr,
+                    'all_Z': all_Z,
+                    'all_misangles': all_misangles,
+                    'all_misangleshalo': all_misangleshalo,
+                    'all_misanglesproj': all_misanglesproj, 
+                    'all_gasdata': all_gasdata,
+                    'all_flags': all_flags,
+                    'output_input': output_input_old}
+        #csv_dict.update({'function_input': str(inspect.signature(_misalignment_distribution))})
+        
+        #-----------------------------
+        # File names
+        angle_str = ''
+        for angle_name in list(angle_selection):
+            angle_str = '%s_%s' %(str(angle_str), str(angle_name))
+            
+        uncertainty_str = 'noErr'    
+        if find_uncertainties:
+            uncertainty_str = 'Err'   
+            
+        rad_str = 'Rad'    
+        if rad_projected:
+            rad_str = 'RadProj'
+        
+            
+        
+        # Writing one massive JSON file
+        json.dump(csv_dict, open('%s/%s_%s_%s_%s_%s.csv' %(output_dir, csv_sample, rad_str, uncertainty_str, angle_str, csv_name), 'w'), cls=NumpyEncoder)
+        print('\n  SAVED: %s/%s_%s_%s_%s_%s.csv' %(output_dir, csv_sample, rad_str, uncertainty_str, angle_str, csv_name))
+        
+        # Reading JSON file
+        """ 
+        # Ensuring the sample and output originated together
+        csv_output = csv_sample + csv_output
+        
+        # Loading sample
+        dict_sample = json.load(open('%s/%s.csv' %(sample_dir, csv_sample), 'r'))
+        GroupNum_List       = np.array(dict_sample['GroupNum'])
+        SubGroupNum_List    = np.array(dict_sample['SubGroupNum'])
+        GalaxyID_List       = np.array(dict_sample['GalaxyID'])
+        SnapNum_List        = np.array(dict_sample['SnapNum'])
+        
+        # Loading output
+        dict_output = json.load(open('%s/%s.csv' %(output_dir, csv_output), 'r'))
+        all_general         = dict_output['all_general']
+        all_spins           = dict_output['all_spins']
+        all_coms            = dict_output['all_coms']
+        all_counts          = dict_output['all_counts']
+        all_masses          = dict_output['all_masses']
+        all_misangles       = dict_output['all_misangles']
+        all_misanglesproj   = dict_output['all_misanglesproj']
+        all_flags           = dict_output['all_flags']
+    
+        # Loading sample criteria
+        sample_input        = dict_sample['sample_input']
+        output_input        = dict_output['output_input']
+    
+        if print_progress:
+            print('  TIME ELAPSED: %.3f s' %(time.time() - time_start))
+        if debug:
+            print(sample_input)
+            print(GroupNum_List)
+            print(SubGroupNum_List)
+            print(GalaxyID_List)
+            print(SnapNum_List)
+   
+        print('\n===================')
+        print('SAMPLE LOADED:\n  %s\n  SnapNum: %s\n  Redshift: %s\n  Mass limit: %.2E M*\n  Satellites: %s' %(sample_input['mySims'][0][0], sample_input['snapNum'], sample_input['Redshift'], sample_input['galaxy_mass_limit'], sample_input['use_satellites']))
+        print('  SAMPLE LENGTH: ', len(GroupNum_List))
+        print('\nOUTPUT LOADED:\n  Viewing axis: %s\n  Angles: %s\n  HMR: %s\n  Uncertainties: %s\n  Using projected radius: %s\n  COM min distance: %s\n  Min. particles: %s\n  Min. inclination: %s' %(output_input['viewing_axis'], output_input['angle_selection'], output_input['spin_hmr'], output_input['find_uncertainties'], output_input['rad_projected'], output_input['com_min_distance'], output_input['min_particles'], output_input['min_inclination']))
+        print('\nPLOT:\n  Angle: %s\n  HMR: %s\n  Projected angle: %s\n  Lower mass limit: %s\n  Upper mass limit: %s\n  ETG or LTG: %s\n  Group or field: %s' %(use_angle, use_hmr, use_proj_angle, lower_mass_limit, upper_mass_limit, ETG_or_LTG, group_or_field))
+        print('===================')
+        """
+
+
 # Reads in a sample file, and does all relevant calculations, and exports as csv file
 # SAVED: /outputs/%s csv_sample
 def _analysis_misalignment_minor(csv_sample = 'L100_19_minor_sample_misalignment_8.0',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
@@ -1019,8 +1270,12 @@ def _analysis_misalignment_minor(csv_sample = 'L100_19_minor_sample_misalignment
 #for snap_i in np.arange(195, 201, 1):
 #    _sample_misalignment(snapNum = int(snap_i), galaxy_mass_min    = 10**(9.5), galaxy_mass_max    = 10**(15))
 #    _analysis_misalignment_distribution(csv_sample = 'L100_' + str(int(snap_i)) + '_all_sample_misalignment_9.5')
+
     
-_analysis_misalignment_distribution(csv_sample = 'L100_' + str(188) + '_all_sample_misalignment_9.5', csv_name = 'plusNSF')
+#_analysis_misalignment_distribution(csv_sample = 'L100_' + str(188) + '_all_sample_misalignment_9.5', csv_name = 'plusNSF')
+
+for snap_i in np.arange(134, 145, 1):
+    _analysis_bh_details(csv_sample = 'L100_' + str(int(snap_i)) + '_all_sample_misalignment_9.5')
 
 #===========================
 

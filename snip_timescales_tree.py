@@ -161,10 +161,16 @@ gasdata_old             - gets updated and replaced with math.nan
 
 'bh'
     mass                - bh mass of central BH (not particle mass)
+	cumlmass			- cumulative accreted mass
     mdot_instant        - [ Msun/yr ] mdot of that particle
     mdot                - [ Msun/yr ] mdot averaged over snipshot time difference
     edd                 - instantaneous eddington from mdot_instant
 	lbol				- instantaneous bolometric luminosity [erg/s]
+    mass_alt            - bh mass of most massive BH (not particle mass) within 1hmr
+    mdot_instant_alt    - [ Msun/yr ] mdot of that particle
+    mdot_alt            - [ Msun/yr ] mdot averaged over snipshot time difference
+    edd_alt             - instantaneous eddington from mdot_instant
+	lbol_alt			- instantaneous bolometric luminosity [erg/s]
     count               - len(mass)
 
 'stars_gas'
@@ -726,10 +732,17 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                 else:
                     count_bh = 1
                 galaxy_tree['%s' %ID_dict]['bh']   = {'mass': [all_general['%s' %GalaxyID]['bh_mass']],
+                                                      'cumlmass': [all_general['%s' %GalaxyID]['bh_cumlmass']],
+                                                      'cumlseeds': [all_general['%s' %GalaxyID]['bh_cumlseeds']],
                                                       'mdot': [math.nan],
                                                       'mdot_instant': [(3.154e+7*all_general['%s' %GalaxyID]['bh_mdot'])],
                                                       'edd': [all_general['%s' %GalaxyID]['bh_edd']],
                                                       'lbol': [(all_general['%s' %GalaxyID]['bh_mdot'] * (2e30) * (0.1 * (3e8)**2) * (1e7))],
+                                                          'mass_alt': [all_general['%s' %GalaxyID]['bh_mass_old']],
+                                                          'mdot_alt': [math.nan],
+                                                          'mdot_instant_alt': [(3.154e+7*all_general['%s' %GalaxyID]['bh_mdot_old'])],
+                                                          'edd_alt': [all_general['%s' %GalaxyID]['bh_edd_old']],
+                                                          'lbol_alt': [(all_general['%s' %GalaxyID]['bh_mdot_old'] * (2e30) * (0.1 * (3e8)**2) * (1e7))],
                                                       'count': [count_bh]}
                             
                 #------------------                       
@@ -1263,11 +1276,21 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                 else:
                     count_bh = 1                                                                      
                 galaxy_tree['%s' %ID_dict]['bh']['mass'].append(all_general['%s' %GalaxyID]['bh_mass'])
+                galaxy_tree['%s' %ID_dict]['bh']['cumlmass'].append(all_general['%s' %GalaxyID]['bh_cumlmass'])
+                galaxy_tree['%s' %ID_dict]['bh']['cumlseeds'].append(all_general['%s' %GalaxyID]['bh_cumlseeds'])
                 mdot = (float(galaxy_tree['%s' %ID_dict]['bh']['mass'][-1]) - float(galaxy_tree['%s' %ID_dict]['bh']['mass'][-2])) / time_step
                 galaxy_tree['%s' %ID_dict]['bh']['mdot'].append(mdot)
                 galaxy_tree['%s' %ID_dict]['bh']['mdot_instant'].append((3.154e+7*all_general['%s' %GalaxyID]['bh_mdot']))
                 galaxy_tree['%s' %ID_dict]['bh']['edd'].append(all_general['%s' %GalaxyID]['bh_edd'])
                 galaxy_tree['%s' %ID_dict]['bh']['lbol'].append((3.154e+7*all_general['%s' %GalaxyID]['bh_mdot']* (2e30 / 3.154e+7) * (0.1 * (3e8)**2) * (1e7)))
+                
+                galaxy_tree['%s' %ID_dict]['bh']['mass_alt'].append(all_general['%s' %GalaxyID]['bh_mass_old'])
+                mdot = (float(galaxy_tree['%s' %ID_dict]['bh']['mass_alt'][-1]) - float(galaxy_tree['%s' %ID_dict]['bh']['mass_alt'][-2])) / time_step
+                galaxy_tree['%s' %ID_dict]['bh']['mdot_alt'].append(mdot)
+                galaxy_tree['%s' %ID_dict]['bh']['mdot_instant_alt'].append((3.154e+7*all_general['%s' %GalaxyID]['bh_mdot_old']))
+                galaxy_tree['%s' %ID_dict]['bh']['edd_alt'].append(all_general['%s' %GalaxyID]['bh_edd_old'])
+                galaxy_tree['%s' %ID_dict]['bh']['lbol_alt'].append((3.154e+7*all_general['%s' %GalaxyID]['bh_mdot_old']* (2e30 / 3.154e+7) * (0.1 * (3e8)**2) * (1e7)))
+                
                 galaxy_tree['%s' %ID_dict]['bh']['count'].append(count_bh)
                 
                 #------------------                       
@@ -1440,12 +1463,20 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
             
             #------------------                       
             # Updating bh                                                                         
-            galaxy_tree['%s' %ID_dict]['bh']['mass'].insert(index, math.nan)
+            galaxy_tree['%s' %ID_dict]['bh']['mass'].insert(index, math.nan)                    
+            galaxy_tree['%s' %ID_dict]['bh']['cumlmass'].insert(index, math.nan)            
+            galaxy_tree['%s' %ID_dict]['bh']['cumlseeds'].insert(index, math.nan)
             galaxy_tree['%s' %ID_dict]['bh']['mdot'].insert(index, math.nan)
             galaxy_tree['%s' %ID_dict]['bh']['mdot_instant'].insert(index, math.nan)
             galaxy_tree['%s' %ID_dict]['bh']['edd'].insert(index, math.nan)
             galaxy_tree['%s' %ID_dict]['bh']['lbol'].insert(index, math.nan)
+            galaxy_tree['%s' %ID_dict]['bh']['mass_alt'].insert(index, math.nan)
+            galaxy_tree['%s' %ID_dict]['bh']['mdot_alt'].insert(index, math.nan)
+            galaxy_tree['%s' %ID_dict]['bh']['mdot_instant_alt'].insert(index, math.nan)
+            galaxy_tree['%s' %ID_dict]['bh']['edd_alt'].insert(index, math.nan)
+            galaxy_tree['%s' %ID_dict]['bh']['lbol_alt'].insert(index, math.nan)
             galaxy_tree['%s' %ID_dict]['bh']['count'].insert(index, math.nan)
+            
             
             #------------------                       
             # Update angles 
@@ -3001,6 +3032,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                                                         'insitu_Z_sf_2hmr': galaxy_tree['%s' %GalaxyID]['gas_sf']['2.0_hmr']['insitu_Z'][index_start:index_stop],
                                                                                                                  
                                                         'bh_mass': galaxy_tree['%s' %GalaxyID]['bh']['mass'][index_start:index_stop],
+                                                        'bh_cumlmass': galaxy_tree['%s' %GalaxyID]['bh']['cumlmass'][index_start:index_stop],
+                                                        'bh_cumlseeds': galaxy_tree['%s' %GalaxyID]['bh']['cumlseeds'][index_start:index_stop],
                                                         'bh_mdot_av': galaxy_tree['%s' %GalaxyID]['bh']['mdot'][index_start:index_stop],
                                                         'bh_mdot_inst': galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant'][index_start:index_stop],
                                                         'bh_edd': galaxy_tree['%s' %GalaxyID]['bh']['edd'][index_start:index_stop],

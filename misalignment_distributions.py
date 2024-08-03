@@ -2948,7 +2948,7 @@ def _manual_plot_misalignment_z(Lookbacktime_array         = [7.94, 7.32, 6.65, 
 # SAVED: /plots/misalignment_distributions/ ... double...
 def _plot_misalignment_double_tree(csv_sample = 'L100_173_all_sample_misalignment_9.5',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                                    csv_output = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_',
-                                   load_csv_file = '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph',    # _20Thresh_30Peak_noLatency _20Thresh_30Peak_normalLatency_anyMergers_anyMorph
+                                   load_csv_file = '_20Thresh_30Peak_noLatency_NEW',    # _20Thresh_30Peak_noLatency _20Thresh_30Peak_normalLatency_anyMergers_anyMorph_NEW
                                    #--------------------------
                                    # Galaxy plotting
                                    print_summary = True,
@@ -2969,7 +2969,7 @@ def _plot_misalignment_double_tree(csv_sample = 'L100_173_all_sample_misalignmen
                                    misangle_threshold = 30,             # what we classify as misaligned
                                    #--------------------------
                                    showfig       = True,
-                                   savefig       = False,
+                                   savefig       = True,
                                     file_format = 'pdf',
                                     savefig_txt = '',
                                    #--------------------------
@@ -3612,7 +3612,7 @@ def _plot_misalignment_double_tree(csv_sample = 'L100_173_all_sample_misalignmen
             print('Total: ',  catalogue['total'])
             print('Sample:', catalogue['sample'])
             print('Plot:  ',  catalogue['plot'])
-            print('\nRAW BIN VALUES:')      
+        print('\nRAW BIN VALUES:')      
         aligned_tally           = 0
         aligned_err_tally       = 0
         misaligned_tally        = 0 
@@ -3636,6 +3636,7 @@ def _plot_misalignment_double_tree(csv_sample = 'L100_173_all_sample_misalignmen
             if angle_i >= (180-misangle_threshold):
                 counter_tally += bin_count_i
                 counter_err_tally += bin_count_i**0.5     
+        number_misaligned_snap = np.sum(hist_n[3:15])
         print(' ')
         aligned_tally           = 0
         aligned_err_tally       = 0
@@ -3656,6 +3657,9 @@ def _plot_misalignment_double_tree(csv_sample = 'L100_173_all_sample_misalignmen
             if angle_i >= (180-misangle_threshold):
                 counter_tally += bin_count_i
                 counter_err_tally += bin_count_i**0.5
+        number_misaligned_timescales = np.sum(hist_n[3:15])
+        percent_of_sample_total = number_misaligned_timescales/number_misaligned_snap
+        
         
                  
         print('\nRAW BIN VALUES LTG:')     
@@ -3678,6 +3682,7 @@ def _plot_misalignment_double_tree(csv_sample = 'L100_173_all_sample_misalignmen
             if angle_i >= (180-misangle_threshold):
                 counter_tally_LTG += bin_count_i
                 counter_err_tally_LTG += bin_count_i**0.5  
+        number_misaligned_snap = np.sum(hist_n[3:15])
         print(' ')
         aligned_tally_LTG           = 0
         aligned_err_tally_LTG       = 0
@@ -3698,6 +3703,8 @@ def _plot_misalignment_double_tree(csv_sample = 'L100_173_all_sample_misalignmen
             if angle_i >= (180-misangle_threshold):
                 counter_tally_LTG += bin_count_i
                 counter_err_tally_LTG += bin_count_i**0.5
+        number_misaligned_timescales = np.sum(hist_n[3:15])
+        percent_of_sample_LTG = number_misaligned_timescales/number_misaligned_snap
                 
         print('\nRAW BIN VALUES ETG:')   
         aligned_tally_ETG           = 0
@@ -3719,6 +3726,7 @@ def _plot_misalignment_double_tree(csv_sample = 'L100_173_all_sample_misalignmen
             if angle_i >= (180-misangle_threshold):
                 counter_tally_ETG += bin_count_i
                 counter_err_tally_ETG += bin_count_i**0.5   
+        number_misaligned_snap = np.sum(hist_n[3:15])
         print(' ')
         aligned_tally_LTG           = 0
         aligned_err_tally_LTG       = 0
@@ -3739,10 +3747,13 @@ def _plot_misalignment_double_tree(csv_sample = 'L100_173_all_sample_misalignmen
             if angle_i >= (180-misangle_threshold):
                 counter_tally_LTG += bin_count_i
                 counter_err_tally_LTG += bin_count_i**0.5 
+        number_misaligned_timescales = np.sum(hist_n[3:15])
+        percent_of_sample_ETG = number_misaligned_timescales/number_misaligned_snap
                 
-          
-                
-                
+        print('')
+        print('\nUnstable fraction:\nfraction misaligned in sample total: %.2f' %(percent_of_sample_total))
+        print('fraction misaligned in sample LTG:   %.2f' %(percent_of_sample_LTG))
+        print('fraction misaligned in sample ETG:   %.2f' %(percent_of_sample_ETG))
             
         if print_summary:    
             print('\n')     # total population includes galaxies that failed sample, so can add to less than 100% (ei. remaining % is galaxies that make up non-sample)

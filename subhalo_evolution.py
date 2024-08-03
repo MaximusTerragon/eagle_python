@@ -1751,11 +1751,10 @@ def _plot_evolution_old(csv_output = 'L100_evolution_ID401467650_RadProj_Err__st
 #savefig_txt = '_AURIGA_GALAXIES'
 
 # BH ISSUES GALAXIES
-ID_list = [102310942, 236121807, 370249894, 285054970]
-savefig_txt = 'BH_issues_NEW'
+#ID_list = [102310942, 236121807, 370249894, 285054970]
+#savefig_txt = 'BH_issues_NEW'
 
-
-def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
+def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                          #--------------------------
                          # Individual galaxies
                          GalaxyID_list = ID_list,             # [ None / ID_list ]
@@ -1832,7 +1831,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                            plot_ttorque         = False,     
                          #==================================================================================
                          showfig        = True,
-                         savefig        = True,
+                         savefig        = False,
                            file_format  = 'pdf',
                            savefig_txt  = savefig_txt, 
                          #--------------------------
@@ -2057,7 +2056,6 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree_',
                                 # Mask out the instability
                                 mask = np.where(np.logical_and(start_i <= np.array(galaxy_tree['%s' %GalaxyID]['SnapNum']),  np.array(galaxy_tree['%s' %GalaxyID]['SnapNum']) <= stop_i))
                                 axs[i].plot(np.array(galaxy_tree['%s' %GalaxyID]['Lookbacktime'])[mask], np.array(galaxy_tree['%s' %GalaxyID][use_angle]['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj])[mask], alpha=0.6, ms=1, ls='-', lw=3.5, zorder=30)
-                                
                                 
                             
                     if abs_or_proj == 'proj':

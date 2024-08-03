@@ -875,9 +875,9 @@ def _plot_sample_vs_dist_hist(misalignment_tree, misalignment_input, summary_dic
 def _plot_timescale_histogram(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
                       #==============================================
                       # General formatting
-                      set_bin_limit_trelax                = 5,        # [ None / Gyr ]
+                      set_bin_limit_trelax                = 6,        # [ None / Gyr ]
                       set_bin_width_trelax                = 0.25,     # [ 0.25 / Gyr ]
-                      set_thist_ymax_trelax               = 0.45,             # 0.45 / 500  yaxis max
+                      set_thist_ymax_trelax               = 0.4,             # 0.45 / 500  yaxis max
                       #-----------------------------
                       # Plot options
                       set_plot_percentage               = True,
@@ -927,6 +927,8 @@ def _plot_timescale_histogram(misalignment_tree, misalignment_input, summary_dic
     counter_co_array      = []
     counter_counter_array = []
     collect_array         = []
+    collect_array_2         = []
+    collect_array_3         = []
     for ID_i in misalignment_tree.keys():
         relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
     
@@ -943,10 +945,19 @@ def _plot_timescale_histogram(misalignment_tree, misalignment_input, summary_dic
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
             if misalignment_tree['%s' %ID_i]['angle_peak'] > 135:
                 collect_array.append(ID_i)
+        if misalignment_tree['%s' %ID_i]['relaxation_time'] > 2:
+            collect_array_2.append(ID_i)
+        
+        if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
+            collect_array_3.append(ID_i)
     
     #print('-------------------------------------------------------------')
+    #print('Number of counter-co misalignments:  ', len(collect_array_3))
+    #print(collect_array_3)
     #print('Number of >135 co-co misalignments: ', len(collect_array))
     #print(collect_array)
+    #print('\nNumber of >2 Gyr misalignments: ', len(collect_array_2))
+    #print(collect_array_2)
     print('  Using sample: ', len(relaxationtime_plot))
     print('\nMax trelax:  %.2f Gyr' %max(relaxationtime_plot))  
     
@@ -1014,7 +1025,7 @@ def _plot_timescale_histogram(misalignment_tree, misalignment_input, summary_dic
         if set_plot_percentage:
             axins.set_ylim(0.0002, set_thist_ymax_trelax)
             axins.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
-            axins.set_ylabel('Percentage of misalignments', fontsize=5)
+            axins.set_ylabel('Percentage of\nmisalignments', fontsize=5)
         else:
             axins.set_ylim(0.5, set_thist_ymax_trelax)
             axins.set_ylabel('Number of misalignments', fontsize=5)
@@ -1146,9 +1157,9 @@ def _plot_timescale_histogram(misalignment_tree, misalignment_input, summary_dic
 def _plot_tdyn_histogram(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
                       #==============================================
                       # General formatting
-                      set_bin_limit_tdyn                  = 32,       # [ None / multiples ]
-                      set_bin_width_tdyn                  = 1,        # [ multiples ]
-                      set_thist_ymax_tdyn                 = 0.35,             # 0.35 / 400 yaxis max
+                      set_bin_limit_tdyn                  = 60,       # [ None / multiples ]
+                      set_bin_width_tdyn                  = 2,        # [ multiples ]
+                      set_thist_ymax_tdyn                 = 0.4,             # 0.35 / 400 yaxis max
                       #-----------------------------
                       # Plot options
                       set_plot_percentage               = True,
@@ -1195,6 +1206,8 @@ def _plot_tdyn_histogram(misalignment_tree, misalignment_input, summary_dict, pl
     co_counter_array      = []
     counter_co_array      = []
     counter_counter_array = []
+    ID_collect_1          = []
+    ID_collect_2          = []
     for ID_i in misalignment_tree.keys():
         # append average tdyn over misalignment
         relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
@@ -1207,12 +1220,22 @@ def _plot_tdyn_histogram(misalignment_tree, misalignment_input, summary_dict, pl
             counter_co_array.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
         elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
             counter_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+        
+        if misalignment_tree['%s' %ID_i]['relaxation_tdyn'] > 10:
+            ID_collect_1.append(ID_i)
+        if misalignment_tree['%s' %ID_i]['relaxation_tdyn'] > 20:   
+            ID_collect_2.append(ID_i) 
             
-        if misalignment_tree['%s' %ID_i]['relaxation_tdyn'] > 20:
-            print('\tFound >20 tdyn:   ID: %s\tMass: %.2e Msun' %(ID_i, np.mean(misalignment_tree['%s' %ID_i]['stelmass'])))
-            print('\t  type: %s, morph: %s, time: %.2f, tdyn: %.2f, ttorque: %.2f' %(misalignment_tree['%s' %ID_i]['relaxation_type'], misalignment_tree['%s' %ID_i]['relaxation_morph'], misalignment_tree['%s' %ID_i]['relaxation_time'], misalignment_tree['%s' %ID_i]['relaxation_tdyn'], misalignment_tree['%s' %ID_i]['relaxation_ttorque']))
+            
+        #if misalignment_tree['%s' %ID_i]['relaxation_tdyn'] > 20:
+        #    print('\tFound >20 tdyn:   ID: %s\tMass: %.2e Msun' %(ID_i, np.mean(misalignment_tree['%s' %ID_i]['stelmass'])))
+        #    print('\t  type: %s, morph: %s, time: %.2f, tdyn: %.2f, ttorque: %.2f' %(misalignment_tree['%s' %ID_i]['relaxation_type'], misalignment_tree['%s' %ID_i]['relaxation_morph'], misalignment_tree['%s' %ID_i]['relaxation_time'], misalignment_tree['%s' %ID_i]['relaxation_tdyn'], misalignment_tree['%s' %ID_i]['relaxation_ttorque']))
     
-    print('  Using sample: ', len(relaxationtime_plot))    
+    #print('Number of >10 tdyn misalignments:   ', len(ID_collect_1))
+    #print(ID_collect_1)
+    #print('\nNumber of >20 tdyn misalignments:   ', len(ID_collect_2))
+    #print(ID_collect_2)
+    print('\n  Using sample: ', len(relaxationtime_plot))    
     print('\nMax tdyn/trelax:  %.2f' %max(relaxationtime_plot)) 
             
     #-------------
@@ -1273,13 +1296,13 @@ def _plot_tdyn_histogram(misalignment_tree, misalignment_input, summary_dict, pl
         # Formatting
         axins.set_yscale('log')
         axins.set_xlim(0, set_bin_limit_tdyn)
-        axins.set_xticks(np.arange(0, set_bin_limit_tdyn+0.1, step=4))
+        axins.set_xticks(np.arange(0, set_bin_limit_tdyn+0.1, step=8))
         axins.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{dyn}}$', fontsize=5)
         
         if set_plot_percentage:
             axins.set_ylim(0.0002, set_thist_ymax_tdyn)
             axins.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
-            axins.set_ylabel('Percentage of misalignments', fontsize=5)
+            axins.set_ylabel('Percentage of\nmisalignments', fontsize=5)
         else:
             axins.set_ylim(0.5, set_thist_ymax_tdyn)
             axins.set_ylabel('Number of misalignments', fontsize=5)
@@ -1341,7 +1364,7 @@ def _plot_tdyn_histogram(misalignment_tree, misalignment_input, summary_dict, pl
     if set_plot_percentage:
         axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
     axs.set_xlim(0, set_bin_limit_tdyn)
-    axs.set_xticks(np.arange(0, set_bin_limit_tdyn+0.1, step=2))
+    axs.set_xticks(np.arange(0, set_bin_limit_tdyn+0.1, step=4))
     axs.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{dyn}}$')
     if set_plot_percentage:
         axs.set_ylabel('Percentage of misalignments')
@@ -1411,9 +1434,9 @@ def _plot_tdyn_histogram(misalignment_tree, misalignment_input, summary_dict, pl
 # ttorque histogram    
 def _plot_ttorque_histogram(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
                       #==============================================
-                      set_bin_limit_ttorque               = 12,       # [ None / multiples ]
-                      set_bin_width_ttorque               = 0.5,      # [ multiples ]
-                      set_thist_ymax_ttorque              = 0.35,             # 0.35 / 400 yaxis max
+                      set_bin_limit_ttorque               = 33,       # [ None / multiples ]
+                      set_bin_width_ttorque               = 1,      # [ multiples ]
+                      set_thist_ymax_ttorque              = 0.4,             # 0.35 / 400 yaxis max
                       #-----------------------------
                       # Plot options
                       set_plot_percentage               = True,
@@ -1462,6 +1485,7 @@ def _plot_ttorque_histogram(misalignment_tree, misalignment_input, summary_dict,
     co_counter_array      = []
     counter_co_array      = []
     counter_counter_array = []
+    ID_collect_1          = []
     for ID_i in misalignment_tree.keys():
         # append average ttorque over misalignment
         relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
@@ -1474,8 +1498,13 @@ def _plot_ttorque_histogram(misalignment_tree, misalignment_input, summary_dict,
             counter_co_array.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
         elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
             counter_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            
+        if misalignment_tree['%s' %ID_i]['relaxation_ttorque'] > 10:
+            ID_collect_1.append(ID_i)
         
-    print('  Using sample: ', len(relaxationtime_plot))
+    #print('Number of >10 ttorque misalignments:   ', len(ID_collect_1))
+    #print(ID_collect_1)
+    print('\n  Using sample: ', len(relaxationtime_plot))
     print('\nMax tdyn/ttorque:  %.2f' %max(relaxationtime_plot)) 
     
     #-------------
@@ -1537,15 +1566,15 @@ def _plot_ttorque_histogram(misalignment_tree, misalignment_input, summary_dict,
         # Formatting
         axins.set_yscale('log')
         axins.set_xlim(0, set_bin_limit_ttorque)
-        axins.set_xticks(np.arange(0, set_bin_limit_ttorque+0.1, step=2))
+        axins.set_xticks(np.arange(0, set_bin_limit_ttorque+0.1, step=4))
         axins.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{torque}}$', fontsize=5)
         if set_plot_percentage:
             axins.set_ylim(0.0002, set_thist_ymax_ttorque)
             axins.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
-            axins.set_ylabel('Percentage of misalignments', fontsize=5)
+            axins.set_ylabel('Percentage of\nmisalignments', fontsize=5)
         else:
             axins.set_ylim(0.5, set_thist_ymax_ttorque)
-            axins.set_ylabel('Percentage of misalignments', fontsize=5)
+            axins.set_ylabel('Percentage of\nmisalignments', fontsize=5)
         
         
         #----------
@@ -1603,7 +1632,7 @@ def _plot_ttorque_histogram(misalignment_tree, misalignment_input, summary_dict,
     if set_plot_percentage:
         axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
     axs.set_xlim(0, set_bin_limit_ttorque)
-    axs.set_xticks(np.arange(0, set_bin_limit_ttorque+0.1, step=1))
+    axs.set_xticks(np.arange(0, set_bin_limit_ttorque+0.1, step=4))
     axs.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{torque}}$')
     if set_plot_percentage:
         axs.set_ylabel('Percentage of misalignments')
@@ -1678,7 +1707,7 @@ def _plot_ttorque_histogram(misalignment_tree, misalignment_input, summary_dict,
 def _plot_stacked_trelax(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
                       #==============================================
                       # General formatting
-                      set_bin_limit_trelax                = 5,        # [ None / Gyr ]
+                      set_bin_limit_trelax                = 6,        # [ None / Gyr ]
                       set_bin_width_trelax                = 0.25,     # [ 0.25 / Gyr ]
                       set_thist_ymax_trelax               = 0.45,             # 0.45 / 500  yaxis max
                       #-----------------------------
@@ -1845,7 +1874,7 @@ def _plot_stacked_trelax(misalignment_tree, misalignment_input, summary_dict, pl
             
             
         #axs.plot(timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if set_plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if set_plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], lw=0.3, c=c, alpha=alpha)
-        axs.plot(timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if set_plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if set_plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], lw=0.3, c='k', alpha=1)
+        axs.plot(timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if set_plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if set_plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], lw=0.3, c=c, alpha=alpha)
         
         ### Annotate
         if set_add_GalaxyIDs:
@@ -2149,9 +2178,9 @@ def _plot_stacked_trelax(misalignment_tree, misalignment_input, summary_dict, pl
 def _plot_stacked_tdyn(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
                       #==============================================
                       # General formatting
-                      set_bin_limit_tdyn                  = 32,       # [ None / multiples ]
-                      set_bin_width_tdyn                  = 1,        # [ multiples ]
-                      set_thist_ymax_tdyn                 = 0.35,             # 0.35 / 400 yaxis max
+                      set_bin_limit_tdyn                  = 60,       # [ None / multiples ]
+                      set_bin_width_tdyn                  = 2,        # [ multiples ]
+                      set_thist_ymax_tdyn                 = 0.4,             # 0.35 / 400 yaxis max
                       #-----------------------------
                       # Plot options
                       set_plot_type                       = 'time',            # 'time', 'snap', 'raw_time', 'raw_snap'
@@ -2496,7 +2525,7 @@ def _plot_stacked_tdyn(misalignment_tree, misalignment_input, summary_dict, plot
     axs.set_yticks(np.arange(0, 181, 30))
     axs.set_ylabel('Misalignment angle, $\psi_{\mathrm{3D}}$')
     axs.set_xlim(-1, set_bin_limit_tdyn)
-    axs.set_xticks(np.arange(0, set_bin_limit_tdyn+0.1, 2))
+    axs.set_xticks(np.arange(0, set_bin_limit_tdyn+0.1, 4))
     axs.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{dyn}}$')
     axs.minorticks_on()
     axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
@@ -2596,9 +2625,9 @@ def _plot_stacked_tdyn(misalignment_tree, misalignment_input, summary_dict, plot
 def _plot_stacked_ttorque(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
                       #==============================================
                       # General formatting
-                      set_bin_limit_ttorque               = 12,       # [ None / multiples ]
-                      set_bin_width_ttorque               = 0.5,      # [ multiples ]
-                      set_thist_ymax_ttorque              = 0.35,             # 0.35 / 400 yaxis max
+                      set_bin_limit_ttorque               = 33,       # [ None / multiples ]
+                      set_bin_width_ttorque               = 1,      # [ multiples ]
+                      set_thist_ymax_ttorque              = 0.4,             # 0.35 / 400 yaxis max
                       #-----------------------------
                       # Plot options
                       set_plot_type                       = 'time',            # 'time', 'snap', 'raw_time', 'raw_snap'
@@ -3045,7 +3074,7 @@ def _plot_stacked_ttorque(misalignment_tree, misalignment_input, summary_dict, p
 def _plot_stacked_trelax_2x2(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
                       #==============================================
                       # General formatting
-                      set_bin_limit_trelax                = 5,        # [ None / Gyr ]
+                      set_bin_limit_trelax                = 6,        # [ None / Gyr ]
                       set_bin_width_trelax                = 0.25,     # [ 0.25 / Gyr ]
                       set_thist_ymax_trelax               = 0.45,             # 0.45 / 500  yaxis max
                       #-----------------------------
@@ -3517,9 +3546,9 @@ def _plot_stacked_trelax_2x2(misalignment_tree, misalignment_input, summary_dict
 def _plot_stacked_tdyn_2x2(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
                       #==============================================
                       # General formatting
-                      set_bin_limit_tdyn                  = 32,       # [ None / multiples ]
-                      set_bin_width_tdyn                  = 1,        # [ multiples ]
-                      set_thist_ymax_tdyn                 = 0.35,             # 0.35 / 400 yaxis max
+                      set_bin_limit_tdyn                  = 60,       # [ None / multiples ]
+                      set_bin_width_tdyn                  = 2,        # [ multiples ]
+                      set_thist_ymax_tdyn                 = 0.4,             # 0.35 / 400 yaxis max
                       #-----------------------------
                       # Plot options
                       set_plot_type                       = 'time',            # 'time', 'snap', 'raw_time', 'raw_snap'
@@ -3865,7 +3894,7 @@ def _plot_stacked_tdyn_2x2(misalignment_tree, misalignment_input, summary_dict, 
     ax_counter_counter.set_ylabel('Misalignment angle, $\psi_{\mathrm{3D}}$')
     #ax_counter_counter.get_yaxis().set_label_coords(-0.12,1)
     ax_counter_counter.set_xlim(-1, set_bin_limit_tdyn)
-    ax_counter_counter.set_xticks(np.arange(0, set_bin_limit_tdyn+0.1, 2))
+    ax_counter_counter.set_xticks(np.arange(0, set_bin_limit_tdyn+0.1, 4))
     ax_counter_counter.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{dyn}}$')
     ax_counter_co.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{dyn}}$')
     #ax_counter_counter.get_xaxis().set_label_coords(1,-0.12)
@@ -3973,9 +4002,9 @@ def _plot_stacked_tdyn_2x2(misalignment_tree, misalignment_input, summary_dict, 
 def _plot_stacked_ttorque_2x2(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
                       #==============================================
                       # General formatting
-                      set_bin_limit_ttorque               = 12,       # [ None / multiples ]
-                      set_bin_width_ttorque               = 0.5,      # [ multiples ]
-                      set_thist_ymax_ttorque              = 0.35,             # 0.35 / 400 yaxis max
+                      set_bin_limit_ttorque               = 33,       # [ None / multiples ]
+                      set_bin_width_ttorque               = 1,      # [ multiples ]
+                      set_thist_ymax_ttorque              = 0.4,             # 0.35 / 400 yaxis max
                       #-----------------------------
                       # Plot options
                       set_plot_type                       = 'time',            # 'time', 'snap', 'raw_time', 'raw_snap'
@@ -5925,10 +5954,10 @@ def _plot_merger_count_tdyn(misalignment_tree, misalignment_input, summary_dict,
         axs.set_xscale('log')
         axs.set_xticks([0.1, 1, 10])
         axs.set_xticklabels(['0.1', '1', '10'])
-        axs.set_xlim(0.6, 25)
+        axs.set_xlim(0.6, 60)
     else:
         axs.set_xlim(0, 20)
-        axs.set_xticks(np.arange(4, 20.1, 4))
+        axs.set_xticks(np.arange(0, 60, 5))
     axs.set_ylim(-0.3, 3.3)
     axs.set_yticks(np.arange(0, 3.1, 1))
     #axs.minorticks_on()
@@ -6086,10 +6115,10 @@ def _plot_merger_count_ttorque(misalignment_tree, misalignment_input, summary_di
         axs.set_xscale('log')
         axs.set_xticks([0.1, 1, 10])
         axs.set_xticklabels(['0.1', '1', '10'])
-        axs.set_xlim(0.6, 15)
+        axs.set_xlim(0.6, 40)
     else:
-        axs.set_xlim(0.5, 12)
-        axs.set_xticks(np.arange(2, 12.1, 2))
+        axs.set_xlim(0.5, 40)
+        axs.set_xticks(np.arange(2, 40, 4))
     axs.set_ylim(-0.3, 3.3)
     axs.set_yticks(np.arange(0, 3.1, 1))
     #axs.minorticks_on()
@@ -6132,6 +6161,7 @@ def _plot_halo_misangle_trelax(misalignment_tree, misalignment_input, summary_di
                       set_min_halo_trelax                 = 0,          # [ Gyr ] min relaxation time, as we dont care about short relaxers
                         add_plot_halo_morph_median        = True,
                         set_plot_halo_misangle_log        = True,
+                      use_only_centrals              = True,        # Use only centrals
                       #==============================================
                       showfig       = True,
                       savefig       = False,    
@@ -6184,8 +6214,17 @@ def _plot_halo_misangle_trelax(misalignment_tree, misalignment_input, summary_di
         if misalignment_tree['%s' %ID_i]['relaxation_time'] <= set_min_halo_trelax:
             continue
             
+        # find subgroupnum, and classify as following:  central: all==0, satellite: all>0, mixed: ones that change
+        if use_only_centrals: 
+            sgn = np.array(misalignment_tree['%s' %ID_i]['SubGroupNum'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']])
+            
+            if not np.all(sgn == 0):
+                continue
+            
         # Collect relaxation time
         relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+        
+        
         ID_plot.append(ID_i)
         if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-ETG':
             relaxationmorph_plot.append('ETG → ETG')
@@ -6314,6 +6353,9 @@ def _plot_halo_misangle_trelax(misalignment_tree, misalignment_input, summary_di
         
     #-----------
     ### title
+    if use_only_centrals:
+        plot_annotate = ''
+        plot_annotate = plot_annotate + 'centrals'
     if plot_annotate:
         ax_scatter.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
     
@@ -6343,6 +6385,7 @@ def _plot_halo_misangle_tdyn(misalignment_tree, misalignment_input, summary_dict
                       set_min_halo_tdyn                 = 0,          # [ Gyr ] min relaxation time, as we dont care about short relaxers
                         add_plot_halo_morph_median        = True,
                         set_plot_halo_misangle_log        = True,
+                      use_only_centrals              = True,        # Use only centrals
                       #==============================================
                       showfig       = True,
                       savefig       = False,    
@@ -6395,6 +6438,12 @@ def _plot_halo_misangle_tdyn(misalignment_tree, misalignment_input, summary_dict
         if misalignment_tree['%s' %ID_i]['relaxation_tdyn'] <= set_min_halo_tdyn:
             continue
             
+        # find subgroupnum, and classify as following:  central: all==0, satellite: all>0, mixed: ones that change
+        if use_only_centrals: 
+            sgn = np.array(misalignment_tree['%s' %ID_i]['SubGroupNum'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']])
+            
+            if not np.all(sgn == 0):
+                continue
             
         # Collect relaxation time
         relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
@@ -6506,11 +6555,11 @@ def _plot_halo_misangle_tdyn(misalignment_tree, misalignment_input, summary_dict
     ax_line.set_xlabel(r'$\bar{\psi}_{\mathrm{DM-stars}}$ during relaxation')
     if set_plot_halo_misangle_log:
         ax_scatter.set_yscale('log')
-        ax_scatter.set_ylim(0.3, 25)
+        ax_scatter.set_ylim(0.3, 35)
         ax_scatter.set_yticks([1, 10])
         ax_scatter.set_yticklabels(['1', '10'])
     else:
-        ax_scatter.set_ylim(0, 15)
+        ax_scatter.set_ylim(0, 30)
     #ax_hist.set_yscale('log')
     #ax_hist.set_ylim(bottom=0)
     ax_line.set_ylim(0.1, 0.6)
@@ -6524,6 +6573,9 @@ def _plot_halo_misangle_tdyn(misalignment_tree, misalignment_input, summary_dict
         
     #-----------
     ### title
+    if use_only_centrals:
+        plot_annotate = ''
+        plot_annotate = plot_annotate + 'centrals'
     if plot_annotate:
         ax_scatter.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
     
@@ -6553,6 +6605,7 @@ def _plot_halo_misangle_ttorque(misalignment_tree, misalignment_input, summary_d
                       set_min_halo_ttorque                = 0,          # [ Gyr ] min relaxation time, as we dont care about short relaxers
                         add_plot_halo_morph_median        = True,
                         set_plot_halo_misangle_log        = True,
+                      use_only_centrals              = True,        # Use only centrals
                       #==============================================
                       showfig       = True,
                       savefig       = False,    
@@ -6605,6 +6658,13 @@ def _plot_halo_misangle_ttorque(misalignment_tree, misalignment_input, summary_d
         if misalignment_tree['%s' %ID_i]['relaxation_ttorque'] <= set_min_halo_ttorque:
             continue
             
+        # find subgroupnum, and classify as following:  central: all==0, satellite: all>0, mixed: ones that change
+        if use_only_centrals: 
+            sgn = np.array(misalignment_tree['%s' %ID_i]['SubGroupNum'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']])
+            
+            if not np.all(sgn == 0):
+                continue
+        
         # Collect relaxation time
         relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
         ID_plot.append(ID_i)
@@ -6645,7 +6705,7 @@ def _plot_halo_misangle_ttorque(misalignment_tree, misalignment_input, summary_d
     mapper = cm.ScalarMappable(norm=norm, cmap='Spectral')         #cmap=cm.coolwarm), cmap='sauron'
     
     #im1 = ax_scatter.scatter(df['DM-stars angle'], df['Relaxation time'], c=df['Relaxation kappa'], s=1.5, norm=norm, cmap='Spectral', zorder=99, edgecolors='k', linewidths=0.1, alpha=1)
-    im1 = ax_scatter.scatter(df['DM-stars angle'], df['Relaxation time'], c=df['Relaxation kappa'], s=1.5, norm=norm, cmap='Spectral', zorder=99, alpha=0.8)
+    im1 = ax_scatter.scatter(df['DM-stars angle'], df['Relaxation time'], c=df['Relaxation kappa'], s=1.5, norm=norm, cmap='Spectral', zorder=99, edgecolors='k', linewidths=0.1, alpha=1)
     plt.colorbar(im1, ax=ax_scatter, label=r'$\bar{\kappa}_{\mathrm{co}}^{*}$', extend='both', pad=0.025)
     
     #--------------
@@ -6732,6 +6792,9 @@ def _plot_halo_misangle_ttorque(misalignment_tree, misalignment_input, summary_d
         
     #-----------
     ### title
+    if use_only_centrals:
+        plot_annotate = ''
+        plot_annotate = plot_annotate + 'centrals'
     if plot_annotate:
         ax_scatter.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
     
@@ -8160,7 +8223,7 @@ def _plot_timescale_gas_histogram_trelax(misalignment_tree, misalignment_input, 
                         gas_fraction_limits               = [0.1, 0.3],         # [ < lower - upper < ] e.g. [0.2, 0.4] means <0.2, 0.2-0.4, >0.4
                       #--------------------
                       # General formatting
-                      set_bin_limit_trelax                = 5,        # [ None / Gyr ]
+                      set_bin_limit_trelax                = 6,        # [ None / Gyr ]
                       set_bin_width_trelax                = 0.25,     # [ 0.25 / Gyr ]
                       set_plot_histogram_log              = False,    # set yaxis as log
                       #==============================================
@@ -8310,12 +8373,12 @@ def _plot_timescale_gas_histogram_trelax(misalignment_tree, misalignment_input, 
     ### General formatting
     # Axis labels
     axs.set_yscale('log')
-    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
+    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
     axs.set_xlim(0, set_bin_limit_trelax)
     axs.set_xticks(np.arange(0, set_bin_limit_trelax+0.1, step=1))
     axs.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)')
     axs.set_ylabel('Percentage of\nmisalignments')
-    axs.set_ylim(bottom=0.001)
+    axs.set_ylim(bottom=0.00025)
     
     
     #-----------
@@ -8385,8 +8448,8 @@ def _plot_timescale_gas_histogram_tdyn(misalignment_tree, misalignment_input, su
                         add_plot_errorbars                = True,
                       #--------------------
                       # General formatting
-                      set_bin_limit_tdyn                  = 35,       # [ None / multiples ]
-                      set_bin_width_tdyn                  = 1,        # [ multiples ]
+                      set_bin_limit_tdyn                  = 50,       # [ None / multiples ]
+                      set_bin_width_tdyn                  = 2,        # [ multiples ]
                       set_plot_histogram_log              = False,    # set yaxis as log
                       #==============================================
                       showfig       = True,
@@ -8536,12 +8599,12 @@ def _plot_timescale_gas_histogram_tdyn(misalignment_tree, misalignment_input, su
     ### General formatting
     # Axis labels
     axs.set_yscale('log')
-    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
+    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
     axs.set_xlim(0, set_bin_limit_tdyn)
-    axs.set_xticks(np.arange(0, set_bin_limit_tdyn+0.1, step=2))
+    axs.set_xticks(np.arange(0, set_bin_limit_tdyn+0.1, step=4))
     axs.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{dyn}}$')
     axs.set_ylabel('Percentage of\nmisalignments')
-    axs.set_ylim(bottom=0.001)
+    axs.set_ylim(bottom=0.00025)
     
     
     #-----------
@@ -8611,8 +8674,8 @@ def _plot_timescale_gas_histogram_ttorque(misalignment_tree, misalignment_input,
                         add_plot_errorbars                = True,
                       #--------------------
                       # General formatting
-                      set_bin_limit_ttorque               = 12,       # [ None / multiples ]
-                      set_bin_width_ttorque               = 0.5,      # [ multiples ]
+                      set_bin_limit_ttorque               = 20,       # [ None / multiples ]
+                      set_bin_width_ttorque               = 1,      # [ multiples ]
                       set_plot_histogram_log              = False,    # set yaxis as log
                       #==============================================
                       showfig       = True,
@@ -8762,12 +8825,12 @@ def _plot_timescale_gas_histogram_ttorque(misalignment_tree, misalignment_input,
     ### General formatting
     # Axis labels
     axs.set_yscale('log')
-    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
+    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
     axs.set_xlim(0, set_bin_limit_ttorque)
-    axs.set_xticks(np.arange(0, set_bin_limit_ttorque+0.1, step=1))
+    axs.set_xticks(np.arange(0, set_bin_limit_ttorque+0.1, step=2))
     axs.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{torque}}$')
     axs.set_ylabel('Percentage of\nmisalignments')
-    axs.set_ylim(bottom=0.001)
+    axs.set_ylim(bottom=0.00025)
     
     
     #-----------
@@ -8839,7 +8902,7 @@ def _plot_timescale_occupation_histogram_trelax(misalignment_tree, misalignment_
                       use_occ_morph                       = True,               # Differentiates between ETG centrals, and LTG centrals
                       #--------------------
                       # General formatting
-                      set_bin_limit_trelax                = 5,        # [ None / Gyr ]
+                      set_bin_limit_trelax                = 6,        # [ None / Gyr ]
                       set_bin_width_trelax                = 0.25,     # [ 0.25 / Gyr ]
                       set_plot_histogram_log              = False,    # set yaxis as log
                       #==============================================
@@ -9022,30 +9085,30 @@ def _plot_timescale_occupation_histogram_trelax(misalignment_tree, misalignment_
     # Axis labels
     if use_occ_morph:
         axs_ETG.set_yscale('log')
-        axs_ETG.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
+        axs_ETG.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
         axs_ETG.set_xlim(0, set_bin_limit_trelax)
         axs_ETG.set_xticks(np.arange(0, set_bin_limit_trelax+0.1, step=1))
         #axs_ETG.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)')
-        axs_ETG.set_ylim(bottom=0.001)
+        axs_ETG.set_ylim(bottom=0.00025)
         
         axs_LTG.set_yscale('log')
-        axs_LTG.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
+        axs_LTG.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
         axs_LTG.set_xlim(0, set_bin_limit_trelax)
         axs_LTG.set_xticks(np.arange(0, set_bin_limit_trelax+0.1, step=1))
         #axs_LTG.set_ylabel('Percentage of misalignments')
-        axs_LTG.set_ylim(bottom=0.001)
+        axs_LTG.set_ylim(bottom=0.00025)
         
 
-        fig.supylabel('Percentage of misalignments')
+        fig.supylabel('Percentage of misalignments', fontsize=9, x=0)
         axs_LTG.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)') 
     else:
         axs.set_yscale('log')
-        axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
+        axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
         axs.set_xlim(0, set_bin_limit_trelax)
         axs.set_xticks(np.arange(0, set_bin_limit_trelax+0.1, step=1))
         axs.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)')
         axs.set_ylabel('Percentage of\nmisalignments')
-        axs.set_ylim(bottom=0.001)
+        axs.set_ylim(bottom=0.00025)
     
         
     #-----------
@@ -9142,8 +9205,8 @@ def _plot_timescale_occupation_histogram_tdyn(misalignment_tree, misalignment_in
                       use_occ_morph                       = True,               # Differentiates between ETG centrals, and LTG centrals
                       #--------------------
                       # General formatting
-                      set_bin_limit_tdyn                  = 35,       # [ None / multiples ]
-                      set_bin_width_tdyn                  = 1,        # [ multiples ]
+                      set_bin_limit_tdyn                  = 50,       # [ None / multiples ]
+                      set_bin_width_tdyn                  = 2,        # [ multiples ]
                       set_plot_histogram_log              = False,    # set yaxis as log
                       #==============================================
                       showfig       = True,
@@ -9325,30 +9388,30 @@ def _plot_timescale_occupation_histogram_tdyn(misalignment_tree, misalignment_in
     # Axis labels
     if use_occ_morph:
         axs_ETG.set_yscale('log')
-        axs_ETG.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
+        axs_ETG.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
         axs_ETG.set_xlim(0, set_bin_limit_tdyn)
-        axs_ETG.set_xticks(np.arange(0, set_bin_limit_tdyn+0.1, step=2))
+        axs_ETG.set_xticks(np.arange(0, set_bin_limit_tdyn+0.1, step=4))
         #axs_ETG.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)')
-        axs_ETG.set_ylim(bottom=0.001)
+        axs_ETG.set_ylim(bottom=0.00025)
         
         axs_LTG.set_yscale('log')
-        axs_LTG.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
+        axs_LTG.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
         axs_LTG.set_xlim(0, set_bin_limit_tdyn)
-        axs_LTG.set_xticks(np.arange(0, set_bin_limit_tdyn+0.1, step=2))
+        axs_LTG.set_xticks(np.arange(0, set_bin_limit_tdyn+0.1, step=4))
         #axs_LTG.set_ylabel('Percentage of misalignments')
-        axs_LTG.set_ylim(bottom=0.001)
+        axs_LTG.set_ylim(bottom=0.00025)
         
 
-        fig.supylabel('Percentage of misalignments')
+        fig.supylabel('Percentage of misalignments', fontsize=9, x=0)
         axs_LTG.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{dyn}}$')
     else:
         axs.set_yscale('log')
-        axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
+        axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
         axs.set_xlim(0, set_bin_limit_tdyn)
-        axs.set_xticks(np.arange(0, set_bin_limit_tdyn+0.1, step=2))
+        axs.set_xticks(np.arange(0, set_bin_limit_tdyn+0.1, step=4))
         axs.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{dyn}}$')
         axs.set_ylabel('Percentage of\nmisalignments')
-        axs.set_ylim(bottom=0.001)
+        axs.set_ylim(bottom=0.00025)
         
     
     #-----------
@@ -9445,8 +9508,8 @@ def _plot_timescale_occupation_histogram_ttorque(misalignment_tree, misalignment
                       use_occ_morph                       = True,               # Differentiates between ETG centrals, and LTG centrals
                       #--------------------
                       # General formatting
-                      set_bin_limit_ttorque               = 12,       # [ None / multiples ]
-                      set_bin_width_ttorque               = 0.5,      # [ multiples ]
+                      set_bin_limit_ttorque               = 20,       # [ None / multiples ]
+                      set_bin_width_ttorque               = 1,      # [ multiples ]
                       set_plot_histogram_log              = False,    # set yaxis as log
                       #==============================================
                       showfig       = True,
@@ -9628,29 +9691,29 @@ def _plot_timescale_occupation_histogram_ttorque(misalignment_tree, misalignment
     # Axis labels
     if use_occ_morph:
         axs_ETG.set_yscale('log')
-        axs_ETG.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
+        axs_ETG.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
         axs_ETG.set_xlim(0, set_bin_limit_ttorque)
-        axs_ETG.set_xticks(np.arange(0, set_bin_limit_ttorque+0.1, step=1))
-        axs_ETG.set_ylim(bottom=0.001)
+        axs_ETG.set_xticks(np.arange(0, set_bin_limit_ttorque+0.1, step=2))
+        axs_ETG.set_ylim(bottom=0.00025)
         
         axs_LTG.set_yscale('log')
-        axs_LTG.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
+        axs_LTG.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
         axs_LTG.set_xlim(0, set_bin_limit_ttorque)
-        axs_LTG.set_xticks(np.arange(0, set_bin_limit_ttorque+0.1, step=1))
+        axs_LTG.set_xticks(np.arange(0, set_bin_limit_ttorque+0.1, step=2))
         #axs_LTG.set_ylabel('Percentage of misalignments')
-        axs_LTG.set_ylim(bottom=0.001)
+        axs_LTG.set_ylim(bottom=0.00025)
         
 
-        fig.supylabel('Percentage of misalignments')
+        fig.supylabel('Percentage of misalignments', fontsize=9, x=0)
         axs_LTG.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{torque}}$')
     else:
         axs.set_yscale('log')
-        axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
+        axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
         axs.set_xlim(0, set_bin_limit_ttorque)
-        axs.set_xticks(np.arange(0, set_bin_limit_ttorque+0.1, step=1))
+        axs.set_xticks(np.arange(0, set_bin_limit_ttorque+0.1, step=2))
         axs.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{torque}}$')
         axs.set_ylabel('Percentage of\nmisalignments')
-        axs.set_ylim(bottom=0.001)
+        axs.set_ylim(bottom=0.00025)
         
     
     #-----------
@@ -9752,7 +9815,7 @@ def _plot_timescale_environment_histogram_trelax(misalignment_tree, misalignment
                       use_only_centrals                   = False,                   # Whether to only use centrals
                       #--------------------
                       # General formatting
-                      set_bin_limit_trelax                = 5,        # [ None / Gyr ]
+                      set_bin_limit_trelax                = 6,        # [ None / Gyr ]
                       set_bin_width_trelax                = 0.25,     # [ 0.25 / Gyr ]
                       set_plot_histogram_log              = False,    # set yaxis as log
                       #==============================================
@@ -9799,6 +9862,7 @@ def _plot_timescale_environment_histogram_trelax(misalignment_tree, misalignment
     subgroupnum_class    = []
     halomass_plot        = []
     ID_plot              = []
+    cluster_ID           = []
     for ID_i in misalignment_tree.keys():
         
         if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_hist_min_trelax:
@@ -9828,7 +9892,10 @@ def _plot_timescale_environment_histogram_trelax(misalignment_tree, misalignment
                 subgroupnum_class.append('mixed')
             
             # Find halo mass
-            halomass_plot.append(np.mean(misalignment_tree['%s' %ID_i]['halomass'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']]))           
+            halomass_plot.append(np.mean(misalignment_tree['%s' %ID_i]['halomass'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']]))      
+            
+            if np.mean(misalignment_tree['%s' %ID_i]['halomass'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']]) > 10**14:
+                cluster_ID.append(ID_i)
                             
             # Collect morphology
             if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-ETG':
@@ -9842,6 +9909,7 @@ def _plot_timescale_environment_histogram_trelax(misalignment_tree, misalignment
             else:
                 relaxationmorph_plot.append('other')
             
+    print('  number of clusters: ', len(cluster_ID))
     print('  Using sample: ', len(ID_plot))
     
     # Collect data into dataframe
@@ -9915,12 +9983,12 @@ def _plot_timescale_environment_histogram_trelax(misalignment_tree, misalignment
     ### General formatting
     # Axis labels
     axs.set_yscale('log')
-    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
+    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
     axs.set_xlim(0, set_bin_limit_trelax)
     axs.set_xticks(np.arange(0, set_bin_limit_trelax+0.1, step=1))
     axs.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)')
     axs.set_ylabel('Percentage of\nmisalignments')
-    axs.set_ylim(bottom=0.001)
+    axs.set_ylim(bottom=0.00025)
     
     
     #-----------
@@ -9997,8 +10065,8 @@ def _plot_timescale_environment_histogram_tdyn(misalignment_tree, misalignment_i
                       use_only_centrals                   = False,                   # Whether to only use centrals
                       #--------------------
                       # General formatting
-                      set_bin_limit_tdyn                  = 35,       # [ None / multiples ]
-                      set_bin_width_tdyn                  = 1,        # [ multiples ]
+                      set_bin_limit_tdyn                  = 50,       # [ None / multiples ]
+                      set_bin_width_tdyn                  = 2,        # [ multiples ]
                       set_plot_histogram_log              = False,    # set yaxis as log
                       #==============================================
                       showfig       = True,
@@ -10160,12 +10228,12 @@ def _plot_timescale_environment_histogram_tdyn(misalignment_tree, misalignment_i
     ### General formatting
     # Axis labels
     axs.set_yscale('log')
-    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
+    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
     axs.set_xlim(0, set_bin_limit_tdyn)
-    axs.set_xticks(np.arange(0, set_bin_limit_tdyn+0.1, step=2))
+    axs.set_xticks(np.arange(0, set_bin_limit_tdyn+0.1, step=4))
     axs.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{dyn}}$')
     axs.set_ylabel('Percentage of\nmisalignments')
-    axs.set_ylim(bottom=0.001)
+    axs.set_ylim(bottom=0.00025)
     
     
     #-----------
@@ -10242,8 +10310,8 @@ def _plot_timescale_environment_histogram_ttorque(misalignment_tree, misalignmen
                       use_only_centrals                   = False,                   # Whether to only use centrals
                       #--------------------
                       # General formatting
-                      set_bin_limit_ttorque               = 12,       # [ None / multiples ]
-                      set_bin_width_ttorque               = 0.5,      # [ multiples ]
+                      set_bin_limit_ttorque               = 20,       # [ None / multiples ]
+                      set_bin_width_ttorque               = 1,      # [ multiples ]
                       set_plot_histogram_log              = False,    # set yaxis as log
                       #==============================================
                       showfig       = True,
@@ -10405,12 +10473,12 @@ def _plot_timescale_environment_histogram_ttorque(misalignment_tree, misalignmen
     ### General formatting
     # Axis labels
     axs.set_yscale('log')
-    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
+    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
     axs.set_xlim(0, set_bin_limit_ttorque)
-    axs.set_xticks(np.arange(0, set_bin_limit_ttorque+0.1, step=1))
+    axs.set_xticks(np.arange(0, set_bin_limit_ttorque+0.1, step=2))
     axs.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{torque}}$')
     axs.set_ylabel('Percentage of\nmisalignments')
-    axs.set_ylim(bottom=0.001)
+    axs.set_ylim(bottom=0.00025)
     
     
     #-----------
@@ -10495,7 +10563,7 @@ def _plot_timescale_accretion_histogram_trelax(misalignment_tree, misalignment_i
                         use_only_centrals                 = True,           # Use only centrals      
                       #--------------------
                       # General formatting
-                      set_bin_limit_trelax                = 5,        # [ None / Gyr ]
+                      set_bin_limit_trelax                = 6,        # [ None / Gyr ]
                       set_bin_width_trelax                = 0.25,     # [ 0.25 / Gyr ]
                       set_plot_histogram_log              = False,    # set yaxis as log
                         add_plot_errorbars                = True,
@@ -10683,12 +10751,12 @@ def _plot_timescale_accretion_histogram_trelax(misalignment_tree, misalignment_i
     ### General formatting
     # Axis labels
     axs.set_yscale('log')
-    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
+    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
     axs.set_xlim(0, set_bin_limit_trelax)
     axs.set_xticks(np.arange(0, set_bin_limit_trelax+0.1, step=1))
     axs.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)')
     axs.set_ylabel('Percentage of\nmisalignments')
-    axs.set_ylim(bottom=0.001)
+    axs.set_ylim(bottom=0.00025)
     
     
     #-----------
@@ -10715,7 +10783,8 @@ def _plot_timescale_accretion_histogram_trelax(misalignment_tree, misalignment_i
     
     #-----------
     ### title
-    plot_annotate = ''
+    if plot_annotate == None:
+        plot_annotate = ''
     if use_only_centrals:
         plot_annotate = plot_annotate + 'centrals'
     if len(set_hist_type) < 4:
@@ -10769,8 +10838,8 @@ def _plot_timescale_accretion_histogram_tdyn(misalignment_tree, misalignment_inp
                         use_only_centrals                 = True,           # Use only centrals      
                       #--------------------
                       # General formatting
-                      set_bin_limit_tdyn                  = 35,       # [ None / multiples ]
-                      set_bin_width_tdyn                  = 1,        # [ multiples ]
+                      set_bin_limit_tdyn                  = 50,       # [ None / multiples ]
+                      set_bin_width_tdyn                  = 2,        # [ multiples ]
                       set_plot_histogram_log              = False,    # set yaxis as log
                         add_plot_errorbars                = True,
                       #==============================================
@@ -10958,12 +11027,12 @@ def _plot_timescale_accretion_histogram_tdyn(misalignment_tree, misalignment_inp
     ### General formatting
     # Axis labels
     axs.set_yscale('log')
-    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
+    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
     axs.set_xlim(0, set_bin_limit_tdyn)
-    axs.set_xticks(np.arange(0, set_bin_limit_tdyn+0.1, step=2))
+    axs.set_xticks(np.arange(0, set_bin_limit_tdyn+0.1, step=4))
     axs.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{dyn}}$')
     axs.set_ylabel('Percentage of\nmisalignments')
-    axs.set_ylim(bottom=0.001)
+    axs.set_ylim(bottom=0.00025)
     
     
     #-----------
@@ -10990,9 +11059,10 @@ def _plot_timescale_accretion_histogram_tdyn(misalignment_tree, misalignment_inp
     
     #-----------
     ### title
-    plot_annotate = ''
+    if plot_annotate == None:
+        plot_annotate = ''
     if use_only_centrals:
-        plot_annotate = plot_annotate + 'centrals'
+        plot_annotate = plot_annotate + ' centrals'
     if len(set_hist_type) < 4:
         if 'co-co' in set_hist_type:
             plot_annotate = plot_annotate + 'co → co'
@@ -11043,8 +11113,8 @@ def _plot_timescale_accretion_histogram_ttorque(misalignment_tree, misalignment_
                         use_only_centrals                 = True,           # Use only centrals      
                       #--------------------
                       # General formatting
-                      set_bin_limit_ttorque               = 12,       # [ None / multiples ]
-                      set_bin_width_ttorque               = 0.5,      # [ multiples ]
+                      set_bin_limit_ttorque               = 20,       # [ None / multiples ]
+                      set_bin_width_ttorque               = 1,      # [ multiples ]
                       set_plot_histogram_log              = False,    # set yaxis as log
                         add_plot_errorbars                = True,
                       #==============================================
@@ -11232,12 +11302,12 @@ def _plot_timescale_accretion_histogram_ttorque(misalignment_tree, misalignment_
     ### General formatting
     # Axis labels
     axs.set_yscale('log')
-    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
+    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
     axs.set_xlim(0, set_bin_limit_ttorque)
-    axs.set_xticks(np.arange(0, set_bin_limit_ttorque+0.1, step=1))
+    axs.set_xticks(np.arange(0, set_bin_limit_ttorque+0.1, step=2))
     axs.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{torque}}$')
     axs.set_ylabel('Percentage of\nmisalignments')
-    axs.set_ylim(bottom=0.001)
+    axs.set_ylim(bottom=0.00025)
     
     
     #-----------
@@ -11264,7 +11334,8 @@ def _plot_timescale_accretion_histogram_ttorque(misalignment_tree, misalignment_
     
     #-----------
     ### title
-    plot_annotate = ''
+    if plot_annotate == None:
+        plot_annotate = ''
     if use_only_centrals:
         plot_annotate = plot_annotate + 'centrals'
     if len(set_hist_type) < 4:
@@ -11318,9 +11389,10 @@ def _plot_timescale_specaccretion_histogram_trelax(misalignment_tree, misalignme
                         inflow_radius                     = 1.0,                # HMR to use
                         inflow_limits                     = [1e-9, 2e-9],            # [ < lower - upper < Msun/yr ] e.g. [5, 10] means <5, 5-10, 10+
                         use_gas_type                      = 'gas',                  # [ 'gas' / 'gas_sf' ]
+                        use_only_centrals                 = True,           # Use only centrals   
                       #--------------------
                       # General formatting
-                      set_bin_limit_trelax                = 5,        # [ None / Gyr ]
+                      set_bin_limit_trelax                = 6,        # [ None / Gyr ]
                       set_bin_width_trelax                = 0.25,     # [ 0.25 / Gyr ]
                       set_plot_histogram_log              = False,    # set yaxis as log
                         add_plot_errorbars                = True,
@@ -11366,7 +11438,13 @@ def _plot_timescale_specaccretion_histogram_trelax(misalignment_tree, misalignme
         # Ensure we actually have inflow to consider
         if misalignment_tree['%s' %ID_i]['relaxation_time'] < ignore_trelax_inflow:
             continue
-            
+        
+        # If we only want centrals, select
+        sgn = np.array(misalignment_tree['%s' %ID_i]['SubGroupNum'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']])
+        if use_only_centrals:
+            if not np.all(sgn == 0):
+                continue
+                
         # Ensure we have at least 1 snapshot that we can evaluate
         mask_inflow = (np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']] - np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']] > ignore_trelax_inflow)
         if mask_inflow.any() == True:        
@@ -11421,6 +11499,8 @@ def _plot_timescale_specaccretion_histogram_trelax(misalignment_tree, misalignme
     
     print('-------------------------------------------------------------')
     print('Number of relaxations: ', len(ID_plot))
+    if use_only_centrals:
+        print('  Using only - CENTRALS -:')
     print('\tSpecific inflow rates %s [ /yr ]:'%use_gas_type)
     print('\t0  - %s   :    %i' %(inflow_limits[0], len(inflow_1_df)))
     print('\t%s - %s:    %i' %(inflow_limits[0], inflow_limits[1], len(inflow_2_df)))
@@ -11501,12 +11581,12 @@ def _plot_timescale_specaccretion_histogram_trelax(misalignment_tree, misalignme
     ### General formatting
     # Axis labels
     axs.set_yscale('log')
-    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
+    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
     axs.set_xlim(0, set_bin_limit_trelax)
     axs.set_xticks(np.arange(0, set_bin_limit_trelax+0.1, step=1))
     axs.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)')
     axs.set_ylabel('Percentage of\nmisalignments')
-    axs.set_ylim(bottom=0.001)
+    axs.set_ylim(bottom=0.00025)
     
     
     #-----------
@@ -11533,7 +11613,10 @@ def _plot_timescale_specaccretion_histogram_trelax(misalignment_tree, misalignme
     
     #-----------
     ### title
-    plot_annotate = ''
+    if plot_annotate == None:
+        plot_annotate = ''
+    if use_only_centrals:
+        plot_annotate = plot_annotate + 'centrals'
     if len(set_hist_type) < 4:
         if 'co-co' in set_hist_type:
             plot_annotate = plot_annotate + 'co → co'
@@ -11557,6 +11640,9 @@ def _plot_timescale_specaccretion_histogram_trelax(misalignment_tree, misalignme
     if savefig:
         savefig_txt = savefig_txt_in + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
         savefig_txt = savefig_txt + '_%i'%inflow_radius
+
+        if use_only_centrals:
+            savefig_txt = savefig_txt + '_centrals'
         
         if len(set_hist_type) == 4:
             savefig_txt = savefig_txt + '_allpaths'
@@ -11581,10 +11667,11 @@ def _plot_timescale_specaccretion_histogram_tdyn(misalignment_tree, misalignment
                         inflow_radius                     = 1.0,                # HMR to use
                         inflow_limits                     = [1e-9, 2e-9],            # [ < lower - upper < Msun/yr ] e.g. [5, 10] means <5, 5-10, 10+
                         use_gas_type                      = 'gas',                  # [ 'gas' / 'gas_sf' ]
+                        use_only_centrals                 = True,           # Use only centrals   
                       #--------------------
                       # General formatting
-                      set_bin_limit_tdyn                  = 35,       # [ None / multiples ]
-                      set_bin_width_tdyn                  = 1,        # [ multiples ]
+                      set_bin_limit_tdyn                  = 50,       # [ None / multiples ]
+                      set_bin_width_tdyn                  = 2,        # [ multiples ]
                       set_plot_histogram_log              = False,    # set yaxis as log
                         add_plot_errorbars                = True,
                       #==============================================
@@ -11629,7 +11716,13 @@ def _plot_timescale_specaccretion_histogram_tdyn(misalignment_tree, misalignment
         # Ensure we actually have inflow to consider
         if misalignment_tree['%s' %ID_i]['relaxation_time'] < ignore_trelax_inflow:
             continue
-            
+        
+        # If we only want centrals, select
+        sgn = np.array(misalignment_tree['%s' %ID_i]['SubGroupNum'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']])
+        if use_only_centrals:
+            if not np.all(sgn == 0):
+                continue
+                
         # Ensure we have at least 1 snapshot that we can evaluate
         mask_inflow = (np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']] - np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']] > ignore_trelax_inflow)
         if mask_inflow.any() == True:        
@@ -11683,6 +11776,8 @@ def _plot_timescale_specaccretion_histogram_tdyn(misalignment_tree, misalignment
     
     print('-------------------------------------------------------------')
     print('Number of relaxations: ', len(ID_plot))
+    if use_only_centrals:
+        print('  Using only - CENTRALS -:')
     print('\tSpecific inflow rates %s [ /yr ]:'%use_gas_type)
     print('\t0  - %s   :    %i' %(inflow_limits[0], len(inflow_1_df)))
     print('\t%s - %s:    %i' %(inflow_limits[0], inflow_limits[1], len(inflow_2_df)))
@@ -11763,12 +11858,12 @@ def _plot_timescale_specaccretion_histogram_tdyn(misalignment_tree, misalignment
     ### General formatting
     # Axis labels
     axs.set_yscale('log')
-    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
+    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
     axs.set_xlim(0, set_bin_limit_tdyn)
-    axs.set_xticks(np.arange(0, set_bin_limit_tdyn+0.1, step=2))
+    axs.set_xticks(np.arange(0, set_bin_limit_tdyn+0.1, step=4))
     axs.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{dyn}}$')
     axs.set_ylabel('Percentage of\nmisalignments')
-    axs.set_ylim(bottom=0.001)
+    axs.set_ylim(bottom=0.00025)
     
     
     #-----------
@@ -11795,7 +11890,10 @@ def _plot_timescale_specaccretion_histogram_tdyn(misalignment_tree, misalignment
     
     #-----------
     ### title
-    plot_annotate = ''
+    if plot_annotate == None:
+        plot_annotate = ''
+    if use_only_centrals:
+        plot_annotate = plot_annotate + 'centrals'
     if len(set_hist_type) < 4:
         if 'co-co' in set_hist_type:
             plot_annotate = plot_annotate + 'co → co'
@@ -11820,6 +11918,9 @@ def _plot_timescale_specaccretion_histogram_tdyn(misalignment_tree, misalignment
         savefig_txt = savefig_txt_in + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
         savefig_txt = savefig_txt + '_%i'%inflow_radius
 
+        if use_only_centrals:
+            savefig_txt = savefig_txt + '_centrals'
+
         if len(set_hist_type) == 4:
             savefig_txt = savefig_txt + '_allpaths'
             
@@ -11842,10 +11943,11 @@ def _plot_timescale_specaccretion_histogram_ttorque(misalignment_tree, misalignm
                         inflow_radius                     = 1.0,                # HMR to use
                         inflow_limits                     = [1e-9, 2e-9],            # [ < lower - upper < Msun/yr ] e.g. [5, 10] means <5, 5-10, 10+
                         use_gas_type                      = 'gas',                  # [ 'gas' / 'gas_sf' ]
+                        use_only_centrals                 = True,           # Use only centrals   
                       #--------------------
                       # General formatting
-                      set_bin_limit_ttorque               = 12,       # [ None / multiples ]
-                      set_bin_width_ttorque               = 0.5,      # [ multiples ]
+                      set_bin_limit_ttorque               = 20,       # [ None / multiples ]
+                      set_bin_width_ttorque               = 1,      # [ multiples ]
                       set_plot_histogram_log              = False,    # set yaxis as log
                         add_plot_errorbars                = True,
                       #==============================================
@@ -11890,7 +11992,13 @@ def _plot_timescale_specaccretion_histogram_ttorque(misalignment_tree, misalignm
         # Ensure we actually have inflow to consider
         if misalignment_tree['%s' %ID_i]['relaxation_time'] < ignore_trelax_inflow:
             continue
-            
+        
+        # If we only want centrals, select
+        sgn = np.array(misalignment_tree['%s' %ID_i]['SubGroupNum'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']])
+        if use_only_centrals:
+            if not np.all(sgn == 0):
+                continue
+                
         # Ensure we have at least 1 snapshot that we can evaluate
         mask_inflow = (np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']] - np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']] > ignore_trelax_inflow)
         if mask_inflow.any() == True:        
@@ -11945,6 +12053,8 @@ def _plot_timescale_specaccretion_histogram_ttorque(misalignment_tree, misalignm
     
     print('-------------------------------------------------------------')
     print('Number of relaxations: ', len(ID_plot))
+    if use_only_centrals:
+        print('  Using only - CENTRALS -:')
     print('\tSpecific inflow rates %s [ /yr ]:'%use_gas_type)
     print('\t0  - %s   :    %i' %(inflow_limits[0], len(inflow_1_df)))
     print('\t%s - %s:    %i' %(inflow_limits[0], inflow_limits[1], len(inflow_2_df)))
@@ -12024,12 +12134,12 @@ def _plot_timescale_specaccretion_histogram_ttorque(misalignment_tree, misalignm
     ### General formatting
     # Axis labels
     axs.set_yscale('log')
-    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
+    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
     axs.set_xlim(0, set_bin_limit_ttorque)
-    axs.set_xticks(np.arange(0, set_bin_limit_ttorque+0.1, step=1))
+    axs.set_xticks(np.arange(0, set_bin_limit_ttorque+0.1, step=2))
     axs.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{torque}}$')
     axs.set_ylabel('Percentage of\nmisalignments')
-    axs.set_ylim(bottom=0.001)
+    axs.set_ylim(bottom=0.00025)
     
     
     #-----------
@@ -12056,7 +12166,10 @@ def _plot_timescale_specaccretion_histogram_ttorque(misalignment_tree, misalignm
     
     #-----------
     ### title
-    plot_annotate = ''
+    if plot_annotate == None:
+        plot_annotate = ''
+    if use_only_centrals:
+        plot_annotate = plot_annotate + 'centrals'
     if len(set_hist_type) < 4:
         if 'co-co' in set_hist_type:
             plot_annotate = plot_annotate + 'co → co'
@@ -12081,6 +12194,9 @@ def _plot_timescale_specaccretion_histogram_ttorque(misalignment_tree, misalignm
         savefig_txt = savefig_txt_in + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
         savefig_txt = savefig_txt + '_%i'%inflow_radius
 
+        if use_only_centrals:
+            savefig_txt = savefig_txt + '_centrals'
+
         if len(set_hist_type) == 4:
             savefig_txt = savefig_txt + '_allpaths'
             
@@ -12102,7 +12218,7 @@ def _plot_timescale_stelmass_histogram_trelax(misalignment_tree, misalignment_in
                       use_only_centrals                   = False,                   # Whether to only use centrals
                       #--------------------
                       # General formatting
-                      set_bin_limit_trelax                = 5,        # [ None / Gyr ]
+                      set_bin_limit_trelax                = 6,        # [ None / Gyr ]
                       set_bin_width_trelax                = 0.25,     # [ 0.25 / Gyr ]
                       set_plot_histogram_log              = False,    # set yaxis as log
                         add_plot_errorbars                = True,
@@ -12274,12 +12390,12 @@ def _plot_timescale_stelmass_histogram_trelax(misalignment_tree, misalignment_in
     ### General formatting
     # Axis labels
     axs.set_yscale('log')
-    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
+    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
     axs.set_xlim(0, set_bin_limit_trelax)
     axs.set_xticks(np.arange(0, set_bin_limit_trelax+0.1, step=1))
     axs.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)')
     axs.set_ylabel('Percentage of\nmisalignments')
-    axs.set_ylim(bottom=0.001)
+    axs.set_ylim(bottom=0.00025)
     
     
     #-----------
@@ -12354,8 +12470,8 @@ def _plot_timescale_stelmass_histogram_tdyn(misalignment_tree, misalignment_inpu
                       use_only_centrals                   = False,                   # Whether to only use centrals
                       #--------------------
                       # General formatting
-                      set_bin_limit_tdyn                  = 35,       # [ None / multiples ]
-                      set_bin_width_tdyn                  = 1,        # [ multiples ]
+                      set_bin_limit_tdyn                  = 50,       # [ None / multiples ]
+                      set_bin_width_tdyn                  = 2,        # [ multiples ]
                       set_plot_histogram_log              = False,    # set yaxis as log
                         add_plot_errorbars                = True,
                       #==============================================
@@ -12526,12 +12642,12 @@ def _plot_timescale_stelmass_histogram_tdyn(misalignment_tree, misalignment_inpu
     ### General formatting
     # Axis labels
     axs.set_yscale('log')
-    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
+    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
     axs.set_xlim(0, set_bin_limit_tdyn)
-    axs.set_xticks(np.arange(0, set_bin_limit_tdyn+0.1, step=2))
+    axs.set_xticks(np.arange(0, set_bin_limit_tdyn+0.1, step=4))
     axs.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{dyn}}$')
     axs.set_ylabel('Percentage of\nmisalignments')
-    axs.set_ylim(bottom=0.001)
+    axs.set_ylim(bottom=0.00025)
     
     
     #-----------
@@ -12606,8 +12722,8 @@ def _plot_timescale_stelmass_histogram_ttorque(misalignment_tree, misalignment_i
                       use_only_centrals                   = False,                   # Whether to only use centrals
                       #--------------------
                       # General formatting
-                      set_bin_limit_ttorque               = 12,       # [ None / multiples ]
-                      set_bin_width_ttorque               = 0.5,      # [ multiples ]
+                      set_bin_limit_ttorque               = 20,       # [ None / multiples ]
+                      set_bin_width_ttorque               = 1,      # [ multiples ]
                       set_plot_histogram_log              = False,    # set yaxis as log
                         add_plot_errorbars                = True,
                       #==============================================
@@ -12778,12 +12894,12 @@ def _plot_timescale_stelmass_histogram_ttorque(misalignment_tree, misalignment_i
     ### General formatting
     # Axis labels
     axs.set_yscale('log')
-    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
+    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
     axs.set_xlim(0, set_bin_limit_ttorque)
-    axs.set_xticks(np.arange(0, set_bin_limit_ttorque+0.1, step=1))
+    axs.set_xticks(np.arange(0, set_bin_limit_ttorque+0.1, step=2))
     axs.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{torque}}$')
     axs.set_ylabel('Percentage of\nmisalignments')
-    axs.set_ylim(bottom=0.001)
+    axs.set_ylim(bottom=0.00025)
     
     
     #-----------
@@ -12985,6 +13101,10 @@ def _plot_morphology_change_ttorque_ellip(misalignment_tree, misalignment_input,
             df_temp2 = df.loc[(df['Relaxation time'] > 1) & (df['Delta ellip'] < 0.80)]
             print('  Number of relaxations >1 Gyr:                                      ', len(df_temp1))
             print('  Number of relaxations >1 Gyr with a delta ellip decrease of >20%:  ', len(df_temp2))
+            df_temp1 = df.loc[(df['Relaxation time'] > 2)]
+            df_temp2 = df.loc[(df['Relaxation time'] > 2) & (df['Delta ellip'] < 0.80)]
+            print('  Number of relaxations >2 Gyr:                                      ', len(df_temp1))
+            print('  Number of relaxations >2 Gyr with a delta ellip decrease of >20%:  ', len(df_temp2))
             #print(df_temp2['GalaxyIDs'])
             
             
@@ -13064,6 +13184,10 @@ def _plot_morphology_change_ttorque_ellip(misalignment_tree, misalignment_input,
             df_temp2 = df.loc[(df['Relaxation time'] > 1) & (df['Delta ttorque'] > 1.20)]
             print('  Number of relaxations >1 Gyr:                                       ', len(df_temp1))
             print('  Number of relaxations >1 Gyr with a delta torque decrease of >20%:  ', len(df_temp2))
+            df_temp1 = df.loc[(df['Relaxation time'] > 2)]
+            df_temp2 = df.loc[(df['Relaxation time'] > 2) & (df['Delta ttorque'] > 1.20)]
+            print('  Number of relaxations >2 Gyr:                                       ', len(df_temp1))
+            print('  Number of relaxations >2 Gyr with a delta torque decrease of >20%:  ', len(df_temp2))
             
             
             #-------------
@@ -13219,15 +13343,26 @@ def _plot_morphology_change_ttorque_ellip(misalignment_tree, misalignment_input,
 
 #\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 # Set starting parameters
-load_csv_file_in = '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph'
-plot_annotate_in                                           = False
+load_csv_file_in = '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010_NEW'
+plot_annotate_in                                           = None
 savefig_txt_in   = load_csv_file_in               # [ 'manual' / load_csv_file_in ] 'manual' will prompt txt before saving
-
-#'_20Thresh_30Peak_normalLatency_anyMergers_anyMorph',         
-#'_20Thresh_30Peak_normalLatency_anyMergers_anyMorph'                                                                                                                                               
-#'_20Thresh_30Peak_normalLatency_anyMergers_hardMorph'                                                                                                                                               
-#'_20Thresh_30Peak_normalLatency_anyMergers_ETG-ETG'                                                                                                                                                 
-#'_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010'
+       
+#'_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_NEW'                                                                                                                                               
+#'_20Thresh_30Peak_normalLatency_anyMergers_hardMorph_NEW'  
+#'_20Thresh_30Peak_normalLatency_anyMergers_ETG_NEW' 
+#'_20Thresh_30Peak_normalLatency_anyMergers_LTG_NEW'  
+#'_20Thresh_30Peak_normalLatency_anyMergers_hardETG_NEW'  
+#'_20Thresh_30Peak_normalLatency_anyMergers_hardLTG_NEW'                                                                                                                          
+#'_20Thresh_30Peak_normalLatency_anyMergers_ETG-ETG_NEW'                                                                                                                          
+#'_20Thresh_30Peak_normalLatency_anyMergers_LTG-LTG_NEW'                                                                                                                         
+#'_20Thresh_30Peak_normalLatency_anyMergers_hardETG-ETG_NEW'                                                                                                                         
+#'_20Thresh_30Peak_normalLatency_anyMergers_hardLTG-LTG_NEW'                                                                                                                                          
+#'_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010_NEW'
+#'_20Thresh_30Peak_noLatency_NEW'
+#'_20Thresh_30Peak_highLatency_NEW'
+#'_20Thresh_30Peak_veryhighLatency_NEW'
+#'_20Thresh_30Peak_50particles_NEW'
+#'_20Thresh_30Peak_100particles_NEW'
 
 #  False 
 # 'ETG → ETG' , 'LTG → LTG'
@@ -13239,7 +13374,16 @@ savefig_txt_in   = load_csv_file_in               # [ 'manual' / load_csv_file_i
 #==================================================================================================================================
 misalignment_tree, misalignment_input, summary_dict = _extract_tree(load_csv_file=load_csv_file_in, plot_annotate=plot_annotate_in)
 #==================================================================================================================================
-if load_csv_file_in == '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010':
+"""misalignment_tree, misalignment_input, summary_dict = _extract_tree(load_csv_file=load_csv_file_in, plot_annotate=plot_annotate_in, 
+                    use_alt_merger_criteria = True,
+                    half_window         = 0.3)"""
+
+
+
+
+
+
+if load_csv_file_in == '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010' or load_csv_file_in == '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010_NEW':
     print('\nTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT\n\t\tUSING 1010 SAMPLE\nTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT')
 
 
@@ -13249,8 +13393,11 @@ if load_csv_file_in == '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010'
                             savefig = False)"""
 
 """_plot_sample_vs_dist_hist(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt=savefig_txt_in,
+                              use_PDF   = False,        # uses probability density function
                             showfig = True,
                             savefig = False)"""
+
+
 
 
 
@@ -13267,13 +13414,14 @@ if load_csv_file_in == '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010'
                             set_plot_histogram_log            = False,    # set yaxis as log
                               add_inset                       = True, 
                             showfig = True,
-                            savefig = False) """   
+                            savefig = False)"""
 """_plot_ttorque_histogram(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_plot_relaxation_type          = True,     # SET TO FALSE IF BELOW TRUE. Stack histogram types   
                             set_plot_histogram_log            = False,    # set yaxis as log
                               add_inset                       = True, 
                             showfig = True,
                             savefig = False)"""
+
 
 # STACKED SINGLE
 """_plot_stacked_trelax(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
@@ -13326,7 +13474,7 @@ if load_csv_file_in == '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010'
                             savefig = False)"""
 
 
-# PLOT DELTA ANGLE, LOOKS AT PEAK ANGLE FROM 0
+# PLOT DELTA ANGLE, LOOKS AT PEAK ANGLE FROM 0, co-co and counter-counter
 """_plot_offset_trelax(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             use_offset_morphs    = True,
                               set_offset_morphs  = ['LTG-LTG', 'ETG-ETG'],           # Can be either relaxation_morph or misalignment_morph
@@ -13347,14 +13495,17 @@ if load_csv_file_in == '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010'
 # AVERAGE HALO MISALIGNMENT WITH RELAXTIME
 """_plot_halo_misangle_trelax(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_min_halo_trelax = 0,
+                              use_only_centrals              = True,        # Use only centrals
                             showfig = True,
                             savefig = False)"""
 """_plot_halo_misangle_tdyn(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_min_halo_tdyn = 0,
+                              use_only_centrals              = True,        # Use only centrals
                             showfig = True,
                             savefig = False)"""
 """_plot_halo_misangle_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_min_halo_ttorque = 0,
+                              use_only_centrals              = True,        # Use only centrals
                             showfig = True,
                             savefig = False)"""
 """_plot_halo_misangle_manual(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
@@ -13369,7 +13520,7 @@ if load_csv_file_in == '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010'
                             set_gashist_min_trelax              = 0.25,
                               add_plot_gas_morph_median         = True,
                             showfig = True,
-                            savefig = False)     # will auto-rename to _allpath if all 4 set_gashist_type used"""
+                            savefig = False)"""     # will auto-rename to _allpath if all 4 set_gashist_type used
 """_plot_timescale_gas_scatter_tdyn(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_gashist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_gashist_min_trelax              = 0.25,
@@ -13387,7 +13538,7 @@ if load_csv_file_in == '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010'
                             set_gashist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_gashist_min_trelax              = 0.25,
                             showfig = True,
-                            savefig = False)     # will auto-rename to _allpath if all 4 set_gashist_type used"""
+                            savefig = False)"""     # will auto-rename to _allpath if all 4 set_gashist_type used"""
 """_plot_timescale_gas_histogram_tdyn(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_gashist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_gashist_min_trelax              = 0.25,
@@ -13407,20 +13558,59 @@ if load_csv_file_in == '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010'
                             set_hist_min_trelax              = 0.25,
                               use_occ_morph                  = False,        # Differentiates between ETG centrals, and LTG centrals. Will autorename
                             showfig = True,
-                            savefig = False)      # will auto-rename to _allpath if all 4 set_gashist_type used"""
+                            savefig = False)"""      # will auto-rename to _allpath if all 4 set_gashist_type used
 """_plot_timescale_occupation_histogram_tdyn(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_hist_min_trelax              = 0.25,
                               use_occ_morph                  = False,               
                             showfig = True,
-                            savefig = False)   """
+                            savefig = False)  """ 
 """_plot_timescale_occupation_histogram_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_hist_min_trelax              = 0.25,
                               use_occ_morph                  = False,        
                             showfig = True,
                             savefig = False)"""
+                            
+"""_plot_timescale_occupation_histogram_trelax(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
+                            set_hist_min_trelax              = 0.25,
+                              use_occ_morph                  = True,        # Differentiates between ETG centrals, and LTG centrals. Will autorename
+                            showfig = True,
+                            savefig = False)"""      # will auto-rename to _allpath if all 4 set_gashist_type used"""
+"""_plot_timescale_occupation_histogram_tdyn(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
+                            set_hist_min_trelax              = 0.25,
+                              use_occ_morph                  = True,               
+                            showfig = True,
+                            savefig = False)  """ 
+"""_plot_timescale_occupation_histogram_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
+                            set_hist_min_trelax              = 0.25,
+                              use_occ_morph                  = True,        
+                            showfig = True,
+                            savefig = False)"""
 
+
+# PLOTS HISTOGRAM OF STELLAR MASS WITH RELAXATION TIME
+"""_plot_timescale_stelmass_histogram_trelax(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
+                            set_hist_min_trelax              = 0.25,
+                              use_only_centrals              = False,        # Use only centrals
+                            showfig = True,
+                            savefig = False)      # will auto-rename to _allpath if all 4 set_gashist_type used"""
+"""_plot_timescale_stelmass_histogram_tdyn(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
+                            set_hist_min_trelax              = 0.25,
+                              use_only_centrals              = False,        # Use only centrals
+                            showfig = True,
+                            savefig = False)      # will auto-rename to _allpath if all 4 set_gashist_type used"""
+"""_plot_timescale_stelmass_histogram_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
+                            set_hist_min_trelax              = 0.25,
+                              use_only_centrals              = False,        # Use only centrals
+                            showfig = True,
+                            savefig = False)      # will auto-rename to _allpath if all 4 set_gashist_type used"""
 
 
 # PLOTS HISTOGRAM OF HALO MASS WITH RELAXATION TIME
@@ -13445,11 +13635,12 @@ if load_csv_file_in == '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010'
                               use_only_centrals              = True,        # Use only centrals                               
                             showfig = True,
                             savefig = False)"""
+                            
 
 
 # PLOTS HISTOGRAM OF GAS INFLOW WITH RELAXATION TIME
 """_plot_timescale_accretion_histogram_trelax(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
-                            set_hist_type                    = ['co-co', 'counter-counter'],
+                            set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_hist_min_trelax              = 0.25,
                               inflow_radius                  = 2.0,                # HMR to use
                               inflow_limits                  = [5, 10],            # [ < lower - upper < Msun/yr ] e.g. [5, 10] means <5, 5-10, 10+      
@@ -13458,7 +13649,7 @@ if load_csv_file_in == '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010'
                             showfig = True,
                             savefig = False)"""
 """_plot_timescale_accretion_histogram_tdyn(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
-                            set_hist_type                    = ['co-co', 'counter-counter'],
+                            set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_hist_min_trelax              = 0.25,
                               inflow_radius                  = 2.0,                # HMR to use
                               inflow_limits                  = [5, 10],            # [ < lower - upper < Msun/yr ] e.g. [5, 10] means <5, 5-10, 10+   
@@ -13467,7 +13658,7 @@ if load_csv_file_in == '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010'
                             showfig = True,
                             savefig = False)"""
 """_plot_timescale_accretion_histogram_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
-                            set_hist_type                    = ['co-co', 'counter-counter'],
+                            set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_hist_min_trelax              = 0.25,
                               inflow_radius                  = 2.0,                # HMR to use
                               inflow_limits                  = [5, 10],            # [ < lower - upper < Msun/yr ] e.g. [5, 10] means <5, 5-10, 10+         
@@ -13483,7 +13674,8 @@ if load_csv_file_in == '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010'
                             set_hist_min_trelax              = 0.25,
                               inflow_radius                  = 2.0,                # HMR to use
                               inflow_limits                  = [1e-9, 2e-9],            # [ < lower - upper < Msun/yr ] e.g. [5, 10] means <5, 5-10, 10+   
-                              use_gas_type                   = 'gas_sf',                  # [ 'gas' / 'gas_sf' ]                              
+                              use_gas_type                   = 'gas',                  # [ 'gas' / 'gas_sf' ]       
+                              use_only_centrals              = False,        # Use only centrals                                           
                             showfig = True,
                             savefig = False)"""
 """_plot_timescale_specaccretion_histogram_tdyn(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
@@ -13491,7 +13683,8 @@ if load_csv_file_in == '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010'
                             set_hist_min_trelax              = 0.25,
                               inflow_radius                  = 2.0,                # HMR to use
                               inflow_limits                  = [1e-9, 2e-9],            # [ < lower - upper < Msun/yr ] e.g. [5, 10] means <5, 5-10, 10+     
-                              use_gas_type                   = 'gas_sf',                  # [ 'gas' / 'gas_sf' ]                                                           
+                              use_gas_type                   = 'gas',                  # [ 'gas' / 'gas_sf' ]     
+                              use_only_centrals              = False,        # Use only centrals                                                                          
                             showfig = True,
                             savefig = False)"""
 """_plot_timescale_specaccretion_histogram_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
@@ -13499,30 +13692,10 @@ if load_csv_file_in == '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010'
                             set_hist_min_trelax              = 0.25,
                               inflow_radius                  = 2.0,                # HMR to use
                               inflow_limits                  = [1e-9, 2e-9],            # [ < lower - upper < Msun/yr ] e.g. [5, 10] means <5, 5-10, 10+   
-                              use_gas_type                   = 'gas_sf',                  # [ 'gas' / 'gas_sf' ]                                                             
+                              use_gas_type                   = 'gas',                  # [ 'gas' / 'gas_sf' ]     
+                              use_only_centrals              = False,        # Use only centrals                                                                            
                             showfig = True,
                             savefig = False)"""
-
-
-# PLOTS HISTOGRAM OF STELLAR MASS WITH RELAXATION TIME
-"""_plot_timescale_stelmass_histogram_trelax(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
-                            set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
-                            set_hist_min_trelax              = 0.25,
-                              use_only_centrals              = False,        # Use only centrals
-                            showfig = True,
-                            savefig = False)      # will auto-rename to _allpath if all 4 set_gashist_type used"""
-"""_plot_timescale_stelmass_histogram_tdyn(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
-                            set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
-                            set_hist_min_trelax              = 0.25,
-                              use_only_centrals              = False,        # Use only centrals
-                            showfig = True,
-                            savefig = False)      # will auto-rename to _allpath if all 4 set_gashist_type used"""
-"""_plot_timescale_stelmass_histogram_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
-                            set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
-                            set_hist_min_trelax              = 0.25,
-                              use_only_centrals              = False,        # Use only centrals
-                            showfig = True,
-                            savefig = False)      # will auto-rename to _allpath if all 4 set_gashist_type used"""
 
 
 # PLOTS HISTOGRAM OF FRACTIONAL CHANGE IN TTORQUE, ELLIP, AND BOTH
@@ -13562,25 +13735,15 @@ if load_csv_file_in == '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010'
 
   
 # PLOTS STACKED BAR CHART. WILL USE use_alt_merger_criteria FROM EARLIER TO FIND MERGERS,          
-"""_plot_origins(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+_plot_origins(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             # Mergers
                             use_alt_merger_criteria = True,
-                            add_total               = True,     # add total
+                            add_total               = True,     # add total (+1 PIE CHART)
                               half_window         = 0.3,      # [ 0.2 / +/-Gyr ] window centred on first misaligned snap to look for mergers
                               min_ratio           = 0.1,   
                               merger_lookback_time = 2,       # Gyr, number of years to check for peak stellar mass
                             showfig = True,
-                            savefig = False)"""
-"""_plot_origins(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
-                            # Mergers
-                            use_alt_merger_criteria = True,
-                            add_total               = False,     # add total
-                              half_window         = 0.3,      # [ 0.2 / +/-Gyr ] window centred on first misaligned snap to look for mergers
-                              min_ratio           = 0.1,   
-                              merger_lookback_time = 2,       # Gyr, number of years to check for peak stellar mass
-                            showfig = True,
-                            savefig = False)"""
-                            
+                            savefig = False)                     
 #====================================
 
 

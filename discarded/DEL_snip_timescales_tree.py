@@ -2525,22 +2525,21 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 index_stop   = index_dict['misalignment_locations']['relax']['index'][misindex_i]+1
                 
                 # Check satellite properties
-                if limit_satellites:
-                    check = []
-                    check_array = np.array(galaxy_tree['%s' %GalaxyID]['SubGroupNum'][index_start:index_stop])
-                    if limit_satellites == 'central':
-                        check.append((check_array == 0).all())
-                    elif limit_satellites == 'satellite':
-                        check.append((check_array >= 1).all())
-                    else:
-                        check.append((check_array >= 0).all())
-                    if np.array(check).all() == False:
-                        if print_checks:
-                            print('    x FAILED CENTRAL/SAT:\t %i / %i, for limit %s' %(np.min(check_array), np.max(check_array), limit_satellites))
-                        continue
+                check = []
+                check_array = np.array(galaxy_tree['%s' %GalaxyID]['SubGroupNum'][index_start:index_stop])
+                if limit_satellites == 'central':
+                    check.append((check_array == 0).all())
+                elif limit_satellites == 'satellite':
+                    check.append((check_array >= 1).all())
+                else:
+                    check.append((check_array >= 0).all())
+                if np.array(check).all() == False:
                     if print_checks:
-                        print('    MET CENTRAL/SAT:\t %i / %i, for limit %s' %(np.min(check_array), np.max(check_array), limit_satellites))
-                    
+                        print('    x FAILED CENTRAL/SAT:\t %i / %i, for limit %s' %(np.min(check_array), np.max(check_array), limit_satellites))
+                    continue
+                if print_checks:
+                    print('    MET CENTRAL/SAT:\t %i / %i, for limit %s' %(np.min(check_array), np.max(check_array), limit_satellites))
+                
                 
                 #------------------------------------------------------------------------------------------------
                 # Check time-weighted average over misalignment properties
@@ -2571,58 +2570,51 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             
             
                 # Check halomass
-                if min_halomass or max_halomass:
-                    check = []                
-                    check_array = np.array(galaxy_tree['%s' %GalaxyID]['halomass'][index_start:index_stop])
-                    check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_halomass == None else max_halomass))
-                    check.append(np.average(check_array, weights=time_weight) >= (0 if min_halomass == None else min_halomass))
-                    if np.array(check).all() == False:
-                        if print_checks:
-                            print('    x FAILED HALO MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_halomass == None else min_halomass), (math.nan if max_halomass == None else max_halomass)))
-                        continue
+                check = []                
+                check_array = np.array(galaxy_tree['%s' %GalaxyID]['halomass'][index_start:index_stop])
+                check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_halomass == None else max_halomass))
+                check.append(np.average(check_array, weights=time_weight) >= (0 if min_halomass == None else min_halomass))
+                if np.array(check).all() == False:
                     if print_checks:
-                        print('    MET HALO MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_halomass == None else min_halomass), (math.nan if max_halomass == None else max_halomass)))
-            
+                        print('    x FAILED HALO MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_halomass == None else min_halomass), (math.nan if max_halomass == None else max_halomass)))
+                    continue
+                if print_checks:
+                    print('    MET HALO MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_halomass == None else min_halomass), (math.nan if max_halomass == None else max_halomass)))
+                
                 # Check stelmass
-                if min_stelmass or max_stelmass:
-                    check = []
-                    if use_hmr_general == 'aperture':
-                        check_array = np.array(galaxy_tree['%s' %GalaxyID]['stars']['ap_mass'][index_start:index_stop])
-                        window_stelmass = galaxy_tree['%s' %GalaxyID]['stars']['ap_mass'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
-                    else:
-                        check_array = np.array(galaxy_tree['%s' %GalaxyID]['stars']['%s_hmr' %use_hmr_general]['mass'][index_start:index_stop])
-                        window_stelmass = galaxy_tree['%s' %GalaxyID]['stars']['%s_hmr' %use_hmr_general]['mass'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
-                    check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_stelmass == None else max_stelmass))
-                    check.append(np.average(check_array, weights=time_weight) >= (0 if min_stelmass == None else min_stelmass))
-                    if np.array(check).all() == False:
-                        if print_checks:
-                            print('    x FAILED STEL MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_stelmass == None else min_stelmass), (math.nan if max_stelmass == None else max_stelmass)))
-                        continue
-                    if print_checks:
-                        print('    MET STEL MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_stelmass == None else min_stelmass), (math.nan if max_stelmass == None else max_stelmass)))
+                check = []
                 if use_hmr_general == 'aperture':
+                    check_array = np.array(galaxy_tree['%s' %GalaxyID]['stars']['ap_mass'][index_start:index_stop])
                     window_stelmass = galaxy_tree['%s' %GalaxyID]['stars']['ap_mass'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
                 else:
+                    check_array = np.array(galaxy_tree['%s' %GalaxyID]['stars']['%s_hmr' %use_hmr_general]['mass'][index_start:index_stop])
                     window_stelmass = galaxy_tree['%s' %GalaxyID]['stars']['%s_hmr' %use_hmr_general]['mass'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
+                check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_stelmass == None else max_stelmass))
+                check.append(np.average(check_array, weights=time_weight) >= (0 if min_stelmass == None else min_stelmass))
+                if np.array(check).all() == False:
+                    if print_checks:
+                        print('    x FAILED STEL MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_stelmass == None else min_stelmass), (math.nan if max_stelmass == None else max_stelmass)))
+                    continue
+                if print_checks:
+                    print('    MET STEL MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_stelmass == None else min_stelmass), (math.nan if max_stelmass == None else max_stelmass)))
                 window_stelmass_1hmr = galaxy_tree['%s' %GalaxyID]['stars']['1.0_hmr']['mass'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
                 
                 # Check gasmass
-                if min_gasmass or max_gasmass:
-                    check = []
-                    if use_hmr_general == 'aperture':
-                        check_array = np.array(galaxy_tree['%s' %GalaxyID]['gas']['ap_mass'][index_start:index_stop])
-                        window_gasmass = galaxy_tree['%s' %GalaxyID]['gas']['ap_mass'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
-                    else:
-                        check_array = np.array(galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_general]['mass'][index_start:index_stop])
-                        window_gasmass = galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_general]['mass'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
-                    check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_gasmass == None else max_gasmass))
-                    check.append(np.average(check_array, weights=time_weight) >= (0 if min_gasmass == None else min_gasmass))
-                    if np.array(check).all() == False:
-                        if print_checks:
-                            print('    x FAILED GAS MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_gasmass == None else min_gasmass), (math.nan if max_gasmass == None else max_gasmass)))
-                        continue
+                check = []
+                if use_hmr_general == 'aperture':
+                    check_array = np.array(galaxy_tree['%s' %GalaxyID]['gas']['ap_mass'][index_start:index_stop])
+                    window_gasmass = galaxy_tree['%s' %GalaxyID]['gas']['ap_mass'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
+                else:
+                    check_array = np.array(galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_general]['mass'][index_start:index_stop])
+                    window_gasmass = galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_general]['mass'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
+                check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_gasmass == None else max_gasmass))
+                check.append(np.average(check_array, weights=time_weight) >= (0 if min_gasmass == None else min_gasmass))
+                if np.array(check).all() == False:
                     if print_checks:
-                        print('    MET GAS MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_gasmass == None else min_gasmass), (math.nan if max_gasmass == None else max_gasmass)))
+                        print('    x FAILED GAS MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_gasmass == None else min_gasmass), (math.nan if max_gasmass == None else max_gasmass)))
+                    continue
+                if print_checks:
+                    print('    MET GAS MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_gasmass == None else min_gasmass), (math.nan if max_gasmass == None else max_gasmass)))
                 if use_hmr_general == 'aperture':
                     window_gasmass = galaxy_tree['%s' %GalaxyID]['gas']['ap_mass'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
                 else:
@@ -2631,22 +2623,21 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 
             
                 # Check gasmass sf
-                if min_sfmass or max_sfmass:
-                    check = []
-                    if use_hmr_general == 'aperture':
-                        check_array = np.array(galaxy_tree['%s' %GalaxyID]['gas_sf']['ap_mass'][index_start:index_stop])
-                        window_sfmass = galaxy_tree['%s' %GalaxyID]['gas_sf']['ap_mass'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
-                    else:
-                        check_array = np.array(galaxy_tree['%s' %GalaxyID]['gas_sf']['%s_hmr' %use_hmr_general]['mass'][index_start:index_stop])
-                        window_sfmass = galaxy_tree['%s' %GalaxyID]['gas_sf']['%s_hmr' %use_hmr_general]['mass'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
-                    check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_sfmass == None else max_sfmass))
-                    check.append(np.average(check_array, weights=time_weight) >= (0 if min_sfmass == None else min_sfmass))
-                    if np.array(check).all() == False:
-                        if print_checks:
-                            print('    x FAILED SF MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_sfmass == None else min_sfmass), (math.nan if max_sfmass == None else max_sfmass)))
-                        continue
+                check = []
+                if use_hmr_general == 'aperture':
+                    check_array = np.array(galaxy_tree['%s' %GalaxyID]['gas_sf']['ap_mass'][index_start:index_stop])
+                    window_sfmass = galaxy_tree['%s' %GalaxyID]['gas_sf']['ap_mass'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
+                else:
+                    check_array = np.array(galaxy_tree['%s' %GalaxyID]['gas_sf']['%s_hmr' %use_hmr_general]['mass'][index_start:index_stop])
+                    window_sfmass = galaxy_tree['%s' %GalaxyID]['gas_sf']['%s_hmr' %use_hmr_general]['mass'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
+                check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_sfmass == None else max_sfmass))
+                check.append(np.average(check_array, weights=time_weight) >= (0 if min_sfmass == None else min_sfmass))
+                if np.array(check).all() == False:
                     if print_checks:
-                        print('    MET SF MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_sfmass == None else min_sfmass), (math.nan if max_sfmass == None else max_sfmass)))
+                        print('    x FAILED SF MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_sfmass == None else min_sfmass), (math.nan if max_sfmass == None else max_sfmass)))
+                    continue
+                if print_checks:
+                    print('    MET SF MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_sfmass == None else min_sfmass), (math.nan if max_sfmass == None else max_sfmass)))
                 if use_hmr_general == 'aperture':
                     window_sfmass = galaxy_tree['%s' %GalaxyID]['gas_sf']['ap_mass'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
                 else:
@@ -2654,22 +2645,21 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                 window_sfmass_1hmr = galaxy_tree['%s' %GalaxyID]['gas_sf']['1.0_hmr']['mass'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
                 
                 # Check gasmass nsf
-                if min_nsfmass or max_nsfmass:
-                    check = []
-                    if use_hmr_general == 'aperture':
-                        check_array = np.array(galaxy_tree['%s' %GalaxyID]['gas_nsf']['ap_mass'][index_start:index_stop])
-                        window_nsfmass = galaxy_tree['%s' %GalaxyID]['gas_nsf']['ap_mass'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
-                    else:
-                        check_array = np.array(galaxy_tree['%s' %GalaxyID]['gas_nsf']['%s_hmr' %use_hmr_general]['mass'][index_start:index_stop])
-                        window_nsfmass = galaxy_tree['%s' %GalaxyID]['gas_nsf']['%s_hmr' %use_hmr_general]['mass'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
-                    check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_nsfmass == None else max_nsfmass))
-                    check.append(np.average(check_array, weights=time_weight) >= (0 if min_nsfmass == None else min_nsfmass))
-                    if np.array(check).all() == False:
-                        if print_checks:
-                            print('    x FAILED NSF MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_nsfmass == None else min_nsfmass), (math.nan if max_nsfmass == None else max_nsfmass)))
-                        continue
+                check = []
+                if use_hmr_general == 'aperture':
+                    check_array = np.array(galaxy_tree['%s' %GalaxyID]['gas_nsf']['ap_mass'][index_start:index_stop])
+                    window_nsfmass = galaxy_tree['%s' %GalaxyID]['gas_nsf']['ap_mass'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
+                else:
+                    check_array = np.array(galaxy_tree['%s' %GalaxyID]['gas_nsf']['%s_hmr' %use_hmr_general]['mass'][index_start:index_stop])
+                    window_nsfmass = galaxy_tree['%s' %GalaxyID]['gas_nsf']['%s_hmr' %use_hmr_general]['mass'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
+                check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_nsfmass == None else max_nsfmass))
+                check.append(np.average(check_array, weights=time_weight) >= (0 if min_nsfmass == None else min_nsfmass))
+                if np.array(check).all() == False:
                     if print_checks:
-                        print('    MET NSF MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_nsfmass == None else min_nsfmass), (math.nan if max_nsfmass == None else max_nsfmass)))
+                        print('    x FAILED NSF MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_nsfmass == None else min_nsfmass), (math.nan if max_nsfmass == None else max_nsfmass)))
+                    continue
+                if print_checks:
+                    print('    MET NSF MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_nsfmass == None else min_nsfmass), (math.nan if max_nsfmass == None else max_nsfmass)))
                 if use_hmr_general == 'aperture':
                     window_nsfmass = galaxy_tree['%s' %GalaxyID]['gas_nsf']['ap_mass'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
                 else:
@@ -2678,43 +2668,41 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                    
                 # Check sfr
                 check = []
-                if min_sfr or max_sfr:
-                    if use_hmr_general == 'aperture':
-                        check_array = np.array(galaxy_tree['%s' %GalaxyID]['ap_sfr'][index_start:index_stop])
-                        window_sfr = galaxy_tree['%s' %GalaxyID]['ap_sfr'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
-                    else:
-                        check_array = np.array(galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_general]['sfr'][index_start:index_stop])
-                        window_sfr = galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_general]['sfr'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
-                    check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_sfr == None else max_sfr))
-                    check.append(np.average(check_array, weights=time_weight) >= (0 if min_sfr == None else min_sfr))
-                    if np.array(check).all() == False:
-                        if print_checks:
-                            print('    x FAILED SFR:\t\t %.1e, for limits %.1e / %.1e [Msun/yr]' %(np.average(check_array, weights=time_weight), (math.nan if min_sfr == None else min_sfr), (math.nan if max_sfr == None else max_sfr)))
-                        continue
+                if use_hmr_general == 'aperture':
+                    check_array = np.array(galaxy_tree['%s' %GalaxyID]['ap_sfr'][index_start:index_stop])
+                    window_sfr = galaxy_tree['%s' %GalaxyID]['ap_sfr'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
+                else:
+                    check_array = np.array(galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_general]['sfr'][index_start:index_stop])
+                    window_sfr = galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_general]['sfr'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
+                check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_sfr == None else max_sfr))
+                check.append(np.average(check_array, weights=time_weight) >= (0 if min_sfr == None else min_sfr))
+                if np.array(check).all() == False:
                     if print_checks:
-                        print('    MET SFR:\t\t %.1e, for limits %.1e / %.1e [Msun/yr]' %(np.average(check_array, weights=time_weight), (math.nan if min_sfr == None else min_sfr), (math.nan if max_sfr == None else max_sfr)))
+                        print('    x FAILED SFR:\t\t %.1e, for limits %.1e / %.1e [Msun/yr]' %(np.average(check_array, weights=time_weight), (math.nan if min_sfr == None else min_sfr), (math.nan if max_sfr == None else max_sfr)))
+                    continue
+                if print_checks:
+                    print('    MET SFR:\t\t %.1e, for limits %.1e / %.1e [Msun/yr]' %(np.average(check_array, weights=time_weight), (math.nan if min_sfr == None else min_sfr), (math.nan if max_sfr == None else max_sfr)))
                 if use_hmr_general == 'aperture':
                     window_sfr = galaxy_tree['%s' %GalaxyID]['ap_sfr'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
                 else:
                     window_sfr = galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_general]['sfr'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]
                     
                 # Check ssfr
-                if min_ssfr or max_ssfr:
-                    check = []
-                    if use_hmr_general == 'aperture':
-                        check_array = np.divide(np.array(galaxy_tree['%s' %GalaxyID]['ap_sfr'][index_start:index_stop]), np.array(galaxy_tree['%s' %GalaxyID]['stars']['ap_mass'][index_start:index_stop]))
-                        window_ssfr = np.divide(np.array(galaxy_tree['%s' %GalaxyID]['ap_sfr'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]), np.array(galaxy_tree['%s' %GalaxyID]['stars']['ap_mass'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]))
-                    else:
-                        check_array = np.divide(np.array(galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_general]['sfr'][index_start:index_stop]), np.array(galaxy_tree['%s' %GalaxyID]['stars']['%s_hmr' %use_hmr_general]['mass'][index_start:index_stop]))
-                        window_ssfr = np.divide(np.array(galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_general]['sfr'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]), np.array(galaxy_tree['%s' %GalaxyID]['stars']['%s_hmr' %use_hmr_general]['mass'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]))
-                    check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_ssfr == None else max_ssfr))
-                    check.append(np.average(check_array, weights=time_weight) >= (0 if min_ssfr == None else min_ssfr))
-                    if np.array(check).all() == False:
-                        if print_checks:
-                            print('    x FAILED sSFR:\t\t %.1e, for limits %.1e / %.1e [Msun/yr]' %(np.average(check_array, weights=time_weight), (math.nan if min_ssfr == None else min_ssfr), (math.nan if max_ssfr == None else max_ssfr)))
-                        continue
+                check = []
+                if use_hmr_general == 'aperture':
+                    check_array = np.divide(np.array(galaxy_tree['%s' %GalaxyID]['ap_sfr'][index_start:index_stop]), np.array(galaxy_tree['%s' %GalaxyID]['stars']['ap_mass'][index_start:index_stop]))
+                    window_ssfr = np.divide(np.array(galaxy_tree['%s' %GalaxyID]['ap_sfr'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]), np.array(galaxy_tree['%s' %GalaxyID]['stars']['ap_mass'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]))
+                else:
+                    check_array = np.divide(np.array(galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_general]['sfr'][index_start:index_stop]), np.array(galaxy_tree['%s' %GalaxyID]['stars']['%s_hmr' %use_hmr_general]['mass'][index_start:index_stop]))
+                    window_ssfr = np.divide(np.array(galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_general]['sfr'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]), np.array(galaxy_tree['%s' %GalaxyID]['stars']['%s_hmr' %use_hmr_general]['mass'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]))
+                check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_ssfr == None else max_ssfr))
+                check.append(np.average(check_array, weights=time_weight) >= (0 if min_ssfr == None else min_ssfr))
+                if np.array(check).all() == False:
                     if print_checks:
-                        print('    MET sSFR:\t\t %.1e, for limits %.1e / %.1e [Msun/yr]' %(np.average(check_array, weights=time_weight), (math.nan if min_ssfr == None else min_ssfr), (math.nan if max_ssfr == None else max_ssfr)))
+                        print('    x FAILED sSFR:\t\t %.1e, for limits %.1e / %.1e [Msun/yr]' %(np.average(check_array, weights=time_weight), (math.nan if min_ssfr == None else min_ssfr), (math.nan if max_ssfr == None else max_ssfr)))
+                    continue
+                if print_checks:
+                    print('    MET sSFR:\t\t %.1e, for limits %.1e / %.1e [Msun/yr]' %(np.average(check_array, weights=time_weight), (math.nan if min_ssfr == None else min_ssfr), (math.nan if max_ssfr == None else max_ssfr)))
                 if use_hmr_general == 'aperture':
                     window_ssfr = np.divide(np.array(galaxy_tree['%s' %GalaxyID]['ap_sfr'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]), np.array(galaxy_tree['%s' %GalaxyID]['stars']['ap_mass'][int(index_dict['window_locations']['misalign']['index'][misindex_i]):int(index_dict['window_locations']['relax']['index'][misindex_i]+1)]))
                 else:
@@ -2762,18 +2750,17 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             
         
                 # Check kappa nsf
-                if min_kappa_nsf or max_kappa_nsf:
-                    check = []
-                    check_array = np.array(galaxy_tree['%s' %GalaxyID]['gas_nsf']['kappa'][index_start:index_stop])
-                    check.append(np.average(check_array, weights=time_weight) <= (1.0 if max_kappa_nsf == None else max_kappa_nsf))
-                    check.append(np.average(check_array, weights=time_weight) >= (0.0 if min_kappa_nsf == None else min_kappa_nsf))
-                    if np.array(check).all() == False:
-                        if print_checks:
-                            print('    x FAILED KAPPA NSF:\t %.2f / %.2f, for limits %s / %s' %(np.min(check_array), np.max(check_array), min_kappa_nsf, max_kappa_nsf))
-                        continue
+                check = []
+                check_array = np.array(galaxy_tree['%s' %GalaxyID]['gas_nsf']['kappa'][index_start:index_stop])
+                check.append(np.average(check_array, weights=time_weight) <= (1.0 if max_kappa_nsf == None else max_kappa_nsf))
+                check.append(np.average(check_array, weights=time_weight) >= (0.0 if min_kappa_nsf == None else min_kappa_nsf))
+                if np.array(check).all() == False:
                     if print_checks:
-                        print('    MET KAPPA NSF:\t %.2f / %.2f, for limits %s / %s' %(np.min(check_array), np.max(check_array), min_kappa_nsf, max_kappa_nsf))
-                    
+                        print('    x FAILED KAPPA NSF:\t %.2f / %.2f, for limits %s / %s' %(np.min(check_array), np.max(check_array), min_kappa_nsf, max_kappa_nsf))
+                    continue
+                if print_checks:
+                    print('    MET KAPPA NSF:\t %.2f / %.2f, for limits %s / %s' %(np.min(check_array), np.max(check_array), min_kappa_nsf, max_kappa_nsf))
+                
                 
             
                 # Check ellipticity
@@ -2819,155 +2806,144 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             
             
                 # Check SF gas radius
-                if min_rad_sf or max_rad_sf:
-                    check = []
-                    check_array = np.array(galaxy_tree['%s' %GalaxyID]['rad_sf'][index_start:index_stop])
-                    check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_rad_sf == None else max_rad_sf))
-                    check.append(np.average(check_array, weights=time_weight) >= (0.0 if min_rad_sf == None else min_rad_sf))
-                    if np.array(check).all() == False:
-                        if print_checks:
-                            print('    x FAILED RAD SF:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_rad_sf, max_rad_sf))
-                        continue
+                check = []
+                check_array = np.array(galaxy_tree['%s' %GalaxyID]['rad_sf'][index_start:index_stop])
+                check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_rad_sf == None else max_rad_sf))
+                check.append(np.average(check_array, weights=time_weight) >= (0.0 if min_rad_sf == None else min_rad_sf))
+                if np.array(check).all() == False:
                     if print_checks:
-                        print('    MET RAD SF:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_rad_sf, max_rad_sf))
-                    
+                        print('    x FAILED RAD SF:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_rad_sf, max_rad_sf))
+                    continue
+                if print_checks:
+                    print('    MET RAD SF:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_rad_sf, max_rad_sf))
+                
                 # Check inflow of gas
-                if min_inflow or max_inflow:
-                    check = []
-                    check_array = np.array(galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_angle]['inflow_rate'][index_start:index_stop])
-                    check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_inflow == None else max_inflow))
-                    check.append(np.average(check_array, weights=time_weight) >= (0 if min_inflow == None else min_inflow))
-                    if np.array(check).all() == False:
-                        if print_checks:
-                            print('    x FAILED GAS INFLOW:\t %.2f / %.2f, for limits %s / %s [Msun/yr]' %(np.min(check_array), np.max(check_array), min_inflow, max_inflow))
-                        continue
+                check = []
+                check_array = np.array(galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_angle]['inflow_rate'][index_start:index_stop])
+                check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_inflow == None else max_inflow))
+                check.append(np.average(check_array, weights=time_weight) >= (0 if min_inflow == None else min_inflow))
+                if np.array(check).all() == False:
                     if print_checks:
-                        print('    MET GAS INFLOW:\t %.2f / %.2f, for limits %s / %s [Msun/yr]' %(np.min(check_array), np.max(check_array), min_inflow, max_inflow))
-                    
+                        print('    x FAILED GAS INFLOW:\t %.2f / %.2f, for limits %s / %s [Msun/yr]' %(np.min(check_array), np.max(check_array), min_inflow, max_inflow))
+                    continue
+                if print_checks:
+                    print('    MET GAS INFLOW:\t %.2f / %.2f, for limits %s / %s [Msun/yr]' %(np.min(check_array), np.max(check_array), min_inflow, max_inflow))
+                
                 
                 # Check metallicity of inflow gas 
-                if min_inflow_Z or max_inflow_Z:
-                    check = []
-                    check_array = np.array(galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_angle]['inflow_Z'][index_start:index_stop])
-                    check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_inflow_Z == None else max_inflow_Z))
-                    check.append(np.average(check_array, weights=time_weight) >= (0 if min_inflow_Z == None else min_inflow_Z))
-                    if np.array(check).all() == False:
-                        if print_checks:
-                            print('    x FAILED INFLOW Z:\t %.2f / %.2f, for limits %s / %s [Z]' %(np.min(check_array), np.max(check_array), min_inflow_Z, max_inflow_Z))
-                        continue
+                check = []
+                check_array = np.array(galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_angle]['inflow_Z'][index_start:index_stop])
+                check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_inflow_Z == None else max_inflow_Z))
+                check.append(np.average(check_array, weights=time_weight) >= (0 if min_inflow_Z == None else min_inflow_Z))
+                if np.array(check).all() == False:
                     if print_checks:
-                        print('    MET INFLOW Z:\t %.2f / %.2f, for limits %s / %s [Z]' %(np.min(check_array), np.max(check_array), min_inflow_Z, max_inflow_Z))
+                        print('    x FAILED INFLOW Z:\t %.2f / %.2f, for limits %s / %s [Z]' %(np.min(check_array), np.max(check_array), min_inflow_Z, max_inflow_Z))
+                    continue
+                if print_checks:
+                    print('    MET INFLOW Z:\t %.2f / %.2f, for limits %s / %s [Z]' %(np.min(check_array), np.max(check_array), min_inflow_Z, max_inflow_Z))
                 
                     
                 #------------------------------------------------------------------------------------------------
                 
                 # Check BH mass
-                if min_bh_mass or max_bh_mass:
-                    check = []
-                    check_array = np.array(galaxy_tree['%s' %GalaxyID]['bh']['mass'][index_start:index_stop])
-                    check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_bh_mass == None else max_bh_mass))
-                    check.append(np.average(check_array, weights=time_weight) >= (0 if min_bh_mass == None else min_bh_mass))
-                    if np.array(check).all() == False:
-                        if print_checks:
-                            print('    x FAILED BH MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_bh_mass == None else min_bh_mass), (math.nan if max_bh_mass == None else max_bh_mass)))
-                        continue
+                check = []
+                check_array = np.array(galaxy_tree['%s' %GalaxyID]['bh']['mass'][index_start:index_stop])
+                check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_bh_mass == None else max_bh_mass))
+                check.append(np.average(check_array, weights=time_weight) >= (0 if min_bh_mass == None else min_bh_mass))
+                if np.array(check).all() == False:
                     if print_checks:
-                        print('    MET BH MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_bh_mass == None else min_bh_mass), (math.nan if max_bh_mass == None else max_bh_mass)))
-                    
+                        print('    x FAILED BH MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_bh_mass == None else min_bh_mass), (math.nan if max_bh_mass == None else max_bh_mass)))
+                    continue
+                if print_checks:
+                    print('    MET BH MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_bh_mass == None else min_bh_mass), (math.nan if max_bh_mass == None else max_bh_mass)))
+                
                 # Check BH accretion rate (averaged)
-                if min_bh_acc or max_bh_acc:
-                    check = []
-                    check_array = np.array(galaxy_tree['%s' %GalaxyID]['bh']['mdot'][index_start:index_stop])
-                    check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_bh_acc == None else max_bh_acc))
-                    check.append(np.average(check_array, weights=time_weight) >= (0 if min_bh_acc == None else min_bh_acc))
-                    if np.array(check).all() == False:
-                        if print_checks:
-                            print('    x FAILED BH ACC (AV):\t %.1e, for limits %.1e / %.1e [Msun/yr]' %(np.average(check_array, weights=time_weight), (math.nan if min_bh_acc == None else min_bh_acc), (math.nan if max_bh_acc == None else max_bh_acc)))
-                        continue
+                check = []
+                check_array = np.array(galaxy_tree['%s' %GalaxyID]['bh']['mdot'][index_start:index_stop])
+                check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_bh_acc == None else max_bh_acc))
+                check.append(np.average(check_array, weights=time_weight) >= (0 if min_bh_acc == None else min_bh_acc))
+                if np.array(check).all() == False:
                     if print_checks:
-                        print('    MET BH ACC (AV):\t %.1e, for limits %.1e / %.1e [Msun/yr]' %(np.average(check_array, weights=time_weight), (math.nan if min_bh_acc == None else min_bh_acc), (math.nan if max_bh_acc == None else max_bh_acc)))
-                    
+                        print('    x FAILED BH ACC (AV):\t %.1e, for limits %.1e / %.1e [Msun/yr]' %(np.average(check_array, weights=time_weight), (math.nan if min_bh_acc == None else min_bh_acc), (math.nan if max_bh_acc == None else max_bh_acc)))
+                    continue
+                if print_checks:
+                    print('    MET BH ACC (AV):\t %.1e, for limits %.1e / %.1e [Msun/yr]' %(np.average(check_array, weights=time_weight), (math.nan if min_bh_acc == None else min_bh_acc), (math.nan if max_bh_acc == None else max_bh_acc)))
+                
             
                 # Check BH accretion rate (instantaneous)
-                if min_bh_acc_instant or max_bh_acc_instant:
-                    check = []
-                    check_array = np.array(galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant'][index_start:index_stop])
-                    check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_bh_acc_instant == None else max_bh_acc_instant))
-                    check.append(np.average(check_array, weights=time_weight) >= (0 if min_bh_acc_instant == None else min_bh_acc_instant))
-                    if np.array(check).all() == False:
-                        if print_checks:
-                            print('    x FAILED BH ACC (INST):\t %.1e, for limits %.1e / %.1e [Msun/yr]' %(np.average(check_array, weights=time_weight), (math.nan if min_bh_acc_instant == None else min_bh_acc_instant), (math.nan if max_bh_acc_instant == None else max_bh_acc_instant)))
-                        continue
+                check = []
+                check_array = np.array(galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant'][index_start:index_stop])
+                check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_bh_acc_instant == None else max_bh_acc_instant))
+                check.append(np.average(check_array, weights=time_weight) >= (0 if min_bh_acc_instant == None else min_bh_acc_instant))
+                if np.array(check).all() == False:
                     if print_checks:
-                        print('    MET BH ACC (INST):\t %.1e, for limits %.1e / %.1e [Msun/yr]' %(np.average(check_array, weights=time_weight), (math.nan if min_bh_acc_instant == None else min_bh_acc_instant), (math.nan if max_bh_acc_instant == None else max_bh_acc_instant)))
-                    
+                        print('    x FAILED BH ACC (INST):\t %.1e, for limits %.1e / %.1e [Msun/yr]' %(np.average(check_array, weights=time_weight), (math.nan if min_bh_acc_instant == None else min_bh_acc_instant), (math.nan if max_bh_acc_instant == None else max_bh_acc_instant)))
+                    continue
+                if print_checks:
+                    print('    MET BH ACC (INST):\t %.1e, for limits %.1e / %.1e [Msun/yr]' %(np.average(check_array, weights=time_weight), (math.nan if min_bh_acc_instant == None else min_bh_acc_instant), (math.nan if max_bh_acc_instant == None else max_bh_acc_instant)))
+                
                 # Check BH eddington (instantaneous)
-                if min_edd or max_edd:
-                    check = []
-                    check_array = np.array(galaxy_tree['%s' %GalaxyID]['bh']['edd'][index_start:index_stop])
-                    check.append(np.average(check_array, weights=time_weight) <= (1 if max_edd == None else max_edd))
-                    check.append(np.average(check_array, weights=time_weight) >= (0 if min_edd == None else min_edd))
-                    if np.array(check).all() == False:
-                        if print_checks:
-                            print('    x FAILED BH EDD (INST):\t %.6f / %.6f, for limits %s / %s [Msun/yr]' %(np.min(check_array), np.max(check_array), min_edd, max_edd))
-                        continue
+                check = []
+                check_array = np.array(galaxy_tree['%s' %GalaxyID]['bh']['edd'][index_start:index_stop])
+                check.append(np.average(check_array, weights=time_weight) <= (1 if max_edd == None else max_edd))
+                check.append(np.average(check_array, weights=time_weight) >= (0 if min_edd == None else min_edd))
+                if np.array(check).all() == False:
                     if print_checks:
-                        print('    MET BH EDD (INST):\t %.6f / %.6f, for limits %s / %s [Msun/yr]' %(np.min(check_array), np.max(check_array), min_edd, max_edd))
+                        print('    x FAILED BH EDD (INST):\t %.6f / %.6f, for limits %s / %s [Msun/yr]' %(np.min(check_array), np.max(check_array), min_edd, max_edd))
+                    continue
+                if print_checks:
+                    print('    MET BH EDD (INST):\t %.6f / %.6f, for limits %s / %s [Msun/yr]' %(np.min(check_array), np.max(check_array), min_edd, max_edd))
                 
                 # Check BH luminosity (instantaneous) |     using L = e Mdot c2 -> converting Mdot from [Msun/yr] -> [kg/s] -> [erg/s]
-                if min_lbol or max_lbol:
-                    check = []
-                    check_array = np.array(galaxy_tree['%s' %GalaxyID]['bh']['lbol'][index_start:index_stop])
-                    check.append(np.average(check_array, weights=time_weight) <= (1e60 if max_lbol == None else max_lbol))
-                    check.append(np.average(check_array, weights=time_weight) >= (0 if min_lbol == None else min_lbol))
-                    if np.array(check).all() == False:
-                        if print_checks:
-                            print('    x FAILED BH Lbol (INST):\t %.1e / %.1e, for limits %s / %s [erg/s]' %(np.min(check_array), np.max(check_array), min_lbol, max_lbol))
-                        continue
+                check = []
+                check_array = np.array(galaxy_tree['%s' %GalaxyID]['bh']['lbol'][index_start:index_stop])
+                check.append(np.average(check_array, weights=time_weight) <= (1e60 if max_lbol == None else max_lbol))
+                check.append(np.average(check_array, weights=time_weight) >= (0 if min_lbol == None else min_lbol))
+                if np.array(check).all() == False:
                     if print_checks:
-                        print('    MET BH Lbol (INST):\t %.1e / %.1e, for limits %s / %s [erg/s]' %(np.min(check_array), np.max(check_array), min_lbol, max_lbol))
-                    
+                        print('    x FAILED BH Lbol (INST):\t %.1e / %.1e, for limits %s / %s [erg/s]' %(np.min(check_array), np.max(check_array), min_lbol, max_lbol))
+                    continue
+                if print_checks:
+                    print('    MET BH Lbol (INST):\t %.1e / %.1e, for limits %s / %s [erg/s]' %(np.min(check_array), np.max(check_array), min_lbol, max_lbol))
+                
                 #------------------------------------------------------------------------------------------------
             
                 # Check vcirc
-                if min_vcirc or max_vcirc:
-                    check = []
-                    check_array = np.array(galaxy_tree['%s' %GalaxyID]['other']['%s_hmr' %use_hmr_general]['vcirc'][index_start:index_stop])
-                    check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_vcirc == None else max_vcirc))
-                    check.append(np.average(check_array, weights=time_weight) >= (0.0 if min_vcirc == None else min_vcirc))
-                    if np.array(check).all() == False:
-                        if print_checks:
-                            print('    x FAILED v_circ:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_vcirc, max_vcirc))
-                        continue
+                check = []
+                check_array = np.array(galaxy_tree['%s' %GalaxyID]['other']['%s_hmr' %use_hmr_general]['vcirc'][index_start:index_stop])
+                check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_vcirc == None else max_vcirc))
+                check.append(np.average(check_array, weights=time_weight) >= (0.0 if min_vcirc == None else min_vcirc))
+                if np.array(check).all() == False:
                     if print_checks:
-                        print('    MET v_circ:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_vcirc, max_vcirc))
-                    
+                        print('    x FAILED v_circ:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_vcirc, max_vcirc))
+                    continue
+                if print_checks:
+                    print('    MET v_circ:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_vcirc, max_vcirc))
+                
                 # Check dynamical time
-                if min_tdyn or max_tdyn:
-                    check = []
-                    check_array = np.array(galaxy_tree['%s' %GalaxyID]['other']['%s_hmr' %use_hmr_general]['tdyn'][index_start:index_stop])
-                    check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_tdyn == None else max_tdyn))
-                    check.append(np.average(check_array, weights=time_weight) >= (0.0 if min_tdyn == None else min_tdyn))
-                    if np.array(check).all() == False:
-                        if print_checks:
-                            print('    x FAILED t_dyn:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_tdyn, max_tdyn))
-                        continue
+                check = []
+                check_array = np.array(galaxy_tree['%s' %GalaxyID]['other']['%s_hmr' %use_hmr_general]['tdyn'][index_start:index_stop])
+                check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_tdyn == None else max_tdyn))
+                check.append(np.average(check_array, weights=time_weight) >= (0.0 if min_tdyn == None else min_tdyn))
+                if np.array(check).all() == False:
                     if print_checks:
-                        print('    MET t_dyn:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_tdyn, max_tdyn))
+                        print('    x FAILED t_dyn:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_tdyn, max_tdyn))
+                    continue
+                if print_checks:
+                    print('    MET t_dyn:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_tdyn, max_tdyn))
                 
                 # Check torquing time
-                if min_ttorque or max_ttorque:
-                    check = []
-                    check_array = np.array(galaxy_tree['%s' %GalaxyID]['other']['%s_hmr' %use_hmr_general]['ttorque'][index_start:index_stop])
-                    check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_ttorque == None else max_ttorque))
-                    check.append(np.average(check_array, weights=time_weight) >= (0.0 if min_ttorque == None else min_ttorque))
-                    if np.array(check).all() == False:
-                        if print_checks:
-                            print('    x FAILED t_torque:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_ttorque, max_ttorque))
-                        continue
+                check = []
+                check_array = np.array(galaxy_tree['%s' %GalaxyID]['other']['%s_hmr' %use_hmr_general]['ttorque'][index_start:index_stop])
+                check.append(np.average(check_array, weights=time_weight) <= (1e20 if max_ttorque == None else max_ttorque))
+                check.append(np.average(check_array, weights=time_weight) >= (0.0 if min_ttorque == None else min_ttorque))
+                if np.array(check).all() == False:
                     if print_checks:
-                        print('    MET t_torque:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_ttorque, max_ttorque))
-            
+                        print('    x FAILED t_torque:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_ttorque, max_ttorque))
+                    continue
+                if print_checks:
+                    print('    MET t_torque:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_ttorque, max_ttorque))
+                
             
                 #================================================================================
                 # If this galaxy's particular misalignment passes, append arrays WINDOWS to new misalignment_tree starting from first ID
@@ -4721,8 +4697,8 @@ def _create_BH_tree(csv_tree = 'L100_galaxy_tree_',
 #=============================
 
 
-"""print('\n\n\t_20Thresh_30Peak_normalLatency_anyMergers_anyMorph')                  
-_analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH', load_csv_file = False, csv_file = False, csv_name = '20Thresh_30Peak_normalLatency_anyMergers_anyMorph_NEW',
+print('\n\n\t_20Thresh_30Peak_normalLatency_anyMergers_anyMorph')
+_analyse_tree(csv_tree = 'L100_galaxy_tree_', load_csv_file = False, csv_file = False, csv_name = '20Thresh_30Peak_normalLatency_anyMergers_anyMorph_NEW',
                 min_particles      = 20,
                 min_stelmass       = None, 
                 misangle_threshold = 20,
@@ -4733,7 +4709,8 @@ _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH', load_csv_file = False, 
                 use_merger_criteria = False,         
                 relaxation_morph   = ['LTG-LTG', 'ETG-ETG', 'LTG-ETG', 'ETG-LTG', 'other'],
                 misalignment_morph = ['LTG', 'ETG'],
-                  morph_limits     = [0.4, 0.4])"""
+                  morph_limits     = [0.4, 0.4])
+                  
 
 """print('\n\n\t_20Thresh_30Peak_noLatency')
 _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH', load_csv_file = False, csv_file = False, csv_name = '20Thresh_30Peak_noLatency_NEW',
@@ -4748,4 +4725,3 @@ _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH', load_csv_file = False, 
                 relaxation_morph   = ['LTG-LTG', 'ETG-ETG', 'LTG-ETG', 'ETG-LTG', 'other'],
                 misalignment_morph = ['LTG', 'ETG'],
                   morph_limits     = [0.4, 0.4])"""
-

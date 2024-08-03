@@ -710,7 +710,6 @@ def _test_read(csv_sample = 'L100_195_all_sample_misalignment_9.5',     # CSV sa
     print('Number of smaller: ', tally_smaller)
     
     
-    
 #==========================
 #_modify_sample_csv()
 
@@ -720,7 +719,7 @@ def _test_read(csv_sample = 'L100_195_all_sample_misalignment_9.5',     # CSV sa
 
 #_modify_radial_csv()
 
-_test_read()
+#_test_read()
 #==========================
 
 

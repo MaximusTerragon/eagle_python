@@ -1751,8 +1751,8 @@ def _plot_evolution_old(csv_output = 'L100_evolution_ID401467650_RadProj_Err__st
 #savefig_txt = '_AURIGA_GALAXIES'
 
 # BH ISSUES GALAXIES
-#ID_list = [102310942, 236121807, 370249894, 285054970]
-#savefig_txt = 'BH_issues_NEW'
+ID_list = [102310942, 236121807, 370249894, 285054970]
+savefig_txt = 'BH_issues_NEW'
 
 def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                          #--------------------------
@@ -1782,6 +1782,9 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                          #-------------------------------------------
                          # Merger settings
                            min_merger_ratio   = 0.1,
+                         #-------------------------------------------
+                         # BH settings
+                           use_closest_to_COP   = True,                   # Uses closest to COP (new method) or most massive in 1 hmr (_old)
                          #-------------------------------------------
                          # Angles   [ deg ]
                            plot_angles          = True,
@@ -1831,7 +1834,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                            plot_ttorque         = False,     
                          #==================================================================================
                          showfig        = True,
-                         savefig        = False,
+                         savefig        = True,
                            file_format  = 'pdf',
                            savefig_txt  = savefig_txt, 
                          #--------------------------
@@ -2163,9 +2166,17 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 if plot_stelmassloss:
                     axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['gas']['%s_hmr' %use_hmr_angle]['stelmassloss_rate'], alpha=1.0, lw=0.8, ls='dashdot', label='stellar mass loss')
                 if plot_bh_acc:
-                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], 1000*np.array(galaxy_tree['%s' %GalaxyID]['bh']['mdot']), alpha=1.0, lw=0.8, c='purple', ls=':', label='$\dot{M}_{\mathrm{BH}}$(×$10^3$)')
+                    if use_closest_to_COP:
+                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], 1000*np.array(galaxy_tree['%s' %GalaxyID]['bh']['mdot']), alpha=1.0, lw=0.8, c='purple', ls=':', label='$\dot{M}_{\mathrm{BH}}$(×$10^3$)')
+                    else:
+                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], 1000*np.array(galaxy_tree['%s' %GalaxyID]['bh']['mdot_alt']), alpha=1.0, lw=0.8, c='purple', ls=':', label='$\dot{M}_{\mathrm{BH}}$(×$10^3$)')
+                        
                 if plot_bh_acc_instant:
-                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], 1000*np.array(galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant']), alpha=1.0, lw=0.8, c='k', ls=':', label='$\dot{M}_{\mathrm{BH}}$(×$10^3$) (inst)')
+                    if use_closest_to_COP:
+                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], 1000*np.array(galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant']), alpha=1.0, lw=0.8, c='k', ls=':', label='$\dot{M}_{\mathrm{BH}}$(×$10^3$) (inst)')
+                    else:
+                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], 1000*np.array(galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant_alt']), alpha=1.0, lw=0.8, c='k', ls=':', label='$\dot{M}_{\mathrm{BH}}$(×$10^3$) (inst)')
+                        
                 if plot_sfr:
                     # Plot data in galaxy_tree():
                     if use_hmr_general == 'aperture:':
@@ -2221,8 +2232,24 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     else:
                         axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['gas_nsf']['%s_hmr' %use_hmr_general]['mass'])), alpha=1.0, lw=0.5, c='b', ls=':', label='gas$_{\mathrm{NSF}}$')
                 if plot_bhmass:
-                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['bh']['mass'])), alpha=1.0, lw=0.5, c='purple', ls='dashdot', label='BH')
-
+                    if use_closest_to_COP:
+                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['bh']['mass'])), alpha=1.0, lw=0.5, c='purple', ls='dashdot', label='BH')
+                    else:
+                        axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['bh']['mass_alt'])), alpha=1.0, lw=0.5, c='purple', ls='dashdot', label='BH')
+                        
+                    
+                    
+                    print('\nBH_ids:  CoP / greatest in 1 hmr')
+                    for iiii, jjjj, kkkk in zip(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['bh']['id'], galaxy_tree['%s' %GalaxyID]['bh']['id_alt']):
+                        print('%.1f\t%s\t%s' %(iiii, jjjj, kkkk))
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
                 
                 #---------------------
                 ### Formatting
@@ -2427,7 +2454,10 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
             # Plot 8
             if plot_names_i == 'edd':
                 # Plot data in galaxy_tree():
-                axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['bh']['edd'])), alpha=1.0, lw=0.7, c='purple')
+                if use_closest_to_COP:
+                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['bh']['edd'])), alpha=1.0, lw=0.7, c='purple')
+                else:
+                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['bh']['edd_alt'])), alpha=1.0, lw=0.7, c='purple')
                 
                 #---------------------
                 ### Formatting
@@ -2452,7 +2482,11 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
             # Plot 9
             if plot_names_i == 'lbol':
                 # Plot data in galaxy_tree():
-                axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['bh']['lbol'])), alpha=1.0, lw=0.7, c='purple')
+                if use_closest_to_COP:
+                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['bh']['lbol'])), alpha=1.0, lw=0.7, c='purple')
+                else:
+                    axs[i].plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], np.log10(np.array(galaxy_tree['%s' %GalaxyID]['bh']['lbol_alt'])), alpha=1.0, lw=0.7, c='purple')
+                    
                 
                 #---------------------
                 ### Formatting

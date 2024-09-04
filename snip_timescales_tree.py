@@ -30,6 +30,7 @@ from subhalo_main import Initial_Sample, Subhalo_Extract, Subhalo_Analysis, Conv
 import eagleSqlTools as sql
 from graphformat import set_rc_params, lighten_color
 from read_dataset_directories import _assign_directories
+from extract_misalignment_trees import _extract_tree
 
 
 #====================================
@@ -255,7 +256,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                           merger_lookback_time = 2,      # [ 2 / Gyr ] Maximum time to look back for peak stellar mass
                         #--------------------------
                         csv_file       = True,             # Will write sample to csv file in sample_dir
-                          csv_name     = '_NEW_NEW',               # extra stuff at end
+                          csv_name     = '_NEW_NEW_BH',               # extra stuff at end
                         #--------------------------
                         print_progress = False,
                         debug = False):
@@ -734,6 +735,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                 else:
                     count_bh = 1
                 galaxy_tree['%s' %ID_dict]['bh']   = {'mass': [all_general['%s' %GalaxyID]['bh_mass']],
+                                                      'id': [all_general['%s' %GalaxyID]['bh_id']],
                                                       'cumlmass': [all_general['%s' %GalaxyID]['bh_cumlmass']],
                                                       'cumlseeds': [all_general['%s' %GalaxyID]['bh_cumlseeds']],
                                                       'mdot': [math.nan],
@@ -741,6 +743,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                                                       'edd': [all_general['%s' %GalaxyID]['bh_edd']],
                                                       'lbol': [(all_general['%s' %GalaxyID]['bh_mdot'] * (2e30) * (0.1 * (3e8)**2) * (1e7))],
                                                           'mass_alt': [all_general['%s' %GalaxyID]['bh_mass_old']],
+                                                          'id_alt': [all_general['%s' %GalaxyID]['bh_id_old']],
                                                           'mdot_alt': [math.nan],
                                                           'mdot_instant_alt': [(3.154e+7*all_general['%s' %GalaxyID]['bh_mdot_old'])],
                                                           'edd_alt': [all_general['%s' %GalaxyID]['bh_edd_old']],
@@ -1278,6 +1281,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                 else:
                     count_bh = 1                                                                      
                 galaxy_tree['%s' %ID_dict]['bh']['mass'].append(all_general['%s' %GalaxyID]['bh_mass'])
+                galaxy_tree['%s' %ID_dict]['bh']['id'].append(all_general['%s' %GalaxyID]['bh_id'])
                 galaxy_tree['%s' %ID_dict]['bh']['cumlmass'].append(all_general['%s' %GalaxyID]['bh_cumlmass'])
                 galaxy_tree['%s' %ID_dict]['bh']['cumlseeds'].append(all_general['%s' %GalaxyID]['bh_cumlseeds'])
                 mdot = (float(galaxy_tree['%s' %ID_dict]['bh']['mass'][-1]) - float(galaxy_tree['%s' %ID_dict]['bh']['mass'][-2])) / time_step
@@ -1287,6 +1291,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                 galaxy_tree['%s' %ID_dict]['bh']['lbol'].append((3.154e+7*all_general['%s' %GalaxyID]['bh_mdot']* (2e30 / 3.154e+7) * (0.1 * (3e8)**2) * (1e7)))
                 
                 galaxy_tree['%s' %ID_dict]['bh']['mass_alt'].append(all_general['%s' %GalaxyID]['bh_mass_old'])
+                galaxy_tree['%s' %ID_dict]['bh']['id_alt'].append(all_general['%s' %GalaxyID]['bh_id_old'])
                 mdot = (float(galaxy_tree['%s' %ID_dict]['bh']['mass_alt'][-1]) - float(galaxy_tree['%s' %ID_dict]['bh']['mass_alt'][-2])) / time_step
                 galaxy_tree['%s' %ID_dict]['bh']['mdot_alt'].append(mdot)
                 galaxy_tree['%s' %ID_dict]['bh']['mdot_instant_alt'].append((3.154e+7*all_general['%s' %GalaxyID]['bh_mdot_old']))
@@ -1465,14 +1470,16 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
             
             #------------------                       
             # Updating bh                                                                         
-            galaxy_tree['%s' %ID_dict]['bh']['mass'].insert(index, math.nan)                    
+            galaxy_tree['%s' %ID_dict]['bh']['mass'].insert(index, math.nan)                     
+            galaxy_tree['%s' %ID_dict]['bh']['id'].insert(index, math.nan)                     
             galaxy_tree['%s' %ID_dict]['bh']['cumlmass'].insert(index, math.nan)            
             galaxy_tree['%s' %ID_dict]['bh']['cumlseeds'].insert(index, math.nan)
             galaxy_tree['%s' %ID_dict]['bh']['mdot'].insert(index, math.nan)
             galaxy_tree['%s' %ID_dict]['bh']['mdot_instant'].insert(index, math.nan)
             galaxy_tree['%s' %ID_dict]['bh']['edd'].insert(index, math.nan)
             galaxy_tree['%s' %ID_dict]['bh']['lbol'].insert(index, math.nan)
-            galaxy_tree['%s' %ID_dict]['bh']['mass_alt'].insert(index, math.nan)
+            galaxy_tree['%s' %ID_dict]['bh']['mass_alt'].insert(index, math.nan)                  
+            galaxy_tree['%s' %ID_dict]['bh']['id_alt'].insert(index, math.nan)    
             galaxy_tree['%s' %ID_dict]['bh']['mdot_alt'].insert(index, math.nan)
             galaxy_tree['%s' %ID_dict]['bh']['mdot_instant_alt'].insert(index, math.nan)
             galaxy_tree['%s' %ID_dict]['bh']['edd_alt'].insert(index, math.nan)
@@ -1542,7 +1549,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
 ID_list = [108988077, 479647060, 21721896, 390595970, 401467650, 182125463, 192213531, 24276812, 116404995, 239808134, 215988755, 86715463, 6972011, 475772617, 374037507, 429352532, 441434976]
 ID_list = [1361598, 1403994, 10421872, 17879310, 21200847, 21659372, 24053428, 182125501, 274449295]
 ID_list = [21200847, 182125516, 462956141]
-def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
+def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                   #--------------------------
                   # Galaxy analysis
                   print_summary             = True,
@@ -3068,13 +3075,20 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
                                                         'insitu_Z_sf_2hmr': galaxy_tree['%s' %GalaxyID]['gas_sf']['2.0_hmr']['insitu_Z'][index_start:index_stop],
                                                                                                                  
                                                         'bh_mass': galaxy_tree['%s' %GalaxyID]['bh']['mass'][index_start:index_stop],
-                                                        #'bh_cumlmass': galaxy_tree['%s' %GalaxyID]['bh']['cumlmass'][index_start:index_stop],
-                                                        #'bh_cumlseeds': galaxy_tree['%s' %GalaxyID]['bh']['cumlseeds'][index_start:index_stop],
+                                                        'bh_id': galaxy_tree['%s' %GalaxyID]['bh']['id'][index_start:index_stop],
+                                                        'bh_cumlmass': galaxy_tree['%s' %GalaxyID]['bh']['cumlmass'][index_start:index_stop],
+                                                        'bh_cumlseeds': galaxy_tree['%s' %GalaxyID]['bh']['cumlseeds'][index_start:index_stop],
                                                         'bh_mdot_av': galaxy_tree['%s' %GalaxyID]['bh']['mdot'][index_start:index_stop],
                                                         'bh_mdot_inst': galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant'][index_start:index_stop],
                                                         'bh_edd': galaxy_tree['%s' %GalaxyID]['bh']['edd'][index_start:index_stop],
                                                         'bh_lbol': np.array(galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant'][index_start:index_stop]) * (2e30 / 3.154e+7) * (0.1 * (3e8)**2) * (1e7),
-                                                                                                                  
+                                                        'bh_mass_alt': galaxy_tree['%s' %GalaxyID]['bh']['mass_alt'][index_start:index_stop],
+                                                        'bh_id_alt': galaxy_tree['%s' %GalaxyID]['bh']['id_alt'][index_start:index_stop],
+                                                        'bh_mdot_av_alt': galaxy_tree['%s' %GalaxyID]['bh']['mdot_alt'][index_start:index_stop],
+                                                        'bh_mdot_inst_alt': galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant_alt'][index_start:index_stop],
+                                                        'bh_edd_alt': galaxy_tree['%s' %GalaxyID]['bh']['edd_alt'][index_start:index_stop],
+                                                        'bh_lbol_alt': np.array(galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant_alt'][index_start:index_stop]) * (2e30 / 3.154e+7) * (0.1 * (3e8)**2) * (1e7),
+                                                                                                           
                                                         '%s' %use_angle: galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj][index_start:index_stop],
                                                         '%s_err' %use_angle: galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj][index_start:index_stop],
                                                         '%s_halo' %use_angle: galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['angle_halo'][index_start:index_stop],
@@ -3225,7 +3239,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
     print('Number of >5 ttorque relaxations:  ', len(collect_IDs))
     print(collect_IDs)
     """
-    '''
+    ''' 
     # Apply a morph criteria
     if use_alt_relaxation_morph:
         misalignment_tree_new = {}
@@ -3831,13 +3845,12 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree_',
             json.dump(csv_dict, open('%s/L100_misalignment_tree_%s%s.csv' %(output_dir, csv_answer, csv_name), 'w'), cls=NumpyEncoder)
             print('\n  SAVED: %s/L100_misalignment_tree_%s%s.csv' %(output_dir, csv_answer, csv_name))
     
-    
 
 #--------------------------------
 # Looks in galaxy_tree() for aligned and counter-rotating galaxies meeting criteria
 ID_list = [204161, 271665, 324088, 344648, 65296039, 251899973, 453139689, 21200847, 182125516, 462956141]
 ID_list = [251899973, 462956141]
-def _create_BH_tree(csv_tree = 'L100_galaxy_tree_',
+def _create_BH_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     #--------------------------
                     # Galaxy analysis
                     print_summary             = True,
@@ -4200,17 +4213,19 @@ def _create_BH_tree(csv_tree = 'L100_galaxy_tree_',
                                                         'insitu_Z_sf_2hmr': galaxy_tree['%s' %GalaxyID]['gas_sf']['2.0_hmr']['insitu_Z'][index_start:index_stop],
                                                                                                                  
                                                         'bh_mass': galaxy_tree['%s' %GalaxyID]['bh']['mass'][index_start:index_stop],
-                                                        #'bh_cumlmass': galaxy_tree['%s' %GalaxyID]['bh']['cumlmass'][index_start:index_stop],
-                                                        #'bh_cumlseeds': galaxy_tree['%s' %GalaxyID]['bh']['cumlseeds'][index_start:index_stop],
+                                                        'bh_id': galaxy_tree['%s' %GalaxyID]['bh']['id'][index_start:index_stop],
+                                                        'bh_cumlmass': galaxy_tree['%s' %GalaxyID]['bh']['cumlmass'][index_start:index_stop],
+                                                        'bh_cumlseeds': galaxy_tree['%s' %GalaxyID]['bh']['cumlseeds'][index_start:index_stop],
                                                         'bh_mdot_av': galaxy_tree['%s' %GalaxyID]['bh']['mdot'][index_start:index_stop],
                                                         'bh_mdot_inst': galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant'][index_start:index_stop],
                                                         'bh_edd': galaxy_tree['%s' %GalaxyID]['bh']['edd'][index_start:index_stop],
                                                         'bh_lbol': np.array(galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant'][index_start:index_stop]) * (2e30 / 3.154e+7) * (0.1 * (3e8)**2) * (1e7),
-                                                        #'bh_mass_alt': galaxy_tree['%s' %GalaxyID]['bh']['mass_alt'][index_start:index_stop],
-                                                        #'bh_mdot_av_alt': galaxy_tree['%s' %GalaxyID]['bh']['mdot_alt'][index_start:index_stop],
-                                                        #'bh_mdot_inst_alt': galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant_alt'][index_start:index_stop],
-                                                        #'bh_edd_alt': galaxy_tree['%s' %GalaxyID]['bh']['edd_alt'][index_start:index_stop],
-                                                        #'bh_lbol_alt': np.array(galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant_alt'][index_start:index_stop]) * (2e30 / 3.154e+7) * (0.1 * (3e8)**2) * (1e7),
+                                                        'bh_mass_alt': galaxy_tree['%s' %GalaxyID]['bh']['mass_alt'][index_start:index_stop],
+                                                        'bh_id_alt': galaxy_tree['%s' %GalaxyID]['bh']['id_alt'][index_start:index_stop],
+                                                        'bh_mdot_av_alt': galaxy_tree['%s' %GalaxyID]['bh']['mdot_alt'][index_start:index_stop],
+                                                        'bh_mdot_inst_alt': galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant_alt'][index_start:index_stop],
+                                                        'bh_edd_alt': galaxy_tree['%s' %GalaxyID]['bh']['edd_alt'][index_start:index_stop],
+                                                        'bh_lbol_alt': np.array(galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant_alt'][index_start:index_stop]) * (2e30 / 3.154e+7) * (0.1 * (3e8)**2) * (1e7),
                                                                                                                   
                                                         '%s' %use_angle: galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj][index_start:index_stop],
                                                         '%s_err' %use_angle: galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj][index_start:index_stop],
@@ -4401,17 +4416,19 @@ def _create_BH_tree(csv_tree = 'L100_galaxy_tree_',
                                                         'insitu_Z_sf_2hmr': galaxy_tree['%s' %GalaxyID]['gas_sf']['2.0_hmr']['insitu_Z'][index_start:index_stop],
                                                                                                                  
                                                         'bh_mass': galaxy_tree['%s' %GalaxyID]['bh']['mass'][index_start:index_stop],
-                                                        #'bh_cumlmass': galaxy_tree['%s' %GalaxyID]['bh']['cumlmass'][index_start:index_stop],
-                                                        #'bh_cumlseeds': galaxy_tree['%s' %GalaxyID]['bh']['cumlseeds'][index_start:index_stop],
+                                                        'bh_id': galaxy_tree['%s' %GalaxyID]['bh']['id'][index_start:index_stop],
+                                                        'bh_cumlmass': galaxy_tree['%s' %GalaxyID]['bh']['cumlmass'][index_start:index_stop],
+                                                        'bh_cumlseeds': galaxy_tree['%s' %GalaxyID]['bh']['cumlseeds'][index_start:index_stop],
                                                         'bh_mdot_av': galaxy_tree['%s' %GalaxyID]['bh']['mdot'][index_start:index_stop],
                                                         'bh_mdot_inst': galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant'][index_start:index_stop],
                                                         'bh_edd': galaxy_tree['%s' %GalaxyID]['bh']['edd'][index_start:index_stop],
                                                         'bh_lbol': np.array(galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant'][index_start:index_stop]) * (2e30 / 3.154e+7) * (0.1 * (3e8)**2) * (1e7),
-                                                        #'bh_mass_alt': galaxy_tree['%s' %GalaxyID]['bh']['mass_alt'][index_start:index_stop],
-                                                        #'bh_mdot_av_alt': galaxy_tree['%s' %GalaxyID]['bh']['mdot_alt'][index_start:index_stop],
-                                                        #'bh_mdot_inst_alt': galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant_alt'][index_start:index_stop],
-                                                        #'bh_edd_alt': galaxy_tree['%s' %GalaxyID]['bh']['edd_alt'][index_start:index_stop],
-                                                        #'bh_lbol_alt': np.array(galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant_alt'][index_start:index_stop]) * (2e30 / 3.154e+7) * (0.1 * (3e8)**2) * (1e7),
+                                                        'bh_mass_alt': galaxy_tree['%s' %GalaxyID]['bh']['mass_alt'][index_start:index_stop],
+                                                        'bh_id_alt': galaxy_tree['%s' %GalaxyID]['bh']['id_alt'][index_start:index_stop],
+                                                        'bh_mdot_av_alt': galaxy_tree['%s' %GalaxyID]['bh']['mdot_alt'][index_start:index_stop],
+                                                        'bh_mdot_inst_alt': galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant_alt'][index_start:index_stop],
+                                                        'bh_edd_alt': galaxy_tree['%s' %GalaxyID]['bh']['edd_alt'][index_start:index_stop],
+                                                        'bh_lbol_alt': np.array(galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant_alt'][index_start:index_stop]) * (2e30 / 3.154e+7) * (0.1 * (3e8)**2) * (1e7),
                                                                                                                   
                                                         '%s' %use_angle: galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj][index_start:index_stop],
                                                         '%s_err' %use_angle: galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj][index_start:index_stop],
@@ -4603,17 +4620,19 @@ def _create_BH_tree(csv_tree = 'L100_galaxy_tree_',
                                                         'insitu_Z_sf_2hmr': galaxy_tree['%s' %GalaxyID]['gas_sf']['2.0_hmr']['insitu_Z'][index_start:index_stop],
                                                                                                                  
                                                         'bh_mass': galaxy_tree['%s' %GalaxyID]['bh']['mass'][index_start:index_stop],
-                                                        #'bh_cumlmass': galaxy_tree['%s' %GalaxyID]['bh']['cumlmass'][index_start:index_stop],
-                                                        #'bh_cumlseeds': galaxy_tree['%s' %GalaxyID]['bh']['cumlseeds'][index_start:index_stop],
+                                                        'bh_id': galaxy_tree['%s' %GalaxyID]['bh']['id'][index_start:index_stop],
+                                                        'bh_cumlmass': galaxy_tree['%s' %GalaxyID]['bh']['cumlmass'][index_start:index_stop],
+                                                        'bh_cumlseeds': galaxy_tree['%s' %GalaxyID]['bh']['cumlseeds'][index_start:index_stop],
                                                         'bh_mdot_av': galaxy_tree['%s' %GalaxyID]['bh']['mdot'][index_start:index_stop],
                                                         'bh_mdot_inst': galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant'][index_start:index_stop],
                                                         'bh_edd': galaxy_tree['%s' %GalaxyID]['bh']['edd'][index_start:index_stop],
                                                         'bh_lbol': np.array(galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant'][index_start:index_stop]) * (2e30 / 3.154e+7) * (0.1 * (3e8)**2) * (1e7),
-                                                        #'bh_mass_alt': galaxy_tree['%s' %GalaxyID]['bh']['mass_alt'][index_start:index_stop],
-                                                        #'bh_mdot_av_alt': galaxy_tree['%s' %GalaxyID]['bh']['mdot_alt'][index_start:index_stop],
-                                                        #'bh_mdot_inst_alt': galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant_alt'][index_start:index_stop],
-                                                        #'bh_edd_alt': galaxy_tree['%s' %GalaxyID]['bh']['edd_alt'][index_start:index_stop],
-                                                        #'bh_lbol_alt': np.array(galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant_alt'][index_start:index_stop]) * (2e30 / 3.154e+7) * (0.1 * (3e8)**2) * (1e7),
+                                                        'bh_mass_alt': galaxy_tree['%s' %GalaxyID]['bh']['mass_alt'][index_start:index_stop],
+                                                        'bh_id_alt': galaxy_tree['%s' %GalaxyID]['bh']['id_alt'][index_start:index_stop],
+                                                        'bh_mdot_av_alt': galaxy_tree['%s' %GalaxyID]['bh']['mdot_alt'][index_start:index_stop],
+                                                        'bh_mdot_inst_alt': galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant_alt'][index_start:index_stop],
+                                                        'bh_edd_alt': galaxy_tree['%s' %GalaxyID]['bh']['edd_alt'][index_start:index_stop],
+                                                        'bh_lbol_alt': np.array(galaxy_tree['%s' %GalaxyID]['bh']['mdot_instant_alt'][index_start:index_stop]) * (2e30 / 3.154e+7) * (0.1 * (3e8)**2) * (1e7),
                                                                                                                   
                                                         '%s' %use_angle: galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj][index_start:index_stop],
                                                         '%s_err' %use_angle: galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj][index_start:index_stop],
@@ -4707,6 +4726,561 @@ def _create_BH_tree(csv_tree = 'L100_galaxy_tree_',
    
  
 
+#--------------------------------
+# Reads in BH_tree(), combines with misalignment_tree() to make a nice sample
+def _create_BH_misaligned_tree(csv_tree = 'L100_BH_tree',
+                               GalaxyID_list = None,             # [ None / ID_list ]
+                               print_summary             = True,
+                                 print_checks = False,
+                               #------------------------------
+                               load_csv_bh_file  = '___05Gyr',   # [ 'file_name' / False ] load existing misalignment tree  
+                               load_csv_misalignment_file = '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_NEW',
+                               #================================================================
+                               # Matching criteria
+                                 check_for_subhalo_switch  = True,
+                                 check_for_BH_grow         = True,
+                                 check_for_BH_magnitude    = True,       # ensures we dont randomly jump by >1 dex
+                                 use_CoP_BH                = False,       # CoP BH or largest within 1 hmr
+                    
+                               # Aligned/counter sample
+                                 #min_window_size   = 0.5,       # [ Gyr ] trim to at least 1 Gyr to allow overlay in aligned/counter
+                                 # SET AUTO FROM load_csv_bh_file 'min_time'
+                     
+                               # Misaligned sample
+                                 set_min_trelax        = 0.3,       # [ Gyr ] trim to at least 1 Gyr relaxations
+                                 set_misalignment_type = None,  # [ 'co-co', 'co-counter' ] etc...
+                     
+                               #use_hmr_general_sample = '2.0',   # [ 1.0 / 2.0 / aperture]
+                                 min_stelmass = None,      max_stelmass = None,        # [ 10**9 / Msun ]
+                                 min_bhmass   = None,      max_bhmass   = None,
+                                 min_sfr      = None,      max_sfr      = None,        # [ Msun/yr ] SF limit of ~ 0.1
+                                 min_ssfr     = None,      max_ssfr     = None,        # [ /yr ] SF limit of ~ 1e-10-11
+                  
+                               # Mergers, looked for within range considered +/- halfwindow
+                                 use_merger_criteria = False,
+                                   half_window         = 0.3,      # [ 0.2 / +/-Gyr ] window centred on first misaligned snap to look for mergers
+                                   min_ratio           = 0.1,   
+                                   merger_lookback_time = 2,       # Gyr, number of years to check for peak stellar mass
+                               #================================================================
+                               csv_file       = True,             # Will write sample to csv file in sample_dir
+                                 csv_name     = '_',               # extra stuff at end
+                               print_progress = False,
+                               debug = False):
+    
+    
+    assert (answer == '4') or (answer == '3'), 'Must use snips'
+    
+    #------------------------------
+    # LOAD BH_TREE()
+    # Load previous csv if asked for
+    dict_tree = json.load(open('%s/L100_BH_tree%s.csv' %(output_dir, load_csv_bh_file), 'r'))
+    BH_input           = dict_tree['BH_input']
+    sample_input       = dict_tree['sample_input']
+    output_input       = dict_tree['output_input']
+    tree_input         = dict_tree['tree_input']
+    BH_tree            = dict_tree['BH_tree']
+    min_window_size = float(BH_input['min_time'])
+    
+    print('\n===================================================')
+    print('Loaded BH tree sample extracted with min %s Gyr window:  ali: %s cnt: %s' %(BH_input['min_time'], len(BH_tree['aligned'].keys()), len(BH_tree['counter'].keys())))
+
+    #------------------------------
+    # LOAD MISALIGNMENT_TREE()
+    misalignment_tree, misalignment_input, summary_dict = _extract_tree(load_csv_file=load_csv_misalignment_file, print_summary=False, EAGLE_dir=EAGLE_dir, sample_dir=sample_dir, tree_dir=tree_dir, output_dir=output_dir, fig_dir=fig_dir, dataDir_dict=dataDir_dict)
+    print('Loaded misalignment_tree sample size: ', len(misalignment_tree.keys()))
+    
+    
+    #------------------------------
+    # CREATE BH_MISALIGNMENT_TREE
+    # Go through sample
+    BH_mis_tree = {'aligned': {}, 'misaligned': {}, 'counter': {}}
+    ID_mis_tree = []
+    
+    # Sort out aligned and counter first
+    for galaxy_state in ['aligned', 'counter']:
+        for ID_i in BH_tree['%s' %galaxy_state].keys():
+            
+            stelmass_array = np.array(BH_tree['%s' %galaxy_state]['%s'%ID_i]['stelmass'])
+            if use_CoP_BH:
+                bhmass_array   = np.array(BH_tree['%s' %galaxy_state]['%s'%ID_i]['bh_mass'])
+            else:
+                bhmass_array   = np.array(BH_tree['%s' %galaxy_state]['%s'%ID_i]['bh_mass_alt'])
+            sfr_array      = np.array(BH_tree['%s' %galaxy_state]['%s'%ID_i]['sfr'])
+            ssfr_array     = np.array(BH_tree['%s' %galaxy_state]['%s'%ID_i]['ssfr'])
+            
+
+            # Check subhalo switch
+            if check_for_subhalo_switch:
+                # Check stelmass doesnt drop randomly
+                subhalo_switch_array = []
+                for ii, check_i in enumerate(stelmass_array):
+                    if ii == 0:
+                        check_i_previous = check_i
+                        subhalo_switch_array.append(True)
+                        continue
+                    else:
+                        # Ensure ratio between stelmasses doesnt drop by half or worse
+                        if check_i/check_i_previous >= 0.5:
+                            subhalo_switch_array.append(True)
+                        else:
+                            subhalo_switch_array.append(False)
+                        check_i_previous = check_i
+                subhalo_switch_array = np.array(subhalo_switch_array)
+            else:
+                subhalo_switch_array = np.full(len(stelmass_array), True)
+                
+            # Check BH grow
+            if check_for_BH_magnitude:
+                # Check bhmass doesnt drop randomly
+                BH_magnitude_array = []
+                for ii, check_i in enumerate(bhmass_array):
+                    if ii == 0:
+                        check_i_previous = check_i
+                        BH_magnitude_array.append(True)
+                        continue
+                    else:                        
+                        # Ensure BH mass doesnt decrease
+                        if np.isnan(check_i) == True:
+                            BH_magnitude_array.append(False)
+                        elif check_i/check_i_previous > 5:
+                            BH_magnitude_array.append(False)
+                            check_i_previous = check_i
+                        else:
+                            BH_magnitude_array.append(True)
+                            check_i_previous = check_i
+                BH_magnitude_array = np.array(BH_magnitude_array)
+            else:
+                BH_magnitude_array = np.full(len(stelmass_array), True)
+                
+            # Check BH grow
+            if check_for_BH_grow:
+                # Check bhmass doesnt drop randomly
+                BH_grow_array = []
+                for ii, check_i in enumerate(bhmass_array):
+                    if ii == 0:
+                        check_i_previous = check_i
+                        BH_grow_array.append(True)
+                        continue
+                    else:                        
+                        # Ensure BH mass doesnt decrease
+                        if np.isnan(check_i) == True:
+                            BH_grow_array.append(False)
+                        elif check_i < check_i_previous:
+                            BH_grow_array.append(False)
+                            check_i_previous = check_i
+                        else:
+                            BH_grow_array.append(True)
+                            check_i_previous = check_i
+                BH_grow_array = np.array(BH_grow_array)
+            else:
+                BH_grow_array = np.full(len(stelmass_array), True)
+                   
+            # Mask out regions with matching stelmass, bhmass, sfr, ssfr, and have non-nan BH mass
+            mask_window = np.where((stelmass_array > (0 if min_stelmass == None else min_stelmass)) & (stelmass_array < (1e99 if max_stelmass == None else max_stelmass)) & (bhmass_array > (0 if min_bhmass == None else min_bhmass)) & (bhmass_array < (1e99 if max_bhmass == None else max_bhmass)) & (np.isnan(bhmass_array) == False) & (subhalo_switch_array == True) & (BH_grow_array == True) & (BH_magnitude_array == True) & (sfr_array > (0 if min_sfr == None else min_sfr)) & (sfr_array < (1e99 if max_sfr == None else max_sfr)) & (ssfr_array > (0 if min_ssfr == None else min_ssfr)) & (ssfr_array < (1e99 if max_ssfr == None else max_ssfr)))
+
+            # If regions exist, check if they are consecutive and long enough to be included
+            if len(mask_window[0]) > 0:
+                test_snaps     = np.array(BH_tree['%s' %galaxy_state]['%s'%ID_i]['SnapNum'])[mask_window]
+                for k, g in groupby(enumerate(test_snaps), lambda ix : ix[0] - ix[1]):
+                
+                    adjacent_regions_snaps = list(map(itemgetter(1), g))
+                    if len(adjacent_regions_snaps) < 2:
+                        if print_checks:
+                            print(' ')
+                            print(adjacent_regions_snaps)
+                            print('REJECTED: only 1 snap for region')
+                        continue
+                
+
+                    # Find args of adjacent snaps
+                    adjacent_regions_arg = np.nonzero(np.in1d(np.array(BH_tree['%s' %galaxy_state]['%s'%ID_i]['SnapNum']), np.array(adjacent_regions_snaps)))[0]
+                    
+                    
+                    if print_checks:
+                        print('\nCurrent iteration counter:')
+                        print(adjacent_regions_snaps)
+                        print(adjacent_regions_arg)
+            
+                    #----------------------------------
+                    # We have co_regions of args, now test if they meet the criteria
+                    start_index = adjacent_regions_arg[0]
+                    end_index   = adjacent_regions_arg[-1]
+                    entry_duration = abs(np.array(BH_tree['%s' %galaxy_state]['%s'%ID_i]['Lookbacktime'])[start_index] - np.array(BH_tree['%s' %galaxy_state]['%s'%ID_i]['Lookbacktime'])[end_index])
+                
+                    # Filter for duration min_window_size
+                    if entry_duration < (0 if min_window_size == None else min_window_size):
+                        if print_checks:
+                            print('\nREJECTED: min_window_size not met')
+                        continue
+                        
+                    #-------------------------------------
+                    # If it passes, add to sample
+                    index_start = adjacent_regions_arg[0]
+                    index_stop  = adjacent_regions_arg[-1] + 1
+                        
+                    #-------------------------------------
+                    # Apply merger criteria
+            
+                    
+            
+                    #-------------------------------------
+                    # If it passes, add to sample
+                    ID_entry = np.array(BH_tree['%s' %galaxy_state]['%s' %ID_i]['GalaxyID'])[index_start]
+                    
+                    ID_mis_tree.append(ID_entry)
+                    BH_mis_tree['%s' %galaxy_state].update({'%s' %ID_entry: {'entry_duration': entry_duration}})
+                    
+                    # ADD INDEXES, NOT ENTIRE:
+                    for array_name_i in BH_tree['%s' %galaxy_state]['%s' %ID_i].keys():
+                        
+                        # Skip single-entry
+                        if array_name_i in ['entry_duration', 'stelmass_2hmr_max', 'stelmass_2hmr_min', 'sfr_2hmr_max', 'sfr_2hmr_min', 'ssfr_2hmr_max', 'ssfr_2hmr_min']:
+                            continue
+                            
+                        array_i = np.array(BH_tree['%s' %galaxy_state]['%s' %ID_i]['%s' %array_name_i], dtype=object)[index_start:index_stop]
+                        
+                        # Update array
+                        BH_mis_tree['%s' %galaxy_state]['%s' %ID_entry].update({'%s' %array_name_i: array_i})
+     
+    
+    # Sort out misaligned sample
+    # we are also including a phase before and after in which the galaxy is aligned/counter...
+    misalignment_sample_in_windowsize = 0
+    misalignment_sample_in_trelax     = 0
+    for ID_i in misalignment_tree.keys():
+        
+        entry_duration = abs(np.array(misalignment_tree['%s'%ID_i]['Lookbacktime'])[0] - np.array(misalignment_tree['%s'%ID_i]['Lookbacktime'])[-1])
+        if entry_duration < min_window_size:
+            continue
+        misalignment_sample_in_windowsize += 1
+        
+        
+        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_min_trelax:
+            continue
+        misalignment_sample_in_trelax += 1
+            
+        if set_misalignment_type:
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] not in set_misalignment_type:
+                continue
+        
+        
+        #------------------
+        stelmass_array = np.array(misalignment_tree['%s'%ID_i]['stelmass'])
+        if use_CoP_BH:
+            bhmass_array   = np.array(misalignment_tree['%s'%ID_i]['bh_mass'])
+        else:
+            bhmass_array   = np.array(misalignment_tree['%s'%ID_i]['bh_mass_alt'])
+        sfr_array      = np.array(misalignment_tree['%s'%ID_i]['sfr'])
+        ssfr_array     = np.array(misalignment_tree['%s'%ID_i]['ssfr'])
+    
+        # Check subhalo switch
+        if check_for_subhalo_switch:
+            # Check stelmass doesnt drop randomly
+            subhalo_switch_array = []
+            for ii, check_i in enumerate(stelmass_array):
+                if ii == 0:
+                    check_i_previous = check_i
+                    subhalo_switch_array.append(True)
+                    continue
+                else:
+                    # Ensure ratio between stelmasses doesnt drop by half or worse
+                    if check_i/check_i_previous >= 0.5:
+                        subhalo_switch_array.append(True)
+                    else:
+                        subhalo_switch_array.append(False)
+                    check_i_previous = check_i
+            subhalo_switch_array = np.array(subhalo_switch_array)
+        else:
+            subhalo_switch_array = np.full(len(stelmass_array), True)
+            
+        # Check BH grow
+        if check_for_BH_magnitude:
+            # Check bhmass doesnt drop randomly
+            BH_magnitude_array = []
+            for ii, check_i in enumerate(bhmass_array):
+                if ii == 0:
+                    check_i_previous = check_i
+                    BH_magnitude_array.append(True)
+                    continue
+                else:                        
+                    # Ensure BH mass doesnt decrease
+                    if np.isnan(check_i) == True:
+                        BH_magnitude_array.append(False)
+                    elif check_i/check_i_previous > 5:
+                        BH_magnitude_array.append(False)
+                        check_i_previous = check_i
+                    else:
+                        BH_magnitude_array.append(True)
+                        check_i_previous = check_i
+            BH_magnitude_array = np.array(BH_magnitude_array)
+        else:
+            BH_magnitude_array = np.full(len(stelmass_array), True)
+            
+        # Check BH grow
+        if check_for_BH_grow:
+            # Check bhmass doesnt drop randomly
+            BH_grow_array = []
+            for ii, check_i in enumerate(bhmass_array):
+                if ii == 0:
+                    check_i_previous = check_i
+                    BH_grow_array.append(True)
+                    continue
+                else:                        
+                    # Ensure BH mass doesnt decrease
+                    if np.isnan(check_i) == True:
+                        BH_grow_array.append(False)
+                    elif check_i < check_i_previous:
+                        BH_grow_array.append(False)
+                        check_i_previous = check_i
+                    else:
+                        BH_grow_array.append(True)
+                        check_i_previous = check_i
+            BH_grow_array = np.array(BH_grow_array)
+        else:
+            BH_grow_array = np.full(len(stelmass_array), True)
+               
+        # Mask out regions with matching stelmass, bhmass, sfr, ssfr, and have non-nan BH mass
+        mask_window = np.where((stelmass_array > (0 if min_stelmass == None else min_stelmass)) & (stelmass_array < (1e99 if max_stelmass == None else max_stelmass)) & (bhmass_array > (0 if min_bhmass == None else min_bhmass)) & (bhmass_array < (1e99 if max_bhmass == None else max_bhmass)) & (np.isnan(bhmass_array) == False) & (subhalo_switch_array == True) & (BH_grow_array == True) & (BH_magnitude_array == True) & (sfr_array > (0 if min_sfr == None else min_sfr)) & (sfr_array < (1e99 if max_sfr == None else max_sfr)) & (ssfr_array > (0 if min_ssfr == None else min_ssfr)) & (ssfr_array < (1e99 if max_ssfr == None else max_ssfr)))
+        
+        
+        if len(mask_window[0]) != len(stelmass_array):
+            continue
+        else:
+            # Add
+            
+            # Filter for duration min_window_size
+            if entry_duration < (0 if min_window_size == None else min_window_size):
+                if print_checks:
+                    print('\nREJECTED: min_window_size not met')
+                continue
+            
+            
+            #-------------------------------------
+            # Apply merger criteria
+            
+    
+            #-------------------------------------
+            # If it passes, add to sample
+            ID_mis_tree.append(ID_i)
+            BH_mis_tree['misaligned'].update({'%s' %ID_i: {'entry_duration': entry_duration}})
+            
+            
+            # ADD ENTIRE:
+            for array_name_i in misalignment_tree['%s'%ID_i].keys():
+                
+                # Update array
+                BH_mis_tree['misaligned']['%s' %ID_i].update({'%s' %array_name_i: misalignment_tree['%s'%ID_i][array_name_i]})
+                
+           
+    # NOT WORKING Apply a merger criteria
+    if use_merger_criteria:
+        # Loading mergertree file to establish windows
+        f = h5py.File(tree_dir + 'Snip100_MainProgenitorTrees.hdf5', 'r')
+        GalaxyID_tree             = np.array(f['Histories']['GalaxyID'])
+        DescendantID_tree         = np.array(f['Histories']['DescendantID'])
+        Lookbacktime_tree         = np.array(f['Snapnum_Index']['LookbackTime'])
+        StellarMass_tree          = np.array(f['Histories']['StellarMass'])
+        GasMass_tree              = np.array(f['Histories']['GasMass'])
+        f.close()
+        
+        BH_mis_tree_new = {}
+        tally_minor = 0
+        tally_major = 0
+        tally_sample = len(BH_mis_tree.keys())
+        for ID_i in BH_mis_tree.keys():
+            """  
+            index_merger_window = np.where(np.absolute(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']+1]) < half_window)[0]
+    
+            meets_criteria = False
+            for merger_i in np.array(misalignment_tree['%s' %ID_i]['merger_ratio_stars'])[index_merger_window]:
+                if len(merger_i) > 0:
+                    if max(merger_i) > min_ratio:
+                        meets_criteria = True
+            if meets_criteria == False:
+                continue
+            else:
+                misalignment_tree_new['%s' %ID_i] = misalignment_tree['%s' %ID_i]
+            """
+                
+            #---------------------------------------------------------
+            # Find location of begin of misalignment in merger tree
+            (row_i, snap_i) = np.where(GalaxyID_tree == int(misalignment_tree['%s' %ID_i]['GalaxyID'][misalignment_tree['%s' %ID_i]['index_s']+1]))
+            row_mask  = row_i[0]
+            snap_mask = snap_i[0]
+            
+            # Find window limits of mergers [SnapNum_merger_min:SnapNum_merger_max]
+            SnapNum_merger_min = 1 + np.where(Lookbacktime_tree >= (Lookbacktime_tree[snap_i] + half_window))[0][-1]
+            if len(np.where(Lookbacktime_tree <= (Lookbacktime_tree[snap_i] - half_window))[0]) > 0:
+                SnapNum_merger_max = np.where(Lookbacktime_tree <= (Lookbacktime_tree[snap_i] - half_window))[0][0]
+            else:
+                SnapNum_merger_max = snap_mask
+            
+            # List of all elligible descendants
+            GalaxyID_list       = np.array(GalaxyID_tree)[row_mask, SnapNum_merger_min:SnapNum_merger_max]
+            
+
+            merger_ID_array_array    = []
+            merger_ratio_array_array = []
+            merger_gas_array_array   = []
+            for SnapNum_i, GalaxyID_i in zip(np.arange(SnapNum_merger_min, SnapNum_merger_max+1), GalaxyID_list):
+                if int(GalaxyID_i) == -1:
+                    continue
+                
+                merger_mask = [i for i in np.where(np.array(DescendantID_tree)[:,int(SnapNum_i-1)] == GalaxyID_i)[0] if i != row_mask]
+                
+                # If misalignment found, its position is given by i in merger_mask, SnapNum_i
+                merger_ID_array    = []
+                merger_ratio_array = []
+                merger_gas_array   = []
+                if len(merger_mask) > 0:
+                    # find peak stelmass of those galaxies
+                    for mask_i in merger_mask:
+                        # Find last snap up to 2 Gyr ago
+                        SnapNum_merger = np.where(Lookbacktime_tree >= (Lookbacktime_tree[SnapNum_i] + merger_lookback_time))[0][-1]
+                
+                        # Find largest stellar mass of this satellite, per method of Rodriguez-Gomez et al. 2015, Qu et al. 2017 (see crain2017)
+                        mass_mask = np.argmax(StellarMass_tree[mask_i][int(SnapNum_merger-100):int(SnapNum_i)]) + (SnapNum_merger-100)
+                
+                        # Extract secondary properties
+                        primary_stelmass   = StellarMass_tree[row_mask][mass_mask]
+                        primary_gasmass    = GasMass_tree[row_mask][mass_mask]
+                        component_stelmass = StellarMass_tree[mask_i][mass_mask]
+                        component_gasmass  = GasMass_tree[mask_i][mass_mask]
+                
+                        if primary_stelmass <= 0.0:
+                            # Adjust stelmass
+                            primary_stelmass   = math.nan
+                            primary_gasmass    = math.nan
+                    
+    
+                        # Find ratios
+                        merger_ratio = component_stelmass / primary_stelmass 
+                        if merger_ratio > 1:
+                            merger_ratio = 1/merger_ratio
+                        gas_ratio    = (primary_gasmass + component_gasmass) / (primary_stelmass + component_stelmass)
+
+                        # Append
+                        merger_ID_array.append(GalaxyID_tree[mask_i][int(SnapNum_i-1)])
+                        merger_ratio_array.append(merger_ratio)
+                        merger_gas_array.append(gas_ratio)
+                        
+                merger_ID_array_array.append(merger_ID_array)
+                merger_ratio_array_array.append(merger_ratio_array)
+                merger_gas_array_array.append(merger_gas_array)      
+            if debug:
+                print(misalignment_tree['%s' %ID_i]['SnapNum'])
+                print(misalignment_tree['%s' %ID_i]['merger_ratio_stars'])
+                for snap_i, star_i in zip(np.arange(SnapNum_merger_min, SnapNum_merger_max+1), merger_ratio_array_array):
+                    print(snap_i, star_i)
+                    
+                    
+            meets_criteria = False
+            for merger_i in merger_ratio_array_array:
+                if len(merger_i) > 0:
+                    if max(merger_i) > min_ratio:
+                        meets_criteria = True
+            if meets_criteria == False:
+                continue
+            else:
+                misalignment_tree_new['%s' %ID_i] = misalignment_tree['%s' %ID_i]
+                    
+                
+            merger_count = 0
+            for merger_i in merger_ratio_array_array:
+                if len(merger_i) > 0:
+                    if (max(merger_i) > min_ratio):
+                        if merger_count == 0:
+                            if 0.3 > max(merger_i) > 0.1:
+                                tally_minor += 1
+                            if max(merger_i) > 0.3:
+                                tally_major += 1
+                        merger_count += 1
+                        
+                        
+        misalignment_tree = misalignment_tree_new
+        misalignment_tree_new = 0
+        
+        print('======================================')
+        print('Using merger criteria, half_window = %.1f Gyr, min_ratio = %.1f' %(half_window, min_ratio))
+        print('Original anyMerger sample:   %i\t' %(tally_sample))
+        print('        Number of mergers:   %i\t%.2f %%' %(tally_minor+tally_major, (tally_minor+tally_major)*100/tally_sample))
+        print('                 ...major:   %i\t%.2f %%' %(tally_major, (tally_major*100/tally_sample)))
+        print('                 ...minor:   %i\t%.2f %%' %(tally_minor, (tally_minor*100/tally_sample)))    
+    #==================================================================================================
+
+
+
+    # Summary 
+    # Values can come out larger if... e.g. a 5 Gyr window meeting misalignment criteria is split as it has a BH mass drop in 1 snip, meaning it is split into 2
+    if print_summary:
+        print('\n===================================================')
+        print('BH_tree sample vs BHmis_tree extracted trimmed to min %s Gyr window + checks:' %min_window_size)
+        print('  aligned:      %s \t\t\t\t\t->\t%s' %(len(BH_tree['aligned'].keys()), len(BH_mis_tree['aligned'].keys())))
+        print('  misaligned:   %s (window)\t-> %s (trelax)\t->\t%s (clean)' %(misalignment_sample_in_windowsize, misalignment_sample_in_trelax, len(BH_mis_tree['misaligned'].keys())))
+        print('  counter:      %s \t\t\t\t\t->\t%s' %(len(BH_tree['counter'].keys()), len(BH_mis_tree['counter'].keys())))
+        print('  Total in clean sample ', len(ID_mis_tree))
+    
+    BHmis_summary = {'aligned_pre': len(BH_tree['aligned'].keys()),
+                     'aligned_clean': len(BH_mis_tree['aligned'].keys()),
+                     'misaligned_window': misalignment_sample_in_windowsize,
+                     'misaligned_trelax': misalignment_sample_in_trelax,
+                     'misaligned_clean': len(BH_mis_tree['misaligned'].keys()),
+                     'counter_pre': len(BH_tree['counter'].keys()),
+                     'counter_clean': len(BH_mis_tree['counter'].keys()),
+                     'clean_sample': len(ID_mis_tree),
+                     'misalignment_sample': len(misalignment_tree.keys())}
+    
+    #---------------------------------------
+    # Save as csv    
+    if csv_file: 
+       # Converting numpy arrays to lists. When reading, may need to simply convert list back to np.array() (easy)
+       class NumpyEncoder(json.JSONEncoder):
+           ''' Special json encoder for numpy types '''
+           def default(self, obj):
+               if isinstance(obj, np.integer):
+                   return int(obj)
+               elif isinstance(obj, np.floating):
+                   return float(obj)
+               elif isinstance(obj, np.ndarray):
+                   return obj.tolist()
+               return json.JSONEncoder.default(self, obj)
+                 
+       # Combining all dictionaries
+       csv_dict = {'BHmis_tree': BH_mis_tree}
+       
+       BHmis_input = {'check_for_subhalo_switch':  check_for_subhalo_switch,
+                   'check_for_BH_grow':         check_for_BH_grow,
+                   'check_for_BH_magnitude':    check_for_BH_magnitude,
+                   'use_CoP_BH':                use_CoP_BH,
+                   'min_window_size':           min_window_size, 
+                   'set_min_trelax':            set_min_trelax,
+                   'set_misalignment_type':     set_misalignment_type,
+                   'min_stelmass': min_stelmass, 'max_stelmass': max_stelmass,
+                   'min_bhmass':   min_bhmass,   'max_bhmass': max_bhmass,
+                   'min_sfr':      min_sfr,      'max_sfr': max_sfr,
+                   'min_ssfr':     min_ssfr,     'max_ssfr': max_ssfr,
+                   'use_merger_criteria':       use_merger_criteria,
+                   'half_window': half_window,
+                   'min_ratio':    min_ratio,
+                   'merger_lookback_time':   merger_lookback_time}
+                   
+                   
+                   
+       csv_dict.update({'BHmis_input': BHmis_input,
+                        'BH_input': BH_input,
+                        'tree_input': tree_input,
+                        'output_input': output_input,
+                        'sample_input': sample_input,
+                        'BHmis_summary': BHmis_summary})
+       
+       #-----------------------------
+       csv_answer = input("\n  > Choose csv name L100_misalignment_tree_...  '_' ... or 'n' to cancel       ")
+       if csv_answer != 'n':
+           # Writing one massive JSON file
+           json.dump(csv_dict, open('%s/L100_BHmis_tree_CoP%s_window%s_trelax%s%s_%s%s.csv' %(output_dir, use_CoP_BH, min_window_size, set_min_trelax, load_csv_bh_file, csv_answer, csv_name), 'w'), cls=NumpyEncoder)
+           print('\n  SAVED: %s/L100_BHmis_tree_CoP%s_window%s_trelax%s%s_%s%s.csv' %(output_dir, use_CoP_BH, min_window_size, set_min_trelax, load_csv_bh_file, csv_answer, csv_name))
+   
+    
 
 
 
@@ -4717,12 +5291,18 @@ def _create_BH_tree(csv_tree = 'L100_galaxy_tree_',
 
 #_analyse_tree()
 
-#_create_BH_tree()
+#_create_BH_tree(min_time = 1, csv_name = '_1Gyr')
+#_create_BH_tree(min_time = 0.5, csv_name = '_05Gyr')
+
+#_create_BH_misaligned_tree(set_min_trelax = 0.3, set_misalignment_type = None, use_CoP_BH = False)
+_create_BH_misaligned_tree(set_min_trelax = 0.3, set_misalignment_type = None, use_CoP_BH = False, min_bhmass = 7.4*10**5, csv_name = 'no_seed')
+_create_BH_misaligned_tree(set_min_trelax = 0.3, set_misalignment_type = None, use_CoP_BH = True, min_bhmass = 7.4*10**5, csv_name = 'no_seed')
+
+
 #=============================
 
 
-"""print('\n\n\t_20Thresh_30Peak_normalLatency_anyMergers_anyMorph')                  
-_analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH', load_csv_file = False, csv_file = False, csv_name = '20Thresh_30Peak_normalLatency_anyMergers_anyMorph_NEW',
+"""_analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH', load_csv_file = False, csv_file = False, csv_name = '20Thresh_30Peak_normalLatency_anyMergers_anyMorph_NEW',
                 min_particles      = 20,
                 min_stelmass       = None, 
                 misangle_threshold = 20,
@@ -4730,20 +5310,6 @@ _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH', load_csv_file = False, 
                 latency_time       = 0.1, 
                   time_extra       = 0.1, 
                   time_no_misangle = 0.1,   
-                use_merger_criteria = False,         
-                relaxation_morph   = ['LTG-LTG', 'ETG-ETG', 'LTG-ETG', 'ETG-LTG', 'other'],
-                misalignment_morph = ['LTG', 'ETG'],
-                  morph_limits     = [0.4, 0.4])"""
-
-"""print('\n\n\t_20Thresh_30Peak_noLatency')
-_analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH', load_csv_file = False, csv_file = False, csv_name = '20Thresh_30Peak_noLatency_NEW',
-                min_particles      = 20,
-                min_stelmass       = None, 
-                misangle_threshold = 20,
-                  peak_misangle    = 30, 
-                latency_time       = None, 
-                  time_extra       = 0, 
-                  time_no_misangle = 0,   
                 use_merger_criteria = False,         
                 relaxation_morph   = ['LTG-LTG', 'ETG-ETG', 'LTG-ETG', 'ETG-LTG', 'other'],
                 misalignment_morph = ['LTG', 'ETG'],

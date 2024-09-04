@@ -380,17 +380,13 @@ def galaxy_render(csv_sample = False,              # False, Whether to read in e
             print('|Combined particle properties within %s pkpc:' %aperture_rad)
             print('|%s| |ID:   %s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f  %.2f  %.2f' %(SnapNum, str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad, subhalo.general['kappa_stars'], subhalo.general['kappa_gas'], subhalo.general['kappa_gas_sf'])) 
         
-        #print('\tNEW BHS STUFF:')
+        print('\tNEW BHS STUFF:')
         #print(subhalo.general.keys())
-        #print(subhalo.general['bh_mass'])
-        #print(subhalo.general['bh_mdot'])
-        #print(subhalo.general['bh_edd'])
-        #print(subhalo.general['bh_id'])
+        print(subhalo.general['bh_mass'])
+        print(subhalo.general['bh_mdot'])
+        print(subhalo.general['bh_edd'])
+        print(subhalo.general['bh_id'])
         #print(' ')
-        #print(bh_dict['bh_mass'])
-        #print(bh_dict['bh_mdot'])
-        #print(bh_dict['bh_edd'])
-        #print(bh_dict['bh_id'])
         
         
         

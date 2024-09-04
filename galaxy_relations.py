@@ -335,7 +335,7 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
                        misangle_threshold = 30,             # what we classify as misaligned
                        #--------------------------
                        showfig       = True,
-                       savefig       = True,
+                       savefig       = False,
                          file_format = 'pdf',
                          savefig_txt = 'bh_mass_centrals',
                        #--------------------------
@@ -585,6 +585,12 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
                     # applying stelmass, environment, morphology, satellite criteria
                     if (all_general['%s' %GalaxyID]['stelmass'] >= lower_mass_limit) and (all_general['%s' %GalaxyID]['stelmass'] <= upper_mass_limit) and (all_general['%s' %GalaxyID]['halo_mass'] >= lower_halo) and (all_general['%s' %GalaxyID]['halo_mass'] <= upper_halo) and (all_general['%s' %GalaxyID]['kappa_stars'] >= lower_morph) and (all_general['%s' %GalaxyID]['kappa_stars'] <= upper_morph) and (all_general['%s' %GalaxyID]['SubGroupNum'] <= satellite_criteria):
                         
+                        # if we dont have a general_hmr entry for 1.0 or 2.0, remove
+                        if use_hmr_values in ['1.0', '2.0']:                            
+                            if (float(use_hmr_values) not in all_misangles['%s' %GalaxyID]['hmr']):
+                                continue
+                                
+                        
                         #-----------------
                         # COLLECT ID OF INTERESTED GALAXIES aaa
                         if all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle' %use_angle][mask_angles] > 170:
@@ -593,7 +599,7 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
                         #-----------------
                         # Extracting values
                         
-                        use_hmr_values
+                        #use_hmr_values
                         
                         # Creating masks
                         if use_hmr_values == 'aperture':
@@ -622,8 +628,8 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
                             #value_y.append(np.divide(3.154e+7*np.array(all_general['%s' %GalaxyID]['ap_sfr']), np.array(all_general['%s' %GalaxyID]['stelmass'])))
                             #value_y.append(np.divide(all_general['%s' %GalaxyID]['gasmass_sf'], all_general['%s' %GalaxyID]['gasmass_sf'] + all_general['%s' %GalaxyID]['stelmass']))
                             
-                            ylabel = 'CentralBHmass'
-                            value_y.append(np.log10(np.array(all_general['%s' %GalaxyID]['bh_mass'])))
+                            #ylabel = 'CentralBHmass'
+                            #value_y.append(np.log10(np.array(all_general['%s' %GalaxyID]['bh_mass'])))
                             
                             
                             clabel = 'kappa'
@@ -650,12 +656,14 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
                             
                             legend_label = 'in %.1f\nz=%.1f' %(float(use_hmr_values), output_input['Redshift'])
                             
-                            xlabel = 'stellar mass'
+                            xlabel = 'Stellar_mass'
                             value_x.append(np.log10(np.array(all_masses['%s' %GalaxyID]['stars'][value_mask_masses])))
                             
-                            ylabel = 'gassf / stelmass + gassf'
+                            #ylabel = 'gassf / stelmass + gassf'
                             #value_y.append(all_general['%s' %GalaxyID]['kappa_stars'])
-                            value_y.append(np.divide(np.array(all_masses['%s' %GalaxyID]['gas_sf'][value_mask_masses]), np.array(all_masses['%s' %GalaxyID]['gas_sf'][value_mask_masses]) + np.array(all_masses['%s' %GalaxyID]['stars'][value_mask_masses])))
+                            #value_y.append(np.divide(np.array(all_masses['%s' %GalaxyID]['gas_sf'][value_mask_masses]), np.array(all_masses['%s' %GalaxyID]['gas_sf'][value_mask_masses]) + np.array(all_masses['%s' %GalaxyID]['stars'][value_mask_masses])))
+                            ylabel = 'sSFR [yr-1]'
+                            value_y.append(np.divide(3.154e+7*np.array(all_sfr['%s' %GalaxyID]['gas_sf'][value_mask_sfr]), np.array(all_masses['%s' %GalaxyID]['stars'][value_mask_masses])))
                             
                             clabel = 'kappa'
                             value_c.append(all_general['%s' %GalaxyID]['kappa_stars'])
@@ -713,14 +721,15 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
             
             # Normalise colormap
             norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax, clip=True)
-            mapper = cm.ScalarMappable(norm=norm, cmap='Spectral')         #cmap=cm.coolwarm)
+            #mapper = cm.ScalarMappable(norm=norm, cmap='Spectral')         #cmap=cm.coolwarm)
+            mapper = cm.ScalarMappable(norm=norm, cmap='viridis')         #cmap=cm.coolwarm)
         
             #-------------
             # Colorbar
             fig.colorbar(mapper, ax=axs, label=clabel)      #, extend='max'
             
             # Scatter
-            axs.scatter(value_x, value_y, c=value_c, s=1, norm=norm, cmap='Spectral', zorder=99, linewidths=0.3, alpha=0.5)
+            axs.scatter(value_x, value_y, c=value_c, s=1, norm=norm, cmap='viridis', zorder=99, linewidths=0.3, alpha=0.5)
             
         
         #-----------
@@ -728,8 +737,8 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
         # Axis labels
         axs.set_xlim(9, 11.5)
         #axs.set_xticks(np.arange(0, 181, step=30))
-        axs.set_ylim(5, 10)
-        #axs.set_yscale('log')
+        axs.set_ylim(3*10**-13, 3*10**-9)
+        axs.set_yscale('log')
         axs.set_xlabel(xlabel)
         axs.set_ylabel(ylabel)
         #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='both', width=0.8, length=2)
@@ -779,7 +788,8 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
 #_plot_relations(ETG_or_LTG = 'ETG')
 #_plot_relations(ETG_or_LTG = 'LTG')
 
-_plot_relations(csv_sample = 'L100_195_all_sample_misalignment_9.5', csv_output = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_')
+#_plot_relations(csv_sample = 'L100_195_all_sample_misalignment_9.5', csv_output = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_')
+#_plot_relations(csv_sample = 'L100_19_all_sample_misalignment_9.5', csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_')
 
 #===========================
 

@@ -1138,7 +1138,7 @@ def _plot_evolution(csv_output = 'L100_evolution_ID443970_RadProj_Err__stars_gas
                 ax.set_ylim(0, 1)
                 ax.set_yticks(np.arange(0, 1.1, 0.25))
 
-                ax.set_xlabel('Lookback time (Gyr)')
+                ax.set_xlabel('Lookback time [Gyr]')
                 ax.set_ylabel('$\kappa_{\mathrm{co}}$')
 
                 ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major', labelbottom=False, labeltop=False)
@@ -1655,7 +1655,7 @@ def _plot_evolution_old(csv_output = 'L100_evolution_ID401467650_RadProj_Err__st
                 ax.set_ylim(0, 1)
                 ax.set_yticks(np.arange(0, 1.1, 0.25))
 
-                ax.set_xlabel('Lookback time (Gyr)')
+                ax.set_xlabel('Lookback time [Gyr]')
                 ax.set_ylabel('$\kappa_{\mathrm{co}}$')
 
                 ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major', labelbottom=False, labeltop=False)
@@ -1743,16 +1743,16 @@ def _plot_evolution_old(csv_output = 'L100_evolution_ID401467650_RadProj_Err__st
 #ID_list = [198707313, 248944532]
 
 # paper plots:
-#ID_list = [453139689, 251899973, 65296105]
-#savefig_txt = '_2Gyr_trelax_paper'
+ID_list = [453139689, 251899973, 65296105]        # animation: 65296105
+savefig_txt = '_2Gyr_trelax_paper'
 
 # AURIGA GALAXIES
 #ID_list = [349869588, 65479759, 200582686, 14435116, 141671870, 280826716, 95589210, 14482957, 33850819, 147906152, 433737821, 467324083, 7582389, 42704061, 377471504, 37808721, 251939360, 277697191, 306562705, 306583243, 437608510, 411956841, 271490834, 353097548, 423252305, 251840829, 475874776, 75941645, 297036450, 58667562]
 #savefig_txt = '_AURIGA_GALAXIES'
 
 # BH ISSUES GALAXIES
-ID_list = [102310942, 236121807, 370249894, 285054970]
-savefig_txt = 'BH_issues_NEW'
+#ID_list = [102310942, 236121807, 370249894, 285054970]
+#savefig_txt = 'BH_issues_NEW'
 
 def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                          #--------------------------
@@ -1784,25 +1784,28 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                            min_merger_ratio   = 0.1,
                          #-------------------------------------------
                          # BH settings
-                           use_closest_to_COP   = True,                   # Uses closest to COP (new method) or most massive in 1 hmr (_old)
+                           use_closest_to_COP   = False,                   # Uses closest to COP (new method) or most massive in 1 hmr (_old)
                          #-------------------------------------------
                          # Angles   [ deg ]
                            plot_angles          = True,
                            plot_inclination     = False,
+                         # Torquing time    [ Gyr ]
+                           plot_tdyn            = True,
+                           plot_ttorque         = True, 
                          # Inflow (gas) [ Msun/yr ]
-                           plot_inflow          = False,
-                           plot_outflow         = False,
+                           plot_inflow          = True,
+                           plot_outflow         = True,
                            plot_stelmassloss    = False,
-                           plot_bh_acc          = True,
-                           plot_bh_acc_instant  = True,
-                           plot_sfr             = False,
+                           plot_bh_acc          = False,
+                           plot_bh_acc_instant  = False,
+                           plot_sfr             = True,
                          # Masses   [ Msun ]
                            plot_halomass        = False,
                            plot_stelmass        = True,
                            plot_gasmass         = False,
                            plot_sfmass          = True,
                            plot_nsfmass         = False,
-                           plot_bhmass          = True,
+                           plot_bhmass          = False,
                          # sSFR     [ /yr ]
                            plot_ssfr            = False,
                          # l of stars (specific angular momentum or spin) [ pkpc/kms-1 ]
@@ -1828,10 +1831,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                          # Luminosity   [ erg/s ]
                            plot_lbol            = False,
                          # Disc velocity    [ km/s ]
-                           plot_vcirc           = False,
-                         # Torquing time    [ Gyr ]
-                           plot_tdyn            = False,
-                           plot_ttorque         = False,     
+                           plot_vcirc           = False,    
                          #==================================================================================
                          showfig        = True,
                          savefig        = True,
@@ -2111,7 +2111,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 
                 #---------------------
                 ### Legend
-                axs[0].legend(loc='best', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1)
+                axs[0].legend(loc='center right', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=1)
                 
                 #---------------------
                 ### Plot mergers
@@ -2138,7 +2138,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 
                 #---------------------
                 ### Formatting
-                axs[i].set_ylabel('Time (Gyr)')
+                axs[i].set_ylabel('Time [Gyr]')
                 axs[i].set_ylim(bottom=0)
                 ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major', labelbottom=False, labeltop=False)
                 ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='minor')
@@ -2187,7 +2187,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 
                 #---------------------    
                 ### Formatting
-                axs[i].set_ylabel('$\dot{M}$ $(\mathrm{M}_{\odot} \mathrm{yr}^{-1})$')
+                axs[i].set_ylabel('$\dot{M}$ $[\mathrm{M}_{\odot} \mathrm{yr}^{-1}]$')
                 #axs[i].set_ylim(0, 30)
                 axs[i].set_ylim(bottom=0)
                 ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major', labelbottom=False, labeltop=False)
@@ -2254,9 +2254,9 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 #---------------------
                 ### Formatting
                 #axs[i].set_ylabel('$\mathrm{log_{10}}(\mathrm{M}/\mathrm{M}_{\odot})$')
-                axs[i].set_ylabel('$\mathrm{log_{10}}M$ $(\mathrm{M}_{\odot})$')
-                #axs[i].set_ylim(bottom=8.5, top=11.5)
-                axs[i].set_ylim(bottom=5.5, top=11.5)
+                axs[i].set_ylabel('$\mathrm{log_{10}}M$ $[\mathrm{M}_{\odot}]$')
+                axs[i].set_ylim(bottom=8.5, top=11.5)
+                #axs[i].set_ylim(bottom=5.5, top=11.5)
                 ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major', labelbottom=False, labeltop=False)
                 ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='minor')
                 
@@ -2283,7 +2283,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     
                 #---------------------
                 ### Formatting
-                axs[i].set_ylabel('$\mathrm{sSFR}$ $(\mathrm{yr}^{-1})$')
+                axs[i].set_ylabel('$\mathrm{sSFR}$ $[\mathrm{yr}^{-1}]$')
                 axs[i].set_ylim(-12, -7)
                 ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major', labelbottom=False, labeltop=False)
                 ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='minor')
@@ -2304,7 +2304,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 
                 #---------------------
                 ### Formatting
-                axs[i].set_ylabel('$\mathrm{log_{10}}j_{\mathrm{stars}}$ $(\mathrm{pkpc} / \mathrm{km s}^{-1})$')
+                axs[i].set_ylabel('$\mathrm{log_{10}}j_{\mathrm{stars}}$ $[\mathrm{pkpc} / \mathrm{km s}^{-1}]$')
                 axs[i].set_ylim(0, 4)
                 ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major', labelbottom=False, labeltop=False)
                 ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='minor')
@@ -2329,7 +2329,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 
                 #---------------------
                 ### Formatting
-                axs[i].set_ylabel('Radius (pkpc)')
+                axs[i].set_ylabel('Radius [pkpc]')
                 axs[i].set_ylim(bottom=0)
                 ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major', labelbottom=False, labeltop=False)
                 ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='minor')
@@ -2491,7 +2491,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 #---------------------
                 ### Formatting
                 #axs[i].set_ylim(-6, 0)
-                axs[i].set_ylabel('$\mathrm{log_{10}}$ $L_{\mathrm{BH,bol}}$ (erg s$^{-1}$)')
+                axs[i].set_ylabel('$\mathrm{log_{10}}$ $L_{\mathrm{BH,bol}}$ [erg s$^{-1}$]')
                 ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major', labelbottom=False, labeltop=False)
                 ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='minor')
                 
@@ -2515,7 +2515,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 
                 #---------------------
                 ### Formatting
-                axs[i].set_ylabel('Disc edge velocity (km s$^{-1}$)')
+                axs[i].set_ylabel('Disc edge velocity [km s$^{-1}$]')
                 ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='major', labelbottom=False, labeltop=False)
                 ax_top.tick_params(axis='both', direction='in', top=True, bottom=False, left=False, right=False, which='minor')
                 
@@ -2543,7 +2543,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 axs[i].tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
                 axs[i].tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
             if i == len(plot_names)-1:
-                axs[i].set_xlabel('Lookback time (Gyr)')
+                axs[i].set_xlabel('Lookback time [Gyr]')
             
             
         #------------------------

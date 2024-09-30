@@ -2869,7 +2869,7 @@ def _manual_plot_misalignment_z(Lookbacktime_array         = [7.94, 7.32, 6.65, 
     ### General formatting
     # Setting regular axis
     axs.set_xlim(0, 8)
-    axs.set_xlabel('Lookback time (Gyr)')
+    axs.set_xlabel('Lookback time [Gyr]')
     axs.invert_xaxis()
     if set_log_plot:
         axs.set_yscale('log')
@@ -3836,7 +3836,7 @@ def _plot_misalignment_double_tree(csv_sample = 'L100_173_all_sample_misalignmen
 #_manual_plot_misalignment_double()
 
 #_plot_misalignment_z()
-#_manual_plot_misalignment_z()
+_manual_plot_misalignment_z()
 
 #_plot_misalignment_distribution_timescale()    NOT FINISHED
 #_plot_misalignment_double_tree()

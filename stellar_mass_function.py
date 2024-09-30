@@ -350,8 +350,8 @@ def _plot_stellar_mass_function(csv_sample = 'L100_27_all_sample_misalignment_9.
         plt.xlim(9, 12.5)
         plt.ylim(-5, -1.5)
         plt.yticks(np.arange(-5, -1.4, 0.5))
-        plt.xlabel(r'log$_{10}$ M$_{*}$ (M$_{\odot}$)')
-        plt.ylabel(r'log$_{10}$ dn/dlog$_{10}$(M$_{*}$)'+'\n'+'(cMpc$^{-3}$)')
+        plt.xlabel(r'log$_{10}$ M$_{*}$ [M$_{\odot}$]')
+        plt.ylabel(r'log$_{10}$ dn/dlog$_{10}$(M$_{*}$)'+'\n'+'[cMpc$^{-3}$]')
         plt.xticks(np.arange(9, 12.5, 0.5))
           
         #-----------  
@@ -359,8 +359,23 @@ def _plot_stellar_mass_function(csv_sample = 'L100_27_all_sample_misalignment_9.
         
         #-----------
         # Legend
-        axs.plot(0, 0, label='${z=%.2f}$' %sample_input['Redshift'], c='k')    # Creating fake plot to add redshift
-        axs.legend(loc='upper right', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=0)
+        legend_elements = []
+        legend_labels = []
+        legend_colors = []
+        legend_labels.append(sim_name)
+        legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+        legend_colors.append('indigo')
+        legend_labels.append('Sample selection')
+        legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+        legend_colors.append('r')
+        legend_labels.append('${z=%.2f}$' %sample_input['Redshift'])
+        legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+        legend_colors.append('k')
+
+        axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0, ncol=1)
+        
+        #axs.plot(0, 0, label='${z=%.2f}$' %sample_input['Redshift'], c='k')    # Creating fake plot to add redshift
+        #axs.legend(loc='upper right', frameon=False, labelspacing=0.1, labelcolor='linecolor', handlelength=0)
         
         #-----------
         # other

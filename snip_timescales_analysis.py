@@ -407,7 +407,7 @@ def _plot_timescale_histogram(misalignment_tree, misalignment_input, summary_dic
         axins.set_yscale('log')
         axins.set_xlim(0, set_bin_limit_trelax)
         axins.set_xticks(np.arange(0, set_bin_limit_trelax+0.1, step=1))
-        axins.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)', fontsize = 5)
+        axins.set_xlabel('$t_{\mathrm{relax}}$ [Gyr]', fontsize = 5)
         if set_plot_percentage:
             axins.set_ylim(0.0002, set_thist_ymax_trelax)
             axins.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
@@ -472,7 +472,7 @@ def _plot_timescale_histogram(misalignment_tree, misalignment_input, summary_dic
         axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=0))
     axs.set_xlim(0, set_bin_limit_trelax)
     axs.set_xticks(np.arange(0, set_bin_limit_trelax+0.1, step=1))
-    axs.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)')
+    axs.set_xlabel('$t_{\mathrm{relax}}$ [Gyr]')
     if set_plot_percentage:
         axs.set_ylabel('Percentage of misalignments')
     else:
@@ -1460,11 +1460,11 @@ def _plot_stacked_trelax(misalignment_tree, misalignment_input, summary_dict, pl
     if set_plot_type == 'time':
         axs.set_xlim(0-3*time_extra, set_bin_limit_trelax)
         axs.set_xticks(np.arange(0, set_bin_limit_trelax+0.1, 1))
-        axs.set_xlabel('Time since misalignment (Gyr)')
+        axs.set_xlabel('Time since misalignment [Gyr]')
     elif set_plot_type == 'raw_time':
         axs.set_xlim(8, 0)
         axs.set_xticks(np.arange(8, -0.1, -1))
-        axs.set_xlabel('Lookbacktime (Gyr)')
+        axs.set_xlabel('Lookbacktime [Gyr]')
     elif set_plot_type == 'snap':
         axs.set_xlim(-10, 70)
         axs.set_xticks(np.arange(-10, 71, 10))
@@ -1550,7 +1550,7 @@ def _plot_stacked_trelax(misalignment_tree, misalignment_input, summary_dict, pl
     median_counter_co = np.median(np.array(summary_dict['trelax']['counter-co']))
     std_counter_co    = np.std(np.array(summary_dict['trelax']['counter-co']))
     print('Relaxation timescales:')
-    print('   (Gyr)     all   co-co   co-counter   counter-counter   counter-co')
+    print('   [Gyr]     all   co-co   co-counter   counter-counter   counter-co')
     print('   Mean:    %.2f    %.2f      %.2f           %.2f            %.2f' %(mean_timescale, (math.nan if len(summary_dict['trelax']['co-co']) == 0 else mean_co_co), (math.nan if len(summary_dict['trelax']['co-counter']) == 0 else mean_co_counter), (math.nan if len(summary_dict['trelax']['counter-counter']) == 0 else mean_counter_counter), (math.nan if len(summary_dict['trelax']['counter-co']) == 0 else mean_counter_co)))   
     print('   Median:  %.2f    %.2f      %.2f           %.2f            %.2f' %(median_timescale, (math.nan if len(summary_dict['trelax']['co-co']) == 0 else median_co_co), (math.nan if len(summary_dict['trelax']['co-counter']) == 0 else median_co_counter), (math.nan if len(summary_dict['trelax']['counter-counter']) == 0 else median_counter_counter), (math.nan if len(summary_dict['trelax']['counter-co']) == 0 else median_counter_co)))   
     print('   std:     %.2f    %.2f      %.2f           %.2f            %.2f' %(std_timescale, (math.nan if len(summary_dict['trelax']['co-co']) == 0 else std_co_co), (math.nan if len(summary_dict['trelax']['co-counter']) == 0 else std_co_counter), (math.nan if len(summary_dict['trelax']['counter-counter']) == 0 else std_counter_counter), (math.nan if len(summary_dict['trelax']['counter-co']) == 0 else std_counter_co)))
@@ -2816,13 +2816,13 @@ def _plot_stacked_trelax_2x2(misalignment_tree, misalignment_input, summary_dict
     if set_plot_type == 'time':
         ax_counter_counter.set_xlim(0-3*time_extra, set_bin_limit_trelax)
         ax_counter_counter.set_xticks(np.arange(0, set_bin_limit_trelax+0.1, 1))
-        ax_counter_co.set_xlabel('Time since misalignment (Gyr)')
-        ax_counter_counter.set_xlabel('Time since misalignment (Gyr)')
+        ax_counter_co.set_xlabel('Time since misalignment [Gyr]')
+        ax_counter_counter.set_xlabel('Time since misalignment [Gyr]')
         #ax_counter_counter.get_xaxis().set_label_coords(1,-0.12)
     elif set_plot_type == 'raw_time':
         ax_counter_counter.set_xlim(8, 0)
         ax_counter_counter.set_xticks(np.arange(8, -0.1, -1))
-        ax_counter_counter.set_xlabel('Lookbacktime (Gyr)')
+        ax_counter_counter.set_xlabel('Lookbacktime [Gyr]')
         ax_counter_counter.get_xaxis().set_label_coords(1,-0.12)
     elif set_plot_type == 'snap':
         ax_counter_counter.set_xlim(-10, 70)
@@ -2917,7 +2917,7 @@ def _plot_stacked_trelax_2x2(misalignment_tree, misalignment_input, summary_dict
     median_counter_co = np.median(np.array(summary_dict['trelax']['counter-co']))
     std_counter_co    = np.std(np.array(summary_dict['trelax']['counter-co']))
     print('Relaxation timescales:')
-    print('   (Gyr)     all   co-co   co-counter   counter-counter   counter-co')
+    print('   [Gyr]     all   co-co   co-counter   counter-counter   counter-co')
     print('   Mean:    %.2f    %.2f      %.2f           %.2f            %.2f' %(mean_timescale, (math.nan if len(summary_dict['trelax']['co-co']) == 0 else mean_co_co), (math.nan if len(summary_dict['trelax']['co-counter']) == 0 else mean_co_counter), (math.nan if len(summary_dict['trelax']['counter-counter']) == 0 else mean_counter_counter), (math.nan if len(summary_dict['trelax']['counter-co']) == 0 else mean_counter_co)))   
     print('   Median:  %.2f    %.2f      %.2f           %.2f            %.2f' %(median_timescale, (math.nan if len(summary_dict['trelax']['co-co']) == 0 else median_co_co), (math.nan if len(summary_dict['trelax']['co-counter']) == 0 else median_co_counter), (math.nan if len(summary_dict['trelax']['counter-counter']) == 0 else median_counter_counter), (math.nan if len(summary_dict['trelax']['counter-co']) == 0 else median_counter_co)))   
     print('   std:     %.2f    %.2f      %.2f           %.2f            %.2f' %(std_timescale, (math.nan if len(summary_dict['trelax']['co-co']) == 0 else std_co_co), (math.nan if len(summary_dict['trelax']['co-counter']) == 0 else std_co_counter), (math.nan if len(summary_dict['trelax']['counter-counter']) == 0 else std_counter_counter), (math.nan if len(summary_dict['trelax']['counter-co']) == 0 else std_counter_co)))
@@ -4002,7 +4002,7 @@ def _plot_box_and_whisker_trelax(misalignment_tree, misalignment_input, summary_
     ### Formatting
     axs.set_xlim(left=0)
     #axs.set_yticks(np.arange(0, set_bin_limit_trelax+0.1, step=1))
-    axs.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)')
+    axs.set_xlabel('$t_{\mathrm{relax}}$ [Gyr]')
     
     #print(max(relaxationtime_plot))
     
@@ -4483,11 +4483,12 @@ def _plot_offset_trelax(misalignment_tree, misalignment_input, summary_dict, plo
     
     #-------------------
     ### Plot scatter
-    ax.scatter(df['Peak misalignment angle'], df['Relaxation time'], s=0.2, c='k', edgecolor='grey', marker='.', alpha=1, zorder=20)
+    #ax.scatter(df['Peak misalignment angle'], df['Relaxation time'], s=0.2, c='k', edgecolor='grey', marker='.', alpha=1, zorder=20)
+    ax.scatter(df['Peak misalignment angle'], df['Relaxation time'], s=2, c='k', edgecolor='k', marker='.', linewidths=0, alpha=0.5, zorder=-2)
     
     ### Plot upper, median, and lower sigma
     #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor=c, alpha=0.15, zorder=5)
-    ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor=c, alpha=0.2, zorder=6)
+    ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor=c, alpha=0.2, zorder=-1)
     #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,2], bin_medians[:,3], facecolor=c, alpha=0.9, zorder=7, label=offset_morph_i)
     ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls='-', zorder=105, label='sample')
     #ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls=':')
@@ -4529,11 +4530,12 @@ def _plot_offset_trelax(misalignment_tree, misalignment_input, summary_dict, plo
             #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor=c, alpha=0.15, zorder=5)
             #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor=c, alpha=0.35, zorder=6)
             #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,2], bin_medians[:,3], facecolor=c, alpha=0.9, zorder=7, label=offset_morph_i)
-            ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls=ls, label=offset_morph_i, zorder=99, alpha=0.5)
+            ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls=ls, label=offset_morph_i, zorder=99, alpha=0.9)
+            
             
             yerr_top    = bin_medians[:,3] - bin_medians[:,2]
             yerr_bottom = bin_medians[:,2] - bin_medians[:,1]
-            ax.errorbar(bins[:-1]+(bin_width/2), bin_medians[:,2], yerr=(yerr_bottom, yerr_top), lw=0.7, c=c, ls=None, zorder=99, alpha=0.5, ecolor=c, elinewidth=0.5, capsize=1.5)
+            ax.errorbar(bins[:-1]+(bin_width/2), bin_medians[:,2], yerr=(yerr_bottom, yerr_top), lw=0.7, c=c, ls='none', zorder=99, alpha=0.9, ecolor=c, elinewidth=0.5, capsize=1.5)
             
             #ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls=':')
         
@@ -4549,7 +4551,7 @@ def _plot_offset_trelax(misalignment_tree, misalignment_input, summary_dict, plo
     #-----------
     ### General formatting
     # Axis labels
-    ax.set_ylabel('$t_{\mathrm{relax}}$ (Gyr)')
+    ax.set_ylabel('$t_{\mathrm{relax}}$ [Gyr]')
     ax.set_xlabel('Peak angle from stability')
     ax_histy.set_xlabel('Count')
     ax_histx.set_ylabel('Count')
@@ -4707,11 +4709,11 @@ def _plot_offset_tdyn(misalignment_tree, misalignment_input, summary_dict, plot_
     
     #-------------------
     ### Plot scatter
-    ax.scatter(df['Peak misalignment angle'], df['Relaxation time'], s=0.2, c='k', edgecolor='grey', marker='.', alpha=1, zorder=20)
+    ax.scatter(df['Peak misalignment angle'], df['Relaxation time'], s=2, c='k', edgecolor='k', marker='.', linewidths=0, alpha=0.5, zorder=-2)
     
     ### Plot upper, median, and lower sigma
     #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor=c, alpha=0.15, zorder=5)
-    ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor=c, alpha=0.2, zorder=6)
+    ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor=c, alpha=0.2, zorder=-1)
     #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,2], bin_medians[:,3], facecolor=c, alpha=0.9, zorder=7, label=offset_morph_i)
     ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls='-', zorder=105, label='sample')
     #ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls=':')
@@ -4755,12 +4757,12 @@ def _plot_offset_tdyn(misalignment_tree, misalignment_input, summary_dict, plot_
         #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor=c, alpha=0.15, zorder=5)
         #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor=c, alpha=0.35, zorder=6)
         #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,2], bin_medians[:,3], facecolor=c, alpha=0.9, zorder=7, label=offset_morph_i)
-        ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls=ls, label=offset_morph_i, zorder=99, alpha=0.5)
+        ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls=ls, label=offset_morph_i, zorder=99, alpha=0.9)
         #ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls=':')
         
         yerr_top    = bin_medians[:,3] - bin_medians[:,2]
         yerr_bottom = bin_medians[:,2] - bin_medians[:,1]
-        ax.errorbar(bins[:-1]+(bin_width/2), bin_medians[:,2], yerr=(yerr_bottom, yerr_top), lw=0.7, c=c, ls=None, zorder=99, alpha=0.5, ecolor=c, elinewidth=0.5, capsize=1.5)
+        ax.errorbar(bins[:-1]+(bin_width/2), bin_medians[:,2], yerr=(yerr_bottom, yerr_top), lw=0.7, c=c, ls='none', zorder=99, alpha=0.9, ecolor=c, elinewidth=0.5, capsize=1.5)
         
         
         ### Plot histograms
@@ -4932,11 +4934,12 @@ def _plot_offset_ttorque(misalignment_tree, misalignment_input, summary_dict, pl
         
     #-------------------
     ### Plot scatter
-    ax.scatter(df['Peak misalignment angle'], df['Relaxation time'], s=0.2, c='k', edgecolor='grey', marker='.', alpha=1, zorder=20)
+    ax.scatter(df['Peak misalignment angle'], df['Relaxation time'], s=4, c='k', edgecolor='k', marker='.', linewidths=0, alpha=0.5, zorder=-2)
+    #ax.scatter(df['Peak misalignment angle'], df['Relaxation time'], s=5, c='grey', edgecolor='k', marker='.', linewidths=0, alpha=0.6, zorder=-2)
         
     ### Plot upper, median, and lower sigma
     #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor=c, alpha=0.15, zorder=5)
-    ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor=c, alpha=0.2, zorder=6)
+    ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor=c, alpha=0.2, zorder=-1)
     #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,2], bin_medians[:,3], facecolor=c, alpha=0.9, zorder=7, label=offset_morph_i)
     ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls='-', zorder=105, label='sample')
     #ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls=':')
@@ -4978,12 +4981,12 @@ def _plot_offset_ttorque(misalignment_tree, misalignment_input, summary_dict, pl
         #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,0], bin_medians[:,4], facecolor=c, alpha=0.15, zorder=5)
         #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,1], bin_medians[:,3], facecolor=c, alpha=0.35, zorder=6)
         #ax.fill_between(bins[:-1]+(bin_width/2), bin_medians[:,2], bin_medians[:,3], facecolor=c, alpha=0.9, zorder=7, label=offset_morph_i)
-        ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls=ls, label=offset_morph_i, zorder=99, alpha=0.5)
+        ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls=ls, label=offset_morph_i, zorder=99, alpha=0.9)
         #ax.plot(bins[:-1]+(bin_width/2), bin_medians[:,2], lw=0.7, c=c, ls=':')
         
         yerr_top    = bin_medians[:,3] - bin_medians[:,2]
         yerr_bottom = bin_medians[:,2] - bin_medians[:,1]
-        ax.errorbar(bins[:-1]+(bin_width/2), bin_medians[:,2], yerr=(yerr_bottom, yerr_top), lw=0.7, c=c, ls=None, zorder=99, alpha=0.5, ecolor=c, elinewidth=0.5, capsize=1.5)
+        ax.errorbar(bins[:-1]+(bin_width/2), bin_medians[:,2], yerr=(yerr_bottom, yerr_top), lw=0.7, c=c, ls='none', zorder=99, alpha=0.9, ecolor=c, elinewidth=0.5, capsize=1.5)
         
         
         ### Plot histograms
@@ -5179,7 +5182,7 @@ def _plot_merger_count_trelax(misalignment_tree, misalignment_input, summary_dic
     
     #-------------
     ### Formatting
-    axs.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)')
+    axs.set_xlabel('$t_{\mathrm{relax}}$ [Gyr]')
     axs.set_ylabel('Number of mergers' +'\n' + r'($\bar{\mu}_{\mathrm{*}}>0.1$)')
     if set_plot_merger_count_log:
         axs.set_xscale('log')
@@ -5719,7 +5722,7 @@ def _plot_halo_misangle_trelax(misalignment_tree, misalignment_input, summary_di
     
     #-------------
     ### Formatting
-    ax_scatter.set_ylabel('$t_{\mathrm{relax}}$ (Gyr)')
+    ax_scatter.set_ylabel('$t_{\mathrm{relax}}$ [Gyr]')
     #ax_hist.set_ylabel('Count')
     ax_line.set_ylabel(r'$\bar{\kappa}_{\mathrm{co}}^{*}$')
     ax_line.set_xlabel(r'$\bar{\psi}_{\mathrm{DM-stars}}$ during relaxation')
@@ -6428,7 +6431,7 @@ def _plot_halo_misangle_manual(misalignment_tree, misalignment_input, summary_di
     
     #-------------
     ### Formatting
-    ax_scatter1.set_ylabel('$t_{\mathrm{relax}}$ (Gyr)')
+    ax_scatter1.set_ylabel('$t_{\mathrm{relax}}$ [Gyr]')
     ax_scatter2.set_ylabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{torque}}$')
     #ax_hist.set_ylabel('Count')
     ax_line.set_ylabel(r'$\bar{\kappa}_{\mathrm{co}}^{*}$')
@@ -7203,7 +7206,7 @@ def _plot_timescale_gas_scatter_trelax(misalignment_tree, misalignment_input, su
     
     #-------------
     ### Formatting
-    axs.set_ylabel('$t_{\mathrm{relax}}$ (Gyr)')
+    axs.set_ylabel('$t_{\mathrm{relax}}$ [Gyr]')
     axs.set_xlabel('$f_{\mathrm{%s}}(<r_{50})$' %('gas' if gas_fraction_type == 'gas' else 'gas,SF'))
     axs.set_ylim(0, 4.5)
     axs.set_yticks(np.arange(0, 4.1, 1))
@@ -7773,7 +7776,7 @@ def _plot_timescale_gas_histogram_trelax(misalignment_tree, misalignment_input, 
     axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
     axs.set_xlim(0, set_bin_limit_trelax)
     axs.set_xticks(np.arange(0, set_bin_limit_trelax+0.1, step=1))
-    axs.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)')
+    axs.set_xlabel('$t_{\mathrm{relax}}$ [Gyr]')
     axs.set_ylabel('Percentage of\nmisalignments')
     axs.set_ylim(bottom=0.00025)
     
@@ -8485,7 +8488,7 @@ def _plot_timescale_occupation_histogram_trelax(misalignment_tree, misalignment_
         axs_ETG.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
         axs_ETG.set_xlim(0, set_bin_limit_trelax)
         axs_ETG.set_xticks(np.arange(0, set_bin_limit_trelax+0.1, step=1))
-        #axs_ETG.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)')
+        #axs_ETG.set_xlabel('$t_{\mathrm{relax}}$ [Gyr]')
         axs_ETG.set_ylim(bottom=0.00025)
         
         axs_LTG.set_yscale('log')
@@ -8497,13 +8500,13 @@ def _plot_timescale_occupation_histogram_trelax(misalignment_tree, misalignment_
         
 
         fig.supylabel('Percentage of misalignments', fontsize=9, x=0)
-        axs_LTG.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)') 
+        axs_LTG.set_xlabel('$t_{\mathrm{relax}}$ [Gyr]') 
     else:
         axs.set_yscale('log')
         axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
         axs.set_xlim(0, set_bin_limit_trelax)
         axs.set_xticks(np.arange(0, set_bin_limit_trelax+0.1, step=1))
-        axs.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)')
+        axs.set_xlabel('$t_{\mathrm{relax}}$ [Gyr]')
         axs.set_ylabel('Percentage of\nmisalignments')
         axs.set_ylim(bottom=0.00025)
     
@@ -8788,7 +8791,7 @@ def _plot_timescale_occupation_histogram_tdyn(misalignment_tree, misalignment_in
         axs_ETG.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
         axs_ETG.set_xlim(0, set_bin_limit_tdyn)
         axs_ETG.set_xticks(np.arange(0, set_bin_limit_tdyn+0.1, step=4))
-        #axs_ETG.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)')
+        #axs_ETG.set_xlabel('$t_{\mathrm{relax}}$ [Gyr]')
         axs_ETG.set_ylim(bottom=0.00025)
         
         axs_LTG.set_yscale('log')
@@ -9383,7 +9386,7 @@ def _plot_timescale_environment_histogram_trelax(misalignment_tree, misalignment
     axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
     axs.set_xlim(0, set_bin_limit_trelax)
     axs.set_xticks(np.arange(0, set_bin_limit_trelax+0.1, step=1))
-    axs.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)')
+    axs.set_xlabel('$t_{\mathrm{relax}}$ [Gyr]')
     axs.set_ylabel('Percentage of\nmisalignments')
     axs.set_ylim(bottom=0.00025)
     
@@ -10151,7 +10154,7 @@ def _plot_timescale_accretion_histogram_trelax(misalignment_tree, misalignment_i
     axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
     axs.set_xlim(0, set_bin_limit_trelax)
     axs.set_xticks(np.arange(0, set_bin_limit_trelax+0.1, step=1))
-    axs.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)')
+    axs.set_xlabel('$t_{\mathrm{relax}}$ [Gyr]')
     axs.set_ylabel('Percentage of\nmisalignments')
     axs.set_ylim(bottom=0.00025)
     
@@ -10981,7 +10984,7 @@ def _plot_timescale_specaccretion_histogram_trelax(misalignment_tree, misalignme
     axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
     axs.set_xlim(0, set_bin_limit_trelax)
     axs.set_xticks(np.arange(0, set_bin_limit_trelax+0.1, step=1))
-    axs.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)')
+    axs.set_xlabel('$t_{\mathrm{relax}}$ [Gyr]')
     axs.set_ylabel('Percentage of\nmisalignments')
     axs.set_ylim(bottom=0.00025)
     
@@ -11790,7 +11793,7 @@ def _plot_timescale_stelmass_histogram_trelax(misalignment_tree, misalignment_in
     axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
     axs.set_xlim(0, set_bin_limit_trelax)
     axs.set_xticks(np.arange(0, set_bin_limit_trelax+0.1, step=1))
-    axs.set_xlabel('$t_{\mathrm{relax}}$ (Gyr)')
+    axs.set_xlabel('$t_{\mathrm{relax}}$ [Gyr]')
     axs.set_ylabel('Percentage of\nmisalignments')
     axs.set_ylim(bottom=0.00025)
     
@@ -12740,7 +12743,7 @@ def _plot_morphology_change_ttorque_ellip(misalignment_tree, misalignment_input,
 
 #\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 # Set starting parameters
-load_csv_file_in = '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_NEW'
+load_csv_file_in = '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_NEW' 
 plot_annotate_in                                           = None
 savefig_txt_in   = load_csv_file_in               # [ 'manual' / load_csv_file_in ] 'manual' will prompt txt before saving
        
@@ -12760,6 +12763,8 @@ savefig_txt_in   = load_csv_file_in               # [ 'manual' / load_csv_file_i
 #'_20Thresh_30Peak_veryhighLatency_NEW'
 #'_20Thresh_30Peak_50particles_NEW'
 #'_20Thresh_30Peak_100particles_NEW'
+#'_20error_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_NEW'
+#'_10error_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_NEW'
 
 #  False 
 # 'ETG → ETG' , 'LTG → LTG'
@@ -13217,7 +13222,7 @@ if load_csv_file_in == '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010'
         axs.set_yticks(np.arange(0, 181, 30))
         axs.set_ylim(0, 180)
         axs.set_xlim(0, set_bin_limit_trelax)
-        axs.set_xlabel('Relaxation time (Gyr)')
+        axs.set_xlabel('Relaxation time [Gyr]')
         axs.set_ylabel('Peak misalignment angle')
         axs.minorticks_on()
         axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
@@ -13611,7 +13616,7 @@ if load_csv_file_in == '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010'
             elif plot_spearman_c == 'relaxation_time':
                 vmin = 0
                 vmax = 4
-                label = 'Relaxation time (Gyr)'
+                label = 'Relaxation time [Gyr]'
             
             #-------------
             # Normalise colormap
@@ -13759,7 +13764,7 @@ if load_csv_file_in == '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010'
             elif plot_spearman_x == 'relaxation_time':
                 axs.set_xticks(np.arange(0, 4.1, 0.5))
                 axs.set_xlim(0, 4)
-                axs.set_xlabel('Relaxation time (Gyr)')
+                axs.set_xlabel('Relaxation time [Gyr]')
                 
             # y-axis labels
             if plot_spearman_y == 'halomass':
@@ -13885,7 +13890,7 @@ if load_csv_file_in == '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010'
             elif plot_spearman_y == 'relaxation_time':
                 axs.set_yticks(np.arange(0, 4.1, 0.5))
                 axs.set_ylim(0, 4)
-                axs.set_ylabel('Relaxation time (Gyr)')
+                axs.set_ylabel('Relaxation time [Gyr]')
             
         
         #-----------
@@ -13954,10 +13959,10 @@ if load_csv_file_in == '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010'
         ### General formatting
         # Axis labels
         axs.set_xlim(0, 5)
-        axs.set_xlabel('Relaxation time (Gyr)')
+        axs.set_xlabel('Relaxation time [Gyr]')
         axs.set_yticks(np.arange(0, 2, 0.2))
         axs.set_ylim(0, 2)
-        axs.set_ylabel('Dynamical time (Gyr)')
+        axs.set_ylabel('Dynamical time [Gyr]')
         axs.minorticks_on()
         axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
         axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')

@@ -2530,7 +2530,7 @@ def _plot_stacked_trelax_2x2(misalignment_tree, misalignment_input, summary_dict
     ### Loop over all windows and plot them
     ID_plot     = []
     ID_collect  = []        # flexible array used to extract weird relaxations
-    diff_co_co           = []
+    diff_co_co           = []   # average time spacing
     diff_co_counter      = []
     diff_counter_counter = []
     diff_counter_co      = []

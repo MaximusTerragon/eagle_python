@@ -9397,15 +9397,15 @@ def _plot_timescale_environment_histogram_trelax(misalignment_tree, misalignment
     legend_labels = []
     legend_colors = []
     
-    legend_labels.append(r'$M_{\mathrm{group}}$' + '/M$_{\odot}$' + r'$<10^{%s}$' %(halomass_limits[0]))
+    legend_labels.append(r'$M_{\mathrm{200}}$' + '/M$_{\odot}$' + r'$<10^{%s}$' %(halomass_limits[0]))
     legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
     legend_colors.append('violet')
     
-    #legend_labels.append(r'$10^{%s}<M_{\mathrm{group}}$'%(halomass_limits[0]) + '/M$_{\odot}$' + r'$<10^{%s}$' %(halomass_limits[1]))
+    #legend_labels.append(r'$10^{%s}<M_{\mathrm{200}}$'%(halomass_limits[0]) + '/M$_{\odot}$' + r'$<10^{%s}$' %(halomass_limits[1]))
     #legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
     #legend_colors.append('mediumorchid')
 
-    legend_labels.append(r'$M_{\mathrm{group}}$/M$_{\odot}$$>10^{%s}$'%(halomass_limits[0]))
+    legend_labels.append(r'$M_{\mathrm{200}}$/M$_{\odot}$$>10^{%s}$'%(halomass_limits[0]))
     legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
     legend_colors.append('indigo')
     
@@ -9642,7 +9642,7 @@ def _plot_timescale_environment_histogram_tdyn(misalignment_tree, misalignment_i
     legend_labels = []
     legend_colors = []
     
-    legend_labels.append(r'$M_{\mathrm{group}}$' + '/M$_{\odot}$' + r'$<10^{%s}$' %(halomass_limits[0]))
+    legend_labels.append(r'$M_{\mathrm{200}}$' + '/M$_{\odot}$' + r'$<10^{%s}$' %(halomass_limits[0]))
     legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
     legend_colors.append('violet')
     
@@ -9650,7 +9650,7 @@ def _plot_timescale_environment_histogram_tdyn(misalignment_tree, misalignment_i
     #legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
     #legend_colors.append('mediumorchid')
 
-    legend_labels.append(r'$M_{\mathrm{group}}$/M$_{\odot}$$>10^{%s}$'%(halomass_limits[0]))
+    legend_labels.append(r'$M_{\mathrm{200}}$/M$_{\odot}$$>10^{%s}$'%(halomass_limits[0]))
     legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
     legend_colors.append('indigo')
     
@@ -9887,7 +9887,7 @@ def _plot_timescale_environment_histogram_ttorque(misalignment_tree, misalignmen
     legend_labels = []
     legend_colors = []
     
-    legend_labels.append(r'$M_{\mathrm{group}}$' + '/M$_{\odot}$' + r'$<10^{%s}$' %(halomass_limits[0]))
+    legend_labels.append(r'$M_{\mathrm{200}}$' + '/M$_{\odot}$' + r'$<10^{%s}$' %(halomass_limits[0]))
     legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
     legend_colors.append('violet')
     
@@ -9895,7 +9895,7 @@ def _plot_timescale_environment_histogram_ttorque(misalignment_tree, misalignmen
     #legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
     #legend_colors.append('mediumorchid')
 
-    legend_labels.append(r'$M_{\mathrm{group}}$/M$_{\odot}$$>10^{%s}$'%(halomass_limits[0]))
+    legend_labels.append(r'$M_{\mathrm{200}}$/M$_{\odot}$$>10^{%s}$'%(halomass_limits[0]))
     legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
     legend_colors.append('indigo')
     
@@ -13038,7 +13038,6 @@ if load_csv_file_in == '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010'
                               use_only_centrals              = True,        # Use only centrals                               
                             showfig = True,
                             savefig = False)"""
-                            
 
 
 # PLOTS HISTOGRAM OF GAS INFLOW WITH RELAXATION TIME

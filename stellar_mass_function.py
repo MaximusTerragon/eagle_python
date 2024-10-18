@@ -46,7 +46,7 @@ def _plot_stellar_mass_function(csv_sample = 'L100_27_all_sample_misalignment_9.
                                    pop_mass_limit      = 10**8.5,            # Lower limit of population plot sampled
                                    use_satellites      = True,   
                                  #--------------------------
-                                 hist_bin_width = 0.2,
+                                 hist_bin_width = 0.1,
                                  #--------------------------
                                  showfig       = True,
                                  savefig       = True,
@@ -490,7 +490,9 @@ def _plot_stellar_mass_function_snip(snipshot_in = 188,
 
 #===========================
 #_plot_stellar_mass_function()
-_plot_stellar_mass_function(use_angle = 'stars_gas_sf')
+_plot_stellar_mass_function(use_angle = 'stars_gas_sf', 
+                                showfig       = True,
+                                savefig       = True)
 #_plot_stellar_mass_function(use_angle = 'stars_dm')
 
 #_plot_stellar_mass_function_snip()

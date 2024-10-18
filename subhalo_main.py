@@ -2687,6 +2687,7 @@ class Subhalo_Analysis:
             # Making a random mask of data points... 50% = 0.5
             random_mask = np.random.choice(tmp_coords.shape[0], int(np.ceil(tmp_coords.shape[0] * 0.5)), replace=False)
             
+            
             # Applying mask
             tmp_coords = tmp_coords[random_mask]
             tmp_mass   = tmp_mass[random_mask]

@@ -526,7 +526,7 @@ def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_9.5',     #
         axs.set_ylim(bottom=0)
         axs.set_xticks(np.arange(0, 181, step=30))
         if use_proj_angle:
-            axs.set_xlabel('Misalignment angle, $\psi_{z}$')
+            axs.set_xlabel('Misalignment angle, $\psi_{\mathrm{2D}}$')
         else:
             axs.set_xlabel('Misalignment angle, $\psi_{\mathrm{3D}}$')
         axs.set_ylabel('Percentage of galaxies')
@@ -1188,7 +1188,7 @@ def _plot_misalignment_halo(csv_sample = 'L100_188_all_sample_misalignment_9.5',
         axs.set_ylim(bottom=0)
         axs.set_xticks(np.arange(0, 181, step=30))
         if use_proj_angle:
-            axs.set_xlabel('Misalignment angle, $\psi_{z}$')
+            axs.set_xlabel('Misalignment angle, $\psi_{\mathrm{2D}}$')
         else:
             axs.set_xlabel('Misalignment angle, $\psi_{\mathrm{3D}}$')
         axs.set_ylabel('Percentage of galaxies')
@@ -1834,7 +1834,7 @@ def _plot_misalignment_double(csv_sample = 'L100_27_all_sample_misalignment_9.5'
             axs[1].get_yaxis().set_label_coords(-0.12,1.0)
         
         if use_proj_angle:
-            axs[1].set_xlabel('Misalignment angle, $\psi_{z}$')
+            axs[1].set_xlabel('Misalignment angle, $\psi_{\mathrm{2D}}$')
         else:
             axs[1].set_xlabel('Misalignment angle, $\psi_{\mathrm{3D}}$')
         
@@ -2062,7 +2062,7 @@ def _manual_plot_misalignment_double(ETG_proj_array = [649, 341, 206, 121, 76, 5
                                      misangle_threshold = 30,             # what we classify as misaligned
                                      #--------------------------
                                      showfig       = True,
-                                     savefig       = False,
+                                     savefig       = True,
                                        file_format = 'pdf',
                                        savefig_txt = 'snips',
                                      #--------------------------
@@ -2171,7 +2171,7 @@ def _manual_plot_misalignment_double(ETG_proj_array = [649, 341, 206, 121, 76, 5
     # LEGEND
     # top graph
     legend_elements1 = [Line2D([0], [0], marker=' ', color='w'), Line2D([0], [0], marker=' ', color='w')]
-    legend_labels1 = ['LTG, $\psi_{z}$', 'LTG, $\psi_{\mathrm{3D}}$']
+    legend_labels1 = ['LTG, $\psi_{\mathrm{2D}}$', 'LTG, $\psi_{\mathrm{3D}}$']
     legend_colors1 = [plot_color_LTG_proj, plot_color_LTG_abs]
             
     legend_elements1.append(Line2D([0], [0], marker=' ', color='w'))
@@ -2188,7 +2188,7 @@ def _manual_plot_misalignment_double(ETG_proj_array = [649, 341, 206, 121, 76, 5
     
     # bottom graph
     legend_elements2 = [Line2D([0], [0], marker=' ', color='w'), Line2D([0], [0], marker=' ', color='w')]
-    legend_labels2 = ['ETG, $\psi_{z}$', 'ETG, $\psi_{\mathrm{3D}}$']
+    legend_labels2 = ['ETG, $\psi_{\mathrm{2D}}$', 'ETG, $\psi_{\mathrm{3D}}$']
     legend_colors2 = [plot_color_ETG_proj, plot_color_ETG_abs]
             
     legend_elements2.append(Line2D([0], [0], marker=' ', color='w'))
@@ -3488,7 +3488,7 @@ def _plot_misalignment_double_tree(csv_sample = 'L100_173_all_sample_misalignmen
             axs[1].get_yaxis().set_label_coords(-0.12,1.0)
         
         if use_proj_angle:
-            axs[1].set_xlabel('Misalignment angle, $\psi_{z}$')
+            axs[1].set_xlabel('Misalignment angle, $\psi_{\mathrm{2D}}$')
         else:
             axs[1].set_xlabel('Misalignment angle, $\psi_{\mathrm{3D}}$')
         
@@ -3833,10 +3833,10 @@ def _plot_misalignment_double_tree(csv_sample = 'L100_173_all_sample_misalignmen
 #_plot_misalignment()  
 #_plot_misalignment_halo()
 #_plot_misalignment_double()
-#_manual_plot_misalignment_double()
+_manual_plot_misalignment_double()
 
 #_plot_misalignment_z()
-_manual_plot_misalignment_z()
+#_manual_plot_misalignment_z()
 
 #_plot_misalignment_distribution_timescale()    NOT FINISHED
 #_plot_misalignment_double_tree()

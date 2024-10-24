@@ -190,9 +190,9 @@ def _extract_tree(csv_tree = 'L100_galaxy_tree_',
 	'index_m'				- First index to be misaligned by more than 30 degrees
     'index_r'				- First to be relaxed back in stable regime
     'index_merger' 			- Index of mergers that met locations. Use this to sample 'merger_ratio_stars'
-    'relaxation_time' 		- [ Gyr ] Time between index_m and index_r
-	'relaxation_tdyn'		- [fraction] trelax/tdyn between index_m and index_r
-	'relaxation_ttorque'	- [fraction] trelax/ttorque between index_m and index_r
+    'relaxation_time' 		- [ Gyr ] Time between index_s and index_r
+	'relaxation_tdyn'		- [fraction] trelax/tdyn between index_s and index_r
+	'relaxation_ttorque'	- [fraction] trelax/ttorque between index_s and index_r
     'relaxation_type'		- co-co, counter-counter, co-counter, counter-co
     'relaxation_morph'		- ETG-ETG, LTG-LTG, ETG-LTG, LTG-ETG, other					BASED OFF MORPH_LIMITS
     'misalignment_morph'	- ETG, LTG, other
@@ -245,7 +245,7 @@ def _extract_tree(csv_tree = 'L100_galaxy_tree_',
         misalignment_tree_new = {}
         for ID_i in misalignment_tree.keys():
             
-            if misalignment_tree['%s' %ID_i]['relaxation_time'] > use_alt_min_trelax:
+            if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] > use_alt_min_trelax:
                 misalignment_tree_new['%s' %ID_i] = misalignment_tree['%s' %ID_i]
     
         misalignment_tree = misalignment_tree_new
@@ -410,7 +410,7 @@ def _extract_tree(csv_tree = 'L100_galaxy_tree_',
         if int(ID_i) in range(251899973, 251899973+80):            
             print('Found misalignment: %s\tLookbacktime: %.2f' %(ID_i, misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_m']]))
             print('\t%s' %misalignment_tree['%s' %ID_i]['relaxation_type'])
-            print('\t%.2f Gyr' %misalignment_tree['%s' %ID_i]['relaxation_time'])
+            print('\t%.2f Gyr' %misalignment_tree['%s' %ID_i]['relaxation_time_alt'])
             print('\t%.2f trelax/tdyn' %misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
             print('\t%.2f trelax/ttorque' %misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
             print('\t%s' %misalignment_tree['%s' %ID_i]['relaxation_morph'])
@@ -473,62 +473,62 @@ def _extract_tree(csv_tree = 'L100_galaxy_tree_',
     
 
     for ID_i in misalignment_tree.keys():
-        summary_dict['trelax']['array'].append(misalignment_tree['%s' %ID_i]['relaxation_time'])
-        summary_dict['tdyn']['array'].append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
-        summary_dict['ttorque']['array'].append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+        summary_dict['trelax']['array'].append(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])
+        summary_dict['tdyn']['array'].append(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'])
+        summary_dict['ttorque']['array'].append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
         summary_dict['ID']['array'].append(ID_i)
         
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
-            summary_dict['trelax']['co-co'].append(misalignment_tree['%s' %ID_i]['relaxation_time']) 
-            summary_dict['tdyn']['co-co'].append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
-            summary_dict['ttorque']['co-co'].append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            summary_dict['trelax']['co-co'].append(misalignment_tree['%s' %ID_i]['relaxation_time_alt']) 
+            summary_dict['tdyn']['co-co'].append(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'])
+            summary_dict['ttorque']['co-co'].append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
             summary_dict['ID']['co-co'].append(ID_i) 
         elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
-            summary_dict['trelax']['co-counter'].append(misalignment_tree['%s' %ID_i]['relaxation_time']) 
-            summary_dict['tdyn']['co-counter'].append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
-            summary_dict['ttorque']['co-counter'].append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            summary_dict['trelax']['co-counter'].append(misalignment_tree['%s' %ID_i]['relaxation_time_alt']) 
+            summary_dict['tdyn']['co-counter'].append(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'])
+            summary_dict['ttorque']['co-counter'].append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
             summary_dict['ID']['co-counter'].append(ID_i) 
         elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
-            summary_dict['trelax']['counter-co'].append(misalignment_tree['%s' %ID_i]['relaxation_time']) 
-            summary_dict['tdyn']['counter-co'].append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
-            summary_dict['ttorque']['counter-co'].append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            summary_dict['trelax']['counter-co'].append(misalignment_tree['%s' %ID_i]['relaxation_time_alt']) 
+            summary_dict['tdyn']['counter-co'].append(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'])
+            summary_dict['ttorque']['counter-co'].append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
             summary_dict['ID']['counter-co'].append(ID_i) 
         elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
-            summary_dict['trelax']['counter-counter'].append(misalignment_tree['%s' %ID_i]['relaxation_time']) 
-            summary_dict['tdyn']['counter-counter'].append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
-            summary_dict['ttorque']['counter-counter'].append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            summary_dict['trelax']['counter-counter'].append(misalignment_tree['%s' %ID_i]['relaxation_time_alt']) 
+            summary_dict['tdyn']['counter-counter'].append(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'])
+            summary_dict['ttorque']['counter-counter'].append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
             summary_dict['ID']['counter-counter'].append(ID_i) 
         
         if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-ETG':
-            summary_dict['trelax']['ETG-ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']) 
-            summary_dict['tdyn']['ETG-ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
-            summary_dict['ttorque']['ETG-ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            summary_dict['trelax']['ETG-ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_time_alt']) 
+            summary_dict['tdyn']['ETG-ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'])
+            summary_dict['ttorque']['ETG-ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
             summary_dict['ID']['ETG-ETG'].append(ID_i)
         elif misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'LTG-LTG':
-            summary_dict['trelax']['LTG-LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']) 
-            summary_dict['tdyn']['LTG-LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
-            summary_dict['ttorque']['LTG-LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            summary_dict['trelax']['LTG-LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_time_alt']) 
+            summary_dict['tdyn']['LTG-LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'])
+            summary_dict['ttorque']['LTG-LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
             summary_dict['ID']['LTG-LTG'].append(ID_i)
         elif misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-LTG':
-            summary_dict['trelax']['ETG-LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']) 
-            summary_dict['tdyn']['ETG-LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
-            summary_dict['ttorque']['ETG-LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            summary_dict['trelax']['ETG-LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_time_alt']) 
+            summary_dict['tdyn']['ETG-LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'])
+            summary_dict['ttorque']['ETG-LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
             summary_dict['ID']['ETG-LTG'].append(ID_i)
         elif misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'LTG-ETG':
-            summary_dict['trelax']['LTG-ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']) 
-            summary_dict['tdyn']['LTG-ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
-            summary_dict['ttorque']['LTG-ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            summary_dict['trelax']['LTG-ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_time_alt']) 
+            summary_dict['tdyn']['LTG-ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'])
+            summary_dict['ttorque']['LTG-ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
             summary_dict['ID']['LTG-ETG'].append(ID_i)
             
         if misalignment_tree['%s' %ID_i]['misalignment_morph'] == 'ETG':
-            summary_dict['trelax']['ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']) 
-            summary_dict['tdyn']['ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
-            summary_dict['ttorque']['ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            summary_dict['trelax']['ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_time_alt']) 
+            summary_dict['tdyn']['ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'])
+            summary_dict['ttorque']['ETG'].append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
             summary_dict['ID']['ETG'].append(ID_i)
         elif misalignment_tree['%s' %ID_i]['misalignment_morph'] == 'LTG':
-            summary_dict['trelax']['LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_time']) 
-            summary_dict['tdyn']['LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
-            summary_dict['ttorque']['LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            summary_dict['trelax']['LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_time_alt']) 
+            summary_dict['tdyn']['LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'])
+            summary_dict['ttorque']['LTG'].append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
             summary_dict['ID']['LTG'].append(ID_i)
     
 

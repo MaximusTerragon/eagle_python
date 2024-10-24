@@ -29,7 +29,7 @@ from subhalo_main import Initial_Sample, Subhalo_Extract, Subhalo_Analysis, Conv
 import eagleSqlTools as sql
 from graphformat import set_rc_params, lighten_color
 from read_dataset_directories import _assign_directories
-from extract_misalignment_trees import _extract_tree
+from extract_misalignment_trees_NEW import _extract_tree
 
 
 #====================================
@@ -39,61 +39,11 @@ EAGLE_dir, sample_dir, tree_dir, output_dir, fig_dir, dataDir_dict = _assign_dir
 register_sauron_colormap()
 #====================================
 
-
-#-------------------------
-# Given ID at z=0, will look for misalignments in tree            
-def _find_misalignment_evolution(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
-                      #==============================================
-                      # Find IDs:
-                        GalaxyID_list_z0 = [453139689, 251899973],    # GalaxyID at z=0
-                        ID_search_range   = 80,                                 # GalaxyID + value to look in misalignment_tree
-                      #-----------------------------
-                      debug = False):
     
-    #-------------------------
-    # Average timescales from input (for use in metadata)
-    mean_timescale   = np.mean(np.array(summary_dict['trelax']['array']))
-    median_timescale = np.median(np.array(summary_dict['trelax']['array']))
-    std_timescale    = np.std(np.array(summary_dict['trelax']['array']))
-    # Average tdyn
-    mean_tdyn   = np.mean(np.array(summary_dict['tdyn']['array']))
-    median_tdyn = np.median(np.array(summary_dict['tdyn']['array']))
-    std_tdyn    = np.std(np.array(summary_dict['tdyn']['array']))
-    # Average ttorque
-    mean_ttorque   = np.mean(np.array(summary_dict['ttorque']['array']))
-    median_ttorque = np.median(np.array(summary_dict['ttorque']['array']))
-    std_ttorque    = np.std(np.array(summary_dict['ttorque']['array']))
-    
-    #-------------------------
-    relaxation_type    = misalignment_input['relaxation_type']
-    relaxation_morph   = misalignment_input['relaxation_morph']
-    misalignment_morph = misalignment_input['misalignment_morph']
-    morph_limits       = misalignment_input['morph_limits']
-    peak_misangle      = misalignment_input['peak_misangle']
-    min_trelax         = misalignment_input['min_trelax']        
-    max_trelax         = misalignment_input['max_trelax']
-    #-------------------------
-    
-    
-    #==========================================================================
-    # Gather data, average stelmass over misalignment
-    for GalaxyID_i in GalaxyID_list_z0:
-        print('\nID: %s' %GalaxyID_i)
-        
-        for ID_i in misalignment_tree.keys():
-        
-            if int(ID_i) in np.arange(GalaxyID_i, GalaxyID_i+ID_search_range+1, 1):
-                print('\n  Found misalignment:')
-                print('     lookback: %.2f Gyr' %np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s'] + 1])
-                print('     initial misangle: %.2f deg' %np.array(misalignment_tree['%s' %ID_i]['stars_gas_sf'])[misalignment_tree['%s' %ID_i]['index_s'] + 1])
-                print('     trelax        : \t%.2f Gyr' %misalignment_tree['%s' %ID_i]['relaxation_time'])
-                print('     trelax/tdyn   : \t%.2f tdyn' %misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
-                print('     trelax/ttorque: \t%.2f ttorque' %misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
-    
-                       
+                              
 #-------------------------
 # Plot sample histogram of misalignments extracted              
-def _plot_sample_hist(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
+def _plot_sample_hist(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None,
                       #==============================================
                       # General formatting
                         set_bin_width_mass                  = 0.01,
@@ -131,10 +81,10 @@ def _plot_sample_hist(misalignment_tree, misalignment_input, summary_dict, plot_
     
     
     #==========================================================================
-    # Gather data, average stelmass in first misaligned snipshot
+    # Gather data, average stelmass over misalignment
     stelmass_plot = []
     for ID_i in misalignment_tree.keys():
-        stelmass_plot.append(np.log10(np.array(misalignment_tree['%s' %ID_i]['stelmass'])[misalignment_tree['%s' %ID_i]['index_s']+1]))
+        stelmass_plot.append(np.log10(np.mean(misalignment_tree['%s' %ID_i]['stelmass'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])))
     
     
     #-------------
@@ -173,7 +123,7 @@ def _plot_sample_hist(misalignment_tree, misalignment_input, summary_dict, plot_
 
 #-------------------------
 # Plot sample histogram of misalignments extracted              
-def _plot_sample_vs_dist_hist(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
+def _plot_sample_vs_dist_hist(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None,
                               #==============================================
                               # Graph settings
                               compare_to_dist          = True,
@@ -366,22 +316,22 @@ def _plot_timescale_histogram(misalignment_tree, misalignment_input, summary_dic
     collect_array_2         = []
     collect_array_3         = []
     for ID_i in misalignment_tree.keys():
-        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])
     
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
-            co_co_array.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            co_co_array.append(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])
         elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
-            co_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            co_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])
         elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
-            counter_co_array.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            counter_co_array.append(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])
         elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
-            counter_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            counter_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])
             
             
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
             if misalignment_tree['%s' %ID_i]['angle_peak'] > 135:
                 collect_array.append(ID_i)
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] > 2:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] > 2:
             collect_array_2.append(ID_i)
         
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
@@ -646,26 +596,26 @@ def _plot_tdyn_histogram(misalignment_tree, misalignment_input, summary_dict, pl
     ID_collect_2          = []
     for ID_i in misalignment_tree.keys():
         # append average tdyn over misalignment
-        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'])
     
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
-            co_co_array.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+            co_co_array.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'])
         elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
-            co_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+            co_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'])
         elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
-            counter_co_array.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+            counter_co_array.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'])
         elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
-            counter_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+            counter_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'])
         
-        if misalignment_tree['%s' %ID_i]['relaxation_tdyn'] > 10:
+        if misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'] > 10:
             ID_collect_1.append(ID_i)
-        if misalignment_tree['%s' %ID_i]['relaxation_tdyn'] > 20:   
+        if misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'] > 20:   
             ID_collect_2.append(ID_i) 
             
             
-        #if misalignment_tree['%s' %ID_i]['relaxation_tdyn'] > 20:
+        #if misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'] > 20:
         #    print('\tFound >20 tdyn:   ID: %s\tMass: %.2e Msun' %(ID_i, np.mean(misalignment_tree['%s' %ID_i]['stelmass'])))
-        #    print('\t  type: %s, morph: %s, time: %.2f, tdyn: %.2f, ttorque: %.2f' %(misalignment_tree['%s' %ID_i]['relaxation_type'], misalignment_tree['%s' %ID_i]['relaxation_morph'], misalignment_tree['%s' %ID_i]['relaxation_time'], misalignment_tree['%s' %ID_i]['relaxation_tdyn'], misalignment_tree['%s' %ID_i]['relaxation_ttorque']))
+        #    print('\t  type: %s, morph: %s, time: %.2f, tdyn: %.2f, ttorque: %.2f' %(misalignment_tree['%s' %ID_i]['relaxation_type'], misalignment_tree['%s' %ID_i]['relaxation_morph'], misalignment_tree['%s' %ID_i]['relaxation_time_alt'], misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'], misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt']))
     
     #print('Number of >10 tdyn misalignments:   ', len(ID_collect_1))
     #print(ID_collect_1)
@@ -925,22 +875,22 @@ def _plot_ttorque_histogram(misalignment_tree, misalignment_input, summary_dict,
     ID_collect_2          = []
     for ID_i in misalignment_tree.keys():
         # append average ttorque over misalignment
-        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
     
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
-            co_co_array.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            co_co_array.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
         elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
-            co_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            co_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
         elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
-            counter_co_array.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            counter_co_array.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
         elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
-            counter_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            counter_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
             
-        if misalignment_tree['%s' %ID_i]['relaxation_ttorque'] > 10:
+        if misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'] > 10:
             ID_collect_1.append(ID_i)
             
-        if misalignment_tree['%s' %ID_i]['relaxation_ttorque'] > 23:
-            ID_collect_2.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+        if misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'] > 23:
+            ID_collect_2.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
         
     #print('Number of >10 ttorque misalignments:   ', len(ID_collect_1))
     #print(ID_collect_1)
@@ -1239,13 +1189,13 @@ def _plot_stacked_trelax(misalignment_tree, misalignment_input, summary_dict, pl
             
         
         ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
-        time_collect.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+        time_collect.append(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])
         if set_plot_type == 'time':
-            timeaxis_plot = -1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']+1])
+            timeaxis_plot = -1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']])
         elif set_plot_type == 'raw_time':
             timeaxis_plot = np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - (0)
         elif set_plot_type == 'snap':
-            timeaxis_plot = np.array(misalignment_tree['%s' %ID_i]['SnapNum']) - misalignment_tree['%s' %ID_i]['SnapNum'][misalignment_tree['%s' %ID_i]['index_s']+1]
+            timeaxis_plot = np.array(misalignment_tree['%s' %ID_i]['SnapNum']) - misalignment_tree['%s' %ID_i]['SnapNum'][misalignment_tree['%s' %ID_i]['index_s']]
         elif set_plot_type == 'raw_snap':
             timeaxis_plot = np.array(misalignment_tree['%s' %ID_i]['SnapNum']) - (0)
         
@@ -1293,24 +1243,24 @@ def _plot_stacked_trelax(misalignment_tree, misalignment_input, summary_dict, pl
         
         #-------------
         # pick out long relaxersß
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] > 2:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] > 2:
             ID_collect.append(ID_i)
                         
         
         #-------------
         # format and plot line
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
-            alpha = max(min(0.6, (misalignment_tree['%s' %ID_i]['relaxation_time']**1.5)/10), 0.02)
-            c     = lighten_color(line_color, (misalignment_tree['%s' %ID_i]['relaxation_time'])**(-0.5)) 
+            alpha = max(min(0.6, (misalignment_tree['%s' %ID_i]['relaxation_time_alt']**1.5)/10), 0.02)
+            c     = lighten_color(line_color, (misalignment_tree['%s' %ID_i]['relaxation_time_alt'])**(-0.5)) 
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
-            alpha = max(min(0.6, (misalignment_tree['%s' %ID_i]['relaxation_time']**1.5)/10), 0.03)
-            c     = lighten_color(line_color, 0.7*(misalignment_tree['%s' %ID_i]['relaxation_time'])**(-0.5)) 
+            alpha = max(min(0.6, (misalignment_tree['%s' %ID_i]['relaxation_time_alt']**1.5)/10), 0.03)
+            c     = lighten_color(line_color, 0.7*(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])**(-0.5)) 
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
-            alpha = max(min(0.6, (misalignment_tree['%s' %ID_i]['relaxation_time']**1.5)/2), 0.02)
-            c     = lighten_color(line_color, 0.7*(misalignment_tree['%s' %ID_i]['relaxation_time'])**(-0.5)) 
+            alpha = max(min(0.6, (misalignment_tree['%s' %ID_i]['relaxation_time_alt']**1.5)/2), 0.02)
+            c     = lighten_color(line_color, 0.7*(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])**(-0.5)) 
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
-            alpha = max(min(0.6, (misalignment_tree['%s' %ID_i]['relaxation_time']**1.5)/3), 0.02)
-            c     = lighten_color(line_color, 0.7*(misalignment_tree['%s' %ID_i]['relaxation_time'])**(-0.5)) 
+            alpha = max(min(0.6, (misalignment_tree['%s' %ID_i]['relaxation_time_alt']**1.5)/3), 0.02)
+            c     = lighten_color(line_color, 0.7*(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])**(-0.5)) 
             
             
             
@@ -1510,7 +1460,7 @@ def _plot_stacked_trelax(misalignment_tree, misalignment_input, summary_dict, pl
     if set_plot_type == 'time':
         axs.set_xlim(0-3*time_extra, set_bin_limit_trelax)
         axs.set_xticks(np.arange(0, set_bin_limit_trelax+0.1, 1))
-        axs.set_xlabel('Relaxation time [Gyr]')
+        axs.set_xlabel('Time since misalignment [Gyr]')
     elif set_plot_type == 'raw_time':
         axs.set_xlim(8, 0)
         axs.set_xticks(np.arange(8, -0.1, -1))
@@ -1709,8 +1659,8 @@ def _plot_stacked_tdyn(misalignment_tree, misalignment_input, summary_dict, plot
             continue
         
         ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
-        time_collect.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
-        timeaxis_plot = (-1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']+1]))/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1])
+        time_collect.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'])
+        timeaxis_plot = (-1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']]))/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
         
         
         #-------------
@@ -1757,24 +1707,24 @@ def _plot_stacked_tdyn(misalignment_tree, misalignment_input, summary_dict, plot
         
         #-------------
         # pick out long relaxersß
-        if misalignment_tree['%s' %ID_i]['relaxation_tdyn'] > 20:
+        if misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'] > 20:
             ID_collect.append(ID_i)
                         
         
         #-------------
         # format and plot line
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
-            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6)**1.5)/10), 0.02)
-            c     = lighten_color(line_color, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6))**(-0.5)) 
+            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt']/6)**1.5)/10), 0.02)
+            c     = lighten_color(line_color, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt']/6))**(-0.5)) 
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
-            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6)**1.5)/10), 0.03)
-            c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6))**(-0.5)) 
+            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt']/6)**1.5)/10), 0.03)
+            c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt']/6))**(-0.5)) 
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
-            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6)**1.5)/2), 0.02)
-            c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6))**(-0.5)) 
+            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt']/6)**1.5)/2), 0.02)
+            c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt']/6))**(-0.5)) 
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
-            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6)**1.5)/3), 0.02)
-            c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6))**(-0.5))
+            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt']/6)**1.5)/3), 0.02)
+            c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt']/6))**(-0.5))
         
             
             
@@ -2156,8 +2106,8 @@ def _plot_stacked_ttorque(misalignment_tree, misalignment_input, summary_dict, p
             continue
         
         ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
-        time_collect.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
-        timeaxis_plot = (-1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']+1]))/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1])
+        time_collect.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
+        timeaxis_plot = (-1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']]))/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
         
         
         #-------------
@@ -2203,24 +2153,24 @@ def _plot_stacked_ttorque(misalignment_tree, misalignment_input, summary_dict, p
         
         #-------------
         # pick out long relaxersß
-        if misalignment_tree['%s' %ID_i]['relaxation_ttorque'] > 10:
+        if misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'] > 10:
             ID_collect.append(ID_i)
                         
         
         #-------------
         # format and plot line
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
-            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2)**1.5)/10), 0.02)
-            c     = lighten_color(line_color, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2))**(-0.5)) 
+            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt']/2)**1.5)/10), 0.02)
+            c     = lighten_color(line_color, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt']/2))**(-0.5)) 
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
-            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2)**1.5)/10), 0.03)
-            c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2))**(-0.5)) 
+            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt']/2)**1.5)/10), 0.03)
+            c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt']/2))**(-0.5)) 
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
-            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2)**1.5)/2), 0.02)
-            c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2))**(-0.5)) 
+            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt']/2)**1.5)/2), 0.02)
+            c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt']/2))**(-0.5)) 
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
-            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2)**1.5)/3), 0.02)
-            c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2))**(-0.5))
+            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt']/2)**1.5)/3), 0.02)
+            c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt']/2))**(-0.5))
         
             
             
@@ -2605,11 +2555,11 @@ def _plot_stacked_trelax_2x2(misalignment_tree, misalignment_input, summary_dict
         
         ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
         if set_plot_type == 'time':
-            timeaxis_plot = -1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']+1])
+            timeaxis_plot = -1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']])
         elif set_plot_type == 'raw_time':
             timeaxis_plot = np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - (0)
         elif set_plot_type == 'snap':
-            timeaxis_plot = np.array(misalignment_tree['%s' %ID_i]['SnapNum']) - misalignment_tree['%s' %ID_i]['SnapNum'][misalignment_tree['%s' %ID_i]['index_s']+1]
+            timeaxis_plot = np.array(misalignment_tree['%s' %ID_i]['SnapNum']) - misalignment_tree['%s' %ID_i]['SnapNum'][misalignment_tree['%s' %ID_i]['index_s']]
         elif set_plot_type == 'raw_snap':
             timeaxis_plot = np.array(misalignment_tree['%s' %ID_i]['SnapNum']) - (0)
         
@@ -2657,27 +2607,27 @@ def _plot_stacked_trelax_2x2(misalignment_tree, misalignment_input, summary_dict
         
         #-------------
         # pick out long relaxersß
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] > 2:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] > 2:
             ID_collect.append(ID_i)
                         
         
         #-------------
         # format and plot line
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
-            alpha = max(min(0.6, (misalignment_tree['%s' %ID_i]['relaxation_time']**1.5)/10), 0.02)
-            c     = lighten_color(line_color, (misalignment_tree['%s' %ID_i]['relaxation_time'])**(-0.5)) 
+            alpha = max(min(0.6, (misalignment_tree['%s' %ID_i]['relaxation_time_alt']**1.5)/10), 0.02)
+            c     = lighten_color(line_color, (misalignment_tree['%s' %ID_i]['relaxation_time_alt'])**(-0.5)) 
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
-            alpha = max(min(0.6, (misalignment_tree['%s' %ID_i]['relaxation_time']**1.5)/10), 0.03)
-            c     = lighten_color(line_color, 0.7*(misalignment_tree['%s' %ID_i]['relaxation_time'])**(-0.5)) 
+            alpha = max(min(0.6, (misalignment_tree['%s' %ID_i]['relaxation_time_alt']**1.5)/10), 0.03)
+            c     = lighten_color(line_color, 0.7*(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])**(-0.5)) 
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
-            alpha = max(min(0.6, (misalignment_tree['%s' %ID_i]['relaxation_time']**1.5)/2), 0.02)
-            c     = lighten_color(line_color, 0.7*(misalignment_tree['%s' %ID_i]['relaxation_time'])**(-0.5)) 
+            alpha = max(min(0.6, (misalignment_tree['%s' %ID_i]['relaxation_time_alt']**1.5)/2), 0.02)
+            c     = lighten_color(line_color, 0.7*(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])**(-0.5)) 
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
-            alpha = max(min(0.6, (misalignment_tree['%s' %ID_i]['relaxation_time']**1.5)/3), 0.02)
-            c     = lighten_color(line_color, 0.7*(misalignment_tree['%s' %ID_i]['relaxation_time'])**(-0.5)) 
+            alpha = max(min(0.6, (misalignment_tree['%s' %ID_i]['relaxation_time_alt']**1.5)/3), 0.02)
+            c     = lighten_color(line_color, 0.7*(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])**(-0.5)) 
             
             
-        ax.plot(timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if set_plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if set_plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], lw=0.3, c=c, alpha=alpha)       # c=scalarMap.to_rgba(misalignment_tree['%s' %ID_i]['relaxation_time'])
+        ax.plot(timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if set_plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if set_plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], lw=0.3, c=c, alpha=alpha)       # c=scalarMap.to_rgba(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])
         
         ### Annotate
         if set_add_GalaxyIDs:
@@ -2866,8 +2816,8 @@ def _plot_stacked_trelax_2x2(misalignment_tree, misalignment_input, summary_dict
     if set_plot_type == 'time':
         ax_counter_counter.set_xlim(0-3*time_extra, set_bin_limit_trelax)
         ax_counter_counter.set_xticks(np.arange(0, set_bin_limit_trelax+0.1, 1))
-        ax_counter_co.set_xlabel('Relaxation time [Gyr]')
-        ax_counter_counter.set_xlabel('Relaxation time [Gyr]')
+        ax_counter_co.set_xlabel('Time since misalignment [Gyr]')
+        ax_counter_counter.set_xlabel('Time since misalignment [Gyr]')
         #ax_counter_counter.get_xaxis().set_label_coords(1,-0.12)
     elif set_plot_type == 'raw_time':
         ax_counter_counter.set_xlim(8, 0)
@@ -3076,7 +3026,7 @@ def _plot_stacked_tdyn_2x2(misalignment_tree, misalignment_input, summary_dict, 
             continue
         
         ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
-        timeaxis_plot = (-1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']+1]))/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1])
+        timeaxis_plot = (-1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']]))/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
         
         #-------------
         # Plot stacked
@@ -3124,29 +3074,29 @@ def _plot_stacked_tdyn_2x2(misalignment_tree, misalignment_input, summary_dict, 
         
         #-------------
         # pick out long relaxersß
-        if misalignment_tree['%s' %ID_i]['relaxation_tdyn'] > 10:
+        if misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'] > 10:
             ID_collect.append(ID_i)
                         
         
         #-------------
         # format and plot line
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
-            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6)**1.5)/10), 0.02)
-            c     = lighten_color(line_color, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6))**(-0.5)) 
+            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt']/6)**1.5)/10), 0.02)
+            c     = lighten_color(line_color, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt']/6))**(-0.5)) 
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
-            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6)**1.5)/10), 0.03)
-            c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6))**(-0.5)) 
+            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt']/6)**1.5)/10), 0.03)
+            c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt']/6))**(-0.5)) 
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
-            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6)**1.5)/2), 0.02)
-            c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6))**(-0.5)) 
+            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt']/6)**1.5)/2), 0.02)
+            c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt']/6))**(-0.5)) 
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
-            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6)**1.5)/3), 0.02)
-            c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_tdyn']/6))**(-0.5))
+            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt']/6)**1.5)/3), 0.02)
+            c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt']/6))**(-0.5))
             
             
             
             
-        ax.plot(timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if set_plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if set_plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], lw=0.3, c=c, alpha=alpha)       # c=scalarMap.to_rgba(misalignment_tree['%s' %ID_i]['relaxation_time'])
+        ax.plot(timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if set_plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if set_plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], lw=0.3, c=c, alpha=alpha)       # c=scalarMap.to_rgba(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])
         
         ### Annotate
         if set_add_GalaxyIDs:
@@ -3532,7 +3482,7 @@ def _plot_stacked_ttorque_2x2(misalignment_tree, misalignment_input, summary_dic
             continue
         
         ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
-        timeaxis_plot = (-1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']+1]))/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1])
+        timeaxis_plot = (-1*np.array(np.array(misalignment_tree['%s' %ID_i]['Lookbacktime']) - misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']]))/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
         
         #-------------
         # Plot stacked
@@ -3581,29 +3531,29 @@ def _plot_stacked_ttorque_2x2(misalignment_tree, misalignment_input, summary_dic
         
         #-------------
         # pick out long relaxersß
-        if misalignment_tree['%s' %ID_i]['relaxation_ttorque'] > 5:
+        if misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'] > 5:
             ID_collect.append(ID_i)
                         
         
         #-------------
         # format and plot line
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
-            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2)**1.5)/10), 0.02)
-            c     = lighten_color(line_color, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2))**(-0.5)) 
+            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt']/2)**1.5)/10), 0.02)
+            c     = lighten_color(line_color, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt']/2))**(-0.5)) 
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
-            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2)**1.5)/10), 0.03)
-            c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2))**(-0.5)) 
+            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt']/2)**1.5)/10), 0.03)
+            c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt']/2))**(-0.5)) 
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
-            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2)**1.5)/2), 0.02)
-            c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2))**(-0.5)) 
+            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt']/2)**1.5)/2), 0.02)
+            c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt']/2))**(-0.5)) 
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
-            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2)**1.5)/3), 0.02)
-            c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_ttorque']/2))**(-0.5))
+            alpha = max(min(0.5, ((misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt']/2)**1.5)/3), 0.02)
+            c     = lighten_color(line_color, 0.7*((misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt']/2))**(-0.5))
             
             
             
             
-        ax.plot(timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if set_plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if set_plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], lw=0.3, c=c, alpha=alpha)       # c=scalarMap.to_rgba(misalignment_tree['%s' %ID_i]['relaxation_time'])
+        ax.plot(timeaxis_plot[0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if set_plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], misalignment_tree['%s' %ID_i][use_angle][0:(len(misalignment_tree['%s' %ID_i]['SnapNum'])+1 if set_plot_extra_time == True else misalignment_tree['%s' %ID_i]['index_r']+1)], lw=0.3, c=c, alpha=alpha)       # c=scalarMap.to_rgba(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])
         
         ### Annotate
         if set_add_GalaxyIDs:
@@ -3953,7 +3903,7 @@ def _plot_box_and_whisker_trelax(misalignment_tree, misalignment_input, summary_
                 continue
         
         # Gather data
-        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])
         #relaxationtype_plot.append(misalignment_tree['%s' %ID_i]['relaxation_type'])
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
             relaxationtype_plot.append('co\n ↓ \nco')
@@ -4134,7 +4084,7 @@ def _plot_box_and_whisker_tdyn(misalignment_tree, misalignment_input, summary_di
                 continue
         
         # Gather data
-        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'])
         #relaxationtype_plot.append(misalignment_tree['%s' %ID_i]['relaxation_type'])
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
             relaxationtype_plot.append('co\n ↓ \nco')
@@ -4311,7 +4261,7 @@ def _plot_box_and_whisker_ttorque(misalignment_tree, misalignment_input, summary
                 continue
         
         # Gather data
-        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
         #relaxationtype_plot.append(misalignment_tree['%s' %ID_i]['relaxation_type'])
         if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
             relaxationtype_plot.append('co\n ↓ \nco')
@@ -4496,7 +4446,7 @@ def _plot_offset_trelax(misalignment_tree, misalignment_input, summary_dict, plo
                             
         # Add angles
         angles_plot.append(misalignment_tree['%s' %ID_i]['angle_peak'])
-        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])
         if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-ETG':
             relaxationmorph_plot.append('ETG → ETG')
         elif misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'LTG-LTG':
@@ -4722,7 +4672,7 @@ def _plot_offset_tdyn(misalignment_tree, misalignment_input, summary_dict, plot_
                             
         # Add angles
         angles_plot.append(misalignment_tree['%s' %ID_i]['angle_peak'])
-        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'])
         if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-ETG':
             relaxationmorph_plot.append('ETG → ETG')
         elif misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'LTG-LTG':
@@ -4947,7 +4897,7 @@ def _plot_offset_ttorque(misalignment_tree, misalignment_input, summary_dict, pl
                             
         # Add angles
         angles_plot.append(misalignment_tree['%s' %ID_i]['angle_peak'])
-        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
         if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-ETG':
             relaxationmorph_plot.append('ETG → ETG')
         elif misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'LTG-LTG':
@@ -5164,10 +5114,10 @@ def _plot_merger_count_trelax(misalignment_tree, misalignment_input, summary_dic
     ID_plot     = []
     for ID_i in misalignment_tree.keys():
         # remove misalignments that are too short
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] <= set_min_merger_trelax:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] <= set_min_merger_trelax:
             continue
         
-        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])
         ID_plot.append(ID_i)
         if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-ETG':
             relaxationmorph_plot.append('ETG → ETG')
@@ -5325,10 +5275,10 @@ def _plot_merger_count_tdyn(misalignment_tree, misalignment_input, summary_dict,
     ID_plot     = []
     for ID_i in misalignment_tree.keys():
         # remove misalignments that are too short
-        if misalignment_tree['%s' %ID_i]['relaxation_tdyn'] <= set_min_merger_tdyn:
+        if misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'] <= set_min_merger_tdyn:
             continue
         
-        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'])
         ID_plot.append(ID_i)
         if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-ETG':
             relaxationmorph_plot.append('ETG → ETG')
@@ -5486,10 +5436,10 @@ def _plot_merger_count_ttorque(misalignment_tree, misalignment_input, summary_di
     ID_plot     = []
     for ID_i in misalignment_tree.keys():
         # remove misalignments that are too short
-        if misalignment_tree['%s' %ID_i]['relaxation_ttorque'] <= set_min_merger_ttorque:
+        if misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'] <= set_min_merger_ttorque:
             continue
         
-        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
         ID_plot.append(ID_i)
         if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-ETG':
             relaxationmorph_plot.append('ETG → ETG')
@@ -5652,11 +5602,11 @@ def _plot_halo_misangle_trelax(misalignment_tree, misalignment_input, summary_di
     for ID_i in misalignment_tree.keys():
         
         # remove misalignments that are too below resolution
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] <= set_halo_trelax_resolution:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] <= set_halo_trelax_resolution:
             continue
         
         # remove misalignments that are too short
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] <= set_min_halo_trelax:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] <= set_min_halo_trelax:
             continue
             
         # find subgroupnum, and classify as following:  central: all==0, satellite: all>0, mixed: ones that change
@@ -5667,7 +5617,7 @@ def _plot_halo_misangle_trelax(misalignment_tree, misalignment_input, summary_di
                 continue
             
         # Collect relaxation time
-        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])
         
         
         ID_plot.append(ID_i)
@@ -5876,11 +5826,11 @@ def _plot_halo_misangle_tdyn(misalignment_tree, misalignment_input, summary_dict
     for ID_i in misalignment_tree.keys():
         
         # remove misalignments that are too below resolution
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] <= set_halo_trelax_resolution:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] <= set_halo_trelax_resolution:
             continue
         
         # remove misalignments that are too short
-        if misalignment_tree['%s' %ID_i]['relaxation_tdyn'] <= set_min_halo_tdyn:
+        if misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'] <= set_min_halo_tdyn:
             continue
             
         # find subgroupnum, and classify as following:  central: all==0, satellite: all>0, mixed: ones that change
@@ -5891,7 +5841,7 @@ def _plot_halo_misangle_tdyn(misalignment_tree, misalignment_input, summary_dict
                 continue
             
         # Collect relaxation time
-        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'])
         ID_plot.append(ID_i)
         if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-ETG':
             relaxationmorph_plot.append('ETG → ETG')
@@ -6096,11 +6046,11 @@ def _plot_halo_misangle_ttorque(misalignment_tree, misalignment_input, summary_d
     for ID_i in misalignment_tree.keys():
         
         # remove misalignments that are too below resolution
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] <= set_halo_trelax_resolution:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] <= set_halo_trelax_resolution:
             continue
         
         # remove misalignments that are too short
-        if misalignment_tree['%s' %ID_i]['relaxation_ttorque'] <= set_min_halo_ttorque:
+        if misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'] <= set_min_halo_ttorque:
             continue
             
         # find subgroupnum, and classify as following:  central: all==0, satellite: all>0, mixed: ones that change
@@ -6111,7 +6061,7 @@ def _plot_halo_misangle_ttorque(misalignment_tree, misalignment_input, summary_d
                 continue
         
         # Collect relaxation time
-        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
         ID_plot.append(ID_i)
         if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-ETG':
             relaxationmorph_plot.append('ETG → ETG')
@@ -6315,16 +6265,16 @@ def _plot_halo_misangle_manual(misalignment_tree, misalignment_input, summary_di
     for ID_i in misalignment_tree.keys():
         
         # remove misalignments that are too below resolution
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] <= set_halo_trelax_resolution:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] <= set_halo_trelax_resolution:
             continue
         
         # remove misalignments that are too short
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] <= set_min_halo_trelax:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] <= set_min_halo_trelax:
             continue
             
         # Collect relaxation time
-        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
-        relaxationtorque_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])
+        relaxationtorque_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
         ID_plot.append(ID_i)
         if misalignment_tree['%s' %ID_i]['relaxation_morph'] == 'ETG-ETG':
             relaxationmorph_plot.append('ETG → ETG')
@@ -6995,7 +6945,7 @@ def _plot_origins(misalignment_tree, misalignment_input, summary_dict, plot_anno
         legend_labels.append('Minor\nmerger')
         legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
         legend_colors.append('orange')
-        legend_labels.append('Other')
+        legend_labels.append('other')
         legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
         legend_colors.append('royalblue')
     
@@ -7048,7 +6998,7 @@ def _plot_origins(misalignment_tree, misalignment_input, summary_dict, plot_anno
         legend_labels.append('Minor\nmerger')
         legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
         legend_colors.append('orange')
-        legend_labels.append('Other')
+        legend_labels.append('other')
         legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
         legend_colors.append('royalblue')
     
@@ -7174,13 +7124,13 @@ def _plot_timescale_gas_scatter_trelax(misalignment_tree, misalignment_input, su
     ID_plot              = []
     for ID_i in misalignment_tree.keys():
         
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_gashist_min_trelax:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] < set_gashist_min_trelax:
             continue
     
         if misalignment_tree['%s' %ID_i]['relaxation_type'] in set_gashist_type:
             
             ID_plot.append(ID_i)
-            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])
             
             if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
                 relaxationtype_plot.append('C0')
@@ -7353,13 +7303,13 @@ def _plot_timescale_gas_scatter_tdyn(misalignment_tree, misalignment_input, summ
     ID_plot              = []
     for ID_i in misalignment_tree.keys():
         
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_gashist_min_trelax:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] < set_gashist_min_trelax:
             continue
     
         if misalignment_tree['%s' %ID_i]['relaxation_type'] in set_gashist_type:
             
             ID_plot.append(ID_i)
-            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'])
             
             if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
                 relaxationtype_plot.append('C0')
@@ -7534,13 +7484,13 @@ def _plot_timescale_gas_scatter_ttorque(misalignment_tree, misalignment_input, s
     ID_plot              = []
     for ID_i in misalignment_tree.keys():
         
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_gashist_min_trelax:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] < set_gashist_min_trelax:
             continue
     
         if misalignment_tree['%s' %ID_i]['relaxation_type'] in set_gashist_type:
             
             ID_plot.append(ID_i)
-            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
             
             if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
                 relaxationtype_plot.append('C0')
@@ -7722,13 +7672,13 @@ def _plot_timescale_gas_histogram_trelax(misalignment_tree, misalignment_input, 
     ID_plot              = []
     for ID_i in misalignment_tree.keys():
         
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_gashist_min_trelax:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] < set_gashist_min_trelax:
             continue
     
         if misalignment_tree['%s' %ID_i]['relaxation_type'] in set_gashist_type:
             
             ID_plot.append(ID_i)
-            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])
             
             if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
                 relaxationtype_plot.append('C0')
@@ -7948,13 +7898,13 @@ def _plot_timescale_gas_histogram_tdyn(misalignment_tree, misalignment_input, su
     ID_plot              = []
     for ID_i in misalignment_tree.keys():
         
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_gashist_min_trelax:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] < set_gashist_min_trelax:
             continue
     
         if misalignment_tree['%s' %ID_i]['relaxation_type'] in set_gashist_type:
             
             ID_plot.append(ID_i)
-            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'])
             
             if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
                 relaxationtype_plot.append('C0')
@@ -8174,13 +8124,13 @@ def _plot_timescale_gas_histogram_ttorque(misalignment_tree, misalignment_input,
     ID_plot              = []
     for ID_i in misalignment_tree.keys():
         
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_gashist_min_trelax:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] < set_gashist_min_trelax:
             continue
     
         if misalignment_tree['%s' %ID_i]['relaxation_type'] in set_gashist_type:
             
             ID_plot.append(ID_i)
-            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
             
             if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
                 relaxationtype_plot.append('C0')
@@ -8400,13 +8350,13 @@ def _plot_timescale_occupation_histogram_trelax(misalignment_tree, misalignment_
     ID_plot              = []
     for ID_i in misalignment_tree.keys():
         
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_hist_min_trelax:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] < set_hist_min_trelax:
             continue
     
         if misalignment_tree['%s' %ID_i]['relaxation_type'] in set_hist_type:
             
             ID_plot.append(ID_i)
-            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])
             
             if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
                 relaxationtype_plot.append('C0')
@@ -8703,13 +8653,13 @@ def _plot_timescale_occupation_histogram_tdyn(misalignment_tree, misalignment_in
     ID_plot              = []
     for ID_i in misalignment_tree.keys():
         
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_hist_min_trelax:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] < set_hist_min_trelax:
             continue
     
         if misalignment_tree['%s' %ID_i]['relaxation_type'] in set_hist_type:
             
             ID_plot.append(ID_i)
-            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'])
             
             if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
                 relaxationtype_plot.append('C0')
@@ -9006,13 +8956,13 @@ def _plot_timescale_occupation_histogram_ttorque(misalignment_tree, misalignment
     ID_plot              = []
     for ID_i in misalignment_tree.keys():
         
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_hist_min_trelax:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] < set_hist_min_trelax:
             continue
     
         if misalignment_tree['%s' %ID_i]['relaxation_type'] in set_hist_type:
             
             ID_plot.append(ID_i)
-            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
             
             if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
                 relaxationtype_plot.append('C0')
@@ -9315,13 +9265,13 @@ def _plot_timescale_environment_histogram_trelax(misalignment_tree, misalignment
     cluster_ID           = []
     for ID_i in misalignment_tree.keys():
         
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_hist_min_trelax:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] < set_hist_min_trelax:
             continue
     
         if misalignment_tree['%s' %ID_i]['relaxation_type'] in set_hist_type:
             
             ID_plot.append(ID_i)
-            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])
             
             if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
                 relaxationtype_plot.append('C0')
@@ -9564,13 +9514,13 @@ def _plot_timescale_environment_histogram_tdyn(misalignment_tree, misalignment_i
     ID_plot              = []
     for ID_i in misalignment_tree.keys():
         
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_hist_min_trelax:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] < set_hist_min_trelax:
             continue
     
         if misalignment_tree['%s' %ID_i]['relaxation_type'] in set_hist_type:
             
             ID_plot.append(ID_i)
-            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'])
             
             if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
                 relaxationtype_plot.append('C0')
@@ -9809,13 +9759,13 @@ def _plot_timescale_environment_histogram_ttorque(misalignment_tree, misalignmen
     ID_plot              = []
     for ID_i in misalignment_tree.keys():
         
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_hist_min_trelax:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] < set_hist_min_trelax:
             continue
     
         if misalignment_tree['%s' %ID_i]['relaxation_type'] in set_hist_type:
             
             ID_plot.append(ID_i)
-            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
             
             if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
                 relaxationtype_plot.append('C0')
@@ -10050,14 +10000,14 @@ def _plot_timescale_accretion_histogram_trelax(misalignment_tree, misalignment_i
     ID_plot              = []
     for ID_i in misalignment_tree.keys():
         
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_hist_min_trelax:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] < set_hist_min_trelax:
             continue
             
         if misalignment_tree['%s' %ID_i]['relaxation_type'] not in set_hist_type:
             continue
         
         # Ensure we actually have inflow to consider
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] < ignore_trelax_inflow:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] < ignore_trelax_inflow:
             continue
             
         # If we only want centrals, select
@@ -10067,11 +10017,11 @@ def _plot_timescale_accretion_histogram_trelax(misalignment_tree, misalignment_i
                 continue
             
         # Ensure we have at least 1 snapshot that we can evaluate
-        mask_inflow = (np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']+1] - np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']+2:misalignment_tree['%s' %ID_i]['index_r']] > ignore_trelax_inflow)
+        mask_inflow = (np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']] - np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']] > ignore_trelax_inflow)
         if mask_inflow.any() == True:        
             
             ID_plot.append(ID_i)
-            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])
             
             if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
                 relaxationtype_plot.append('C0')
@@ -10325,14 +10275,14 @@ def _plot_timescale_accretion_histogram_tdyn(misalignment_tree, misalignment_inp
     ID_plot              = []
     for ID_i in misalignment_tree.keys():
         
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_hist_min_trelax:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] < set_hist_min_trelax:
             continue
             
         if misalignment_tree['%s' %ID_i]['relaxation_type'] not in set_hist_type:
             continue
         
         # Ensure we actually have inflow to consider
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] < ignore_trelax_inflow:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] < ignore_trelax_inflow:
             continue
             
         # If we only want centrals, select
@@ -10342,11 +10292,11 @@ def _plot_timescale_accretion_histogram_tdyn(misalignment_tree, misalignment_inp
                 continue
             
         # Ensure we have at least 1 snapshot that we can evaluate
-        mask_inflow = (np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']+1] - np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']+2:misalignment_tree['%s' %ID_i]['index_r']] > ignore_trelax_inflow)
+        mask_inflow = (np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']] - np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']] > ignore_trelax_inflow)
         if mask_inflow.any() == True:        
             
             ID_plot.append(ID_i)
-            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'])
             
             if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
                 relaxationtype_plot.append('C0')
@@ -10600,14 +10550,14 @@ def _plot_timescale_accretion_histogram_ttorque(misalignment_tree, misalignment_
     ID_plot              = []
     for ID_i in misalignment_tree.keys():
         
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_hist_min_trelax:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] < set_hist_min_trelax:
             continue
             
         if misalignment_tree['%s' %ID_i]['relaxation_type'] not in set_hist_type:
             continue
         
         # Ensure we actually have inflow to consider
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] < ignore_trelax_inflow:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] < ignore_trelax_inflow:
             continue
             
         # If we only want centrals, select
@@ -10617,11 +10567,11 @@ def _plot_timescale_accretion_histogram_ttorque(misalignment_tree, misalignment_
                 continue
             
         # Ensure we have at least 1 snapshot that we can evaluate
-        mask_inflow = (np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']+1] - np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']+2:misalignment_tree['%s' %ID_i]['index_r']] > ignore_trelax_inflow)
+        mask_inflow = (np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']] - np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']] > ignore_trelax_inflow)
         if mask_inflow.any() == True:        
             
             ID_plot.append(ID_i)
-            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
             
             if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
                 relaxationtype_plot.append('C0')
@@ -10879,14 +10829,14 @@ def _plot_timescale_specaccretion_histogram_trelax(misalignment_tree, misalignme
     ID_plot              = []
     for ID_i in misalignment_tree.keys():
         
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_hist_min_trelax:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] < set_hist_min_trelax:
             continue
             
         if misalignment_tree['%s' %ID_i]['relaxation_type'] not in set_hist_type:
             continue
         
         # Ensure we actually have inflow to consider
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] < ignore_trelax_inflow:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] < ignore_trelax_inflow:
             continue
         
         # If we only want centrals, select
@@ -10896,11 +10846,11 @@ def _plot_timescale_specaccretion_histogram_trelax(misalignment_tree, misalignme
                 continue
                 
         # Ensure we have at least 1 snapshot that we can evaluate
-        mask_inflow = (np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']+1] - np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']+2:misalignment_tree['%s' %ID_i]['index_r']] > ignore_trelax_inflow)
+        mask_inflow = (np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']] - np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']] > ignore_trelax_inflow)
         if mask_inflow.any() == True:        
             
             ID_plot.append(ID_i)
-            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])
             
             if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
                 relaxationtype_plot.append('C0')
@@ -11157,14 +11107,14 @@ def _plot_timescale_specaccretion_histogram_tdyn(misalignment_tree, misalignment
     ID_plot              = []
     for ID_i in misalignment_tree.keys():
         
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_hist_min_trelax:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] < set_hist_min_trelax:
             continue
             
         if misalignment_tree['%s' %ID_i]['relaxation_type'] not in set_hist_type:
             continue
         
         # Ensure we actually have inflow to consider
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] < ignore_trelax_inflow:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] < ignore_trelax_inflow:
             continue
         
         # If we only want centrals, select
@@ -11174,11 +11124,11 @@ def _plot_timescale_specaccretion_histogram_tdyn(misalignment_tree, misalignment
                 continue
                 
         # Ensure we have at least 1 snapshot that we can evaluate
-        mask_inflow = (np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']+1] - np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']+2:misalignment_tree['%s' %ID_i]['index_r']] > ignore_trelax_inflow)
+        mask_inflow = (np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']] - np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']] > ignore_trelax_inflow)
         if mask_inflow.any() == True:        
             
             ID_plot.append(ID_i)
-            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'])
             
             if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
                 relaxationtype_plot.append('C0')
@@ -11433,14 +11383,14 @@ def _plot_timescale_specaccretion_histogram_ttorque(misalignment_tree, misalignm
     ID_plot              = []
     for ID_i in misalignment_tree.keys():
         
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_hist_min_trelax:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] < set_hist_min_trelax:
             continue
             
         if misalignment_tree['%s' %ID_i]['relaxation_type'] not in set_hist_type:
             continue
         
         # Ensure we actually have inflow to consider
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] < ignore_trelax_inflow:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] < ignore_trelax_inflow:
             continue
         
         # If we only want centrals, select
@@ -11450,11 +11400,11 @@ def _plot_timescale_specaccretion_histogram_ttorque(misalignment_tree, misalignm
                 continue
                 
         # Ensure we have at least 1 snapshot that we can evaluate
-        mask_inflow = (np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']+1] - np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']+2:misalignment_tree['%s' %ID_i]['index_r']] > ignore_trelax_inflow)
+        mask_inflow = (np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']] - np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']] > ignore_trelax_inflow)
         if mask_inflow.any() == True:        
             
             ID_plot.append(ID_i)
-            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
             
             if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
                 relaxationtype_plot.append('C0')
@@ -11718,13 +11668,13 @@ def _plot_timescale_stelmass_histogram_trelax(misalignment_tree, misalignment_in
     ID_plot              = []
     for ID_i in misalignment_tree.keys():
         
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_hist_min_trelax:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] < set_hist_min_trelax:
             continue
     
         if misalignment_tree['%s' %ID_i]['relaxation_type'] in set_hist_type:
             
             ID_plot.append(ID_i)
-            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])
             
             if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
                 relaxationtype_plot.append('C0')
@@ -11970,13 +11920,13 @@ def _plot_timescale_stelmass_histogram_tdyn(misalignment_tree, misalignment_inpu
     ID_plot              = []
     for ID_i in misalignment_tree.keys():
         
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_hist_min_trelax:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] < set_hist_min_trelax:
             continue
     
         if misalignment_tree['%s' %ID_i]['relaxation_type'] in set_hist_type:
             
             ID_plot.append(ID_i)
-            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'])
             
             if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
                 relaxationtype_plot.append('C0')
@@ -12222,13 +12172,13 @@ def _plot_timescale_stelmass_histogram_ttorque(misalignment_tree, misalignment_i
     ID_plot              = []
     for ID_i in misalignment_tree.keys():
         
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_hist_min_trelax:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] < set_hist_min_trelax:
             continue
     
         if misalignment_tree['%s' %ID_i]['relaxation_type'] in set_hist_type:
             
             ID_plot.append(ID_i)
-            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque_alt'])
             
             if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
                 relaxationtype_plot.append('C0')
@@ -12481,13 +12431,13 @@ def _plot_morphology_change_ttorque_ellip(misalignment_tree, misalignment_input,
     ID_plot              = []
     for ID_i in misalignment_tree.keys():
         
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_hist_min_trelax:
+        if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] < set_hist_min_trelax:
             continue
     
         if misalignment_tree['%s' %ID_i]['relaxation_type'] in set_hist_type:
             
             ID_plot.append(ID_i)
-            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])
             
             if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
                 relaxationtype_plot.append('C0')
@@ -12793,7 +12743,7 @@ def _plot_morphology_change_ttorque_ellip(misalignment_tree, misalignment_input,
 
 #\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 # Set starting parameters
-load_csv_file_in = '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_NEW' 
+load_csv_file_in = '_20Thresh_30Peak_normalLatency_anyMergers_LTG-LTG_NEW' 
 plot_annotate_in                                           = None
 savefig_txt_in   = load_csv_file_in               # [ 'manual' / load_csv_file_in ] 'manual' will prompt txt before saving
        
@@ -12825,8 +12775,6 @@ savefig_txt_in   = load_csv_file_in               # [ 'manual' / load_csv_file_i
 
 #==================================================================================================================================
 misalignment_tree, misalignment_input, summary_dict = _extract_tree(load_csv_file=load_csv_file_in, plot_annotate=plot_annotate_in, print_summary=True, EAGLE_dir=EAGLE_dir, sample_dir=sample_dir, tree_dir=tree_dir, output_dir=output_dir, fig_dir=fig_dir, dataDir_dict=dataDir_dict)
-
-print('\n\nUSING MORPH SELECTOR IN EXTRACT TREE')
 #==================================================================================================================================
 """misalignment_tree, misalignment_input, summary_dict = _extract_tree(load_csv_file=load_csv_file_in, plot_annotate=plot_annotate_in, 
                     use_alt_merger_criteria = True,
@@ -12842,16 +12790,12 @@ if load_csv_file_in == '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010'
     print('\nTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT\n\t\tUSING 1010 SAMPLE\nTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT')
 
 
-# FIND MISALIGNMENT OF AN EVOLUTION
-_find_misalignment_evolution(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in)
-
-
 # SAMPLE MASS
-"""_plot_sample_hist(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+"""_plot_sample_hist(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt=savefig_txt_in,
                             showfig = True,
                             savefig = False)"""
 
-"""_plot_sample_vs_dist_hist(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+"""_plot_sample_vs_dist_hist(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt=savefig_txt_in,
                               use_PDF   = False,        # uses probability density function
                             showfig = True,
                             savefig = False)"""
@@ -12997,7 +12941,7 @@ _find_misalignment_evolution(misalignment_tree=misalignment_tree, misalignment_i
                             set_gashist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_gashist_min_trelax              = 0.25,
                             showfig = True,
-                            savefig = False)"""     # will auto-rename to _allpath if all 4 set_gashist_type used"""
+                            savefig = False)"""          # will auto-rename to _allpath if all 4 set_gashist_type used
 """_plot_timescale_gas_histogram_tdyn(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_gashist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_gashist_min_trelax              = 0.25,
@@ -13023,7 +12967,7 @@ _find_misalignment_evolution(misalignment_tree=misalignment_tree, misalignment_i
                             set_hist_min_trelax              = 0.25,
                               use_occ_morph                  = False,               
                             showfig = True,
-                            savefig = False)  """ 
+                            savefig = False)  """
 """_plot_timescale_occupation_histogram_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_hist_min_trelax              = 0.25,
@@ -13042,7 +12986,7 @@ _find_misalignment_evolution(misalignment_tree=misalignment_tree, misalignment_i
                             set_hist_min_trelax              = 0.25,
                               use_occ_morph                  = True,               
                             showfig = True,
-                            savefig = False)  """ 
+                            savefig = False)  """
 """_plot_timescale_occupation_histogram_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_hist_min_trelax              = 0.25,
@@ -13053,23 +12997,23 @@ _find_misalignment_evolution(misalignment_tree=misalignment_tree, misalignment_i
 
 # PLOTS HISTOGRAM OF STELLAR MASS WITH RELAXATION TIME
 """_plot_timescale_stelmass_histogram_trelax(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
-                            set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
+                            set_hist_type                    = ['co-co', 'counter-counter'],
                             set_hist_min_trelax              = 0.25,
                               use_only_centrals              = False,        # Use only centrals
                             showfig = True,
-                            savefig = False)      # will auto-rename to _allpath if all 4 set_gashist_type used"""
+                            savefig = False) """     # will auto-rename to _allpath if all 4 set_gashist_type used
 """_plot_timescale_stelmass_histogram_tdyn(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
-                            set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
+                            set_hist_type                    = ['co-co', 'counter-counter'],
                             set_hist_min_trelax              = 0.25,
                               use_only_centrals              = False,        # Use only centrals
                             showfig = True,
-                            savefig = False)      # will auto-rename to _allpath if all 4 set_gashist_type used"""
+                            savefig = False)"""      # will auto-rename to _allpath if all 4 set_gashist_type used
 """_plot_timescale_stelmass_histogram_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
-                            set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
+                            set_hist_type                    = ['co-co', 'counter-counter'],
                             set_hist_min_trelax              = 0.25,
                               use_only_centrals              = False,        # Use only centrals
                             showfig = True,
-                            savefig = False)      # will auto-rename to _allpath if all 4 set_gashist_type used"""
+                            savefig = False) """     # will auto-rename to _allpath if all 4 set_gashist_type used
 
 
 # PLOTS HISTOGRAM OF HALO MASS WITH RELAXATION TIME
@@ -13079,7 +13023,7 @@ _find_misalignment_evolution(misalignment_tree=misalignment_tree, misalignment_i
                               use_occ_morph                  = False,        # Differentiates between ETG centrals, and LTG centrals. Will autorename
                               use_only_centrals              = True,        # Use only centrals
                             showfig = True,
-                            savefig = False)      # will auto-rename to _allpath if all 4 set_gashist_type used"""
+                            savefig = False) """     # will auto-rename to _allpath if all 4 set_gashist_type used
 """_plot_timescale_environment_histogram_tdyn(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_hist_min_trelax              = 0.25,
@@ -13192,16 +13136,16 @@ _find_misalignment_evolution(misalignment_tree=misalignment_tree, misalignment_i
                             savefig = False)"""
 
   
-# PLOTS STACKED BAR CHART. WILL USE use_alt_merger_criteria FROM EARLIER TO FIND MERGERS,          
+# PLOTS  CHART. WILL USE use_alt_merger_criteria FROM EARLIER TO FIND MERGERS,          
 """_plot_origins(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             # Mergers
                             use_alt_merger_criteria = True,
                             add_total               = True,     # add total (+1 PIE CHART)
-                              half_window         = 0.3,      # [ 0.2 / 0.3 / 0.5 +/-Gyr ] window centred on first misaligned snap to look for mergers
+                              half_window         = 0.5,      # [ 0.2 / +/-Gyr ] window centred on first misaligned snap to look for mergers
                               min_ratio           = 0.1,   
                               merger_lookback_time = 2,       # Gyr, number of years to check for peak stellar mass
                             showfig = True,
-                            savefig = False)     """               
+                            savefig = False)  """                 
 #====================================
 
 
@@ -13237,7 +13181,7 @@ _find_misalignment_evolution(misalignment_tree=misalignment_tree, misalignment_i
             #angles_plot.append(misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1][index_peak])
             err_plot_l.append(misalignment_tree['%s' %ID_i]['%s_err' %use_angle][index_peak][0] - misalignment_tree['%s' %ID_i][use_angle][index_peak])
             err_plot_u.append(misalignment_tree['%s' %ID_i]['%s_err' %use_angle][index_peak][1] - misalignment_tree['%s' %ID_i][use_angle][index_peak])
-            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])
             
             other_plot.append(np.average(np.array(misalignment_tree['%s' %ID_i][plot_delta_color][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']]), weights=np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']-1:misalignment_tree['%s' %ID_i]['index_r']-1]) - np.array(misalignment_tree['%s' %ID_i]['Lookbacktime'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']])))
             ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
@@ -13343,7 +13287,7 @@ _find_misalignment_evolution(misalignment_tree=misalignment_tree, misalignment_i
             #--------------
             # IF we're using inflows, skip galaxies that dont have enough misalignment snipshots
             if not set(['inflow_rate', 'inflow_cum', 's_inflow_rate', 's_inflow_cum', 'outflow_rate']).isdisjoint([plot_spearman_x, plot_spearman_y, plot_spearman_c]):
-                if misalignment_tree['%s' %ID_i]['relaxation_time'] < inflow_skip:
+                if misalignment_tree['%s' %ID_i]['relaxation_time_alt'] < inflow_skip:
                     continue
             
             #--------------
@@ -13399,7 +13343,7 @@ _find_misalignment_evolution(misalignment_tree=misalignment_tree, misalignment_i
                 
                     x_array.append(check)
             else:
-                if plot_spearman_x in ['angle_peak', 'relaxation_time', 'relaxation_type', 'relaxation_morph', 'misalignment_morph']:
+                if plot_spearman_x in ['angle_peak', 'relaxation_time_alt', 'relaxation_type', 'relaxation_morph', 'misalignment_morph']:
                     x_array.append(misalignment_tree['%s' %ID_i]['%s' %plot_spearman_x]) 
                 else:
                     x_array.append(np.mean(misalignment_tree['%s' %ID_i]['%s' %plot_spearman_x][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
@@ -13455,7 +13399,7 @@ _find_misalignment_evolution(misalignment_tree=misalignment_tree, misalignment_i
                 
                     y_array.append(check)
             else:
-                if plot_spearman_y in ['angle_peak', 'relaxation_time', 'relaxation_type', 'relaxation_morph', 'misalignment_morph']:
+                if plot_spearman_y in ['angle_peak', 'relaxation_time_alt', 'relaxation_type', 'relaxation_morph', 'misalignment_morph']:
                     y_array.append(misalignment_tree['%s' %ID_i]['%s' %plot_spearman_y]) 
                 else:
                     y_array.append(np.mean(misalignment_tree['%s' %ID_i]['%s' %plot_spearman_y][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
@@ -13512,7 +13456,7 @@ _find_misalignment_evolution(misalignment_tree=misalignment_tree, misalignment_i
                     
                         c_array.append(check)  
                 else:
-                    if plot_spearman_c in ['angle_peak', 'relaxation_time', 'relaxation_type', 'relaxation_morph', 'misalignment_morph']:
+                    if plot_spearman_c in ['angle_peak', 'relaxation_time_alt', 'relaxation_type', 'relaxation_morph', 'misalignment_morph']:
                         c_array.append(misalignment_tree['%s' %ID_i]['%s' %plot_spearman_c]) 
                     else:
                         c_array.append(np.mean(misalignment_tree['%s' %ID_i]['%s' %plot_spearman_c][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1]))
@@ -13668,7 +13612,7 @@ _find_misalignment_evolution(misalignment_tree=misalignment_tree, misalignment_i
                 vmin = 0
                 vmax = max(c_array)
                 label = 'Number of mergers'
-            elif plot_spearman_c == 'relaxation_time':
+            elif plot_spearman_c == 'relaxation_time_alt':
                 vmin = 0
                 vmax = 4
                 label = 'Relaxation time [Gyr]'
@@ -13816,7 +13760,7 @@ _find_misalignment_evolution(misalignment_tree=misalignment_tree, misalignment_i
                 #axs.set_xticks(np.arange(0, max(c_array)+0.1, 1))
                 #axs.set_xlim(0, max(c_array))
                 axs.set_xlabel('Number of mergers')
-            elif plot_spearman_x == 'relaxation_time':
+            elif plot_spearman_x == 'relaxation_time_alt':
                 axs.set_xticks(np.arange(0, 4.1, 0.5))
                 axs.set_xlim(0, 4)
                 axs.set_xlabel('Relaxation time [Gyr]')
@@ -13942,7 +13886,7 @@ _find_misalignment_evolution(misalignment_tree=misalignment_tree, misalignment_i
                 #axs.set_yticks(np.arange(0, max(c_array)+0.1, 1))
                 #axs.set_ylim(0, max(c_array))
                 axs.set_ylabel('Number of mergers')
-            elif plot_spearman_y == 'relaxation_time':
+            elif plot_spearman_y == 'relaxation_time_alt':
                 axs.set_yticks(np.arange(0, 4.1, 0.5))
                 axs.set_ylim(0, 4)
                 axs.set_ylabel('Relaxation time [Gyr]')
@@ -13981,10 +13925,10 @@ _find_misalignment_evolution(misalignment_tree=misalignment_tree, misalignment_i
         ID_plot             = []
         for ID_i in misalignment_tree.keys():
             # Actual relaxation time
-            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])
             
             # Average the dynamical time and ellip
-            dyntime_plot.append(np.mean(np.array(misalignment_tree['%s' %ID_i]['relaxation_tdyn'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])))
+            dyntime_plot.append(np.mean(np.array(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])))
             
             ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])
             
@@ -14059,10 +14003,10 @@ _find_misalignment_evolution(misalignment_tree=misalignment_tree, misalignment_i
         ID_plot             = []
         for ID_i in misalignment_tree.keys():
             # Actual relaxation time
-            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time_alt'])
             
             # Average the dynamical time and ellip
-            dyntime_plot.append(np.mean(np.array(misalignment_tree['%s' %ID_i]['relaxation_tdyn'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])))
+            dyntime_plot.append(np.mean(np.array(misalignment_tree['%s' %ID_i]['relaxation_tdyn_alt'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])))
             ellip_plot.append(np.mean(np.array(misalignment_tree['%s' %ID_i]['ellip'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])))
             
             ID_plot.append(misalignment_tree['%s' %ID_i]['GalaxyID'][0])

@@ -3,7 +3,7 @@ from snip_timescales_tree import _analyse_tree
 
 
 #================================================================       
-# _normalLatency_anyMergers_anyMorph
+# _normalLatency_anyMergers_anyMorph (default)
 print('\n\n\t_20Thresh_30Peak_normalLatency_anyMergers_anyMorph')
 _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH', load_csv_file = False, csv_file = True, csv_name = '20Thresh_30Peak_normalLatency_anyMergers_anyMorph_NEW',
                 min_particles      = 20,

@@ -3111,13 +3111,21 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     index_merger_locations = np.array(index_dict['merger_locations']['index'][misindex_i]) - int(index_dict['window_locations']['misalign']['index'][misindex_i])
                 else:
                     index_merger_locations = [] 
-                relaxation_time_entry    = float(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_dict['misalignment_locations']['misalign']['index'][misindex_i]]) - float(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_dict['misalignment_locations']['relax']['index'][misindex_i]])
+                relaxation_time_entry_original    = float(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_dict['misalignment_locations']['misalign']['index'][misindex_i]]) - float(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_dict['misalignment_locations']['relax']['index'][misindex_i]])
                 misalignment_tree['%s' %ID_i].update({'index_s': index_misalignment_start,       # last in stable regime
                                                       'index_r': index_misalignment_end,        # first back in stable regime (so +1 when we use a range eg. [index_m:index_r+1])
                                                       'index_merger': index_merger_locations,   # index of merger that meets criteria
-                                                      'relaxation_time': relaxation_time_entry})
-                relaxation_tdyn_entry    = misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
-                relaxation_ttorque_entry = misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
+                                                      'relaxation_time_original': relaxation_time_entry_original})
+                relaxation_tdyn_entry_original    = misalignment_tree['%s' %ID_i]['relaxation_time_original']/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
+                relaxation_ttorque_entry_original = misalignment_tree['%s' %ID_i]['relaxation_time_original']/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
+                misalignment_tree['%s' %ID_i].update({'relaxation_tdyn_original': relaxation_tdyn_entry_original,
+                                                      'relaxation_ttorque_original': relaxation_ttorque_entry_original})
+                                                      
+                # modified trelax (from first unstable -> next stable)
+                relaxation_time_entry   = float(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_dict['misalignment_locations']['misalign']['index'][misindex_i] + 1]) - float(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_dict['misalignment_locations']['relax']['index'][misindex_i]])
+                misalignment_tree['%s' %ID_i].update({'relaxation_time': relaxation_time_entry})
+                relaxation_tdyn_entry    = misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['tdyn'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1])
+                relaxation_ttorque_entry = misalignment_tree['%s' %ID_i]['relaxation_time']/np.mean(np.array(misalignment_tree['%s' %ID_i]['ttorque'])[misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']+1])
                 misalignment_tree['%s' %ID_i].update({'relaxation_tdyn': relaxation_tdyn_entry,
                                                       'relaxation_ttorque': relaxation_ttorque_entry})
                 

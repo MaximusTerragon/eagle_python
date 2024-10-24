@@ -2574,7 +2574,7 @@ def _plot_evolution_snip(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
 
 #_plot_evolution()
 
-_plot_evolution_snip()
+_plot_evolution_snip(showfig = True, savefig = False)
 #============================
 
 #for ID_i in [108988077, 479647060, 21721896, 390595970, 401467650, 182125463, 192213531, 24276812, 116404995, 239808134, 215988755, 86715463, 6972011, 475772617, 374037507, 429352532, 441434976]:

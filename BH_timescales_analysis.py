@@ -52,6 +52,7 @@ def _BH_sample(BHmis_tree = None, BHmis_input = None, BHmis_summary = None, plot
                           add_observational = False,                # not working
                           add_bulge_ratios  = True,
                           add_histograms    = True, 
+                          add_title         = False,
                       # Sample options
                         apply_at_start = True,      # True = first snip, False = takes mean over window
                       # Sample refinement
@@ -114,7 +115,7 @@ def _BH_sample(BHmis_tree = None, BHmis_input = None, BHmis_summary = None, plot
                 if apply_at_start:
                     # establish starting index (0 for aligned/counter, )
                     if galaxy_state == 'misaligned':
-                        starting_index = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['index_s']
+                        starting_index = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['index_s'] + 1
                     else:
                         starting_index = 0
                 
@@ -164,12 +165,15 @@ def _BH_sample(BHmis_tree = None, BHmis_input = None, BHmis_summary = None, plot
     
     
     #df.loc[(df['Occupation'] == 'central') & (df['Relaxation morph'] == 'ETG → ETG')]
-    
-    color_dict = {'aligned':'darkgrey', 'misaligned':'orangered', 'counter':'dodgerblue'}
+
     
     if 'bhmass' in plot_yaxis:
         #---------------------------  
         # Figure initialising
+        
+        color_dict = {'aligned':'darkgrey', 'misaligned':'orangered', 'counter':'dodgerblue'}
+        
+        
         if add_histograms:
             
             fig = plt.figure(figsize=(10/3, 10/3))
@@ -239,7 +243,7 @@ def _BH_sample(BHmis_tree = None, BHmis_input = None, BHmis_summary = None, plot
         #axs.set_yscale('log')
         axs.set_xlabel(r'log$_{10}$ M$_{*}(2r_{50})$ [M$_{\odot}$]')
         #axs.set_ylabel('BH mass [Msun]')
-        axs.set_ylabel(r'log$_{10}$ most massive $M_{\mathrm{BH}}(<r_{50}$) [M$_{\odot}]$')
+        axs.set_ylabel(r'log$_{10}$ $M_{\mathrm{BH}}$ [M$_{\odot}]$')
         #axs.minorticks_on()
         #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
         #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
@@ -260,8 +264,16 @@ def _BH_sample(BHmis_tree = None, BHmis_input = None, BHmis_summary = None, plot
         legend_colors.append('dodgerblue')
         axs.legend(handles=legend_elements, labels=legend_labels, loc='upper left', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0, ncol=1)
     
-    
-        #axs.set_title(r'CoP BH: %s %s' %(use_CoP_BH, '' if plot_annotate == False else plot_annotate), size=7, loc='left', pad=3)
+        #-----------
+        ### Annotate
+        if add_title:
+            if add_histograms:
+                ax_histx.set_title(r'CoP BH: %s %s' %(use_CoP_BH, '' if plot_annotate == None else plot_annotate), size=7, loc='left', pad=3)
+            else:
+                axs.set_title(r'CoP BH: %s %s' %(use_CoP_BH, '' if plot_annotate == None else plot_annotate), size=7, loc='left', pad=3)
+            
+            
+        
     
         #-----------
         # other
@@ -282,6 +294,8 @@ def _BH_sample(BHmis_tree = None, BHmis_input = None, BHmis_summary = None, plot
         # Figure initialising
         fig, axs = plt.subplots(1, 1, figsize=[10/3, 3], sharex=False, sharey=False) 
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
+    
+        color_dict = {'aligned':'darkgrey', 'misaligned':'red', 'counter':'blue'}
     
         plt.scatter(np.log10(df['stelmass']), df['SFR'], s=0.1, c=[color_dict[i] for i in df['State']], edgecolor=[color_dict[i] for i in df['State']], marker='.', alpha=0.8)
         
@@ -312,7 +326,8 @@ def _BH_sample(BHmis_tree = None, BHmis_input = None, BHmis_summary = None, plot
         axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0, ncol=1)
         
         
-        axs.set_title(r'CoP BH: %s %s' %(use_CoP_BH, '' if plot_annotate == False else plot_annotate), size=7, loc='left', pad=3)
+        if add_title:
+            axs.set_title(r'CoP BH: %s %s' %(use_CoP_BH, '' if plot_annotate == None else plot_annotate), size=7, loc='left', pad=3)
         
         #-----------
         # other
@@ -333,6 +348,8 @@ def _BH_sample(BHmis_tree = None, BHmis_input = None, BHmis_summary = None, plot
         # Figure initialising
         fig, axs = plt.subplots(1, 1, figsize=[10/3, 3], sharex=False, sharey=False) 
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
+        
+        color_dict = {'aligned':'darkgrey', 'misaligned':'red', 'counter':'blue'}
     
         plt.scatter(np.log10(df['stelmass']), df['sSFR'], s=0.1, c=[color_dict[i] for i in df['State']], edgecolor=[color_dict[i] for i in df['State']], marker='.', alpha=0.8)
     
@@ -362,7 +379,9 @@ def _BH_sample(BHmis_tree = None, BHmis_input = None, BHmis_summary = None, plot
         legend_colors.append(color_dict['counter'])
         axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0, ncol=1)
         
-        axs.set_title(r'CoP BH: %s %s' %(use_CoP_BH, '' if plot_annotate == False else plot_annotate), size=7, loc='left', pad=3)
+
+        if add_title:
+            axs.set_title(r'CoP BH: %s %s' %(use_CoP_BH, '' if plot_annotate == None else plot_annotate), size=7, loc='left', pad=3)
         
         #-----------
         # other
@@ -387,6 +406,7 @@ def _BH_sample(BHmis_tree = None, BHmis_input = None, BHmis_summary = None, plot
         
         xaxis_max = 8       #[Gyr]
         bin_width = 0.05
+        color_dict = {'aligned':'darkgrey', 'misaligned':'orangered', 'counter':'dodgerblue'}
         
         #------------
         # Histograms
@@ -569,7 +589,7 @@ def _BH_stacked_evolution(BHmis_tree = None, BHmis_input = None, BHmis_summary =
             # Misaligned sample
             if galaxy_state == 'misaligned':
                 
-                check_index = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['index_s']
+                check_index = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['index_s'] + 1
                 if use_CoP_BH:
                     BH_check   = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mass'])[check_index]
                 else:
@@ -1008,9 +1028,12 @@ def _BH_deltamass_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary
             # Misaligned sample
             if galaxy_state == 'misaligned':
                 
-                check_index = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['index_s']
+                #check_index = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['index_s']
+                check_index = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['index_s']+1
+                
                 if must_still_be_misaligned:
-                    time_check = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['relaxation_time']
+                    #time_check = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['relaxation_time']
+                    time_check = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[check_index] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[BH_subsample['%s' %galaxy_state]['%s' %ID_i]['index_r']]   
                 else:
                     time_check = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[check_index] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[-1]
                 
@@ -1287,1041 +1310,6 @@ def _BH_deltamass_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary
         
     
 #--------------------------------
-# histogram of delta M_BH / M_BH**2, as a measure of generally enhanced/reduced growth
-def _BH_deltamassmass2_hist_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary = None, plot_annotate = None, savefig_txt_in = None,
-                          #==============================================
-                          # Plot options
-                            target_window_size   = 0.5,         # [ Gyr ] trim to at least 1 Gyr since misalignment to allow overlay
-                              window_err      = 0.05,           # [ +/- Gyr ] trim
-                              must_still_be_misaligned = True,  # target window = target trelax
-                          # Sample refinement
-                            run_refinement = False,
-                              #use_hmr_general_sample = '2.0',   # [ 1.0 / 2.0 / aperture]
-                              # basic properties
-                              min_stelmass = None,      max_stelmass = None,        # [ 10**9 / Msun ]
-                              min_bhmass   = None,      max_bhmass   = None,
-                              min_sfr      = None,      max_sfr      = None,        # [ Msun/yr ] SF limit of ~ 0.1
-                              min_ssfr     = None,      max_ssfr     = None,        # [ /yr ] SF limit of ~ 1e-10-11
-                              # Mergers, looked for within range considered +/- halfwindow
-                              use_merger_criteria = False,
-                          #==============================================
-                          showfig       = True,
-                          savefig       = False,    
-                            file_format   = 'pdf',
-                            savefig_txt = '',            # [ '' / 'any text' / 'manual' ] 'manual' will prompt txt before saving
-                          #-----------------------------
-                          debug = False):
-                      
-    #-----------------------------------
-    use_CoP_BH                  = BHmis_input['use_CoP_BH']
-    apply_at_start = True
-    target_bhmass = False
-    target_stelmass = False
-    
-    # Establish sub-sample we wish to focus on
-    if run_refinement:
-        BH_subsample, BH_subsample_summary = _refine_BHmis_sample(BHmis_tree = BHmis_tree, BHmis_input = BHmis_input, BHmis_summary = BHmis_summary,
-                                                                  apply_at_start = apply_at_start,  
-                                                                  min_stelmass = min_stelmass,      max_stelmass = max_stelmass,       
-                                                                  min_bhmass   = min_bhmass,        max_bhmass   = max_bhmass,
-                                                                  min_sfr      = min_sfr,           max_sfr      = max_sfr,        
-                                                                  min_ssfr     = min_ssfr,          max_ssfr     = max_ssfr,    
-                                                                  use_merger_criteria = use_merger_criteria)
-    else:
-        print('==================================================================')
-        print('No refinement -> BH_subsample = clean BH_sample from above\n')
-        BH_subsample = BHmis_tree
-        BH_subsample_summary = BHmis_summary
-        BH_subsample_summary.update({'total_sub': BH_subsample_summary['clean_sample']})
-    
-    #===================================================================================================
-    # Go through sample
-    stelmass_plot  = []
-    time_delta_plot = []
-    bhmass_start_plot = []
-    bhmass_delta_plot = []
-    bhmdot_plot    = []
-    sfr_plot       = []
-    ssfr_plot      = []
-    kappa_plot     = []
-    trelax_plot    = []
-    trelax_ID      = []
-    duration_plot  = []
-    state_plot     = []
-    ID_plot        = []
-    for galaxy_state in ['aligned', 'misaligned', 'counter']:
-        for ID_i in BH_subsample['%s' %galaxy_state].keys():
-            
-            # check if duration is shorter than window size
-            if BH_subsample['%s' %galaxy_state]['%s' %ID_i]['entry_duration'] < (target_window_size-window_err):
-                continue
-            
-            #-----------------
-            # Misaligned sample
-            if galaxy_state == 'misaligned':
-                
-                check_index = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['index_s']
-                if must_still_be_misaligned:
-                    time_check = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['relaxation_time']
-                else:
-                    time_check = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[check_index] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[-1]
-                
-                # check if last snapshot in stable regime (index_s) is within target limits + window_size
-                if (time_check >= (target_window_size - window_err)):
-                    
-                    index_start = check_index
-                    duration_array = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime']) - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start])
-                    index_stop_array  = np.where((duration_array > (target_window_size-window_err)) & (duration_array < (target_window_size+window_err)))[0]
-                    
-                    # check if the next snapshot is not too far away
-                    if len(index_stop_array) > 0:
-                        index_stop = random.choice(index_stop_array) + 1
-                        
-                        #---------------------------
-                        # Add evolution entry and append
-                        time_axis = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start:index_stop] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start])
-                        time_delta_plot.append(time_axis[-1])
-                        if use_CoP_BH:
-                            mass_axis = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mass'])[index_start:index_stop]
-                            bhmass_start_plot.append(mass_axis[0])
-                            bhmass_delta_plot.append(mass_axis[-1] - mass_axis[0])
-                            bhmdot_plot.append((mass_axis[-1] - mass_axis[0])/time_axis[-1])
-                        else:
-                            mass_axis = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mass_alt'])[index_start:index_stop]
-                            bhmass_start_plot.append(mass_axis[0])
-                            bhmass_delta_plot.append(mass_axis[-1] - mass_axis[0])
-                            bhmdot_plot.append((mass_axis[-1] - mass_axis[0])/time_axis[-1])
-                    
-                        #--------------------------
-                        # Singular values
-                        stelmass_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass'])[index_start])
-                        sfr_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfr'])[index_start])
-                        ssfr_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['ssfr'])[index_start])
-                        kappa_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['kappa_stars'])[index_start])
-            
-                        duration_plot.append(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['entry_duration'])
-                        trelax_plot.append(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['relaxation_time'])
-                        trelax_ID.append(ID_i)
-                        state_plot.append(galaxy_state)
-                        ID_plot.append(ID_i)
-                    
-                    
-                else:
-                    continue
-                
-            #-----------------
-            # Aligned and counter sample
-            else:
-                # Consider all indexes
-                stelmass_index_length = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass'])
-
-                check_index_array = []
-                for index_i in np.arange(0, len(stelmass_index_length), 1).astype(int):
-                    time_check = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_i] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[-1]
-                    duration_array = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime']) - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_i])
-                    
-                    # check if within window limits
-                    if (time_check >= (target_window_size - window_err)) & (duration_array[-1] <= (target_window_size + window_err)):
-                        check_index_array.append(index_i)
-                
-                # If there exists at least one valid entry, pick random to append min_window_max entries to
-                if len(check_index_array) > 0:
-                    # Pick random starting point
-                    index_start = random.choice(check_index_array)
-                    duration_array = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime']) - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start])
-                    index_stop_array  = np.where(duration_array > (target_window_size-window_err))[0]
-                    index_stop = random.choice(index_stop_array) + 1
-                                        
-                    #---------------------------
-                    # Add evolution entry and append
-                    time_axis = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start:index_stop] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start])
-                    time_delta_plot.append(time_axis[-1])
-                    if use_CoP_BH:
-                        mass_axis = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mass'])[index_start:index_stop]
-                        bhmass_start_plot.append(mass_axis[0])
-                        bhmass_delta_plot.append(mass_axis[-1] - mass_axis[0])
-                        bhmdot_plot.append((mass_axis[-1] - mass_axis[0])/time_axis[-1])
-                    else:
-                        mass_axis = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mass_alt'])[index_start:index_stop]
-                        bhmass_start_plot.append(mass_axis[0])
-                        bhmass_delta_plot.append(mass_axis[-1] - mass_axis[0])
-                        bhmdot_plot.append((mass_axis[-1] - mass_axis[0])/time_axis[-1])
-                
-                    #--------------------------
-                    # Singular values
-                    stelmass_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass'])[index_start])
-                    sfr_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfr'])[index_start])
-                    ssfr_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['ssfr'])[index_start])
-                    kappa_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['kappa_stars'])[index_start])
-        
-                    duration_plot.append(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['entry_duration'])
-                    state_plot.append(galaxy_state)
-                    ID_plot.append(ID_i)
-                
-                
-                          
-    # Collect data into dataframe
-    df = pd.DataFrame(data={'stelmass': stelmass_plot, 'SFR': sfr_plot, 'sSFR': ssfr_plot, 'Time delta': time_delta_plot, 'BH mass start': bhmass_start_plot, 'BH mass delta': bhmass_delta_plot, 'BH mdot': bhmdot_plot, 'Morphology': kappa_plot, 'State': state_plot, 'window': duration_plot, 'GalaxyIDs': ID_plot})        
-    df['BH deltamassmass2'] = df['BH mass delta']/(df['BH mass start']**2)
-    df['BH fraction growth'] = df['BH mass delta']/(df['BH mass start'])
-    
-    df_co  = df.loc[(df['State'] == 'aligned')]
-    df_mis = df.loc[(df['State'] == 'misaligned')]
-    df_cnt = df.loc[(df['State'] == 'counter')]
-    
-    print('Sub-sample in range, with target_window_size median of %.2f±%.2f:' %(target_window_size, window_err))
-    print('  total:       %s' %len(df['GalaxyIDs']))
-    print('  aligned:     %s\t%.4f M_bh (first snip)\t%.3f Gyr' %(len(df_co['GalaxyIDs']), np.median(np.log10(df_co['BH mass start'])), np.median(df_co['Time delta'])))
-    print('  misaligned:  %s\t%.4f M_bh             \t%.3f Gyr' %(len(df_mis['GalaxyIDs']), np.median(np.log10(df_mis['BH mass start'])), np.median(df_mis['Time delta'])))
-    print('  counter:     %s\t%.4f M_bh             \t%.3f Gyr' %(len(df_cnt['GalaxyIDs']), np.median(np.log10(df_cnt['BH mass start'])), np.median(df_cnt['Time delta'])))
-    print(' ')
-    
-    
-    
-    #---------------------------  
-    # Figure initialising
-    fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.1], sharex=False, sharey=False) 
-    plt.subplots_adjust(wspace=0.4, hspace=0.4)
-    
-    color_dict = {'aligned':'darkgrey', 'misaligned':'orangered', 'counter':'dodgerblue'}
-    
-    #---------------------
-    ### Plot histograms
-    add_plot_errorbars = True
-    for state_i in color_dict.keys():
-        
-        df_state = df.loc[df['State'] == state_i]
-        
-        bins = np.arange(-13, -3.9, 0.5)
-        
-        axs.hist(np.log10(df_state['BH deltamassmass2']), log=True, bins=bins, weights=np.ones(len(df_state['BH deltamassmass2']))/len(df_state['BH deltamassmass2']), facecolor='none', linewidth=1, edgecolor=color_dict[state_i], histtype='step', alpha=1)
-        if state_i == 'aligned':
-            axs.hist(np.log10(df_state['BH deltamassmass2']), log=True, bins=bins, weights=np.ones(len(df_state['BH deltamassmass2']))/len(df_state['BH deltamassmass2']), facecolor=color_dict[state_i], linewidth=1, edgecolor='none', alpha=0.1)
-
-        # Add error bars
-        if add_plot_errorbars:
-            hist_n, _ = np.histogram(np.log10(df_state['BH deltamassmass2']), bins=bins)
-            axs.errorbar(bins[:-1]+0.25, hist_n/np.sum(hist_n), xerr=None, yerr=np.sqrt(hist_n)/np.sum(hist_n), ecolor=color_dict[state_i], ls='none', capsize=1, elinewidth=0.7, markeredgewidth=0.7, alpha=0.3)
-
-
-    #--------------
-    # annotation
-    #arr = mpatches.FancyArrowPatch((-3.8, 0.45), (-5, 0.45), arrowstyle='->,head_width=.15', mutation_scale=6, color='grey')
-    #axs.add_patch(arr)
-    #axs.annotate("reduced growth", (.8, 1), xycoords=arr, ha='center', va='bottom', fontsize=6, c='grey')
-    #arr = mpatches.FancyArrowPatch((0.8, 0.45), (2, 0.45), arrowstyle='->,head_width=.15', mutation_scale=6, color='grey')
-    #axs.add_patch(arr)
-    #axs.annotate("enhanced growth", (.2, 1), xycoords=arr, ha='center', va='bottom', fontsize=6, c='grey')
-
-    #-----------
-    ### title
-    plot_annotate = 'target window %.2f±%.2f Gyr window'%(target_window_size, window_err) + (plot_annotate if plot_annotate else '')
-    if must_still_be_misaligned:
-        plot_annotate = plot_annotate + '/trelax'
-    else:
-        axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
-    
-
-    #-----------
-    ### General formatting
-    # Axis labels
-    axs.set_xlim(-13, -4)
-    axs.set_ylim(0.001, 1)
-    #axs.set_yticks([1, 10, 100, 1000])
-    axs.set_xlabel(r'log$_{10}$ $\Delta M_{\mathrm{BH,%s Gyr}}/M_{\mathrm{BH,initial}}^{2}$' %target_window_size)
-    axs.set_ylabel('fraction of sub-sample')
-    #axs.minorticks_on()
-    #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
-    #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
-
-    #-----------
-    ### Legend
-    legend_elements = []
-    legend_labels = []
-    legend_colors = []
-    legend_labels.append('aligned')
-    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-    legend_colors.append(lighten_color(color_dict['aligned'], 1))
-    legend_labels.append('misaligned')
-    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-    legend_colors.append(lighten_color(color_dict['misaligned'], 1))
-    legend_labels.append('counter-rotating')
-    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-    legend_colors.append(lighten_color(color_dict['counter'], 1))
-    axs.legend(handles=legend_elements, labels=legend_labels, loc='upper left', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0, ncol=1)
-
-
-    #-----------
-    # other
-    plt.tight_layout()
-
-    #-----------
-    ### Savefig        
-
-    metadata_plot = {'Title': 'sample/median M_bh/median window\nali: %s %.4f %.3f Gyr\nmis: %s %.4f %.3f Gyr\ncnt: %s %.4f %.3f Gyr' %(len(df_co['GalaxyIDs']), np.median(np.log10(df_co['BH mass start'])), np.median(df_co['Time delta']), len(df_mis['GalaxyIDs']), np.median(np.log10(df_mis['BH mass start'])), np.median(df_mis['Time delta']), len(df_cnt['GalaxyIDs']), np.median(np.log10(df_cnt['BH mass start'])), np.median(df_cnt['Time delta']))}
-               
-    if savefig:
-        savefig_txt_save = savefig_txt_in + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
-
-        plt.savefig("%s/BH_deltamassmass2_analysis/%sbhmass_delta_hist_%s%s_clean%s_subsample%s_plot%s_%s.%s" %(fig_dir, 'L100_', ('trelax' if must_still_be_misaligned else 'window'), target_window_size, BHmis_summary['clean_sample'], BH_subsample_summary['total_sub'], len(df['GalaxyIDs']), savefig_txt_save, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-        print("\n  SAVED: %s/BH_deltamassmass2_analysis/%sbhmass_delta_hist_%s%s_clean%s_subsample%s_plot%s_%s.%s" %(fig_dir, 'L100_', ('trelax' if must_still_be_misaligned else 'window'), target_window_size, BHmis_summary['clean_sample'], BH_subsample_summary['total_sub'], len(df['GalaxyIDs']), savefig_txt_save, file_format)) 
-    if showfig:
-        plt.show()
-    plt.close()
-# x-y of delta M_BH / M_BH**2 (measure of enhanced/reduced growth) vs gas fraction
-def _BH_deltamassmass2_fgas_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary = None, plot_annotate = None, savefig_txt_in = None,
-                          #==============================================
-                          # Plot options
-                            target_window_size   = 0.5,         # [ Gyr ] trim to at least 1 Gyr since misalignment to allow overlay
-                              window_err      = 0.05,           # [ +/- Gyr ] trim
-                              must_still_be_misaligned = True,  # target window = target trelax
-                            gas_fraction_type                   = 'gas_sf',              # [ 'gas' / 'gas_sf' ]
-                                           ring_or_enclosed   = 'enclosed',     # comparing rings of surface density or total enclosed
-                          # Sample refinement
-                            run_refinement = False,
-                              #use_hmr_general_sample = '2.0',   # [ 1.0 / 2.0 / aperture]
-                              # basic properties
-                              min_stelmass = None,      max_stelmass = None,        # [ 10**9 / Msun ]
-                              min_bhmass   = None,      max_bhmass   = None,
-                              min_sfr      = None,      max_sfr      = None,        # [ Msun/yr ] SF limit of ~ 0.1
-                              min_ssfr     = None,      max_ssfr     = None,        # [ /yr ] SF limit of ~ 1e-10-11
-                              # Mergers, looked for within range considered +/- halfwindow
-                              use_merger_criteria = False,
-                          #==============================================
-                          showfig       = True,
-                          savefig       = False,    
-                            file_format   = 'pdf',
-                            savefig_txt = '',            # [ '' / 'any text' / 'manual' ] 'manual' will prompt txt before saving
-                          #-----------------------------
-                          debug = False):
-                      
-    #-----------------------------------
-    use_CoP_BH                  = BHmis_input['use_CoP_BH']
-    apply_at_start = True
-    target_bhmass = False
-    target_stelmass = False
-    
-    # Establish sub-sample we wish to focus on
-    if run_refinement:
-        BH_subsample, BH_subsample_summary = _refine_BHmis_sample(BHmis_tree = BHmis_tree, BHmis_input = BHmis_input, BHmis_summary = BHmis_summary,
-                                                                  apply_at_start = apply_at_start,  
-                                                                  min_stelmass = min_stelmass,      max_stelmass = max_stelmass,       
-                                                                  min_bhmass   = min_bhmass,        max_bhmass   = max_bhmass,
-                                                                  min_sfr      = min_sfr,           max_sfr      = max_sfr,        
-                                                                  min_ssfr     = min_ssfr,          max_ssfr     = max_ssfr,    
-                                                                  use_merger_criteria = use_merger_criteria)
-    else:
-        print('==================================================================')
-        print('No refinement -> BH_subsample = clean BH_sample from above\n')
-        BH_subsample = BHmis_tree
-        BH_subsample_summary = BHmis_summary
-        BH_subsample_summary.update({'total_sub': BH_subsample_summary['clean_sample']})
-    
-    #===================================================================================================
-    # Go through sample
-    stelmass_plot  = []
-    time_delta_plot = []
-    bhmass_start_plot = []
-    bhmass_delta_plot = []
-    bhmdot_plot    = []
-    sfr_plot       = []
-    ssfr_plot      = []
-    fgas_plot      = []
-    fgassf_plot    = []
-    gas_density_plot    = []
-    gassf_density_plot  = []
-    kappa_plot     = []
-    trelax_plot    = []
-    trelax_ID      = []
-    duration_plot  = []
-    state_plot     = []
-    ID_plot        = []
-    density_fail = {'gas': {'aligned': [], 'misaligned': [], 'counter': []},
-                    'gas_sf': {'aligned': [], 'misaligned': [], 'counter': []}}       # galaxies for which surface density ratio is infinite
-    
-    for galaxy_state in ['aligned', 'misaligned', 'counter']:
-        for ID_i in BH_subsample['%s' %galaxy_state].keys():
-            
-            # check if duration is shorter than window size
-            if BH_subsample['%s' %galaxy_state]['%s' %ID_i]['entry_duration'] < (target_window_size-window_err):
-                continue
-            
-            #-----------------
-            # Misaligned sample
-            if galaxy_state == 'misaligned':
-                
-                check_index = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['index_s']
-                if must_still_be_misaligned:
-                    time_check = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['relaxation_time']
-                else:
-                    time_check = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[check_index] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[-1]
-                
-                # check if last snapshot in stable regime (index_s) is within target limits + window_size
-                if (time_check >= (target_window_size - window_err)):
-                    
-                    index_start = check_index
-                    duration_array = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime']) - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start])
-                    index_stop_array  = np.where((duration_array > (target_window_size-window_err)) & (duration_array < (target_window_size+window_err)))[0]
-                    
-                    # check if the next snapshot is not too far away
-                    if len(index_stop_array) > 0:
-                        index_stop = random.choice(index_stop_array) + 1
-                        
-                        #---------------------------
-                        # Add evolution entry and append
-                        time_axis = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start:index_stop] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start])
-                        time_delta_plot.append(time_axis[-1])
-                        if use_CoP_BH:
-                            mass_axis = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mass'])[index_start:index_stop]
-                            bhmass_start_plot.append(mass_axis[0])
-                            bhmass_delta_plot.append(mass_axis[-1] - mass_axis[0])
-                            bhmdot_plot.append((mass_axis[-1] - mass_axis[0])/time_axis[-1])
-                        else:
-                            mass_axis = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mass_alt'])[index_start:index_stop]
-                            bhmass_start_plot.append(mass_axis[0])
-                            bhmass_delta_plot.append(mass_axis[-1] - mass_axis[0])
-                            bhmdot_plot.append((mass_axis[-1] - mass_axis[0])/time_axis[-1])
-                    
-                        #--------------------------
-                        # Singular values
-                        stelmass_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass'])[index_start])
-                        sfr_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfr'])[index_start])
-                        ssfr_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['ssfr'])[index_start])
-                        kappa_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['kappa_stars'])[index_start])
-                        
-                        
-                        #---------------
-                        # Gas and gassf fraction
-                        fgas_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
-                        fgassf_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
-                        
-                        
-                        # Gas and gassf surface density ratios (within r50/<2r50-r50>)... the rad cancels out
-                        #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
-                        gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start]
-                        gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start]
-                        gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start]
-                        gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start]
-                        
-                        if ring_or_enclosed == 'ring':
-                            gas_surfdens_ratio = 3*(gasmass_r50/(gasmass_2r50 - gasmass_r50))
-                            gassf_surfdens_ratio = 3*(gassfmass_r50/(gassfmass_2r50 - gassfmass_r50))
-                            
-                            # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
-                            if gasmass_2r50 - gasmass_r50 == 0:
-                                density_fail['gas']['%s' %galaxy_state].append(ID_i)
-                            if gassfmass_2r50 - gassfmass_r50 == 0:
-                                density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
-                        elif ring_or_enclosed == 'enclosed': 
-                            gas_surfdens_ratio = 4*(gasmass_r50/(gasmass_2r50))
-                            gassf_surfdens_ratio = 4*(gassfmass_r50/(gassfmass_2r50))
-                        
-                        gas_density_plot.append(gas_surfdens_ratio)
-                        gassf_density_plot.append(gassf_surfdens_ratio)
-                                
-                                    
-                        duration_plot.append(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['entry_duration'])
-                        trelax_plot.append(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['relaxation_time'])
-                        trelax_ID.append(ID_i)
-                        state_plot.append(galaxy_state)
-                        ID_plot.append(ID_i)
-                    
-                    
-                else:
-                    continue
-                
-            #-----------------
-            # Aligned and counter sample
-            else:
-                # Consider all indexes
-                stelmass_index_length = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass'])
-
-                check_index_array = []
-                for index_i in np.arange(0, len(stelmass_index_length), 1).astype(int):
-                    time_check = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_i] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[-1]
-                    duration_array = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime']) - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_i])
-                    
-                    # check if within window limits
-                    if (time_check >= (target_window_size - window_err)) & (duration_array[-1] <= (target_window_size + window_err)):
-                        check_index_array.append(index_i)
-                
-                # If there exists at least one valid entry, pick random to append min_window_max entries to
-                if len(check_index_array) > 0:
-                    # Pick random starting point
-                    index_start = random.choice(check_index_array)
-                    duration_array = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime']) - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start])
-                    index_stop_array  = np.where(duration_array > (target_window_size-window_err))[0]
-                    index_stop = random.choice(index_stop_array) + 1
-                                        
-                    #---------------------------
-                    # Add evolution entry and append
-                    time_axis = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start:index_stop] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start])
-                    time_delta_plot.append(time_axis[-1])
-                    if use_CoP_BH:
-                        mass_axis = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mass'])[index_start:index_stop]
-                        bhmass_start_plot.append(mass_axis[0])
-                        bhmass_delta_plot.append(mass_axis[-1] - mass_axis[0])
-                        bhmdot_plot.append((mass_axis[-1] - mass_axis[0])/time_axis[-1])
-                    else:
-                        mass_axis = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mass_alt'])[index_start:index_stop]
-                        bhmass_start_plot.append(mass_axis[0])
-                        bhmass_delta_plot.append(mass_axis[-1] - mass_axis[0])
-                        bhmdot_plot.append((mass_axis[-1] - mass_axis[0])/time_axis[-1])
-                
-                    #--------------------------
-                    # Singular values
-                    stelmass_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass'])[index_start])
-                    sfr_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfr'])[index_start])
-                    ssfr_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['ssfr'])[index_start])
-                    kappa_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['kappa_stars'])[index_start])
-                    
-                    #---------------
-                    # Gas and gassf fraction
-                    fgas_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
-                    fgassf_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
-                    
-                    
-                    # Gas and gassf surface density ratios (within r50/<2r50-r50>)... the rad cancels out
-                    #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
-                    gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start]
-                    gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start]
-                    gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start]
-                    gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start]
-                                    
-                    if ring_or_enclosed == 'ring':
-                        gas_surfdens_ratio = 3*(gasmass_r50/(gasmass_2r50 - gasmass_r50))
-                        gassf_surfdens_ratio = 3*(gassfmass_r50/(gassfmass_2r50 - gassfmass_r50))
-                        
-                        # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
-                        if gasmass_2r50 - gasmass_r50 == 0:
-                            density_fail['gas']['%s' %galaxy_state].append(ID_i)
-                        if gassfmass_2r50 - gassfmass_r50 == 0:
-                            density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
-                    elif ring_or_enclosed == 'enclosed': 
-                        gas_surfdens_ratio = 4*(gasmass_r50/(gasmass_2r50))
-                        gassf_surfdens_ratio = 4*(gassfmass_r50/(gassfmass_2r50))
-                            
-                    gas_density_plot.append(gas_surfdens_ratio)
-                    gassf_density_plot.append(gassf_surfdens_ratio)
-        
-                    duration_plot.append(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['entry_duration'])
-                    state_plot.append(galaxy_state)
-                    ID_plot.append(ID_i)
-                
-                
-                          
-    # Collect data into dataframe
-    df = pd.DataFrame(data={'stelmass': stelmass_plot, 'SFR': sfr_plot, 'sSFR': ssfr_plot, 'Time delta': time_delta_plot, 'BH mass start': bhmass_start_plot, 'BH mass delta': bhmass_delta_plot, 'BH mdot': bhmdot_plot, 'Gas fraction': fgas_plot, 'Gassf fraction': fgassf_plot, 'Gas surfdens ratio': gas_density_plot, 'Gassf surfdens ratio': gassf_density_plot, 'Morphology': kappa_plot, 'State': state_plot, 'window': duration_plot, 'GalaxyIDs': ID_plot})        
-    df['BH deltamassmass2'] = df['BH mass delta']/(df['BH mass start']**2)
-    df_co  = df.loc[(df['State'] == 'aligned')]
-    df_mis = df.loc[(df['State'] == 'misaligned')]
-    df_cnt = df.loc[(df['State'] == 'counter')]
-    
-    print('Sub-sample in range, with target_window_size median of %.2f±%.2f:' %(target_window_size, window_err))
-    print('  total:       %s' %len(df['GalaxyIDs']))
-    print('  aligned:     %s\t%.4f M_bh (first snip)\t%.3f Gyr' %(len(df_co['GalaxyIDs']), np.median(np.log10(df_co['BH mass start'])), np.median(df_co['Time delta'])))
-    print('  misaligned:  %s\t%.4f M_bh             \t%.3f Gyr' %(len(df_mis['GalaxyIDs']), np.median(np.log10(df_mis['BH mass start'])), np.median(df_mis['Time delta'])))
-    print('  counter:     %s\t%.4f M_bh             \t%.3f Gyr' %(len(df_cnt['GalaxyIDs']), np.median(np.log10(df_cnt['BH mass start'])), np.median(df_cnt['Time delta'])))
-    print(' ')
-    print('Cannot estimate %s surface ratios for these galaxies:  (remove from above)' %gas_fraction_type)
-    print('  aligned:     %s' %len(density_fail['%s' %gas_fraction_type]['aligned']))
-    print('  misaligned:  %s' %len(density_fail['%s' %gas_fraction_type]['misaligned']))
-    print('  counter:     %s' %len(density_fail['%s' %gas_fraction_type]['counter']))
-    
-    
-    
-    #---------------------------  
-    # Figure initialising
-    fig, axs = plt.subplots(1, 1, figsize=[10/3, 3], sharex=False, sharey=False) 
-    plt.subplots_adjust(wspace=0.4, hspace=0.4)
-    
-    color_dict = {'aligned':'darkgrey', 'misaligned':'orangered', 'counter':'dodgerblue'}
-    
-    #---------------------
-    ### Plot scatter
-    if gas_fraction_type == 'gas':
-        axs.scatter(np.log10(df['BH deltamassmass2']), np.log10(df['Gas fraction']), s=6, c=[color_dict[i] for i in df['State']], edgecolor='k', marker='.', linewidths=0, alpha=0.8, zorder=-2)
-    if gas_fraction_type == 'gas_sf':
-        axs.scatter(np.log10(df['BH deltamassmass2']), np.log10(df['Gassf fraction']), s=6, c=[color_dict[i] for i in df['State']], edgecolor='k', marker='.', linewidths=0, alpha=0.8, zorder=-2)
-    
-    
-    
-    #--------------
-    # Contours
-    levels = [1-0.68, 1-0.38, 1] # 1 - sigma, as contour will plot 'probability of lying outside this contour', not 'within contour'
-    for state_i in ['aligned', 'misaligned', 'counter']:
-        df_i = df.loc[(df['State'] == state_i)]
-    
-        x = np.array(np.log10(df_i['BH deltamassmass2']))
-        if gas_fraction_type == 'gas':
-            y = np.array(np.log10(df_i['Gas fraction']))
-        if gas_fraction_type == 'gas_sf':
-            y = np.array(np.log10(df_i['Gassf fraction']))
-
-        k = gaussian_kde(np.vstack([x, y]))
-        xi, yi = np.mgrid[x.min():x.max():x.size**0.5*1j,y.min():y.max():y.size**0.5*1j]
-        zi = k(np.vstack([xi.flatten(), yi.flatten()]))
-
-        #set zi to 0-1 scale
-        zi = (zi-zi.min())/(zi.max() - zi.min())
-        zi =zi.reshape(xi.shape)
-
-        #set up plot
-        origin = 'lower'
-        #levels = [0.25, 0.5, 0.75]
-
-        CS = axs.contour(xi, yi, zi,levels = levels, colors=(lighten_color(color_dict['%s' %state_i], 0.8), lighten_color(color_dict['%s' %state_i], 0.5),), linewidths=(1,), origin=origin, zorder=100, alpha=0.7)
-        axs.contourf(xi, yi, zi,levels = [levels[0], levels[1]], colors=(lighten_color(color_dict['%s' %state_i], 0.8),), origin=origin, zorder=-3, alpha=0.15)
-        axs.contourf(xi, yi, zi,levels = [levels[1], levels[2]], colors=(lighten_color(color_dict['%s' %state_i], 0.5),), origin=origin, zorder=-3, alpha=0.15)
-    
-    #--------------
-    # annotation
-    arr = mpatches.FancyArrowPatch((-11, -0.2), (-12.8, -0.2), arrowstyle='->,head_width=.15', mutation_scale=6, color='grey')
-    axs.add_patch(arr)
-    axs.annotate("reduced growth", (.8, 1), xycoords=arr, ha='center', va='bottom', fontsize=6, c='grey')
-    arr = mpatches.FancyArrowPatch((-6, -0.2), (-4.2, -0.2), arrowstyle='->,head_width=.15', mutation_scale=6, color='grey')
-    axs.add_patch(arr)
-    axs.annotate("enhanced growth", (.2, 1), xycoords=arr, ha='center', va='bottom', fontsize=6, c='grey')
-
-    #-----------
-    ### title
-    plot_annotate = 'target window %.2f±%.2f Gyr window'%(target_window_size, window_err) + (plot_annotate if plot_annotate else '')
-    if must_still_be_misaligned:
-        plot_annotate = plot_annotate + '/trelax'
-    else:
-        axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
-    
-
-    #-----------
-    ### General formatting
-    # Axis labels
-    axs.set_xlim(-13, -4)
-    #axs.set_yscale('log')
-    #axs.set_ylim(0.0025, 1)
-    axs.set_ylim(-2.5, 0)
-    #axs.set_yticks([1, 10, 100, 1000])
-    axs.set_xlabel(r'log$_{10}$ $\Delta M_{\mathrm{BH,%s Gyr}}/M_{\mathrm{BH,initial}}^{2}$ [M$_{\odot}^{-1}]$' %target_window_size)
-    axs.set_ylabel('log$_{10}$ $f_{\mathrm{gas,SF}}(<r_{50})$')
-    #axs.minorticks_on()
-    #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
-    #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
-
-    #-----------
-    ### Legend
-    legend_elements = []
-    legend_labels = []
-    legend_colors = []
-    legend_labels.append('aligned')
-    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-    legend_colors.append(lighten_color(color_dict['aligned'], 1))
-    legend_labels.append('misaligned')
-    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-    legend_colors.append(lighten_color(color_dict['misaligned'], 1))
-    legend_labels.append('counter-rotating')
-    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-    legend_colors.append(lighten_color(color_dict['counter'], 1))
-    axs.legend(handles=legend_elements, labels=legend_labels, loc='lower right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0, ncol=1)
-
-
-    #-----------
-    # other
-    plt.tight_layout()
-
-    #-----------
-    ### Savefig        
-
-    metadata_plot = {'Title': 'sample/median M_bh/median window\nali: %s %.4f %.3f Gyr\nmis: %s %.4f %.3f Gyr\ncnt: %s %.4f %.3f Gyr' %(len(df_co['GalaxyIDs']), np.median(np.log10(df_co['BH mass start'])), np.median(df_co['Time delta']), len(df_mis['GalaxyIDs']), np.median(np.log10(df_mis['BH mass start'])), np.median(df_mis['Time delta']), len(df_cnt['GalaxyIDs']), np.median(np.log10(df_cnt['BH mass start'])), np.median(df_cnt['Time delta']))}
-               
-    if savefig:
-        savefig_txt_save = savefig_txt_in + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
-
-        plt.savefig("%s/BH_deltamassmass2_analysis/%sbhmass_delta_f%s_%s%s_clean%s_subsample%s_plot%s_%s.%s" %(fig_dir, 'L100_', gas_fraction_type, ('trelax' if must_still_be_misaligned else 'window'), target_window_size, BHmis_summary['clean_sample'], BH_subsample_summary['total_sub'], len(df['GalaxyIDs']), savefig_txt_save, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-        print("\n  SAVED: %s/BH_deltamassmass2_analysis/%sbhmass_delta_f%s_%s%s_clean%s_subsample%s_plot%s_%s.%s" %(fig_dir, 'L100_', gas_fraction_type, ('trelax' if must_still_be_misaligned else 'window'), target_window_size, BHmis_summary['clean_sample'], BH_subsample_summary['total_sub'], len(df['GalaxyIDs']), savefig_txt_save, file_format)) 
-    if showfig:
-        plt.show()
-    plt.close()
-# x-y of delta M_BH / M_BH**2 (measure of enhanced/reduced growth) vs ratio of gas surface density at r50 and between r50 and 2r50
-def _BH_deltamassmass2_gassurfratio_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary = None, plot_annotate = None, savefig_txt_in = None,
-                          #==============================================
-                          # Plot options
-                            target_window_size   = 0.5,         # [ Gyr ] trim to at least 1 Gyr since misalignment to allow overlay
-                              window_err      = 0.05,           # [ +/- Gyr ] trim
-                              must_still_be_misaligned = True,  # target window = target trelax
-                            gas_fraction_type                   = 'gas_sf',              # [ 'gas' / 'gas_sf' ]
-                            ring_or_enclosed                    = 'enclosed',               # gas surface density within 2r50, or between r50 and 2r50
-                          # Sample refinement
-                            run_refinement = False,
-                              #use_hmr_general_sample = '2.0',   # [ 1.0 / 2.0 / aperture]
-                              # basic properties
-                              min_stelmass = None,      max_stelmass = None,        # [ 10**9 / Msun ]
-                              min_bhmass   = None,      max_bhmass   = None,
-                              min_sfr      = None,      max_sfr      = None,        # [ Msun/yr ] SF limit of ~ 0.1
-                              min_ssfr     = None,      max_ssfr     = None,        # [ /yr ] SF limit of ~ 1e-10-11
-                              # Mergers, looked for within range considered +/- halfwindow
-                              use_merger_criteria = False,
-                          #==============================================
-                          showfig       = True,
-                          savefig       = False,    
-                            file_format   = 'pdf',
-                            savefig_txt = '',            # [ '' / 'any text' / 'manual' ] 'manual' will prompt txt before saving
-                          #-----------------------------
-                          debug = False):
-                      
-    #-----------------------------------
-    use_CoP_BH                  = BHmis_input['use_CoP_BH']
-    apply_at_start = True
-    target_bhmass = False
-    target_stelmass = False
-    
-    # Establish sub-sample we wish to focus on
-    if run_refinement:
-        BH_subsample, BH_subsample_summary = _refine_BHmis_sample(BHmis_tree = BHmis_tree, BHmis_input = BHmis_input, BHmis_summary = BHmis_summary,
-                                                                  apply_at_start = apply_at_start,  
-                                                                  min_stelmass = min_stelmass,      max_stelmass = max_stelmass,       
-                                                                  min_bhmass   = min_bhmass,        max_bhmass   = max_bhmass,
-                                                                  min_sfr      = min_sfr,           max_sfr      = max_sfr,        
-                                                                  min_ssfr     = min_ssfr,          max_ssfr     = max_ssfr,    
-                                                                  use_merger_criteria = use_merger_criteria)
-    else:
-        print('==================================================================')
-        print('No refinement -> BH_subsample = clean BH_sample from above\n')
-        BH_subsample = BHmis_tree
-        BH_subsample_summary = BHmis_summary
-        BH_subsample_summary.update({'total_sub': BH_subsample_summary['clean_sample']})
-    
-    #===================================================================================================
-    # Go through sample
-    stelmass_plot  = []
-    time_delta_plot = []
-    bhmass_start_plot = []
-    bhmass_delta_plot = []
-    bhmdot_plot    = []
-    sfr_plot       = []
-    ssfr_plot      = []
-    fgas_plot      = []
-    fgassf_plot    = []
-    gas_density_plot    = []
-    gassf_density_plot  = []
-    kappa_plot     = []
-    trelax_plot    = []
-    trelax_ID      = []
-    duration_plot  = []
-    state_plot     = []
-    ID_plot        = []
-    density_fail = {'gas': {'aligned': [], 'misaligned': [], 'counter': []},
-                    'gas_sf': {'aligned': [], 'misaligned': [], 'counter': []}}       # galaxies for which surface density ratio is infinite
-    
-    for galaxy_state in ['aligned', 'misaligned', 'counter']:
-        for ID_i in BH_subsample['%s' %galaxy_state].keys():
-            
-            # check if duration is shorter than window size
-            if BH_subsample['%s' %galaxy_state]['%s' %ID_i]['entry_duration'] < (target_window_size-window_err):
-                continue
-            
-            #-----------------
-            # Misaligned sample
-            if galaxy_state == 'misaligned':
-                
-                check_index = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['index_s']
-                if must_still_be_misaligned:
-                    time_check = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['relaxation_time']
-                else:
-                    time_check = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[check_index] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[-1]
-                
-                # check if last snapshot in stable regime (index_s) is within target limits + window_size
-                if (time_check >= (target_window_size - window_err)):
-                    
-                    index_start = check_index
-                    duration_array = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime']) - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start])
-                    index_stop_array  = np.where((duration_array > (target_window_size-window_err)) & (duration_array < (target_window_size+window_err)))[0]
-                    
-                    # check if the next snapshot is not too far away
-                    if len(index_stop_array) > 0:
-                        index_stop = random.choice(index_stop_array) + 1
-                        
-                        #---------------------------
-                        # Add evolution entry and append
-                        time_axis = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start:index_stop] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start])
-                        time_delta_plot.append(time_axis[-1])
-                        if use_CoP_BH:
-                            mass_axis = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mass'])[index_start:index_stop]
-                            bhmass_start_plot.append(mass_axis[0])
-                            bhmass_delta_plot.append(mass_axis[-1] - mass_axis[0])
-                            bhmdot_plot.append((mass_axis[-1] - mass_axis[0])/time_axis[-1])
-                        else:
-                            mass_axis = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mass_alt'])[index_start:index_stop]
-                            bhmass_start_plot.append(mass_axis[0])
-                            bhmass_delta_plot.append(mass_axis[-1] - mass_axis[0])
-                            bhmdot_plot.append((mass_axis[-1] - mass_axis[0])/time_axis[-1])
-                    
-                        #--------------------------
-                        # Singular values
-                        stelmass_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass'])[index_start])
-                        sfr_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfr'])[index_start])
-                        ssfr_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['ssfr'])[index_start])
-                        kappa_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['kappa_stars'])[index_start])
-                        
-                        
-                        #---------------
-                        # Gas and gassf fraction
-                        fgas_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
-                        fgassf_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
-                        
-                        
-                        # Gas and gassf surface density ratios (within r50/<2r50-r50>)... the rad cancels out
-                        #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
-                        gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start]
-                        gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start]
-                        gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start]
-                        gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start]
-                        
-                        if ring_or_enclosed == 'ring':
-                            gas_surfdens_ratio = 3*(gasmass_r50/(gasmass_2r50 - gasmass_r50))
-                            gassf_surfdens_ratio = 3*(gassfmass_r50/(gassfmass_2r50 - gassfmass_r50))
-                            
-                            # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
-                            if gasmass_2r50 - gasmass_r50 == 0:
-                                density_fail['gas']['%s' %galaxy_state].append(ID_i)
-                            if gassfmass_2r50 - gassfmass_r50 == 0:
-                                density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
-                        elif ring_or_enclosed == 'enclosed': 
-                            gas_surfdens_ratio = 4*(gasmass_r50/(gasmass_2r50))
-                            gassf_surfdens_ratio = 4*(gassfmass_r50/(gassfmass_2r50))
-                            
-                        gas_density_plot.append(gas_surfdens_ratio)
-                        gassf_density_plot.append(gassf_surfdens_ratio)
-                        
-                                
-                                    
-                        duration_plot.append(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['entry_duration'])
-                        trelax_plot.append(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['relaxation_time'])
-                        trelax_ID.append(ID_i)
-                        state_plot.append(galaxy_state)
-                        ID_plot.append(ID_i)
-                    
-                    
-                else:
-                    continue
-                
-            #-----------------
-            # Aligned and counter sample
-            else:
-                # Consider all indexes
-                stelmass_index_length = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass'])
-
-                check_index_array = []
-                for index_i in np.arange(0, len(stelmass_index_length), 1).astype(int):
-                    time_check = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_i] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[-1]
-                    duration_array = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime']) - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_i])
-                    
-                    # check if within window limits
-                    if (time_check >= (target_window_size - window_err)) & (duration_array[-1] <= (target_window_size + window_err)):
-                        check_index_array.append(index_i)
-                
-                # If there exists at least one valid entry, pick random to append min_window_max entries to
-                if len(check_index_array) > 0:
-                    # Pick random starting point
-                    index_start = random.choice(check_index_array)
-                    duration_array = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime']) - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start])
-                    index_stop_array  = np.where(duration_array > (target_window_size-window_err))[0]
-                    index_stop = random.choice(index_stop_array) + 1
-                                        
-                    #---------------------------
-                    # Add evolution entry and append
-                    time_axis = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start:index_stop] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start])
-                    time_delta_plot.append(time_axis[-1])
-                    if use_CoP_BH:
-                        mass_axis = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mass'])[index_start:index_stop]
-                        bhmass_start_plot.append(mass_axis[0])
-                        bhmass_delta_plot.append(mass_axis[-1] - mass_axis[0])
-                        bhmdot_plot.append((mass_axis[-1] - mass_axis[0])/time_axis[-1])
-                    else:
-                        mass_axis = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mass_alt'])[index_start:index_stop]
-                        bhmass_start_plot.append(mass_axis[0])
-                        bhmass_delta_plot.append(mass_axis[-1] - mass_axis[0])
-                        bhmdot_plot.append((mass_axis[-1] - mass_axis[0])/time_axis[-1])
-                
-                    #--------------------------
-                    # Singular values
-                    stelmass_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass'])[index_start])
-                    sfr_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfr'])[index_start])
-                    ssfr_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['ssfr'])[index_start])
-                    kappa_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['kappa_stars'])[index_start])
-                    
-                    #---------------
-                    # Gas and gassf fraction
-                    fgas_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
-                    fgassf_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
-                    
-                    
-                    # Gas and gassf surface density ratios (within r50/<2r50-r50>)... the rad cancels out
-                    #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
-                    gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start]
-                    gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start]
-                    gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start]
-                    gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start]
-                        
-                    if ring_or_enclosed == 'ring':
-                        gas_surfdens_ratio = 3*(gasmass_r50/(gasmass_2r50 - gasmass_r50))
-                        gassf_surfdens_ratio = 3*(gassfmass_r50/(gassfmass_2r50 - gassfmass_r50))
-                        
-                        # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
-                        if gasmass_2r50 - gasmass_r50 == 0:
-                            density_fail['gas']['%s' %galaxy_state].append(ID_i)
-                        if gassfmass_2r50 - gassfmass_r50 == 0:
-                            density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
-                    elif ring_or_enclosed == 'enclosed': 
-                        gas_surfdens_ratio = 4*(gasmass_r50/(gasmass_2r50))
-                        gassf_surfdens_ratio = 4*(gassfmass_r50/(gassfmass_2r50))
-                        
-                    gas_density_plot.append(gas_surfdens_ratio)
-                    gassf_density_plot.append(gassf_surfdens_ratio)
-        
-                    duration_plot.append(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['entry_duration'])
-                    state_plot.append(galaxy_state)
-                    ID_plot.append(ID_i)
-                
-                
-                          
-    # Collect data into dataframe
-    df = pd.DataFrame(data={'stelmass': stelmass_plot, 'SFR': sfr_plot, 'sSFR': ssfr_plot, 'Time delta': time_delta_plot, 'BH mass start': bhmass_start_plot, 'BH mass delta': bhmass_delta_plot, 'BH mdot': bhmdot_plot, 'Gas fraction': fgas_plot, 'Gassf fraction': fgassf_plot, 'Gas surfdens ratio': gas_density_plot, 'Gassf surfdens ratio': gassf_density_plot, 'Morphology': kappa_plot, 'State': state_plot, 'window': duration_plot, 'GalaxyIDs': ID_plot})        
-    df['BH deltamassmass2'] = df['BH mass delta']/(df['BH mass start']**2)
-    df_co  = df.loc[(df['State'] == 'aligned')]
-    df_mis = df.loc[(df['State'] == 'misaligned')]
-    df_cnt = df.loc[(df['State'] == 'counter')]
-    
-    print('Sub-sample in range, with target_window_size median of %.2f±%.2f:' %(target_window_size, window_err))
-    print('  total:       %s' %len(df['GalaxyIDs']))
-    print('  aligned:     %s\t%.4f M_bh (first snip)\t%.3f Gyr' %(len(df_co['GalaxyIDs']), np.median(np.log10(df_co['BH mass start'])), np.median(df_co['Time delta'])))
-    print('  misaligned:  %s\t%.4f M_bh             \t%.3f Gyr' %(len(df_mis['GalaxyIDs']), np.median(np.log10(df_mis['BH mass start'])), np.median(df_mis['Time delta'])))
-    print('  counter:     %s\t%.4f M_bh             \t%.3f Gyr' %(len(df_cnt['GalaxyIDs']), np.median(np.log10(df_cnt['BH mass start'])), np.median(df_cnt['Time delta'])))
-    print(' ')
-    print('Cannot estimate %s surface ratios for these galaxies:  (remove from above)' %gas_fraction_type)
-    print('  aligned:     %s' %len(density_fail['%s' %gas_fraction_type]['aligned']))
-    print('  misaligned:  %s' %len(density_fail['%s' %gas_fraction_type]['misaligned']))
-    print('  counter:     %s' %len(density_fail['%s' %gas_fraction_type]['counter']))
-    
-    
-    
-    #---------------------------  
-    # Figure initialising
-    fig, axs = plt.subplots(1, 1, figsize=[10/3, 3], sharex=False, sharey=False) 
-    plt.subplots_adjust(wspace=0.4, hspace=0.4)
-    
-    color_dict = {'aligned':'darkgrey', 'misaligned':'orangered', 'counter':'dodgerblue'}
-    
-    #---------------------
-    ### Plot scatter
-    if gas_fraction_type == 'gas':
-        axs.scatter(np.log10(df['BH deltamassmass2']), np.log10(df['Gas surfdens ratio']), s=6, c=[color_dict[i] for i in df['State']], edgecolor='k', marker='.', linewidths=0, alpha=0.8, zorder=-2)
-    if gas_fraction_type == 'gas_sf':
-        axs.scatter(np.log10(df['BH deltamassmass2']), np.log10(df['Gassf surfdens ratio']), s=6, c=[color_dict[i] for i in df['State']], edgecolor='k', marker='.', linewidths=0, alpha=0.8, zorder=-2)
-    
-    
-    #--------------
-    # Contours
-    levels = [1-0.68, 1-0.38, 1] # 1 - sigma, as contour will plot 'probability of lying outside this contour', not 'within contour'
-    for state_i in ['aligned', 'misaligned', 'counter']:
-        df_i = df.loc[(df['State'] == state_i)]
-    
-        x = np.array(np.log10(df_i['BH deltamassmass2']))
-        if gas_fraction_type == 'gas':
-            y = np.array(np.log10(df_i['Gas surfdens ratio']))
-        if gas_fraction_type == 'gas_sf':
-            y = np.array(np.log10(df_i['Gassf surfdens ratio']))
-
-        k = gaussian_kde(np.vstack([x, y]))
-        xi, yi = np.mgrid[x.min():x.max():x.size**0.5*1j,y.min():y.max():y.size**0.5*1j]
-        zi = k(np.vstack([xi.flatten(), yi.flatten()]))
-
-        #set zi to 0-1 scale
-        zi = (zi-zi.min())/(zi.max() - zi.min())
-        zi =zi.reshape(xi.shape)
-
-        #set up plot
-        origin = 'lower'
-        #levels = [0.25, 0.5, 0.75]
-
-        CS = axs.contour(xi, yi, zi,levels = levels, colors=(lighten_color(color_dict['%s' %state_i], 0.8), lighten_color(color_dict['%s' %state_i], 0.5),), linewidths=(1,), origin=origin, zorder=100, alpha=0.7)
-        axs.contourf(xi, yi, zi,levels = [levels[0], levels[1]], colors=(lighten_color(color_dict['%s' %state_i], 0.8),), origin=origin, zorder=-3, alpha=0.15)
-        axs.contourf(xi, yi, zi,levels = [levels[1], levels[2]], colors=(lighten_color(color_dict['%s' %state_i], 0.5),), origin=origin, zorder=-3, alpha=0.15)
-    
-    
-    #--------------
-    # annotation
-    #arr = mpatches.FancyArrowPatch((-11, 100), (-12.8, 100), arrowstyle='->,head_width=.15', mutation_scale=6, color='grey')
-    #axs.add_patch(arr)
-    #axs.annotate("reduced growth", (.8, 1), xycoords=arr, ha='center', va='bottom', fontsize=6, c='grey')
-    #arr = mpatches.FancyArrowPatch((-6, 100), (-4.2, 100), arrowstyle='->,head_width=.15', mutation_scale=6, color='grey')
-    #axs.add_patch(arr)
-    #axs.annotate("enhanced growth", (.2, 1), xycoords=arr, ha='center', va='bottom', fontsize=6, c='grey')
-
-    #-----------
-    ### title
-    plot_annotate = 'target window %.2f±%.2f Gyr window'%(target_window_size, window_err) + (plot_annotate if plot_annotate else '')
-    if must_still_be_misaligned:
-        plot_annotate = plot_annotate + '/trelax'
-    else:
-        axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
-    
-
-    #-----------
-    ### General formatting
-    # Axis labels
-    axs.set_xlim(-13, -4)
-    #axs.set_yscale('log')
-    #axs.set_yticks([1, 10, 100, 1000])
-    axs.set_xlabel(r'log$_{10}$ $\Delta M_{\mathrm{BH,%s Gyr}}/M_{\mathrm{BH,initial}}^{2}$ [M$_{\odot}^{-1}]$' %target_window_size)
-    if ring_or_enclosed == 'ring':
-        axs.set_ylim(-2, 3)
-        axs.set_ylabel('log$_{10}$ $\Sigma_{\mathrm{SF,<r_{50}>}}/\Sigma_{\mathrm{SF,<r_{50}-2r_{50}}>}$')
-    elif ring_or_enclosed == 'enclosed':
-        axs.set_ylim(-0.5, 0.7)
-        axs.set_ylabel('log$_{10}$ $\Sigma_{\mathrm{SF,<r_{50}>}}/\Sigma_{\mathrm{SF,<2r_{50}}>}$')
-    #axs.minorticks_on()
-    #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
-    #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
-
-    #-----------
-    ### Legend
-    legend_elements = []
-    legend_labels = []
-    legend_colors = []
-    legend_labels.append('aligned')
-    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-    legend_colors.append(lighten_color(color_dict['aligned'], 1))
-    legend_labels.append('misaligned')
-    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-    legend_colors.append(lighten_color(color_dict['misaligned'], 1))
-    legend_labels.append('counter-rotating')
-    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-    legend_colors.append(lighten_color(color_dict['counter'], 1))
-    axs.legend(handles=legend_elements, labels=legend_labels, loc='lower right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0, ncol=1)
-
-
-    #-----------
-    # other
-    plt.tight_layout()
-
-    #-----------
-    ### Savefig        
-
-    metadata_plot = {'Title': 'sample/median M_bh/median window\nali: %s %.4f %.3f Gyr\nmis: %s %.4f %.3f Gyr\ncnt: %s %.4f %.3f Gyr' %(len(df_co['GalaxyIDs']), np.median(np.log10(df_co['BH mass start'])), np.median(df_co['Time delta']), len(df_mis['GalaxyIDs']), np.median(np.log10(df_mis['BH mass start'])), np.median(df_mis['Time delta']), len(df_cnt['GalaxyIDs']), np.median(np.log10(df_cnt['BH mass start'])), np.median(df_cnt['Time delta']))}
-               
-    if savefig:
-        savefig_txt_save = savefig_txt_in + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
-
-        plt.savefig("%s/BH_deltamassmass2_analysis/%sbhmass_delta_surfdens%s_%s_%s%s_clean%s_subsample%s_plot%s_%s.%s" %(fig_dir, 'L100_', ring_or_enclosed, gas_fraction_type, ('trelax' if must_still_be_misaligned else 'window'), target_window_size, BHmis_summary['clean_sample'], BH_subsample_summary['total_sub'], len(df['GalaxyIDs']), savefig_txt_save, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-        print("\n  SAVED: %s/BH_deltamassmass2_analysis/%sbhmass_delta_surfdens%s_%s_%s%s_clean%s_subsample%s_plot%s_%s.%s" %(fig_dir, 'L100_', ring_or_enclosed, gas_fraction_type, ('trelax' if must_still_be_misaligned else 'window'), target_window_size, BHmis_summary['clean_sample'], BH_subsample_summary['total_sub'], len(df['GalaxyIDs']), savefig_txt_save, file_format)) 
-    if showfig:
-        plt.show()
-    plt.close()
-    if showfig:
-        plt.show()
-    plt.close()
-
-
-#--------------------------------
 # histogram of fractional BH growth delta M_BH / M_BH, as a measure of generally enhanced/reduced growth
 def _BH_deltamassmass_hist_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary = None, plot_annotate = None, savefig_txt_in = None,
                           #==============================================
@@ -2395,9 +1383,11 @@ def _BH_deltamassmass_hist_in_window(BHmis_tree = None, BHmis_input = None, BHmi
             # Misaligned sample
             if galaxy_state == 'misaligned':
                 
-                check_index = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['index_s']
+                check_index = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['index_s'] + 1
+                
                 if must_still_be_misaligned:
-                    time_check = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['relaxation_time']
+                    #time_check = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['relaxation_time']
+                    time_check = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[check_index] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[BH_subsample['%s' %galaxy_state]['%s' %ID_i]['index_r']]
                 else:
                     time_check = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[check_index] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[-1]
                 
@@ -2599,11 +1589,296 @@ def _BH_deltamassmass_hist_in_window(BHmis_tree = None, BHmis_input = None, BHmi
     if savefig:
         savefig_txt_save = savefig_txt_in + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
 
-        plt.savefig("%s/BH_growth_fraction/%sbhmass_delta_hist_%s%s_clean%s_subsample%s_plot%s_%s.%s" %(fig_dir, 'L100_', ('trelax' if must_still_be_misaligned else 'window'), target_window_size, BHmis_summary['clean_sample'], BH_subsample_summary['total_sub'], len(df['GalaxyIDs']), savefig_txt_save, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-        print("\n  SAVED: %s/BH_growth_fraction/%sbhmass_delta_hist_%s%s_clean%s_subsample%s_plot%s_%s.%s" %(fig_dir, 'L100_', ('trelax' if must_still_be_misaligned else 'window'), target_window_size, BHmis_summary['clean_sample'], BH_subsample_summary['total_sub'], len(df['GalaxyIDs']), savefig_txt_save, file_format)) 
+        plt.savefig("%s/BH_delta_hist/%sbhmass_delta_hist_%s%s_clean%s_subsample%s_plot%s_%s.%s" %(fig_dir, 'L100_', ('trelax' if must_still_be_misaligned else 'window'), target_window_size, BHmis_summary['clean_sample'], BH_subsample_summary['total_sub'], len(df['GalaxyIDs']), savefig_txt_save, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+        print("\n  SAVED: %s/BH_delta_hist/%sbhmass_delta_hist_%s%s_clean%s_subsample%s_plot%s_%s.%s" %(fig_dir, 'L100_', ('trelax' if must_still_be_misaligned else 'window'), target_window_size, BHmis_summary['clean_sample'], BH_subsample_summary['total_sub'], len(df['GalaxyIDs']), savefig_txt_save, file_format)) 
     if showfig:
         plt.show()
     plt.close()
+# histogram of delta M_BH / M_BH**2, as a measure of generally enhanced/reduced growth
+def _BH_deltamassmass2_hist_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary = None, plot_annotate = None, savefig_txt_in = None,
+                          #==============================================
+                          # Plot options
+                            target_window_size   = 0.5,         # [ Gyr ] trim to at least 1 Gyr since misalignment to allow overlay
+                              window_err      = 0.05,           # [ +/- Gyr ] trim
+                              must_still_be_misaligned = True,  # target window = target trelax
+                          # Sample refinement
+                            run_refinement = False,
+                              #use_hmr_general_sample = '2.0',   # [ 1.0 / 2.0 / aperture]
+                              # basic properties
+                              min_stelmass = None,      max_stelmass = None,        # [ 10**9 / Msun ]
+                              min_bhmass   = None,      max_bhmass   = None,
+                              min_sfr      = None,      max_sfr      = None,        # [ Msun/yr ] SF limit of ~ 0.1
+                              min_ssfr     = None,      max_ssfr     = None,        # [ /yr ] SF limit of ~ 1e-10-11
+                              # Mergers, looked for within range considered +/- halfwindow
+                              use_merger_criteria = False,
+                          #==============================================
+                          showfig       = True,
+                          savefig       = False,    
+                            file_format   = 'pdf',
+                            savefig_txt = '',            # [ '' / 'any text' / 'manual' ] 'manual' will prompt txt before saving
+                          #-----------------------------
+                          debug = False):
+                      
+    #-----------------------------------
+    use_CoP_BH                  = BHmis_input['use_CoP_BH']
+    apply_at_start = True
+    target_bhmass = False
+    target_stelmass = False
+    
+    # Establish sub-sample we wish to focus on
+    if run_refinement:
+        BH_subsample, BH_subsample_summary = _refine_BHmis_sample(BHmis_tree = BHmis_tree, BHmis_input = BHmis_input, BHmis_summary = BHmis_summary,
+                                                                  apply_at_start = apply_at_start,  
+                                                                  min_stelmass = min_stelmass,      max_stelmass = max_stelmass,       
+                                                                  min_bhmass   = min_bhmass,        max_bhmass   = max_bhmass,
+                                                                  min_sfr      = min_sfr,           max_sfr      = max_sfr,        
+                                                                  min_ssfr     = min_ssfr,          max_ssfr     = max_ssfr,    
+                                                                  use_merger_criteria = use_merger_criteria)
+    else:
+        print('==================================================================')
+        print('No refinement -> BH_subsample = clean BH_sample from above\n')
+        BH_subsample = BHmis_tree
+        BH_subsample_summary = BHmis_summary
+        BH_subsample_summary.update({'total_sub': BH_subsample_summary['clean_sample']})
+    
+    #===================================================================================================
+    # Go through sample
+    stelmass_plot  = []
+    time_delta_plot = []
+    bhmass_start_plot = []
+    bhmass_delta_plot = []
+    bhmdot_plot    = []
+    sfr_plot       = []
+    ssfr_plot      = []
+    kappa_plot     = []
+    trelax_plot    = []
+    trelax_ID      = []
+    duration_plot  = []
+    state_plot     = []
+    ID_plot        = []
+    for galaxy_state in ['aligned', 'misaligned', 'counter']:
+        for ID_i in BH_subsample['%s' %galaxy_state].keys():
+            
+            # check if duration is shorter than window size
+            if BH_subsample['%s' %galaxy_state]['%s' %ID_i]['entry_duration'] < (target_window_size-window_err):
+                continue
+            
+            #-----------------
+            # Misaligned sample
+            if galaxy_state == 'misaligned':
+                
+                check_index = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['index_s'] + 1
+                
+                if must_still_be_misaligned:
+                    #time_check = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['relaxation_time']
+                    time_check = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[check_index] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[BH_subsample['%s' %galaxy_state]['%s' %ID_i]['index_r']]
+                else:
+                    time_check = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[check_index] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[-1]
+                
+                # check if last snapshot in stable regime (index_s) is within target limits + window_size
+                if (time_check >= (target_window_size - window_err)):
+                    
+                    index_start = check_index
+                    duration_array = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime']) - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start])
+                    index_stop_array  = np.where((duration_array > (target_window_size-window_err)) & (duration_array < (target_window_size+window_err)))[0]
+                    
+                    # check if the next snapshot is not too far away
+                    if len(index_stop_array) > 0:
+                        index_stop = random.choice(index_stop_array) + 1
+                        
+                        #---------------------------
+                        # Add evolution entry and append
+                        time_axis = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start:index_stop] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start])
+                        time_delta_plot.append(time_axis[-1])
+                        if use_CoP_BH:
+                            mass_axis = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mass'])[index_start:index_stop]
+                            bhmass_start_plot.append(mass_axis[0])
+                            bhmass_delta_plot.append(mass_axis[-1] - mass_axis[0])
+                            bhmdot_plot.append((mass_axis[-1] - mass_axis[0])/time_axis[-1])
+                        else:
+                            mass_axis = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mass_alt'])[index_start:index_stop]
+                            bhmass_start_plot.append(mass_axis[0])
+                            bhmass_delta_plot.append(mass_axis[-1] - mass_axis[0])
+                            bhmdot_plot.append((mass_axis[-1] - mass_axis[0])/time_axis[-1])
+                    
+                        #--------------------------
+                        # Singular values
+                        stelmass_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass'])[index_start])
+                        sfr_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfr'])[index_start])
+                        ssfr_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['ssfr'])[index_start])
+                        kappa_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['kappa_stars'])[index_start])
+            
+                        duration_plot.append(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['entry_duration'])
+                        trelax_plot.append(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['relaxation_time'])
+                        trelax_ID.append(ID_i)
+                        state_plot.append(galaxy_state)
+                        ID_plot.append(ID_i)
+                    
+                    
+                else:
+                    continue
+                
+            #-----------------
+            # Aligned and counter sample
+            else:
+                # Consider all indexes
+                stelmass_index_length = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass'])
+
+                check_index_array = []
+                for index_i in np.arange(0, len(stelmass_index_length), 1).astype(int):
+                    time_check = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_i] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[-1]
+                    duration_array = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime']) - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_i])
+                    
+                    # check if within window limits
+                    if (time_check >= (target_window_size - window_err)) & (duration_array[-1] <= (target_window_size + window_err)):
+                        check_index_array.append(index_i)
+                
+                # If there exists at least one valid entry, pick random to append min_window_max entries to
+                if len(check_index_array) > 0:
+                    # Pick random starting point
+                    index_start = random.choice(check_index_array)
+                    duration_array = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime']) - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start])
+                    index_stop_array  = np.where(duration_array > (target_window_size-window_err))[0]
+                    index_stop = random.choice(index_stop_array) + 1
+                                        
+                    #---------------------------
+                    # Add evolution entry and append
+                    time_axis = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start:index_stop] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start])
+                    time_delta_plot.append(time_axis[-1])
+                    if use_CoP_BH:
+                        mass_axis = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mass'])[index_start:index_stop]
+                        bhmass_start_plot.append(mass_axis[0])
+                        bhmass_delta_plot.append(mass_axis[-1] - mass_axis[0])
+                        bhmdot_plot.append((mass_axis[-1] - mass_axis[0])/time_axis[-1])
+                    else:
+                        mass_axis = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mass_alt'])[index_start:index_stop]
+                        bhmass_start_plot.append(mass_axis[0])
+                        bhmass_delta_plot.append(mass_axis[-1] - mass_axis[0])
+                        bhmdot_plot.append((mass_axis[-1] - mass_axis[0])/time_axis[-1])
+                
+                    #--------------------------
+                    # Singular values
+                    stelmass_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass'])[index_start])
+                    sfr_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfr'])[index_start])
+                    ssfr_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['ssfr'])[index_start])
+                    kappa_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['kappa_stars'])[index_start])
+        
+                    duration_plot.append(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['entry_duration'])
+                    state_plot.append(galaxy_state)
+                    ID_plot.append(ID_i)
+                
+                
+                          
+    # Collect data into dataframe
+    df = pd.DataFrame(data={'stelmass': stelmass_plot, 'SFR': sfr_plot, 'sSFR': ssfr_plot, 'Time delta': time_delta_plot, 'BH mass start': bhmass_start_plot, 'BH mass delta': bhmass_delta_plot, 'BH mdot': bhmdot_plot, 'Morphology': kappa_plot, 'State': state_plot, 'window': duration_plot, 'GalaxyIDs': ID_plot})        
+    df['BH deltamassmass2'] = df['BH mass delta']/(df['BH mass start']**2)
+    df['BH fraction growth'] = df['BH mass delta']/(df['BH mass start'])
+    
+    df_co  = df.loc[(df['State'] == 'aligned')]
+    df_mis = df.loc[(df['State'] == 'misaligned')]
+    df_cnt = df.loc[(df['State'] == 'counter')]
+    
+    print('Sub-sample in range, with target_window_size median of %.2f±%.2f:' %(target_window_size, window_err))
+    print('  total:       %s' %len(df['GalaxyIDs']))
+    print('  aligned:     %s\t%.4f M_bh (first snip)\t%.3f Gyr' %(len(df_co['GalaxyIDs']), np.median(np.log10(df_co['BH mass start'])), np.median(df_co['Time delta'])))
+    print('  misaligned:  %s\t%.4f M_bh             \t%.3f Gyr' %(len(df_mis['GalaxyIDs']), np.median(np.log10(df_mis['BH mass start'])), np.median(df_mis['Time delta'])))
+    print('  counter:     %s\t%.4f M_bh             \t%.3f Gyr' %(len(df_cnt['GalaxyIDs']), np.median(np.log10(df_cnt['BH mass start'])), np.median(df_cnt['Time delta'])))
+    print(' ')
+    
+    
+    
+    #---------------------------  
+    # Figure initialising
+    fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.1], sharex=False, sharey=False) 
+    plt.subplots_adjust(wspace=0.4, hspace=0.4)
+    
+    color_dict = {'aligned':'darkgrey', 'misaligned':'orangered', 'counter':'dodgerblue'}
+    
+    #---------------------
+    ### Plot histograms
+    add_plot_errorbars = True
+    for state_i in color_dict.keys():
+        
+        df_state = df.loc[df['State'] == state_i]
+        
+        bins = np.arange(-13, -3.9, 0.5)
+        
+        axs.hist(np.log10(df_state['BH deltamassmass2']), log=True, bins=bins, weights=np.ones(len(df_state['BH deltamassmass2']))/len(df_state['BH deltamassmass2']), facecolor='none', linewidth=1, edgecolor=color_dict[state_i], histtype='step', alpha=1)
+        if state_i == 'aligned':
+            axs.hist(np.log10(df_state['BH deltamassmass2']), log=True, bins=bins, weights=np.ones(len(df_state['BH deltamassmass2']))/len(df_state['BH deltamassmass2']), facecolor=color_dict[state_i], linewidth=1, edgecolor='none', alpha=0.1)
+
+        # Add error bars
+        if add_plot_errorbars:
+            hist_n, _ = np.histogram(np.log10(df_state['BH deltamassmass2']), bins=bins)
+            axs.errorbar(bins[:-1]+0.25, hist_n/np.sum(hist_n), xerr=None, yerr=np.sqrt(hist_n)/np.sum(hist_n), ecolor=color_dict[state_i], ls='none', capsize=1, elinewidth=0.7, markeredgewidth=0.7, alpha=0.3)
+
+
+    #--------------
+    # annotation
+    #arr = mpatches.FancyArrowPatch((-3.8, 0.45), (-5, 0.45), arrowstyle='->,head_width=.15', mutation_scale=6, color='grey')
+    #axs.add_patch(arr)
+    #axs.annotate("reduced growth", (.8, 1), xycoords=arr, ha='center', va='bottom', fontsize=6, c='grey')
+    #arr = mpatches.FancyArrowPatch((0.8, 0.45), (2, 0.45), arrowstyle='->,head_width=.15', mutation_scale=6, color='grey')
+    #axs.add_patch(arr)
+    #axs.annotate("enhanced growth", (.2, 1), xycoords=arr, ha='center', va='bottom', fontsize=6, c='grey')
+
+    #-----------
+    ### title
+    plot_annotate = 'target window %.2f±%.2f Gyr window'%(target_window_size, window_err) + (plot_annotate if plot_annotate else '')
+    if must_still_be_misaligned:
+        plot_annotate = plot_annotate + '/trelax'
+    else:
+        axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
+    
+
+    #-----------
+    ### General formatting
+    # Axis labels
+    axs.set_xlim(-13, -4)
+    axs.set_ylim(0.001, 1)
+    #axs.set_yticks([1, 10, 100, 1000])
+    axs.set_xlabel(r'log$_{10}$ $\Delta M_{\mathrm{BH,%s Gyr}}/M_{\mathrm{BH,initial}}^{2}$' %target_window_size)
+    axs.set_ylabel('fraction of sub-sample')
+    #axs.minorticks_on()
+    #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
+    #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
+
+    #-----------
+    ### Legend
+    legend_elements = []
+    legend_labels = []
+    legend_colors = []
+    legend_labels.append('aligned')
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append(lighten_color(color_dict['aligned'], 1))
+    legend_labels.append('misaligned')
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append(lighten_color(color_dict['misaligned'], 1))
+    legend_labels.append('counter-rotating')
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append(lighten_color(color_dict['counter'], 1))
+    axs.legend(handles=legend_elements, labels=legend_labels, loc='upper left', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0, ncol=1)
+
+
+    #-----------
+    # other
+    plt.tight_layout()
+
+    #-----------
+    ### Savefig        
+
+    metadata_plot = {'Title': 'sample/median M_bh/median window\nali: %s %.4f %.3f Gyr\nmis: %s %.4f %.3f Gyr\ncnt: %s %.4f %.3f Gyr' %(len(df_co['GalaxyIDs']), np.median(np.log10(df_co['BH mass start'])), np.median(df_co['Time delta']), len(df_mis['GalaxyIDs']), np.median(np.log10(df_mis['BH mass start'])), np.median(df_mis['Time delta']), len(df_cnt['GalaxyIDs']), np.median(np.log10(df_cnt['BH mass start'])), np.median(df_cnt['Time delta']))}
+               
+    if savefig:
+        savefig_txt_save = savefig_txt_in + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
+
+        plt.savefig("%s/BH_delta_hist/%sbhmass_delta2_hist_%s%s_clean%s_subsample%s_plot%s_%s.%s" %(fig_dir, 'L100_', ('trelax' if must_still_be_misaligned else 'window'), target_window_size, BHmis_summary['clean_sample'], BH_subsample_summary['total_sub'], len(df['GalaxyIDs']), savefig_txt_save, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+        print("\n  SAVED: %s/BH_delta_hist/%sbhmass_delta2_hist_%s%s_clean%s_subsample%s_plot%s_%s.%s" %(fig_dir, 'L100_', ('trelax' if must_still_be_misaligned else 'window'), target_window_size, BHmis_summary['clean_sample'], BH_subsample_summary['total_sub'], len(df['GalaxyIDs']), savefig_txt_save, file_format)) 
+    if showfig:
+        plt.show()
+    plt.close()
+
+#--------------------------------
 # x-y of fractional BH growth delta M_BH / M_BH vs gas fraction
 def _BH_deltamassmass_fgas_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary = None, plot_annotate = None, savefig_txt_in = None,
                           #==============================================
@@ -2613,6 +1888,7 @@ def _BH_deltamassmass_fgas_in_window(BHmis_tree = None, BHmis_input = None, BHmi
                               must_still_be_misaligned = True,  # target window = target trelax
                             gas_fraction_type                   = 'gas_sf',              # [ 'gas' / 'gas_sf' ]
                               ring_or_enclosed   = 'enclosed',     # comparing rings of surface density or total enclosed
+                              initial_or_average = 'average',       # [ 'initial', 'average', 'peak' ] averaged over window
                           # Sample refinement
                             run_refinement = False,
                               #use_hmr_general_sample = '2.0',   # [ 1.0 / 2.0 / aperture]
@@ -2686,9 +1962,11 @@ def _BH_deltamassmass_fgas_in_window(BHmis_tree = None, BHmis_input = None, BHmi
             # Misaligned sample
             if galaxy_state == 'misaligned':
                 
-                check_index = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['index_s']
+                check_index = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['index_s'] + 1
+                
                 if must_still_be_misaligned:
-                    time_check = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['relaxation_time']
+                    #time_check = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['relaxation_time']
+                    time_check = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[check_index] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[BH_subsample['%s' %galaxy_state]['%s' %ID_i]['index_r']]
                 else:
                     time_check = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[check_index] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[-1]
                 
@@ -2728,30 +2006,75 @@ def _BH_deltamassmass_fgas_in_window(BHmis_tree = None, BHmis_input = None, BHmi
                         
                         #---------------
                         # Gas and gassf fraction
-                        fgas_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
-                        fgassf_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
-                        
-                        
+                        if initial_or_average == 'initial':
+                            fgas_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
+                            fgassf_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
+                        elif initial_or_average == 'average':
+                            fgas_plot.append(np.mean(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                            fgassf_plot.append(np.mean(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                        elif initial_or_average == 'peak':
+                            fgas_plot.append(np.max(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                            fgassf_plot.append(np.max(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                    
+                    
                         # Gas and gassf surface density ratios (within r50/<2r50-r50>)... the rad cancels out
-                        #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
-                        gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start]
-                        gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start]
-                        gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start]
-                        gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start]
+                        if initial_or_average == 'initial':
+                            #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
+                            gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start]
+                            gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start]
+                            gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start]
+                            gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start]
+                    
+                            if ring_or_enclosed == 'ring':
+                                gas_surfdens_ratio = 3*(gasmass_r50/(gasmass_2r50 - gasmass_r50))
+                                gassf_surfdens_ratio = 3*(gassfmass_r50/(gassfmass_2r50 - gassfmass_r50))
                         
-                        if ring_or_enclosed == 'ring':
-                            gas_surfdens_ratio = 3*(gasmass_r50/(gasmass_2r50 - gasmass_r50))
-                            gassf_surfdens_ratio = 3*(gassfmass_r50/(gassfmass_2r50 - gassfmass_r50))
-                            
-                            # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
-                            if gasmass_2r50 - gasmass_r50 == 0:
-                                density_fail['gas']['%s' %galaxy_state].append(ID_i)
-                            if gassfmass_2r50 - gassfmass_r50 == 0:
-                                density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
-                        elif ring_or_enclosed == 'enclosed': 
-                            gas_surfdens_ratio = 4*(gasmass_r50/(gasmass_2r50))
-                            gassf_surfdens_ratio = 4*(gassfmass_r50/(gassfmass_2r50))
-                            
+                                # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
+                                if gasmass_2r50 - gasmass_r50 == 0:
+                                    density_fail['gas']['%s' %galaxy_state].append(ID_i)
+                                if gassfmass_2r50 - gassfmass_r50 == 0:
+                                    density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
+                            elif ring_or_enclosed == 'enclosed': 
+                                gas_surfdens_ratio = 4*(gasmass_r50/(gasmass_2r50))
+                                gassf_surfdens_ratio = 4*(gassfmass_r50/(gassfmass_2r50))
+                        elif initial_or_average == 'average':
+                            #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
+                            gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop]
+                            gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start:index_stop]
+                            gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop]
+                            gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start:index_stop]
+                    
+                            if ring_or_enclosed == 'ring':
+                                gas_surfdens_ratio = np.mean(3*np.divide(gasmass_r50, (gasmass_2r50 - gasmass_r50)))
+                                gassf_surfdens_ratio = np.mean(3*np.divide(gassfmass_r50, (gassfmass_2r50 - gassfmass_r50)))
+                        
+                                # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
+                                if gasmass_2r50 - gasmass_r50 == 0:
+                                    density_fail['gas']['%s' %galaxy_state].append(ID_i)
+                                if gassfmass_2r50 - gassfmass_r50 == 0:
+                                    density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
+                            elif ring_or_enclosed == 'enclosed': 
+                                gas_surfdens_ratio = np.mean(4*np.divide(gasmass_r50, gasmass_2r50))
+                                gassf_surfdens_ratio = np.mean(4*np.divide(gassfmass_r50, gassfmass_2r50))
+                        elif initial_or_average == 'peak':
+                            #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
+                            gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop]
+                            gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start:index_stop]
+                            gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop]
+                            gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start:index_stop]
+                    
+                            if ring_or_enclosed == 'ring':
+                                gas_surfdens_ratio = np.max(3*np.divide(gasmass_r50, (gasmass_2r50 - gasmass_r50)))
+                                gassf_surfdens_ratio = np.max(3*np.divide(gassfmass_r50, (gassfmass_2r50 - gassfmass_r50)))
+                        
+                                # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
+                                if gasmass_2r50 - gasmass_r50 == 0:
+                                    density_fail['gas']['%s' %galaxy_state].append(ID_i)
+                                if gassfmass_2r50 - gassfmass_r50 == 0:
+                                    density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
+                            elif ring_or_enclosed == 'enclosed': 
+                                gas_surfdens_ratio = np.max(4*np.divide(gasmass_r50, gasmass_2r50))
+                                gassf_surfdens_ratio = np.max(4*np.divide(gassfmass_r50, gassfmass_2r50))
                         gas_density_plot.append(gas_surfdens_ratio)
                         gassf_density_plot.append(gassf_surfdens_ratio)
                                 
@@ -2788,7 +2111,7 @@ def _BH_deltamassmass_fgas_in_window(BHmis_tree = None, BHmis_input = None, BHmi
                     duration_array = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime']) - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start])
                     index_stop_array  = np.where(duration_array > (target_window_size-window_err))[0]
                     index_stop = random.choice(index_stop_array) + 1
-                                        
+                                  
                     #---------------------------
                     # Add evolution entry and append
                     time_axis = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start:index_stop] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start])
@@ -2813,30 +2136,75 @@ def _BH_deltamassmass_fgas_in_window(BHmis_tree = None, BHmis_input = None, BHmi
                     
                     #---------------
                     # Gas and gassf fraction
-                    fgas_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
-                    fgassf_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
+                    if initial_or_average == 'initial':
+                        fgas_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
+                        fgassf_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
+                    elif initial_or_average == 'average':
+                        fgas_plot.append(np.mean(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                        fgassf_plot.append(np.mean(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                    elif initial_or_average == 'peak':
+                        fgas_plot.append(np.max(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                        fgassf_plot.append(np.max(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
                     
                     
                     # Gas and gassf surface density ratios (within r50/<2r50-r50>)... the rad cancels out
-                    #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
-                    gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start]
-                    gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start]
-                    gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start]
-                    gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start]
+                    if initial_or_average == 'initial':
+                        #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
+                        gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start]
+                        gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start]
+                        gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start]
+                        gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start]
+                    
+                        if ring_or_enclosed == 'ring':
+                            gas_surfdens_ratio = 3*(gasmass_r50/(gasmass_2r50 - gasmass_r50))
+                            gassf_surfdens_ratio = 3*(gassfmass_r50/(gassfmass_2r50 - gassfmass_r50))
                         
-                    if ring_or_enclosed == 'ring':
-                        gas_surfdens_ratio = 3*(gasmass_r50/(gasmass_2r50 - gasmass_r50))
-                        gassf_surfdens_ratio = 3*(gassfmass_r50/(gassfmass_2r50 - gassfmass_r50))
+                            # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
+                            if gasmass_2r50 - gasmass_r50 == 0:
+                                density_fail['gas']['%s' %galaxy_state].append(ID_i)
+                            if gassfmass_2r50 - gassfmass_r50 == 0:
+                                density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
+                        elif ring_or_enclosed == 'enclosed': 
+                            gas_surfdens_ratio = 4*(gasmass_r50/(gasmass_2r50))
+                            gassf_surfdens_ratio = 4*(gassfmass_r50/(gassfmass_2r50))
+                    elif initial_or_average == 'average':
+                        #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
+                        gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop]
+                        gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start:index_stop]
+                        gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop]
+                        gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start:index_stop]
+                    
+                        if ring_or_enclosed == 'ring':
+                            gas_surfdens_ratio = np.mean(3*np.divide(gasmass_r50, (gasmass_2r50 - gasmass_r50)))
+                            gassf_surfdens_ratio = np.mean(3*np.divide(gassfmass_r50, (gassfmass_2r50 - gassfmass_r50)))
                         
-                        # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
-                        if gasmass_2r50 - gasmass_r50 == 0:
-                            density_fail['gas']['%s' %galaxy_state].append(ID_i)
-                        if gassfmass_2r50 - gassfmass_r50 == 0:
-                            density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
-                    elif ring_or_enclosed == 'enclosed': 
-                        gas_surfdens_ratio = 4*(gasmass_r50/(gasmass_2r50))
-                        gassf_surfdens_ratio = 4*(gassfmass_r50/(gassfmass_2r50))
-                            
+                            # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
+                            if gasmass_2r50 - gasmass_r50 == 0:
+                                density_fail['gas']['%s' %galaxy_state].append(ID_i)
+                            if gassfmass_2r50 - gassfmass_r50 == 0:
+                                density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
+                        elif ring_or_enclosed == 'enclosed': 
+                            gas_surfdens_ratio = np.mean(4*np.divide(gasmass_r50, gasmass_2r50))
+                            gassf_surfdens_ratio = np.mean(4*np.divide(gassfmass_r50, gassfmass_2r50))
+                    elif initial_or_average == 'peak':
+                        #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
+                        gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop]
+                        gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start:index_stop]
+                        gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop]
+                        gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start:index_stop]
+                    
+                        if ring_or_enclosed == 'ring':
+                            gas_surfdens_ratio = np.max(3*np.divide(gasmass_r50, (gasmass_2r50 - gasmass_r50)))
+                            gassf_surfdens_ratio = np.max(3*np.divide(gassfmass_r50, (gassfmass_2r50 - gassfmass_r50)))
+                        
+                            # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
+                            if gasmass_2r50 - gasmass_r50 == 0:
+                                density_fail['gas']['%s' %galaxy_state].append(ID_i)
+                            if gassfmass_2r50 - gassfmass_r50 == 0:
+                                density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
+                        elif ring_or_enclosed == 'enclosed': 
+                            gas_surfdens_ratio = np.max(4*np.divide(gasmass_r50, gasmass_2r50))
+                            gassf_surfdens_ratio = np.max(4*np.divide(gassfmass_r50, gassfmass_2r50))
                     gas_density_plot.append(gas_surfdens_ratio)
                     gassf_density_plot.append(gassf_surfdens_ratio)
         
@@ -2860,10 +2228,10 @@ def _BH_deltamassmass_fgas_in_window(BHmis_tree = None, BHmis_input = None, BHmi
     print('  misaligned:  %s\t%.4f M_bh             \t%.3f Gyr' %(len(df_mis['GalaxyIDs']), np.median(np.log10(df_mis['BH mass start'])), np.median(df_mis['Time delta'])))
     print('  counter:     %s\t%.4f M_bh             \t%.3f Gyr' %(len(df_cnt['GalaxyIDs']), np.median(np.log10(df_cnt['BH mass start'])), np.median(df_cnt['Time delta'])))
     print(' ')
-    print('Cannot estimate %s surface ratios for these galaxies:  (remove from above)' %gas_fraction_type)
-    print('  aligned:     %s' %len(density_fail['%s' %gas_fraction_type]['aligned']))
-    print('  misaligned:  %s' %len(density_fail['%s' %gas_fraction_type]['misaligned']))
-    print('  counter:     %s' %len(density_fail['%s' %gas_fraction_type]['counter']))
+    #print('Cannot estimate %s surface ratios for these galaxies:  (remove from above)' %gas_fraction_type)
+    #print('  aligned:     %s' %len(density_fail['%s' %gas_fraction_type]['aligned']))
+    #print('  misaligned:  %s' %len(density_fail['%s' %gas_fraction_type]['misaligned']))
+    #print('  counter:     %s' %len(density_fail['%s' %gas_fraction_type]['counter']))
     
     
     
@@ -2937,7 +2305,13 @@ def _BH_deltamassmass_fgas_in_window(BHmis_tree = None, BHmis_input = None, BHmi
     axs.set_ylim(-2.5, 0)
     #axs.set_yticks([1, 10, 100, 1000])
     axs.set_xlabel(r'log$_{10}$ $\Delta M_{\mathrm{BH,%s Gyr}}/M_{\mathrm{BH,initial}}$' %target_window_size)
-    axs.set_ylabel('log$_{10}$ $f_{\mathrm{gas,SF}}(<r_{50})$')
+    if initial_or_average == 'initial':
+        axs.set_ylabel('log$_{10}$ $f_{\mathrm{gas,SF}}(<r_{50})$')
+    elif initial_or_average == 'average':
+        axs.set_ylabel(r'log$_{10}$ $\bar{f}_{\mathrm{gas,SF}}(<r_{50})$')
+    elif initial_or_average == 'peak':
+        axs.set_ylabel(r'log$_{10}$ $f_{\mathrm{peak gas,SF}}(<r_{50})$')
+        
     #axs.minorticks_on()
     #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
     #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
@@ -2971,20 +2345,21 @@ def _BH_deltamassmass_fgas_in_window(BHmis_tree = None, BHmis_input = None, BHmi
     if savefig:
         savefig_txt_save = savefig_txt_in + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
 
-        plt.savefig("%s/BH_growth_fraction/%sbhmass_delta_f%s_%s%s_clean%s_subsample%s_plot%s_%s.%s" %(fig_dir, 'L100_', gas_fraction_type, ('trelax' if must_still_be_misaligned else 'window'), target_window_size, BHmis_summary['clean_sample'], BH_subsample_summary['total_sub'], len(df['GalaxyIDs']), savefig_txt_save, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-        print("\n  SAVED: %s/BH_growth_fraction/%sbhmass_delta_f%s_%s%s_clean%s_subsample%s_plot%s_%s.%s" %(fig_dir, 'L100_', gas_fraction_type, ('trelax' if must_still_be_misaligned else 'window'), target_window_size, BHmis_summary['clean_sample'], BH_subsample_summary['total_sub'], len(df['GalaxyIDs']), savefig_txt_save, file_format)) 
+        plt.savefig("%s/BH_fgas/%sbhmass_delta_%s_f%s_%s%s_clean%s_subsample%s_plot%s_%s.%s" %(fig_dir, 'L100_', initial_or_average, gas_fraction_type, ('trelax' if must_still_be_misaligned else 'window'), target_window_size, BHmis_summary['clean_sample'], BH_subsample_summary['total_sub'], len(df['GalaxyIDs']), savefig_txt_save, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+        print("\n  SAVED: %s/BH_fgas/%sbhmass_delta_%s_f%s_%s%s_clean%s_subsample%s_plot%s_%s.%s" %(fig_dir, 'L100_', initial_or_average, gas_fraction_type, ('trelax' if must_still_be_misaligned else 'window'), target_window_size, BHmis_summary['clean_sample'], BH_subsample_summary['total_sub'], len(df['GalaxyIDs']), savefig_txt_save, file_format)) 
     if showfig:
         plt.show()
     plt.close()
-# x-y of fractional BH growth delta M_BH / M_BH vs ratio of gas surface density at r50 and between r50 and 2r50
-def _BH_deltamassmass_gassurfratio_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary = None, plot_annotate = None, savefig_txt_in = None,
+# x-y of delta M_BH / M_BH**2 (measure of enhanced/reduced growth) vs gas fraction
+def _BH_deltamassmass2_fgas_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary = None, plot_annotate = None, savefig_txt_in = None,
                           #==============================================
                           # Plot options
                             target_window_size   = 0.5,         # [ Gyr ] trim to at least 1 Gyr since misalignment to allow overlay
                               window_err      = 0.05,           # [ +/- Gyr ] trim
                               must_still_be_misaligned = True,  # target window = target trelax
                             gas_fraction_type                   = 'gas_sf',              # [ 'gas' / 'gas_sf' ]
-                            ring_or_enclosed                    = 'enclosed',               # gas surface density within 2r50, or between r50 and 2r50
+                              ring_or_enclosed   = 'enclosed',     # comparing rings of surface density or total enclosed
+                              initial_or_average = 'average',       # [ 'initial', 'average', 'peak' ] averaged over window
                           # Sample refinement
                             run_refinement = False,
                               #use_hmr_general_sample = '2.0',   # [ 1.0 / 2.0 / aperture]
@@ -3058,9 +2433,11 @@ def _BH_deltamassmass_gassurfratio_in_window(BHmis_tree = None, BHmis_input = No
             # Misaligned sample
             if galaxy_state == 'misaligned':
                 
-                check_index = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['index_s']
+                check_index = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['index_s'] + 1
+                
                 if must_still_be_misaligned:
-                    time_check = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['relaxation_time']
+                    #time_check = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['relaxation_time']
+                    time_check = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[check_index] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[BH_subsample['%s' %galaxy_state]['%s' %ID_i]['index_r']]
                 else:
                     time_check = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[check_index] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[-1]
                 
@@ -3100,33 +2477,77 @@ def _BH_deltamassmass_gassurfratio_in_window(BHmis_tree = None, BHmis_input = No
                         
                         #---------------
                         # Gas and gassf fraction
-                        fgas_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
-                        fgassf_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
-                        
-                        
+                        if initial_or_average == 'initial':
+                            fgas_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
+                            fgassf_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
+                        elif initial_or_average == 'average':
+                            fgas_plot.append(np.mean(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                            fgassf_plot.append(np.mean(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                        elif initial_or_average == 'peak':
+                            fgas_plot.append(np.max(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                            fgassf_plot.append(np.max(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                    
+                    
                         # Gas and gassf surface density ratios (within r50/<2r50-r50>)... the rad cancels out
-                        #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
-                        gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start]
-                        gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start]
-                        gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start]
-                        gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start]
+                        if initial_or_average == 'initial':
+                            #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
+                            gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start]
+                            gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start]
+                            gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start]
+                            gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start]
+                    
+                            if ring_or_enclosed == 'ring':
+                                gas_surfdens_ratio = 3*(gasmass_r50/(gasmass_2r50 - gasmass_r50))
+                                gassf_surfdens_ratio = 3*(gassfmass_r50/(gassfmass_2r50 - gassfmass_r50))
                         
-                        if ring_or_enclosed == 'ring':
-                            gas_surfdens_ratio = 3*(gasmass_r50/(gasmass_2r50 - gasmass_r50))
-                            gassf_surfdens_ratio = 3*(gassfmass_r50/(gassfmass_2r50 - gassfmass_r50))
-                            
-                            # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
-                            if gasmass_2r50 - gasmass_r50 == 0:
-                                density_fail['gas']['%s' %galaxy_state].append(ID_i)
-                            if gassfmass_2r50 - gassfmass_r50 == 0:
-                                density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
-                        elif ring_or_enclosed == 'enclosed': 
-                            gas_surfdens_ratio = 4*(gasmass_r50/(gasmass_2r50))
-                            gassf_surfdens_ratio = 4*(gassfmass_r50/(gassfmass_2r50))
-                            
+                                # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
+                                if gasmass_2r50 - gasmass_r50 == 0:
+                                    density_fail['gas']['%s' %galaxy_state].append(ID_i)
+                                if gassfmass_2r50 - gassfmass_r50 == 0:
+                                    density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
+                            elif ring_or_enclosed == 'enclosed': 
+                                gas_surfdens_ratio = 4*(gasmass_r50/(gasmass_2r50))
+                                gassf_surfdens_ratio = 4*(gassfmass_r50/(gassfmass_2r50))
+                        elif initial_or_average == 'average':
+                            #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
+                            gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop]
+                            gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start:index_stop]
+                            gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop]
+                            gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start:index_stop]
+                    
+                            if ring_or_enclosed == 'ring':
+                                gas_surfdens_ratio = np.mean(3*np.divide(gasmass_r50, (gasmass_2r50 - gasmass_r50)))
+                                gassf_surfdens_ratio = np.mean(3*np.divide(gassfmass_r50, (gassfmass_2r50 - gassfmass_r50)))
+                        
+                                # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
+                                if gasmass_2r50 - gasmass_r50 == 0:
+                                    density_fail['gas']['%s' %galaxy_state].append(ID_i)
+                                if gassfmass_2r50 - gassfmass_r50 == 0:
+                                    density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
+                            elif ring_or_enclosed == 'enclosed': 
+                                gas_surfdens_ratio = np.mean(4*np.divide(gasmass_r50, gasmass_2r50))
+                                gassf_surfdens_ratio = np.mean(4*np.divide(gassfmass_r50, gassfmass_2r50))
+                        elif initial_or_average == 'peak':
+                            #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
+                            gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop]
+                            gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start:index_stop]
+                            gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop]
+                            gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start:index_stop]
+                    
+                            if ring_or_enclosed == 'ring':
+                                gas_surfdens_ratio = np.max(3*np.divide(gasmass_r50, (gasmass_2r50 - gasmass_r50)))
+                                gassf_surfdens_ratio = np.max(3*np.divide(gassfmass_r50, (gassfmass_2r50 - gassfmass_r50)))
+                        
+                                # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
+                                if gasmass_2r50 - gasmass_r50 == 0:
+                                    density_fail['gas']['%s' %galaxy_state].append(ID_i)
+                                if gassfmass_2r50 - gassfmass_r50 == 0:
+                                    density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
+                            elif ring_or_enclosed == 'enclosed': 
+                                gas_surfdens_ratio = np.max(4*np.divide(gasmass_r50, gasmass_2r50))
+                                gassf_surfdens_ratio = np.max(4*np.divide(gassfmass_r50, gassfmass_2r50))
                         gas_density_plot.append(gas_surfdens_ratio)
                         gassf_density_plot.append(gassf_surfdens_ratio)
-                        
                                 
                                     
                         duration_plot.append(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['entry_duration'])
@@ -3186,30 +2607,549 @@ def _BH_deltamassmass_gassurfratio_in_window(BHmis_tree = None, BHmis_input = No
                     
                     #---------------
                     # Gas and gassf fraction
-                    fgas_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
-                    fgassf_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
+
+                    # Gas and gassf fraction
+                    if initial_or_average == 'initial':
+                        fgas_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
+                        fgassf_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
+                    elif initial_or_average == 'average':
+                        fgas_plot.append(np.mean(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                        fgassf_plot.append(np.mean(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                    elif initial_or_average == 'peak':
+                        fgas_plot.append(np.max(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                        fgassf_plot.append(np.max(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
                     
                     
                     # Gas and gassf surface density ratios (within r50/<2r50-r50>)... the rad cancels out
-                    #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
-                    gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start]
-                    gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start]
-                    gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start]
-                    gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start]
+                    if initial_or_average == 'initial':
+                        #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
+                        gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start]
+                        gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start]
+                        gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start]
+                        gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start]
+                    
+                        if ring_or_enclosed == 'ring':
+                            gas_surfdens_ratio = 3*(gasmass_r50/(gasmass_2r50 - gasmass_r50))
+                            gassf_surfdens_ratio = 3*(gassfmass_r50/(gassfmass_2r50 - gassfmass_r50))
                         
-                    if ring_or_enclosed == 'ring':
-                        gas_surfdens_ratio = 3*(gasmass_r50/(gasmass_2r50 - gasmass_r50))
-                        gassf_surfdens_ratio = 3*(gassfmass_r50/(gassfmass_2r50 - gassfmass_r50))
+                            # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
+                            if gasmass_2r50 - gasmass_r50 == 0:
+                                density_fail['gas']['%s' %galaxy_state].append(ID_i)
+                            if gassfmass_2r50 - gassfmass_r50 == 0:
+                                density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
+                        elif ring_or_enclosed == 'enclosed': 
+                            gas_surfdens_ratio = 4*(gasmass_r50/(gasmass_2r50))
+                            gassf_surfdens_ratio = 4*(gassfmass_r50/(gassfmass_2r50))
+                    elif initial_or_average == 'average':
+                        #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
+                        gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop]
+                        gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start:index_stop]
+                        gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop]
+                        gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start:index_stop]
+                    
+                        if ring_or_enclosed == 'ring':
+                            gas_surfdens_ratio = np.mean(3*np.divide(gasmass_r50, (gasmass_2r50 - gasmass_r50)))
+                            gassf_surfdens_ratio = np.mean(3*np.divide(gassfmass_r50, (gassfmass_2r50 - gassfmass_r50)))
                         
-                        # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
-                        if gasmass_2r50 - gasmass_r50 == 0:
-                            density_fail['gas']['%s' %galaxy_state].append(ID_i)
-                        if gassfmass_2r50 - gassfmass_r50 == 0:
-                            density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
-                    elif ring_or_enclosed == 'enclosed': 
-                        gas_surfdens_ratio = 4*(gasmass_r50/(gasmass_2r50))
-                        gassf_surfdens_ratio = 4*(gassfmass_r50/(gassfmass_2r50))
+                            # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
+                            if gasmass_2r50 - gasmass_r50 == 0:
+                                density_fail['gas']['%s' %galaxy_state].append(ID_i)
+                            if gassfmass_2r50 - gassfmass_r50 == 0:
+                                density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
+                        elif ring_or_enclosed == 'enclosed': 
+                            gas_surfdens_ratio = np.mean(4*np.divide(gasmass_r50, gasmass_2r50))
+                            gassf_surfdens_ratio = np.mean(4*np.divide(gassfmass_r50, gassfmass_2r50))
+                    elif initial_or_average == 'peak':
+                        #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
+                        gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop]
+                        gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start:index_stop]
+                        gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop]
+                        gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start:index_stop]
+                    
+                        if ring_or_enclosed == 'ring':
+                            gas_surfdens_ratio = np.max(3*np.divide(gasmass_r50, (gasmass_2r50 - gasmass_r50)))
+                            gassf_surfdens_ratio = np.max(3*np.divide(gassfmass_r50, (gassfmass_2r50 - gassfmass_r50)))
                         
+                            # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
+                            if gasmass_2r50 - gasmass_r50 == 0:
+                                density_fail['gas']['%s' %galaxy_state].append(ID_i)
+                            if gassfmass_2r50 - gassfmass_r50 == 0:
+                                density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
+                        elif ring_or_enclosed == 'enclosed': 
+                            gas_surfdens_ratio = np.max(4*np.divide(gasmass_r50, gasmass_2r50))
+                            gassf_surfdens_ratio = np.max(4*np.divide(gassfmass_r50, gassfmass_2r50))
+                    gas_density_plot.append(gas_surfdens_ratio)
+                    gassf_density_plot.append(gassf_surfdens_ratio)
+        
+                    duration_plot.append(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['entry_duration'])
+                    state_plot.append(galaxy_state)
+                    ID_plot.append(ID_i)
+                
+                
+                          
+    # Collect data into dataframe
+    df = pd.DataFrame(data={'stelmass': stelmass_plot, 'SFR': sfr_plot, 'sSFR': ssfr_plot, 'Time delta': time_delta_plot, 'BH mass start': bhmass_start_plot, 'BH mass delta': bhmass_delta_plot, 'BH mdot': bhmdot_plot, 'Gas fraction': fgas_plot, 'Gassf fraction': fgassf_plot, 'Gas surfdens ratio': gas_density_plot, 'Gassf surfdens ratio': gassf_density_plot, 'Morphology': kappa_plot, 'State': state_plot, 'window': duration_plot, 'GalaxyIDs': ID_plot})        
+    df['BH deltamassmass2'] = df['BH mass delta']/(df['BH mass start']**2)
+    df_co  = df.loc[(df['State'] == 'aligned')]
+    df_mis = df.loc[(df['State'] == 'misaligned')]
+    df_cnt = df.loc[(df['State'] == 'counter')]
+    
+    print('Sub-sample in range, with target_window_size median of %.2f±%.2f:' %(target_window_size, window_err))
+    print('  total:       %s' %len(df['GalaxyIDs']))
+    print('  aligned:     %s\t%.4f M_bh (first snip)\t%.3f Gyr' %(len(df_co['GalaxyIDs']), np.median(np.log10(df_co['BH mass start'])), np.median(df_co['Time delta'])))
+    print('  misaligned:  %s\t%.4f M_bh             \t%.3f Gyr' %(len(df_mis['GalaxyIDs']), np.median(np.log10(df_mis['BH mass start'])), np.median(df_mis['Time delta'])))
+    print('  counter:     %s\t%.4f M_bh             \t%.3f Gyr' %(len(df_cnt['GalaxyIDs']), np.median(np.log10(df_cnt['BH mass start'])), np.median(df_cnt['Time delta'])))
+    print(' ')
+    #print('Cannot estimate %s surface ratios for these galaxies:  (remove from above)' %gas_fraction_type)
+    #print('  aligned:     %s' %len(density_fail['%s' %gas_fraction_type]['aligned']))
+    #print('  misaligned:  %s' %len(density_fail['%s' %gas_fraction_type]['misaligned']))
+    #print('  counter:     %s' %len(density_fail['%s' %gas_fraction_type]['counter']))
+    
+    
+    
+    #---------------------------  
+    # Figure initialising
+    fig, axs = plt.subplots(1, 1, figsize=[10/3, 3], sharex=False, sharey=False) 
+    plt.subplots_adjust(wspace=0.4, hspace=0.4)
+    
+    color_dict = {'aligned':'darkgrey', 'misaligned':'orangered', 'counter':'dodgerblue'}
+    
+    #---------------------
+    ### Plot scatter
+    if gas_fraction_type == 'gas':
+        axs.scatter(np.log10(df['BH deltamassmass2']), np.log10(df['Gas fraction']), s=6, c=[color_dict[i] for i in df['State']], edgecolor='k', marker='.', linewidths=0, alpha=0.8, zorder=-2)
+    if gas_fraction_type == 'gas_sf':
+        axs.scatter(np.log10(df['BH deltamassmass2']), np.log10(df['Gassf fraction']), s=6, c=[color_dict[i] for i in df['State']], edgecolor='k', marker='.', linewidths=0, alpha=0.8, zorder=-2)
+    
+    
+    
+    #--------------
+    # Contours
+    levels = [1-0.68, 1-0.38, 1] # 1 - sigma, as contour will plot 'probability of lying outside this contour', not 'within contour'
+    for state_i in ['aligned', 'misaligned', 'counter']:
+        df_i = df.loc[(df['State'] == state_i)]
+    
+        x = np.array(np.log10(df_i['BH deltamassmass2']))
+        if gas_fraction_type == 'gas':
+            y = np.array(np.log10(df_i['Gas fraction']))
+        if gas_fraction_type == 'gas_sf':
+            y = np.array(np.log10(df_i['Gassf fraction']))
+
+        k = gaussian_kde(np.vstack([x, y]))
+        xi, yi = np.mgrid[x.min():x.max():x.size**0.5*1j,y.min():y.max():y.size**0.5*1j]
+        zi = k(np.vstack([xi.flatten(), yi.flatten()]))
+
+        #set zi to 0-1 scale
+        zi = (zi-zi.min())/(zi.max() - zi.min())
+        zi =zi.reshape(xi.shape)
+
+        #set up plot
+        origin = 'lower'
+        #levels = [0.25, 0.5, 0.75]
+
+        CS = axs.contour(xi, yi, zi,levels = levels, colors=(lighten_color(color_dict['%s' %state_i], 0.8), lighten_color(color_dict['%s' %state_i], 0.5),), linewidths=(1,), origin=origin, zorder=100, alpha=0.7)
+        axs.contourf(xi, yi, zi,levels = [levels[0], levels[1]], colors=(lighten_color(color_dict['%s' %state_i], 0.8),), origin=origin, zorder=-3, alpha=0.15)
+        axs.contourf(xi, yi, zi,levels = [levels[1], levels[2]], colors=(lighten_color(color_dict['%s' %state_i], 0.5),), origin=origin, zorder=-3, alpha=0.15)
+    
+    #--------------
+    # annotation
+    arr = mpatches.FancyArrowPatch((-11, -0.2), (-12.8, -0.2), arrowstyle='->,head_width=.15', mutation_scale=6, color='grey')
+    axs.add_patch(arr)
+    axs.annotate("reduced growth", (.8, 1), xycoords=arr, ha='center', va='bottom', fontsize=6, c='grey')
+    arr = mpatches.FancyArrowPatch((-6, -0.2), (-4.2, -0.2), arrowstyle='->,head_width=.15', mutation_scale=6, color='grey')
+    axs.add_patch(arr)
+    axs.annotate("enhanced growth", (.2, 1), xycoords=arr, ha='center', va='bottom', fontsize=6, c='grey')
+
+    #-----------
+    ### title
+    plot_annotate = 'target window %.2f±%.2f Gyr window'%(target_window_size, window_err) + (plot_annotate if plot_annotate else '')
+    if must_still_be_misaligned:
+        plot_annotate = plot_annotate + '/trelax'
+    else:
+        axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
+    
+
+    #-----------
+    ### General formatting
+    # Axis labels
+    axs.set_xlim(-13, -4)
+    #axs.set_yscale('log')
+    #axs.set_ylim(0.0025, 1)
+    axs.set_ylim(-2.5, 0)
+    #axs.set_yticks([1, 10, 100, 1000])
+    axs.set_xlabel(r'log$_{10}$ $\Delta M_{\mathrm{BH,%s Gyr}}/M_{\mathrm{BH,initial}}^{2}$ [M$_{\odot}^{-1}]$' %target_window_size)
+    if initial_or_average == 'initial':
+        axs.set_ylabel('log$_{10}$ $f_{\mathrm{gas,SF}}(<r_{50})$')
+    elif initial_or_average == 'average':
+        axs.set_ylabel(r'log$_{10}$ $\bar{f}_{\mathrm{gas,SF}}(<r_{50})$')
+    elif initial_or_average == 'peak':
+        axs.set_ylabel(r'log$_{10}$ $f_{\mathrm{peak gas,SF}}(<r_{50})$')
+    #axs.minorticks_on()
+    #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
+    #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
+
+    #-----------
+    ### Legend
+    legend_elements = []
+    legend_labels = []
+    legend_colors = []
+    legend_labels.append('aligned')
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append(lighten_color(color_dict['aligned'], 1))
+    legend_labels.append('misaligned')
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append(lighten_color(color_dict['misaligned'], 1))
+    legend_labels.append('counter-rotating')
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append(lighten_color(color_dict['counter'], 1))
+    axs.legend(handles=legend_elements, labels=legend_labels, loc='lower right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0, ncol=1)
+
+
+    #-----------
+    # other
+    plt.tight_layout()
+
+    #-----------
+    ### Savefig        
+
+    metadata_plot = {'Title': 'sample/median M_bh/median window\nali: %s %.4f %.3f Gyr\nmis: %s %.4f %.3f Gyr\ncnt: %s %.4f %.3f Gyr' %(len(df_co['GalaxyIDs']), np.median(np.log10(df_co['BH mass start'])), np.median(df_co['Time delta']), len(df_mis['GalaxyIDs']), np.median(np.log10(df_mis['BH mass start'])), np.median(df_mis['Time delta']), len(df_cnt['GalaxyIDs']), np.median(np.log10(df_cnt['BH mass start'])), np.median(df_cnt['Time delta']))}
+               
+    if savefig:
+        savefig_txt_save = savefig_txt_in + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
+
+        plt.savefig("%s/BH_fgas/%sbhmass_delta2_%s_f%s_%s%s_clean%s_subsample%s_plot%s_%s.%s" %(fig_dir, 'L100_', initial_or_average, gas_fraction_type, ('trelax' if must_still_be_misaligned else 'window'), target_window_size, BHmis_summary['clean_sample'], BH_subsample_summary['total_sub'], len(df['GalaxyIDs']), savefig_txt_save, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+        print("\n  SAVED: %s/BH_fgas/%sbhmass_delta2_%s_f%s_%s%s_clean%s_subsample%s_plot%s_%s.%s" %(fig_dir, 'L100_', initial_or_average, gas_fraction_type, ('trelax' if must_still_be_misaligned else 'window'), target_window_size, BHmis_summary['clean_sample'], BH_subsample_summary['total_sub'], len(df['GalaxyIDs']), savefig_txt_save, file_format)) 
+    if showfig:
+        plt.show()
+    plt.close()
+
+#--------------------------------
+# x-y of fractional BH growth delta M_BH / M_BH vs ratio of gas surface density at r50 and between r50 and 2r50
+def _BH_deltamassmass_gassurfratio_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary = None, plot_annotate = None, savefig_txt_in = None,
+                          #==============================================
+                          # Plot options
+                            target_window_size   = 0.5,         # [ Gyr ] trim to at least 1 Gyr since misalignment to allow overlay
+                              window_err      = 0.05,           # [ +/- Gyr ] trim
+                              must_still_be_misaligned = True,  # target window = target trelax
+                            gas_fraction_type                   = 'gas_sf',              # [ 'gas' / 'gas_sf' ]
+                              ring_or_enclosed          = 'enclosed',               # gas surface density within 2r50, or between r50 and 2r50
+                              initial_or_average        = 'average',       # [ 'initial', 'average', 'peak' ] averaged over window
+                          # Sample refinement
+                            run_refinement = False,
+                              #use_hmr_general_sample = '2.0',   # [ 1.0 / 2.0 / aperture]
+                              # basic properties
+                              min_stelmass = None,      max_stelmass = None,        # [ 10**9 / Msun ]
+                              min_bhmass   = None,      max_bhmass   = None,
+                              min_sfr      = None,      max_sfr      = None,        # [ Msun/yr ] SF limit of ~ 0.1
+                              min_ssfr     = None,      max_ssfr     = None,        # [ /yr ] SF limit of ~ 1e-10-11
+                              # Mergers, looked for within range considered +/- halfwindow
+                              use_merger_criteria = False,
+                          #==============================================
+                          showfig       = True,
+                          savefig       = False,    
+                            file_format   = 'pdf',
+                            savefig_txt = '',            # [ '' / 'any text' / 'manual' ] 'manual' will prompt txt before saving
+                          #-----------------------------
+                          debug = False):
+                      
+    #-----------------------------------
+    use_CoP_BH                  = BHmis_input['use_CoP_BH']
+    apply_at_start = True
+    target_bhmass = False
+    target_stelmass = False
+    
+    # Establish sub-sample we wish to focus on
+    if run_refinement:
+        BH_subsample, BH_subsample_summary = _refine_BHmis_sample(BHmis_tree = BHmis_tree, BHmis_input = BHmis_input, BHmis_summary = BHmis_summary,
+                                                                  apply_at_start = apply_at_start,  
+                                                                  min_stelmass = min_stelmass,      max_stelmass = max_stelmass,       
+                                                                  min_bhmass   = min_bhmass,        max_bhmass   = max_bhmass,
+                                                                  min_sfr      = min_sfr,           max_sfr      = max_sfr,        
+                                                                  min_ssfr     = min_ssfr,          max_ssfr     = max_ssfr,    
+                                                                  use_merger_criteria = use_merger_criteria)
+    else:
+        print('==================================================================')
+        print('No refinement -> BH_subsample = clean BH_sample from above\n')
+        BH_subsample = BHmis_tree
+        BH_subsample_summary = BHmis_summary
+        BH_subsample_summary.update({'total_sub': BH_subsample_summary['clean_sample']})
+    
+    #===================================================================================================
+    # Go through sample
+    stelmass_plot  = []
+    time_delta_plot = []
+    bhmass_start_plot = []
+    bhmass_delta_plot = []
+    bhmdot_plot    = []
+    sfr_plot       = []
+    ssfr_plot      = []
+    fgas_plot      = []
+    fgassf_plot    = []
+    gas_density_plot    = []
+    gassf_density_plot  = []
+    kappa_plot     = []
+    trelax_plot    = []
+    trelax_ID      = []
+    duration_plot  = []
+    state_plot     = []
+    ID_plot        = []
+    density_fail = {'gas': {'aligned': [], 'misaligned': [], 'counter': []},
+                    'gas_sf': {'aligned': [], 'misaligned': [], 'counter': []}}       # galaxies for which surface density ratio is infinite
+    
+    for galaxy_state in ['aligned', 'misaligned', 'counter']:
+        for ID_i in BH_subsample['%s' %galaxy_state].keys():
+            
+            # check if duration is shorter than window size
+            if BH_subsample['%s' %galaxy_state]['%s' %ID_i]['entry_duration'] < (target_window_size-window_err):
+                continue
+            
+            #-----------------
+            # Misaligned sample
+            if galaxy_state == 'misaligned':
+                
+                check_index = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['index_s'] + 1
+                
+                if must_still_be_misaligned:
+                    #time_check = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['relaxation_time']
+                    time_check = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[check_index] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[BH_subsample['%s' %galaxy_state]['%s' %ID_i]['index_r']]
+                else:
+                    time_check = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[check_index] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[-1]
+                
+                # check if last snapshot in stable regime (index_s) is within target limits + window_size
+                if (time_check >= (target_window_size - window_err)):
+                    
+                    index_start = check_index
+                    duration_array = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime']) - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start])
+                    index_stop_array  = np.where((duration_array > (target_window_size-window_err)) & (duration_array < (target_window_size+window_err)))[0]
+                    
+                    # check if the next snapshot is not too far away
+                    if len(index_stop_array) > 0:
+                        index_stop = random.choice(index_stop_array) + 1
+                        
+                        #---------------------------
+                        # Add evolution entry and append
+                        time_axis = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start:index_stop] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start])
+                        time_delta_plot.append(time_axis[-1])
+                        if use_CoP_BH:
+                            mass_axis = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mass'])[index_start:index_stop]
+                            bhmass_start_plot.append(mass_axis[0])
+                            bhmass_delta_plot.append(mass_axis[-1] - mass_axis[0])
+                            bhmdot_plot.append((mass_axis[-1] - mass_axis[0])/time_axis[-1])
+                        else:
+                            mass_axis = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mass_alt'])[index_start:index_stop]
+                            bhmass_start_plot.append(mass_axis[0])
+                            bhmass_delta_plot.append(mass_axis[-1] - mass_axis[0])
+                            bhmdot_plot.append((mass_axis[-1] - mass_axis[0])/time_axis[-1])
+                    
+                        #--------------------------
+                        # Singular values
+                        stelmass_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass'])[index_start])
+                        sfr_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfr'])[index_start])
+                        ssfr_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['ssfr'])[index_start])
+                        kappa_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['kappa_stars'])[index_start])
+                        
+                        
+                        #---------------
+                        # Gas and gassf fraction
+                        if initial_or_average == 'initial':
+                            fgas_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
+                            fgassf_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
+                        elif initial_or_average == 'average':
+                            fgas_plot.append(np.mean(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                            fgassf_plot.append(np.mean(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                        elif initial_or_average == 'peak':
+                            fgas_plot.append(np.max(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                            fgassf_plot.append(np.max(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                    
+                    
+                        # Gas and gassf surface density ratios (within r50/<2r50-r50>)... the rad cancels out
+                        if initial_or_average == 'initial':
+                            #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
+                            gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start]
+                            gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start]
+                            gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start]
+                            gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start]
+                    
+                            if ring_or_enclosed == 'ring':
+                                gas_surfdens_ratio = 3*(gasmass_r50/(gasmass_2r50 - gasmass_r50))
+                                gassf_surfdens_ratio = 3*(gassfmass_r50/(gassfmass_2r50 - gassfmass_r50))
+                        
+                                # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
+                                if gasmass_2r50 - gasmass_r50 == 0:
+                                    density_fail['gas']['%s' %galaxy_state].append(ID_i)
+                                if gassfmass_2r50 - gassfmass_r50 == 0:
+                                    density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
+                            elif ring_or_enclosed == 'enclosed': 
+                                gas_surfdens_ratio = 4*(gasmass_r50/(gasmass_2r50))
+                                gassf_surfdens_ratio = 4*(gassfmass_r50/(gassfmass_2r50))
+                        elif initial_or_average == 'average':
+                            #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
+                            gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop]
+                            gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start:index_stop]
+                            gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop]
+                            gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start:index_stop]
+                    
+                            if ring_or_enclosed == 'ring':
+                                gas_surfdens_ratio = np.mean(3*np.divide(gasmass_r50, (gasmass_2r50 - gasmass_r50)))
+                                gassf_surfdens_ratio = np.mean(3*np.divide(gassfmass_r50, (gassfmass_2r50 - gassfmass_r50)))
+                        
+                                # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
+                                if gasmass_2r50 - gasmass_r50 == 0:
+                                    density_fail['gas']['%s' %galaxy_state].append(ID_i)
+                                if gassfmass_2r50 - gassfmass_r50 == 0:
+                                    density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
+                            elif ring_or_enclosed == 'enclosed': 
+                                gas_surfdens_ratio = np.mean(4*np.divide(gasmass_r50, gasmass_2r50))
+                                gassf_surfdens_ratio = np.mean(4*np.divide(gassfmass_r50, gassfmass_2r50))
+                        elif initial_or_average == 'peak':
+                            #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
+                            gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop]
+                            gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start:index_stop]
+                            gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop]
+                            gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start:index_stop]
+                    
+                            if ring_or_enclosed == 'ring':
+                                gas_surfdens_ratio = np.max(3*np.divide(gasmass_r50, (gasmass_2r50 - gasmass_r50)))
+                                gassf_surfdens_ratio = np.max(3*np.divide(gassfmass_r50, (gassfmass_2r50 - gassfmass_r50)))
+                        
+                                # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
+                                if gasmass_2r50 - gasmass_r50 == 0:
+                                    density_fail['gas']['%s' %galaxy_state].append(ID_i)
+                                if gassfmass_2r50 - gassfmass_r50 == 0:
+                                    density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
+                            elif ring_or_enclosed == 'enclosed': 
+                                gas_surfdens_ratio = np.max(4*np.divide(gasmass_r50, gasmass_2r50))
+                                gassf_surfdens_ratio = np.max(4*np.divide(gassfmass_r50, gassfmass_2r50))
+                        gas_density_plot.append(gas_surfdens_ratio)
+                        gassf_density_plot.append(gassf_surfdens_ratio)
+                                
+                                    
+                        duration_plot.append(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['entry_duration'])
+                        trelax_plot.append(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['relaxation_time'])
+                        trelax_ID.append(ID_i)
+                        state_plot.append(galaxy_state)
+                        ID_plot.append(ID_i)
+                    
+                    
+                else:
+                    continue
+                
+            #-----------------
+            # Aligned and counter sample
+            else:
+                # Consider all indexes
+                stelmass_index_length = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass'])
+
+                check_index_array = []
+                for index_i in np.arange(0, len(stelmass_index_length), 1).astype(int):
+                    time_check = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_i] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[-1]
+                    duration_array = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime']) - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_i])
+                    
+                    # check if within window limits
+                    if (time_check >= (target_window_size - window_err)) & (duration_array[-1] <= (target_window_size + window_err)):
+                        check_index_array.append(index_i)
+                
+                # If there exists at least one valid entry, pick random to append min_window_max entries to
+                if len(check_index_array) > 0:
+                    # Pick random starting point
+                    index_start = random.choice(check_index_array)
+                    duration_array = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime']) - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start])
+                    index_stop_array  = np.where(duration_array > (target_window_size-window_err))[0]
+                    index_stop = random.choice(index_stop_array) + 1
+                                        
+                    #---------------------------
+                    # Add evolution entry and append
+                    time_axis = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start:index_stop] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start])
+                    time_delta_plot.append(time_axis[-1])
+                    if use_CoP_BH:
+                        mass_axis = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mass'])[index_start:index_stop]
+                        bhmass_start_plot.append(mass_axis[0])
+                        bhmass_delta_plot.append(mass_axis[-1] - mass_axis[0])
+                        bhmdot_plot.append((mass_axis[-1] - mass_axis[0])/time_axis[-1])
+                    else:
+                        mass_axis = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mass_alt'])[index_start:index_stop]
+                        bhmass_start_plot.append(mass_axis[0])
+                        bhmass_delta_plot.append(mass_axis[-1] - mass_axis[0])
+                        bhmdot_plot.append((mass_axis[-1] - mass_axis[0])/time_axis[-1])
+                
+                    #--------------------------
+                    # Singular values
+                    stelmass_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass'])[index_start])
+                    sfr_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfr'])[index_start])
+                    ssfr_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['ssfr'])[index_start])
+                    kappa_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['kappa_stars'])[index_start])
+                    
+                    #---------------
+                    # Gas and gassf fraction
+                    if initial_or_average == 'initial':
+                        fgas_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
+                        fgassf_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
+                    elif initial_or_average == 'average':
+                        fgas_plot.append(np.mean(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                        fgassf_plot.append(np.mean(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                    elif initial_or_average == 'peak':
+                        fgas_plot.append(np.max(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                        fgassf_plot.append(np.max(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                    
+                    
+                    # Gas and gassf surface density ratios (within r50/<2r50-r50>)... the rad cancels out
+                    if initial_or_average == 'initial':
+                        #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
+                        gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start]
+                        gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start]
+                        gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start]
+                        gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start]
+                    
+                        if ring_or_enclosed == 'ring':
+                            gas_surfdens_ratio = 3*(gasmass_r50/(gasmass_2r50 - gasmass_r50))
+                            gassf_surfdens_ratio = 3*(gassfmass_r50/(gassfmass_2r50 - gassfmass_r50))
+                        
+                            # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
+                            if gasmass_2r50 - gasmass_r50 == 0:
+                                density_fail['gas']['%s' %galaxy_state].append(ID_i)
+                            if gassfmass_2r50 - gassfmass_r50 == 0:
+                                density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
+                        elif ring_or_enclosed == 'enclosed': 
+                            gas_surfdens_ratio = 4*(gasmass_r50/(gasmass_2r50))
+                            gassf_surfdens_ratio = 4*(gassfmass_r50/(gassfmass_2r50))
+                    elif initial_or_average == 'average':
+                        #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
+                        gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop]
+                        gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start:index_stop]
+                        gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop]
+                        gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start:index_stop]
+                    
+                        if ring_or_enclosed == 'ring':
+                            gas_surfdens_ratio = np.mean(3*np.divide(gasmass_r50, (gasmass_2r50 - gasmass_r50)))
+                            gassf_surfdens_ratio = np.mean(3*np.divide(gassfmass_r50, (gassfmass_2r50 - gassfmass_r50)))
+                        
+                            # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
+                            if gasmass_2r50 - gasmass_r50 == 0:
+                                density_fail['gas']['%s' %galaxy_state].append(ID_i)
+                            if gassfmass_2r50 - gassfmass_r50 == 0:
+                                density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
+                        elif ring_or_enclosed == 'enclosed': 
+                            gas_surfdens_ratio = np.mean(4*np.divide(gasmass_r50, gasmass_2r50))
+                            gassf_surfdens_ratio = np.mean(4*np.divide(gassfmass_r50, gassfmass_2r50))
+                    elif initial_or_average == 'peak':
+                        #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
+                        gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop]
+                        gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start:index_stop]
+                        gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop]
+                        gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start:index_stop]
+                    
+                        if ring_or_enclosed == 'ring':
+                            gas_surfdens_ratio = np.max(3*np.divide(gasmass_r50, (gasmass_2r50 - gasmass_r50)))
+                            gassf_surfdens_ratio = np.max(3*np.divide(gassfmass_r50, (gassfmass_2r50 - gassfmass_r50)))
+                        
+                            # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
+                            if gasmass_2r50 - gasmass_r50 == 0:
+                                density_fail['gas']['%s' %galaxy_state].append(ID_i)
+                            if gassfmass_2r50 - gassfmass_r50 == 0:
+                                density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
+                        elif ring_or_enclosed == 'enclosed': 
+                            gas_surfdens_ratio = np.max(4*np.divide(gasmass_r50, gasmass_2r50))
+                            gassf_surfdens_ratio = np.max(4*np.divide(gassfmass_r50, gassfmass_2r50))
                     gas_density_plot.append(gas_surfdens_ratio)
                     gassf_density_plot.append(gassf_surfdens_ratio)
         
@@ -3233,10 +3173,10 @@ def _BH_deltamassmass_gassurfratio_in_window(BHmis_tree = None, BHmis_input = No
     print('  misaligned:  %s\t%.4f M_bh             \t%.3f Gyr' %(len(df_mis['GalaxyIDs']), np.median(np.log10(df_mis['BH mass start'])), np.median(df_mis['Time delta'])))
     print('  counter:     %s\t%.4f M_bh             \t%.3f Gyr' %(len(df_cnt['GalaxyIDs']), np.median(np.log10(df_cnt['BH mass start'])), np.median(df_cnt['Time delta'])))
     print(' ')
-    print('Cannot estimate %s surface ratios for these galaxies:  (remove from above)' %gas_fraction_type)
-    print('  aligned:     %s' %len(density_fail['%s' %gas_fraction_type]['aligned']))
-    print('  misaligned:  %s' %len(density_fail['%s' %gas_fraction_type]['misaligned']))
-    print('  counter:     %s' %len(density_fail['%s' %gas_fraction_type]['counter']))
+    #print('Cannot estimate %s surface ratios for these galaxies:  (remove from above)' %gas_fraction_type)
+    #print('  aligned:     %s' %len(density_fail['%s' %gas_fraction_type]['aligned']))
+    #print('  misaligned:  %s' %len(density_fail['%s' %gas_fraction_type]['misaligned']))
+    #print('  counter:     %s' %len(density_fail['%s' %gas_fraction_type]['counter']))
     
     
     
@@ -3311,10 +3251,20 @@ def _BH_deltamassmass_gassurfratio_in_window(BHmis_tree = None, BHmis_input = No
     axs.set_xlabel(r'log$_{10}$ $\Delta M_{\mathrm{BH,%s Gyr}}/M_{\mathrm{BH,initial}}$' %target_window_size)
     if ring_or_enclosed == 'ring':
         axs.set_ylim(-2, 3)
-        axs.set_ylabel('log$_{10}$ $\Sigma_{\mathrm{SF,<r_{50}>}}/\Sigma_{\mathrm{SF,<r_{50}-2r_{50}}>}$')
+        if initial_or_average == 'initial':
+            axs.set_ylabel('log$_{10}$ $\Sigma_{\mathrm{SF,<r_{50}>}}/\Sigma_{\mathrm{SF,<r_{50}-2r_{50}}>}$')
+        elif initial_or_average == 'average':
+            axs.set_ylabel(r'log$_{10}$ $<\Sigma_{\mathrm{SF,<r_{50}>}}/\Sigma_{\mathrm{SF,<r_{50}-2r_{50}}>}>$')
+        elif initial_or_average == 'peak':
+            axs.set_ylabel('log$_{10}$ ${\Sigma_{\mathrm{SF,<r_{50}>}}/\Sigma_{\mathrm{SF,<r_{50}-2r_{50}}>}}_{\mathrm{peak}}$')
     elif ring_or_enclosed == 'enclosed':
         axs.set_ylim(-0.5, 0.7)
-        axs.set_ylabel('log$_{10}$ $\Sigma_{\mathrm{SF,<r_{50}>}}/\Sigma_{\mathrm{SF,<2r_{50}}>}$')
+        if initial_or_average == 'initial':
+            axs.set_ylabel('log$_{10}$ $\Sigma_{\mathrm{SF,<r_{50}>}}/\Sigma_{\mathrm{SF,<2r_{50}}>}$')
+        elif initial_or_average == 'average':
+            axs.set_ylabel('log$_{10}$ $<\Sigma_{\mathrm{SF,<r_{50}>}}/\Sigma_{\mathrm{SF,<2r_{50}}>}>$')
+        elif initial_or_average == 'peak':
+            axs.set_ylabel('log$_{10}$ ${\Sigma_{\mathrm{SF,<r_{50}>}}/\Sigma_{\mathrm{SF,<2r_{50}}>}}_{\mathrm{peak}}$')
     #axs.minorticks_on()
     #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
     #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
@@ -3348,8 +3298,489 @@ def _BH_deltamassmass_gassurfratio_in_window(BHmis_tree = None, BHmis_input = No
     if savefig:
         savefig_txt_save = savefig_txt_in + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
 
-        plt.savefig("%s/BH_growth_fraction/%sbhmass_delta_surfdens%s_%s_%s%s_clean%s_subsample%s_plot%s_%s.%s" %(fig_dir, 'L100_', ring_or_enclosed, gas_fraction_type, ('trelax' if must_still_be_misaligned else 'window'), target_window_size, BHmis_summary['clean_sample'], BH_subsample_summary['total_sub'], len(df['GalaxyIDs']), savefig_txt_save, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
-        print("\n  SAVED: %s/BH_growth_fraction/%sbhmass_delta_surfdens%s_%s_%s%s_clean%s_subsample%s_plot%s_%s.%s" %(fig_dir, 'L100_', ring_or_enclosed, gas_fraction_type, ('trelax' if must_still_be_misaligned else 'window'), target_window_size, BHmis_summary['clean_sample'], BH_subsample_summary['total_sub'], len(df['GalaxyIDs']), savefig_txt_save, file_format)) 
+        plt.savefig("%s/BH_gas_surfdens/%sbhmass_delta_%s_surfdens%s_%s_%s%s_clean%s_subsample%s_plot%s_%s.%s" %(fig_dir, 'L100_', initial_or_average, ring_or_enclosed, gas_fraction_type, ('trelax' if must_still_be_misaligned else 'window'), target_window_size, BHmis_summary['clean_sample'], BH_subsample_summary['total_sub'], len(df['GalaxyIDs']), savefig_txt_save, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+        print("\n  SAVED: %s/BH_gas_surfdens/%sbhmass_delta_%s_surfdens%s_%s_%s%s_clean%s_subsample%s_plot%s_%s.%s" %(fig_dir, 'L100_', initial_or_average, ring_or_enclosed, gas_fraction_type, ('trelax' if must_still_be_misaligned else 'window'), target_window_size, BHmis_summary['clean_sample'], BH_subsample_summary['total_sub'], len(df['GalaxyIDs']), savefig_txt_save, file_format)) 
+    if showfig:
+        plt.show()
+    plt.close()
+    if showfig:
+        plt.show()
+    plt.close()
+# x-y of delta M_BH / M_BH**2 (measure of enhanced/reduced growth) vs ratio of gas surface density at r50 and between r50 and 2r50
+def _BH_deltamassmass2_gassurfratio_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary = None, plot_annotate = None, savefig_txt_in = None,
+                          #==============================================
+                          # Plot options
+                            target_window_size   = 0.5,         # [ Gyr ] trim to at least 1 Gyr since misalignment to allow overlay
+                              window_err      = 0.05,           # [ +/- Gyr ] trim
+                              must_still_be_misaligned = True,  # target window = target trelax
+                            gas_fraction_type                   = 'gas_sf',              # [ 'gas' / 'gas_sf' ]
+                              ring_or_enclosed      = 'enclosed',               # gas surface density within 2r50, or between r50 and 2r50
+                              initial_or_average    = 'average',       # [ 'initial', 'average', 'peak' ] averaged over window
+                          # Sample refinement
+                            run_refinement = False,
+                              #use_hmr_general_sample = '2.0',   # [ 1.0 / 2.0 / aperture]
+                              # basic properties
+                              min_stelmass = None,      max_stelmass = None,        # [ 10**9 / Msun ]
+                              min_bhmass   = None,      max_bhmass   = None,
+                              min_sfr      = None,      max_sfr      = None,        # [ Msun/yr ] SF limit of ~ 0.1
+                              min_ssfr     = None,      max_ssfr     = None,        # [ /yr ] SF limit of ~ 1e-10-11
+                              # Mergers, looked for within range considered +/- halfwindow
+                              use_merger_criteria = False,
+                          #==============================================
+                          showfig       = True,
+                          savefig       = False,    
+                            file_format   = 'pdf',
+                            savefig_txt = '',            # [ '' / 'any text' / 'manual' ] 'manual' will prompt txt before saving
+                          #-----------------------------
+                          debug = False):
+                      
+    #-----------------------------------
+    use_CoP_BH                  = BHmis_input['use_CoP_BH']
+    apply_at_start = True
+    target_bhmass = False
+    target_stelmass = False
+    
+    # Establish sub-sample we wish to focus on
+    if run_refinement:
+        BH_subsample, BH_subsample_summary = _refine_BHmis_sample(BHmis_tree = BHmis_tree, BHmis_input = BHmis_input, BHmis_summary = BHmis_summary,
+                                                                  apply_at_start = apply_at_start,  
+                                                                  min_stelmass = min_stelmass,      max_stelmass = max_stelmass,       
+                                                                  min_bhmass   = min_bhmass,        max_bhmass   = max_bhmass,
+                                                                  min_sfr      = min_sfr,           max_sfr      = max_sfr,        
+                                                                  min_ssfr     = min_ssfr,          max_ssfr     = max_ssfr,    
+                                                                  use_merger_criteria = use_merger_criteria)
+    else:
+        print('==================================================================')
+        print('No refinement -> BH_subsample = clean BH_sample from above\n')
+        BH_subsample = BHmis_tree
+        BH_subsample_summary = BHmis_summary
+        BH_subsample_summary.update({'total_sub': BH_subsample_summary['clean_sample']})
+    
+    #===================================================================================================
+    # Go through sample
+    stelmass_plot  = []
+    time_delta_plot = []
+    bhmass_start_plot = []
+    bhmass_delta_plot = []
+    bhmdot_plot    = []
+    sfr_plot       = []
+    ssfr_plot      = []
+    fgas_plot      = []
+    fgassf_plot    = []
+    gas_density_plot    = []
+    gassf_density_plot  = []
+    kappa_plot     = []
+    trelax_plot    = []
+    trelax_ID      = []
+    duration_plot  = []
+    state_plot     = []
+    ID_plot        = []
+    density_fail = {'gas': {'aligned': [], 'misaligned': [], 'counter': []},
+                    'gas_sf': {'aligned': [], 'misaligned': [], 'counter': []}}       # galaxies for which surface density ratio is infinite
+    
+    for galaxy_state in ['aligned', 'misaligned', 'counter']:
+        for ID_i in BH_subsample['%s' %galaxy_state].keys():
+            
+            # check if duration is shorter than window size
+            if BH_subsample['%s' %galaxy_state]['%s' %ID_i]['entry_duration'] < (target_window_size-window_err):
+                continue
+            
+            #-----------------
+            # Misaligned sample
+            if galaxy_state == 'misaligned':
+                
+                check_index = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['index_s'] + 1
+                
+                if must_still_be_misaligned:
+                    #time_check = BH_subsample['%s' %galaxy_state]['%s' %ID_i]['relaxation_time']
+                    time_check = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[check_index] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[BH_subsample['%s' %galaxy_state]['%s' %ID_i]['index_r']]
+                else:
+                    time_check = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[check_index] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[-1]
+                
+                # check if last snapshot in stable regime (index_s) is within target limits + window_size
+                if (time_check >= (target_window_size - window_err)):
+                    
+                    index_start = check_index
+                    duration_array = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime']) - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start])
+                    index_stop_array  = np.where((duration_array > (target_window_size-window_err)) & (duration_array < (target_window_size+window_err)))[0]
+                    
+                    # check if the next snapshot is not too far away
+                    if len(index_stop_array) > 0:
+                        index_stop = random.choice(index_stop_array) + 1
+                        
+                        #---------------------------
+                        # Add evolution entry and append
+                        time_axis = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start:index_stop] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start])
+                        time_delta_plot.append(time_axis[-1])
+                        if use_CoP_BH:
+                            mass_axis = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mass'])[index_start:index_stop]
+                            bhmass_start_plot.append(mass_axis[0])
+                            bhmass_delta_plot.append(mass_axis[-1] - mass_axis[0])
+                            bhmdot_plot.append((mass_axis[-1] - mass_axis[0])/time_axis[-1])
+                        else:
+                            mass_axis = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mass_alt'])[index_start:index_stop]
+                            bhmass_start_plot.append(mass_axis[0])
+                            bhmass_delta_plot.append(mass_axis[-1] - mass_axis[0])
+                            bhmdot_plot.append((mass_axis[-1] - mass_axis[0])/time_axis[-1])
+                    
+                        #--------------------------
+                        # Singular values
+                        stelmass_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass'])[index_start])
+                        sfr_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfr'])[index_start])
+                        ssfr_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['ssfr'])[index_start])
+                        kappa_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['kappa_stars'])[index_start])
+                        
+                        
+                        #---------------
+                        # Gas and gassf fraction
+                        if initial_or_average == 'initial':
+                            fgas_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
+                            fgassf_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
+                        elif initial_or_average == 'average':
+                            fgas_plot.append(np.mean(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                            fgassf_plot.append(np.mean(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                        elif initial_or_average == 'peak':
+                            fgas_plot.append(np.max(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                            fgassf_plot.append(np.max(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                    
+                    
+                        # Gas and gassf surface density ratios (within r50/<2r50-r50>)... the rad cancels out
+                        if initial_or_average == 'initial':
+                            #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
+                            gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start]
+                            gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start]
+                            gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start]
+                            gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start]
+                    
+                            if ring_or_enclosed == 'ring':
+                                gas_surfdens_ratio = 3*(gasmass_r50/(gasmass_2r50 - gasmass_r50))
+                                gassf_surfdens_ratio = 3*(gassfmass_r50/(gassfmass_2r50 - gassfmass_r50))
+                        
+                                # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
+                                if gasmass_2r50 - gasmass_r50 == 0:
+                                    density_fail['gas']['%s' %galaxy_state].append(ID_i)
+                                if gassfmass_2r50 - gassfmass_r50 == 0:
+                                    density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
+                            elif ring_or_enclosed == 'enclosed': 
+                                gas_surfdens_ratio = 4*(gasmass_r50/(gasmass_2r50))
+                                gassf_surfdens_ratio = 4*(gassfmass_r50/(gassfmass_2r50))
+                        elif initial_or_average == 'average':
+                            #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
+                            gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop]
+                            gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start:index_stop]
+                            gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop]
+                            gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start:index_stop]
+                    
+                            if ring_or_enclosed == 'ring':
+                                gas_surfdens_ratio = np.mean(3*np.divide(gasmass_r50, (gasmass_2r50 - gasmass_r50)))
+                                gassf_surfdens_ratio = np.mean(3*np.divide(gassfmass_r50, (gassfmass_2r50 - gassfmass_r50)))
+                        
+                                # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
+                                if gasmass_2r50 - gasmass_r50 == 0:
+                                    density_fail['gas']['%s' %galaxy_state].append(ID_i)
+                                if gassfmass_2r50 - gassfmass_r50 == 0:
+                                    density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
+                            elif ring_or_enclosed == 'enclosed': 
+                                gas_surfdens_ratio = np.mean(4*np.divide(gasmass_r50, gasmass_2r50))
+                                gassf_surfdens_ratio = np.mean(4*np.divide(gassfmass_r50, gassfmass_2r50))
+                        elif initial_or_average == 'peak':
+                            #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
+                            gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop]
+                            gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start:index_stop]
+                            gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop]
+                            gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start:index_stop]
+                    
+                            if ring_or_enclosed == 'ring':
+                                gas_surfdens_ratio = np.max(3*np.divide(gasmass_r50, (gasmass_2r50 - gasmass_r50)))
+                                gassf_surfdens_ratio = np.max(3*np.divide(gassfmass_r50, (gassfmass_2r50 - gassfmass_r50)))
+                        
+                                # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
+                                if gasmass_2r50 - gasmass_r50 == 0:
+                                    density_fail['gas']['%s' %galaxy_state].append(ID_i)
+                                if gassfmass_2r50 - gassfmass_r50 == 0:
+                                    density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
+                            elif ring_or_enclosed == 'enclosed': 
+                                gas_surfdens_ratio = np.max(4*np.divide(gasmass_r50, gasmass_2r50))
+                                gassf_surfdens_ratio = np.max(4*np.divide(gassfmass_r50, gassfmass_2r50))
+                        gas_density_plot.append(gas_surfdens_ratio)
+                        gassf_density_plot.append(gassf_surfdens_ratio)
+                                
+                                    
+                        duration_plot.append(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['entry_duration'])
+                        trelax_plot.append(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['relaxation_time'])
+                        trelax_ID.append(ID_i)
+                        state_plot.append(galaxy_state)
+                        ID_plot.append(ID_i)
+                    
+                    
+                else:
+                    continue
+                
+            #-----------------
+            # Aligned and counter sample
+            else:
+                # Consider all indexes
+                stelmass_index_length = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass'])
+
+                check_index_array = []
+                for index_i in np.arange(0, len(stelmass_index_length), 1).astype(int):
+                    time_check = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_i] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[-1]
+                    duration_array = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime']) - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_i])
+                    
+                    # check if within window limits
+                    if (time_check >= (target_window_size - window_err)) & (duration_array[-1] <= (target_window_size + window_err)):
+                        check_index_array.append(index_i)
+                
+                # If there exists at least one valid entry, pick random to append min_window_max entries to
+                if len(check_index_array) > 0:
+                    # Pick random starting point
+                    index_start = random.choice(check_index_array)
+                    duration_array = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime']) - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start])
+                    index_stop_array  = np.where(duration_array > (target_window_size-window_err))[0]
+                    index_stop = random.choice(index_stop_array) + 1
+                                        
+                    #---------------------------
+                    # Add evolution entry and append
+                    time_axis = -1*(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start:index_stop] - np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['Lookbacktime'])[index_start])
+                    time_delta_plot.append(time_axis[-1])
+                    if use_CoP_BH:
+                        mass_axis = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mass'])[index_start:index_stop]
+                        bhmass_start_plot.append(mass_axis[0])
+                        bhmass_delta_plot.append(mass_axis[-1] - mass_axis[0])
+                        bhmdot_plot.append((mass_axis[-1] - mass_axis[0])/time_axis[-1])
+                    else:
+                        mass_axis = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mass_alt'])[index_start:index_stop]
+                        bhmass_start_plot.append(mass_axis[0])
+                        bhmass_delta_plot.append(mass_axis[-1] - mass_axis[0])
+                        bhmdot_plot.append((mass_axis[-1] - mass_axis[0])/time_axis[-1])
+                
+                    #--------------------------
+                    # Singular values
+                    stelmass_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass'])[index_start])
+                    sfr_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfr'])[index_start])
+                    ssfr_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['ssfr'])[index_start])
+                    kappa_plot.append(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['kappa_stars'])[index_start])
+                    
+                    #---------------
+                    # Gas and gassf fraction
+                    if initial_or_average == 'initial':
+                        fgas_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
+                        fgassf_plot.append(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start]))
+                    elif initial_or_average == 'average':
+                        fgas_plot.append(np.mean(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                        fgassf_plot.append(np.mean(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                    elif initial_or_average == 'peak':
+                        fgas_plot.append(np.max(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                        fgassf_plot.append(np.max(np.divide(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop], np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop] + np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stelmass_1hmr'])[index_start:index_stop])))
+                    
+                    
+                    # Gas and gassf surface density ratios (within r50/<2r50-r50>)... the rad cancels out
+                    if initial_or_average == 'initial':
+                        #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
+                        gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start]
+                        gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start]
+                        gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start]
+                        gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start]
+                    
+                        if ring_or_enclosed == 'ring':
+                            gas_surfdens_ratio = 3*(gasmass_r50/(gasmass_2r50 - gasmass_r50))
+                            gassf_surfdens_ratio = 3*(gassfmass_r50/(gassfmass_2r50 - gassfmass_r50))
+                        
+                            # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
+                            if gasmass_2r50 - gasmass_r50 == 0:
+                                density_fail['gas']['%s' %galaxy_state].append(ID_i)
+                            if gassfmass_2r50 - gassfmass_r50 == 0:
+                                density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
+                        elif ring_or_enclosed == 'enclosed': 
+                            gas_surfdens_ratio = 4*(gasmass_r50/(gasmass_2r50))
+                            gassf_surfdens_ratio = 4*(gassfmass_r50/(gassfmass_2r50))
+                    elif initial_or_average == 'average':
+                        #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
+                        gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop]
+                        gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start:index_stop]
+                        gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop]
+                        gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start:index_stop]
+                    
+                        if ring_or_enclosed == 'ring':
+                            gas_surfdens_ratio = np.mean(3*np.divide(gasmass_r50, (gasmass_2r50 - gasmass_r50)))
+                            gassf_surfdens_ratio = np.mean(3*np.divide(gassfmass_r50, (gassfmass_2r50 - gassfmass_r50)))
+                        
+                            # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
+                            if gasmass_2r50 - gasmass_r50 == 0:
+                                density_fail['gas']['%s' %galaxy_state].append(ID_i)
+                            if gassfmass_2r50 - gassfmass_r50 == 0:
+                                density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
+                        elif ring_or_enclosed == 'enclosed': 
+                            gas_surfdens_ratio = np.mean(4*np.divide(gasmass_r50, gasmass_2r50))
+                            gassf_surfdens_ratio = np.mean(4*np.divide(gassfmass_r50, gassfmass_2r50))
+                    elif initial_or_average == 'peak':
+                        #halfrad = np.array(BH_subsample['%s' %ID_i]['rad'])[index_start]
+                        gasmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass_1hmr'])[index_start:index_stop]
+                        gasmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['gasmass'])[index_start:index_stop]
+                        gassfmass_r50  = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass_1hmr'])[index_start:index_stop]
+                        gassfmass_2r50 = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['sfmass'])[index_start:index_stop]
+                    
+                        if ring_or_enclosed == 'ring':
+                            gas_surfdens_ratio = np.max(3*np.divide(gasmass_r50, (gasmass_2r50 - gasmass_r50)))
+                            gassf_surfdens_ratio = np.max(3*np.divide(gassfmass_r50, (gassfmass_2r50 - gassfmass_r50)))
+                        
+                            # If basically all gas or gassf is within r50 (rare, but can happen, this will log number of divide by 0 from above equation)
+                            if gasmass_2r50 - gasmass_r50 == 0:
+                                density_fail['gas']['%s' %galaxy_state].append(ID_i)
+                            if gassfmass_2r50 - gassfmass_r50 == 0:
+                                density_fail['gas_sf']['%s' %galaxy_state].append(ID_i)
+                        elif ring_or_enclosed == 'enclosed': 
+                            gas_surfdens_ratio = np.max(4*np.divide(gasmass_r50, gasmass_2r50))
+                            gassf_surfdens_ratio = np.max(4*np.divide(gassfmass_r50, gassfmass_2r50))
+                    gas_density_plot.append(gas_surfdens_ratio)
+                    gassf_density_plot.append(gassf_surfdens_ratio)
+        
+                    duration_plot.append(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['entry_duration'])
+                    state_plot.append(galaxy_state)
+                    ID_plot.append(ID_i)
+                
+                
+                          
+    # Collect data into dataframe
+    df = pd.DataFrame(data={'stelmass': stelmass_plot, 'SFR': sfr_plot, 'sSFR': ssfr_plot, 'Time delta': time_delta_plot, 'BH mass start': bhmass_start_plot, 'BH mass delta': bhmass_delta_plot, 'BH mdot': bhmdot_plot, 'Gas fraction': fgas_plot, 'Gassf fraction': fgassf_plot, 'Gas surfdens ratio': gas_density_plot, 'Gassf surfdens ratio': gassf_density_plot, 'Morphology': kappa_plot, 'State': state_plot, 'window': duration_plot, 'GalaxyIDs': ID_plot})        
+    df['BH deltamassmass2'] = df['BH mass delta']/(df['BH mass start']**2)
+    df_co  = df.loc[(df['State'] == 'aligned')]
+    df_mis = df.loc[(df['State'] == 'misaligned')]
+    df_cnt = df.loc[(df['State'] == 'counter')]
+    
+    print('Sub-sample in range, with target_window_size median of %.2f±%.2f:' %(target_window_size, window_err))
+    print('  total:       %s' %len(df['GalaxyIDs']))
+    print('  aligned:     %s\t%.4f M_bh (first snip)\t%.3f Gyr' %(len(df_co['GalaxyIDs']), np.median(np.log10(df_co['BH mass start'])), np.median(df_co['Time delta'])))
+    print('  misaligned:  %s\t%.4f M_bh             \t%.3f Gyr' %(len(df_mis['GalaxyIDs']), np.median(np.log10(df_mis['BH mass start'])), np.median(df_mis['Time delta'])))
+    print('  counter:     %s\t%.4f M_bh             \t%.3f Gyr' %(len(df_cnt['GalaxyIDs']), np.median(np.log10(df_cnt['BH mass start'])), np.median(df_cnt['Time delta'])))
+    print(' ')
+    #print('Cannot estimate %s surface ratios for these galaxies:  (remove from above)' %gas_fraction_type)
+    #print('  aligned:     %s' %len(density_fail['%s' %gas_fraction_type]['aligned']))
+    #print('  misaligned:  %s' %len(density_fail['%s' %gas_fraction_type]['misaligned']))
+    #print('  counter:     %s' %len(density_fail['%s' %gas_fraction_type]['counter']))
+    
+    
+    
+    #---------------------------  
+    # Figure initialising
+    fig, axs = plt.subplots(1, 1, figsize=[10/3, 3], sharex=False, sharey=False) 
+    plt.subplots_adjust(wspace=0.4, hspace=0.4)
+    
+    color_dict = {'aligned':'darkgrey', 'misaligned':'orangered', 'counter':'dodgerblue'}
+    
+    #---------------------
+    ### Plot scatter
+    if gas_fraction_type == 'gas':
+        axs.scatter(np.log10(df['BH deltamassmass2']), np.log10(df['Gas surfdens ratio']), s=6, c=[color_dict[i] for i in df['State']], edgecolor='k', marker='.', linewidths=0, alpha=0.8, zorder=-2)
+    if gas_fraction_type == 'gas_sf':
+        axs.scatter(np.log10(df['BH deltamassmass2']), np.log10(df['Gassf surfdens ratio']), s=6, c=[color_dict[i] for i in df['State']], edgecolor='k', marker='.', linewidths=0, alpha=0.8, zorder=-2)
+    
+    
+    #--------------
+    # Contours
+    levels = [1-0.68, 1-0.38, 1] # 1 - sigma, as contour will plot 'probability of lying outside this contour', not 'within contour'
+    for state_i in ['aligned', 'misaligned', 'counter']:
+        df_i = df.loc[(df['State'] == state_i)]
+    
+        x = np.array(np.log10(df_i['BH deltamassmass2']))
+        if gas_fraction_type == 'gas':
+            y = np.array(np.log10(df_i['Gas surfdens ratio']))
+        if gas_fraction_type == 'gas_sf':
+            y = np.array(np.log10(df_i['Gassf surfdens ratio']))
+
+        k = gaussian_kde(np.vstack([x, y]))
+        xi, yi = np.mgrid[x.min():x.max():x.size**0.5*1j,y.min():y.max():y.size**0.5*1j]
+        zi = k(np.vstack([xi.flatten(), yi.flatten()]))
+
+        #set zi to 0-1 scale
+        zi = (zi-zi.min())/(zi.max() - zi.min())
+        zi =zi.reshape(xi.shape)
+
+        #set up plot
+        origin = 'lower'
+        #levels = [0.25, 0.5, 0.75]
+
+        CS = axs.contour(xi, yi, zi,levels = levels, colors=(lighten_color(color_dict['%s' %state_i], 0.8), lighten_color(color_dict['%s' %state_i], 0.5),), linewidths=(1,), origin=origin, zorder=100, alpha=0.7)
+        axs.contourf(xi, yi, zi,levels = [levels[0], levels[1]], colors=(lighten_color(color_dict['%s' %state_i], 0.8),), origin=origin, zorder=-3, alpha=0.15)
+        axs.contourf(xi, yi, zi,levels = [levels[1], levels[2]], colors=(lighten_color(color_dict['%s' %state_i], 0.5),), origin=origin, zorder=-3, alpha=0.15)
+    
+    
+    #--------------
+    # annotation
+    #arr = mpatches.FancyArrowPatch((-11, 100), (-12.8, 100), arrowstyle='->,head_width=.15', mutation_scale=6, color='grey')
+    #axs.add_patch(arr)
+    #axs.annotate("reduced growth", (.8, 1), xycoords=arr, ha='center', va='bottom', fontsize=6, c='grey')
+    #arr = mpatches.FancyArrowPatch((-6, 100), (-4.2, 100), arrowstyle='->,head_width=.15', mutation_scale=6, color='grey')
+    #axs.add_patch(arr)
+    #axs.annotate("enhanced growth", (.2, 1), xycoords=arr, ha='center', va='bottom', fontsize=6, c='grey')
+
+    #-----------
+    ### title
+    plot_annotate = 'target window %.2f±%.2f Gyr window'%(target_window_size, window_err) + (plot_annotate if plot_annotate else '')
+    if must_still_be_misaligned:
+        plot_annotate = plot_annotate + '/trelax'
+    else:
+        axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
+    
+
+    #-----------
+    ### General formatting
+    # Axis labels
+    axs.set_xlim(-13, -4)
+    #axs.set_yscale('log')
+    #axs.set_yticks([1, 10, 100, 1000])
+    axs.set_xlabel(r'log$_{10}$ $\Delta M_{\mathrm{BH,%s Gyr}}/M_{\mathrm{BH,initial}}^{2}$ [M$_{\odot}^{-1}]$' %target_window_size)
+    if ring_or_enclosed == 'ring':
+        axs.set_ylim(-2, 3)
+        if initial_or_average == 'initial':
+            axs.set_ylabel('log$_{10}$ $\Sigma_{\mathrm{SF,<r_{50}>}}/\Sigma_{\mathrm{SF,<r_{50}-2r_{50}}>}$')
+        elif initial_or_average == 'average':
+            axs.set_ylabel(r'log$_{10}$ $<\Sigma_{\mathrm{SF,<r_{50}>}}/\Sigma_{\mathrm{SF,<r_{50}-2r_{50}}>}>$')
+        elif initial_or_average == 'peak':
+            axs.set_ylabel('log$_{10}$ ${\Sigma_{\mathrm{SF,<r_{50}>}}/\Sigma_{\mathrm{SF,<r_{50}-2r_{50}}>}}_{\mathrm{peak}}$')
+    elif ring_or_enclosed == 'enclosed':
+        axs.set_ylim(-0.5, 0.7)
+        if initial_or_average == 'initial':
+            axs.set_ylabel('log$_{10}$ $\Sigma_{\mathrm{SF,<r_{50}>}}/\Sigma_{\mathrm{SF,<2r_{50}}>}$')
+        elif initial_or_average == 'average':
+            axs.set_ylabel('log$_{10}$ $<\Sigma_{\mathrm{SF,<r_{50}>}}/\Sigma_{\mathrm{SF,<2r_{50}}>}>$')
+        elif initial_or_average == 'peak':
+            axs.set_ylabel('log$_{10}$ ${\Sigma_{\mathrm{SF,<r_{50}>}}/\Sigma_{\mathrm{SF,<2r_{50}}>}}_{\mathrm{peak}}$')
+    #axs.minorticks_on()
+    #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
+    #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
+
+    #-----------
+    ### Legend
+    legend_elements = []
+    legend_labels = []
+    legend_colors = []
+    legend_labels.append('aligned')
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append(lighten_color(color_dict['aligned'], 1))
+    legend_labels.append('misaligned')
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append(lighten_color(color_dict['misaligned'], 1))
+    legend_labels.append('counter-rotating')
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append(lighten_color(color_dict['counter'], 1))
+    axs.legend(handles=legend_elements, labels=legend_labels, loc='lower right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0, ncol=1)
+
+
+    #-----------
+    # other
+    plt.tight_layout()
+
+    #-----------
+    ### Savefig        
+
+    metadata_plot = {'Title': 'sample/median M_bh/median window\nali: %s %.4f %.3f Gyr\nmis: %s %.4f %.3f Gyr\ncnt: %s %.4f %.3f Gyr' %(len(df_co['GalaxyIDs']), np.median(np.log10(df_co['BH mass start'])), np.median(df_co['Time delta']), len(df_mis['GalaxyIDs']), np.median(np.log10(df_mis['BH mass start'])), np.median(df_mis['Time delta']), len(df_cnt['GalaxyIDs']), np.median(np.log10(df_cnt['BH mass start'])), np.median(df_cnt['Time delta']))}
+               
+    if savefig:
+        savefig_txt_save = savefig_txt_in + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
+
+        plt.savefig("%s/BH_gas_surfdens/%sbhmass_delta2_%s_surfdens%s_%s_%s%s_clean%s_subsample%s_plot%s_%s.%s" %(fig_dir, 'L100_', initial_or_average, ring_or_enclosed, gas_fraction_type, ('trelax' if must_still_be_misaligned else 'window'), target_window_size, BHmis_summary['clean_sample'], BH_subsample_summary['total_sub'], len(df['GalaxyIDs']), savefig_txt_save, file_format), metadata=metadata_plot, format=file_format, bbox_inches='tight', dpi=600)    
+        print("\n  SAVED: %s/BH_gas_surfdens/%sbhmass_delta2_%s_surfdens%s_%s_%s%s_clean%s_subsample%s_plot%s_%s.%s" %(fig_dir, 'L100_', initial_or_average, ring_or_enclosed, gas_fraction_type, ('trelax' if must_still_be_misaligned else 'window'), target_window_size, BHmis_summary['clean_sample'], BH_subsample_summary['total_sub'], len(df['GalaxyIDs']), savefig_txt_save, file_format)) 
     if showfig:
         plt.show()
     plt.close()
@@ -3361,14 +3792,14 @@ def _BH_deltamassmass_gassurfratio_in_window(BHmis_tree = None, BHmis_input = No
 
 #\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 # Set starting parameters
-load_BHmis_tree_in = '_CoPFalse_window0.5_trelax0.3___05Gyr__no_seed'
-plot_annotate_in   = False
+load_BHmis_tree_in = '_CoPFalse_window0.5_trelax0_05Gyr__no_seed'
+plot_annotate_in                  = None
 savefig_txt_in     = load_BHmis_tree_in               # [ 'manual' / load_csv_file_in ] 'manual' will prompt txt before saving
 
-# '_CoPFalse_window0.5_trelax0.3___05Gyr__no_seed'  # <-- default
-# '_CoPFalse_window0.5_trelax0.3___05Gyr___'
-# '_CoPTrue_window0.5_trelax0.3___05Gyr__no_seed'
-# '_CoPTrue_window0.5_trelax0.3___05Gyr___'
+# '_CoPFalse_window0.5_trelax0_05Gyr__no_seed'  # <-- default
+# '_CoPFalse_window0.5_trelax0_05Gyr___'
+# '_CoPTrue_window0.5_trelax0_05Gyr__no_seed'
+# '_CoPTrue_window0.5_trelax0_05Gyr___'
 #  False 
 # 'ETG → ETG' , 'LTG → LTG'
 #  r'ETG ($\bar{\kappa}_{\mathrm{co}}^{\mathrm{*}} < 0.35$)'
@@ -3385,17 +3816,18 @@ BHmis_tree, BHmis_input, BH_input, BHmis_summary = _extract_BHmis_tree(csv_BHmis
 
 # SAMPLE BH mass
 """_BH_sample(BHmis_tree=BHmis_tree, BHmis_input=BHmis_input, BHmis_summary=BHmis_summary, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
-                                plot_yaxis = ['bhmass'],
+                                plot_yaxis = ['bhmass', 'sfr', 'ssfr'],        # 'sfr', 'ssfr'
                                   apply_at_start = True,
+                                  add_title = True,
                                 run_refinement = False,
                                 showfig = True,
-                                savefig = False)"""
+                                savefig = True)"""
 """_BH_sample(BHmis_tree=BHmis_tree, BHmis_input=BHmis_input, BHmis_summary=BHmis_summary, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                                 plot_yaxis = ['window'],
                                   apply_at_start = True,
                                 run_refinement = False,
                                 showfig = True,
-                                savefig = False)"""
+                                savefig = True)"""
                                 
 # STACKED BH growth
 """for target_bh_mass_i in [6.1, 6.3, 6.5, 6.75, 7, 7.25, 7.5, 7.75, 8]:
@@ -3424,7 +3856,7 @@ BHmis_tree, BHmis_input, BH_input, BHmis_summary = _extract_BHmis_tree(csv_BHmis
                                           must_still_be_misaligned = True,  # target window = target trelax
                                         run_refinement = False,
                                           showfig = True,
-                                          savefig = False)"""
+                                          savefig = True)"""
 # make sample plot of SCATTER with _seed_
 """for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
     df_out = _BH_deltamass_in_window(BHmis_tree=BHmis_tree, BHmis_input=BHmis_input, BHmis_summary=BHmis_summary, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
@@ -3440,12 +3872,12 @@ BHmis_tree, BHmis_input, BH_input, BHmis_summary = _extract_BHmis_tree(csv_BHmis
                                     plot_yaxis = ['bhmass'],
                                       apply_at_start = True,
                                     run_refinement = False,
-                                    savefig_txt = '_using_analysis_sample_05_',
+                                    savefig_txt = '_using_analysis_sample_%s_'%str(target_window_size_i),
                                     showfig = True,
-                                    savefig = False)"""
+                                    savefig = True)"""
 
                             
-# HIST of MBH / MBH**2, for a given time window/trelax
+# HIST of fractional growth or MBH / MBH**2, for a given time window/trelax
 """for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
     _BH_deltamassmass2_hist_in_window(BHmis_tree=BHmis_tree, BHmis_input=BHmis_input, BHmis_summary=BHmis_summary, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                                         target_window_size   = target_window_size_i,         # [ Gyr ] trim to at least 1 Gyr to allow overlay
@@ -3453,31 +3885,7 @@ BHmis_tree, BHmis_input, BH_input, BHmis_summary = _extract_BHmis_tree(csv_BHmis
                                           must_still_be_misaligned = True,  # target window = target trelax
                                         run_refinement = False,
                                           showfig = True,
-                                          savefig = True) """ 
-# SCATTER delta MBH / MBH**2 vs fgas in a given time window/trelax
-"""for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
-    _BH_deltamassmass2_fgas_in_window(BHmis_tree=BHmis_tree, BHmis_input=BHmis_input, BHmis_summary=BHmis_summary, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
-                                        target_window_size   = target_window_size_i,         # [ Gyr ] trim to at least 1 Gyr to allow overlay
-                                          window_err      = window_err_i,           # [ +/- Gyr ] trim
-                                          must_still_be_misaligned = True,  # target window = target trelax
-                                           gas_fraction_type  = 'gas_sf',              # [ 'gas' / 'gas_sf' ]
-                                        run_refinement = False,
-                                          showfig = True,
-                                          savefig = True) """
-# SCATTER delta MBH / MBH**2 vs ratio of gas surface densities within r50, and 2r50 in a given time window/trelax
-"""for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
-    _BH_deltamassmass2_gassurfratio_in_window(BHmis_tree=BHmis_tree, BHmis_input=BHmis_input, BHmis_summary=BHmis_summary, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
-                                        target_window_size   = target_window_size_i,         # [ Gyr ] trim to at least 1 Gyr to allow overlay
-                                          window_err      = window_err_i,           # [ +/- Gyr ] trim
-                                          must_still_be_misaligned = True,  # target window = target trelax
-                                           gas_fraction_type  = 'gas_sf',              # [ 'gas' / 'gas_sf' ]
-                                           ring_or_enclosed   = 'enclosed',     # comparing rings of surface density or total enclosed
-                                        run_refinement = False,
-                                          showfig = True,
                                           savefig = True)"""
-   
-                                      
-# HIST of fractional BH growth delta MBH / MBH, for a given time window/trelax
 """for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
     _BH_deltamassmass_hist_in_window(BHmis_tree=BHmis_tree, BHmis_input=BHmis_input, BHmis_summary=BHmis_summary, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                                         target_window_size   = target_window_size_i,         # [ Gyr ] trim to at least 1 Gyr to allow overlay
@@ -3486,28 +3894,62 @@ BHmis_tree, BHmis_input, BH_input, BHmis_summary = _extract_BHmis_tree(csv_BHmis
                                         run_refinement = False,
                                           showfig = True,
                                           savefig = True)"""
-# SCATTER fractional change in MBH / MBH vs fgas in a given time window/trelax
+
+
+# SCATTER of fractional growth or MBH / MBH**2 vs fgas in a given time window/trelax
+# Can change initial/average/peak
+"""for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
+    _BH_deltamassmass2_fgas_in_window(BHmis_tree=BHmis_tree, BHmis_input=BHmis_input, BHmis_summary=BHmis_summary, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                                        target_window_size   = target_window_size_i,         # [ Gyr ] trim to at least 1 Gyr to allow overlay
+                                          window_err      = window_err_i,           # [ +/- Gyr ] trim
+                                          must_still_be_misaligned = True,  # target window = target trelax
+                                           gas_fraction_type  = 'gas_sf',              # [ 'gas' / 'gas_sf' ]
+                                           initial_or_average = 'initial',       # ['initial', 'average', 'peak'] first in window or averaged over window
+                                        run_refinement = False,
+                                          showfig = True,
+                                          savefig = True) """
 """for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
     _BH_deltamassmass_fgas_in_window(BHmis_tree=BHmis_tree, BHmis_input=BHmis_input, BHmis_summary=BHmis_summary, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                                         target_window_size   = target_window_size_i,         # [ Gyr ] trim to at least 1 Gyr to allow overlay
                                           window_err      = window_err_i,           # [ +/- Gyr ] trim
                                           must_still_be_misaligned = True,  # target window = target trelax
                                            gas_fraction_type  = 'gas_sf',              # [ 'gas' / 'gas_sf' ]
+                                           initial_or_average = 'initial',       # ['initial', 'average', 'peak'] first in window or averaged over window
+                                        run_refinement = False,
+                                          showfig = True,
+                                          savefig = True)"""
+                                          
+
+
+# SCATTER of fractional growth or vs ratio of gas surface densities within r50, and 2r50 in a given time window/trelax
+# Can change initial/average/peak
+"""for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
+    _BH_deltamassmass2_gassurfratio_in_window(BHmis_tree=BHmis_tree, BHmis_input=BHmis_input, BHmis_summary=BHmis_summary, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                                        target_window_size   = target_window_size_i,         # [ Gyr ] trim to at least 1 Gyr to allow overlay
+                                          window_err      = window_err_i,           # [ +/- Gyr ] trim
+                                          must_still_be_misaligned = True,  # target window = target trelax
+                                           gas_fraction_type  = 'gas_sf',              # [ 'gas' / 'gas_sf' ]
+                                           ring_or_enclosed   = 'enclosed',     # comparing rings of surface density or total enclosed
+                                           initial_or_average = 'initial',       # ['initial', 'average', 'peak'] first in window or averaged over window
                                         run_refinement = False,
                                           showfig = True,
                                           savefig = True)"""
 # SCATTER fractional change in MBH / MBH vs ratio of gas surface densities within r50, and 2r50 in a given time window/trelax
-"""for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
+for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
     _BH_deltamassmass_gassurfratio_in_window(BHmis_tree=BHmis_tree, BHmis_input=BHmis_input, BHmis_summary=BHmis_summary, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                                         target_window_size   = target_window_size_i,         # [ Gyr ] trim to at least 1 Gyr to allow overlay
                                           window_err      = window_err_i,           # [ +/- Gyr ] trim
                                           must_still_be_misaligned = True,  # target window = target trelax
                                            gas_fraction_type  = 'gas_sf',              # [ 'gas' / 'gas_sf' ]
                                            ring_or_enclosed   = 'enclosed',     # comparing rings of surface density or total enclosed
+                                           initial_or_average = 'peak',       # ['initial', 'average', 'peak'] first in window or averaged over window
                                         run_refinement = False,
                                           showfig = True,
-                                          savefig = True)"""
+                                          savefig = True)
 
+
+# update graphs from first misaligned
+# change fgas and density to average while misaligned/window
 
 # SCATTER: x-y of fraction vs peak surface density ratio during window
 # SCATTER: x-y of fraction vs delta surface density ratio during window

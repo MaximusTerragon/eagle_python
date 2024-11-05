@@ -689,8 +689,6 @@ def _extract_BHmis_tree(csv_BHmis_tree = None,
     
     return BHmis_tree, BHmis_input, BH_input, BHmis_summary
     
-
-
 #--------------------------------
 # Reads in tree and extracts galaxies from tree that meet criteria
 def _refine_BHmis_sample(BHmis_tree = None, BHmis_input = None, BHmis_summary = None,

@@ -2969,7 +2969,7 @@ def _plot_misalignment_double_tree(csv_sample = 'L100_173_all_sample_misalignmen
                                    misangle_threshold = 30,             # what we classify as misaligned
                                    #--------------------------
                                    showfig       = True,
-                                   savefig       = True,
+                                   savefig       = False,
                                     file_format = 'pdf',
                                     savefig_txt = '',
                                    #--------------------------
@@ -3833,7 +3833,7 @@ def _plot_misalignment_double_tree(csv_sample = 'L100_173_all_sample_misalignmen
 #_plot_misalignment()  
 #_plot_misalignment_halo()
 #_plot_misalignment_double()
-_manual_plot_misalignment_double()
+#_manual_plot_misalignment_double()
 
 #_plot_misalignment_z()
 #_manual_plot_misalignment_z()

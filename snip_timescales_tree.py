@@ -3855,7 +3855,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
     
 
 #--------------------------------
-# Looks in galaxy_tree() for aligned and counter-rotating galaxies meeting criteria
+# Looks in galaxy_tree() for aligned and counter-rotating galaxies meeting criteria (ignore output for misaligned galaxies - use _create_BH_misaligned_tree)
 ID_list = [204161, 271665, 324088, 344648, 65296039, 251899973, 453139689, 21200847, 182125516, 462956141]
 ID_list = [251899973, 462956141]
 def _create_BH_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
@@ -4732,16 +4732,15 @@ def _create_BH_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
            json.dump(csv_dict, open('%s/L100_BH_tree_%s%s.csv' %(output_dir, csv_answer, csv_name), 'w'), cls=NumpyEncoder)
            print('\n  SAVED: %s/L100_BH_tree_%s%s.csv' %(output_dir, csv_answer, csv_name))
    
- 
 
 #--------------------------------
 # Reads in BH_tree(), combines with misalignment_tree() to make a nice sample
-def _create_BH_misaligned_tree(csv_tree = 'L100_BH_tree',
+def _create_BH_misaligned_tree(csv_tree = 'L100_BH_tree__',
                                GalaxyID_list = None,             # [ None / ID_list ]
                                print_summary             = True,
                                  print_checks = False,
                                #------------------------------
-                               load_csv_bh_file  = '___05Gyr',   # [ 'file_name' / False ] load existing misalignment tree  
+                               load_csv_bh_file  = '_05Gyr',   # [ 'file_name' / False ] load existing misalignment tree  
                                load_csv_misalignment_file = '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_NEW',
                                #================================================================
                                # Matching criteria
@@ -4755,7 +4754,7 @@ def _create_BH_misaligned_tree(csv_tree = 'L100_BH_tree',
                                  # SET AUTO FROM load_csv_bh_file 'min_time'
                      
                                # Misaligned sample
-                                 set_min_trelax        = 0.3,       # [ Gyr ] trim to at least 1 Gyr relaxations
+                                 set_min_trelax        = 0,       # [ Gyr ] trim to at least 1 Gyr relaxations
                                  set_misalignment_type = None,  # [ 'co-co', 'co-counter' ] etc...
                      
                                #use_hmr_general_sample = '2.0',   # [ 1.0 / 2.0 / aperture]
@@ -4781,7 +4780,7 @@ def _create_BH_misaligned_tree(csv_tree = 'L100_BH_tree',
     #------------------------------
     # LOAD BH_TREE()
     # Load previous csv if asked for
-    dict_tree = json.load(open('%s/L100_BH_tree%s.csv' %(output_dir, load_csv_bh_file), 'r'))
+    dict_tree = json.load(open('%s/%s%s.csv' %(output_dir, csv_tree, load_csv_bh_file), 'r'))
     BH_input           = dict_tree['BH_input']
     sample_input       = dict_tree['sample_input']
     output_input       = dict_tree['output_input']
@@ -5299,12 +5298,12 @@ def _create_BH_misaligned_tree(csv_tree = 'L100_BH_tree',
 
 #_analyse_tree()
 
-#_create_BH_tree(min_time = 1, csv_name = '_1Gyr')
+# Need to run BH_tree _05Gyr once, then run _create_BH_misaligned to replace misaligned sample with new sample
 #_create_BH_tree(min_time = 0.5, csv_name = '_05Gyr')
-
-#_create_BH_misaligned_tree(set_min_trelax = 0.3, set_misalignment_type = None, use_CoP_BH = False)
-#_create_BH_misaligned_tree(set_min_trelax = 0.3, set_misalignment_type = None, use_CoP_BH = False, min_bhmass = 1*10**6, csv_name = 'no_seed')
-#_create_BH_misaligned_tree(set_min_trelax = 0.3, set_misalignment_type = None, use_CoP_BH = True, min_bhmass = 1*10**6, csv_name = 'no_seed')
+#_create_BH_misaligned_tree(set_min_trelax = 0, set_misalignment_type = None, use_CoP_BH = False)
+#_create_BH_misaligned_tree(set_min_trelax = 0, set_misalignment_type = None, use_CoP_BH = True)
+#_create_BH_misaligned_tree(set_min_trelax = 0, set_misalignment_type = None, use_CoP_BH = False, min_bhmass = 1*10**6, csv_name = 'no_seed')
+#_create_BH_misaligned_tree(set_min_trelax = 0, set_misalignment_type = None, use_CoP_BH = True, min_bhmass = 1*10**6, csv_name = 'no_seed')
 
 
 #=============================

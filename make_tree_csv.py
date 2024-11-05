@@ -287,7 +287,7 @@ _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH', load_csv_file = False, 
                 misalignment_morph = ['LTG', 'ETG'],
                   morph_limits     = [0.4, 0.4])
                   
-                  
+
 
                   
                   
@@ -307,19 +307,7 @@ _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH', load_csv_file = False, 
                 misalignment_morph = ['LTG', 'ETG'],
                   morph_limits     = [0.4, 0.4])"""
 
-"""print('\n\n\t_lowmisangle_thresh')
-_analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH', load_csv_file = False, csv_file = True, csv_name = '_lowmisangle_thresh_NEW',
-                min_particles      = 20,
-                min_stelmass       = None, 
-                misangle_threshold = 20,
-                  peak_misangle    = 20, 
-                latency_time       = 0.1, 
-                  time_extra       = 0.1, 
-                  time_no_misangle = 0.1,   
-                use_merger_criteria = False,         
-                relaxation_morph   = ['LTG-LTG', 'ETG-ETG', 'LTG-ETG', 'ETG-LTG', 'other'],
-                misalignment_morph = ['LTG', 'ETG'],
-                  morph_limits     = [0.4, 0.4])"""
+"""
                   
                   
                   

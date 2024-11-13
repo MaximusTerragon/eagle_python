@@ -492,7 +492,7 @@ def _plot_stellar_mass_function_snip(snipshot_in = 188,
 #_plot_stellar_mass_function()
 _plot_stellar_mass_function(use_angle = 'stars_gas_sf', 
                                 showfig       = True,
-                                savefig       = True)
+                                savefig       = False)
 #_plot_stellar_mass_function(use_angle = 'stars_dm')
 
 #_plot_stellar_mass_function_snip()

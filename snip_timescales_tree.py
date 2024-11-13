@@ -1765,8 +1765,18 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
         #==================================================================================================
         # Loop over all galaxies
         misalignment_tree = {}
-        for GalaxyID in tqdm(galaxy_tree.keys()):
         
+        # Check where we lose galaxies
+        o_number_in_tree              = 0      # check 1 - 5
+        o_number_with_1_misalignment  = 0
+        o_number_with_complete_window = 0
+        o_number_with_valid_timextra  = 0
+        o_number_with_valid_gap       = 0
+        o_number_going_to_processing  = 0
+        
+        for GalaxyID in tqdm(galaxy_tree.keys()):
+            
+            o_number_in_tree += 1
         
             #=========================================================================
             # CHECK 1: checking if there are any misalignments in range at all
@@ -1838,6 +1848,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 for ID_ii, index, snap_i, time_i, z_i, angle_i, err_i, merger_i, stars_i in zip(np.array(galaxy_tree['%s' %GalaxyID]['GalaxyID'])[mask_test_z], np.array(galaxy_tree['%s' %GalaxyID]['SnapNum'])[mask_test_z] - np.array(galaxy_tree['%s' %GalaxyID]['SnapNum'])[0], np.array(galaxy_tree['%s' %GalaxyID]['SnapNum'])[mask_test_z], np.array(galaxy_tree['%s' %GalaxyID]['Lookbacktime'])[mask_test_z], np.array(galaxy_tree['%s' %GalaxyID]['Redshift'])[mask_test_z], np.array(galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj])[mask_test_z], np.array(galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj])[mask_test_z], np.array(galaxy_tree['%s' %GalaxyID]['merger_ratio_stars'], dtype=object)[mask_test_z], np.array(galaxy_tree['%s' %GalaxyID]['stars']['ap_mass'])[mask_test_z]):
                     print('%s  %s\t%s\t%.2f\t%.2f\t%.1f\t%.1f\t%.1f\t%.2f\t%.1f' %(ID_ii, index, snap_i, z_i, time_i, err_i[0], angle_i, err_i[1], max(merger_i, default=0), np.log10(stars_i)))
                 print(' ')
+            
+            o_number_with_1_misalignment += 1
             #=========================================================================
         
         
@@ -1890,7 +1902,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                         if debug:
                             print('limiting index:', len(all_angles)-1-index_ahead, index)
             
-                        # if it relaxes to counter-, ensure it stays counter
+                        # if it relaxes to co-, ensure it stays counter
                         if (all_angles[index+1] < misangle_threshold):
                             # Loop over all snaps ahead of time
                             for index_ahead_i in np.arange(0, index_ahead+1):
@@ -1913,7 +1925,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                                 misalignment_started = False        
                 
             
-                        # if it relaxes to co-, ensure it stays regular
+                        # if it relaxes to counter-, ensure it stays regular
                         elif (all_angles[index+1] > (180-misangle_threshold)):
                             # Loop over all snaps ahead of time
                             for index_ahead_i in np.arange(0, index_ahead+1):
@@ -1983,6 +1995,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
             elif print_checks:
                 print('  CHECK 2: %s misalignments meeting algorithm criteria: %s°, latency time: %s Gyr' %(len(index_dict['misalignment_locations']['misalign']['index']), misangle_threshold, latency_time))
             
+            o_number_with_complete_window += 1
             #=========================================================================
         
         
@@ -2067,6 +2080,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 continue
             elif print_checks:
                 print('  CHECK 3: %s misalignments matching window for ± %s Gyr' %(np.count_nonzero(~np.isnan(index_dict['window_locations']['misalign']['index'])), time_extra))
+            
+            o_number_with_valid_timextra += 1
             #=========================================================================
         
             
@@ -2202,6 +2217,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 continue
             elif print_checks:
                 print('  CHECK 4: %s misalignments with isolated misalignments/gaps for ± %s Gyr' %(np.count_nonzero(~np.isnan(index_dict['window_locations']['misalign']['index'])), time_no_misangle))
+            
+            o_number_with_valid_gap += 1
             #=========================================================================
         
         
@@ -2299,7 +2316,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     continue
                 elif print_checks:
                     print('  CHECK 5: %s misalignments with mergers in range %s-%s Gyr' %(np.count_nonzero(~np.isnan(index_dict['window_locations']['misalign']['index'])), max_merger_pre, max_merger_post))
-                
+              
+            o_number_going_to_processing += 1
             #=========================================================================
             
         
@@ -2451,7 +2469,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     print('    MET DM COUNTS:\t min %i, min %i, for limit %s' %(np.min(np.array(galaxy_tree['%s' %GalaxyID]['dm']['count'][index_start:index_stop])), np.min(np.array(galaxy_tree['%s' %GalaxyID]['dm']['count'][index_start:index_stop])), min_particles))
                 
                 
-                # Check stelmass doesnt drop randomly
+                # Check stelmass doesnt drop randomly - doesnt do much
                 check = []
                 if use_hmr_general == 'aperture':
                     check_array = np.array(galaxy_tree['%s' %GalaxyID]['stars']['ap_mass'][index_start:index_stop])
@@ -2997,6 +3015,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                                                         'gasmass_1hmr': window_gasmass_1hmr,
                                                         'sfmass': window_sfmass,
                                                         'sfmass_1hmr': window_sfmass_1hmr,
+                                                        'sfparticlecount_1hmr': galaxy_tree['%s' %GalaxyID]['gas_sf']['1.0_hmr']['count'][index_start:index_stop],
                                                         'nsfmass': window_nsfmass,
                                                         'dmmass': galaxy_tree['%s' %GalaxyID]['dm']['ap_mass'][index_start:index_stop],
                                                                                                                  
@@ -3443,6 +3462,16 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
     
     #------------------------------------------------ 
     plt.close()
+    
+    print('Rough guide to where we lose misalignments. NOTE: these are galaxy numbers, not misalignment numbers')
+    print('Number of galaxy tree:                                    ', o_number_in_tree)
+    #print('Number with at least 1 misalignment:                      ', o_number_with_1_misalignment)
+    print('Number with consecutive window:                           ', o_number_with_complete_window)
+    print('Number with existing time extra either side:              ', o_number_with_valid_timextra)
+    print('Number with time extra not misaligned:                    ', o_number_with_valid_gap)
+    print('Number meeting merger criteria (that go to processing):   ', o_number_going_to_processing)
+    
+    
     # Summary and K-S KS test
     if print_summary:
         summary_dict = {'trelax':       {'array': [],               # relaxation times in [Gyr]

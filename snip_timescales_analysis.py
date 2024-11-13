@@ -170,7 +170,91 @@ def _plot_sample_hist(misalignment_tree, misalignment_input, summary_dict, plot_
     if showfig:
         plt.show()
     plt.close()
-
+#-------------------------
+# Returns values of average particle count of relaxations
+def _average_particle_count(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
+                      #==============================================
+                      showfig       = True,
+                      savefig       = False,    
+                        file_format   = 'pdf',
+                        savefig_txt = '',            # [ '' / 'any text' / 'manual' ] 'manual' will prompt txt before saving
+                      #-----------------------------
+                      debug = False):
+                      
+    #-------------------------
+    # Average timescales from input (for use in metadata)
+    mean_timescale   = np.mean(np.array(summary_dict['trelax']['array']))
+    median_timescale = np.median(np.array(summary_dict['trelax']['array']))
+    std_timescale    = np.std(np.array(summary_dict['trelax']['array']))
+    # Average tdyn
+    mean_tdyn   = np.mean(np.array(summary_dict['tdyn']['array']))
+    median_tdyn = np.median(np.array(summary_dict['tdyn']['array']))
+    std_tdyn    = np.std(np.array(summary_dict['tdyn']['array']))
+    # Average ttorque
+    mean_ttorque   = np.mean(np.array(summary_dict['ttorque']['array']))
+    median_ttorque = np.median(np.array(summary_dict['ttorque']['array']))
+    std_ttorque    = np.std(np.array(summary_dict['ttorque']['array']))
+    
+    #-------------------------
+    relaxation_type    = misalignment_input['relaxation_type']
+    relaxation_morph   = misalignment_input['relaxation_morph']
+    misalignment_morph = misalignment_input['misalignment_morph']
+    morph_limits       = misalignment_input['morph_limits']
+    peak_misangle      = misalignment_input['peak_misangle']
+    min_trelax         = misalignment_input['min_trelax']        
+    max_trelax         = misalignment_input['max_trelax'] 
+    use_angle          = misalignment_input['use_angle']
+    misangle_threshold = misalignment_input['misangle_threshold']
+    time_extra         = misalignment_input['time_extra']
+    #------------------------- 
+    
+    
+    #==========================================================================
+    # Gather data
+    particle_count_array = []
+    ID_plot              = []
+    for ID_i in misalignment_tree.keys():
+        
+        # Average particle count during relaxation
+        particle_count_array.append(np.mean(misalignment_tree['%s' %ID_i]['sfparticlecount_1hmr'][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']]))
+        ID_plot.append(ID_i)
+    
+            
+    print('  Using sample: ', len(ID_plot))
+    
+    #-------------
+    ### Plotting
+    fig, axs = plt.subplots(1, 1, figsize=[10, 3], sharex=True, sharey=False)
+    plt.subplots_adjust(wspace=0.4, hspace=0.4)
+    
+    axs.hist(particle_count_array, bins=np.arange(0, 501, 1), histtype='bar', edgecolor='none', facecolor='b', alpha=0.1)
+    axs.hist(particle_count_array, bins=np.arange(0, 501, 1), histtype='bar', edgecolor='b', facecolor='none', alpha=1.0)
+    
+    print('Median sf particle coun: \t%.2e.' %(np.median(particle_count_array)))
+    
+    #-------------
+    ### Formatting
+    axs.set_xlabel('mean gas_sf particle count while relaxing ($r_{50}$) [count]')
+    axs.set_ylabel('Galaxies in sample')
+    axs.set_xticks(np.arange(0, 501, 20))
+    axs.set_xlim(0, 500)
+    axs.set_ylim(0, 35)
+    
+    #-----------
+    ### other
+    plt.tight_layout()
+    
+    #-----------
+    # savefig     
+    if savefig:
+        savefig_txt = savefig_txt_in + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
+        
+        plt.savefig("%s/time_spent_misaligned/%ssample_gassf_particle_count_%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), savefig_txt, file_format), format=file_format, bbox_inches='tight', dpi=600)    
+        print("\n  SAVED: %s/time_spent_misaligned/%ssample_gassf_particle_count_%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), savefig_txt, file_format)) 
+    if showfig:
+        plt.show()
+    plt.close()
+ 
 #-------------------------
 # Plot sample histogram of misalignments extracted              
 def _plot_sample_vs_dist_hist(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
@@ -314,6 +398,7 @@ def _plot_timescale_histogram(misalignment_tree, misalignment_input, summary_dic
                       set_bin_limit_trelax                = 6,        # [ None / Gyr ]
                       set_bin_width_trelax                = 0.2,     # [ 0.25 / Gyr ]
                       set_thist_ymax_trelax               = 0.35,             # 0.45 / 500  yaxis max
+                      set_min_trelax                      = 0,
                       #-----------------------------
                       # Plot options
                       set_plot_percentage               = True,
@@ -366,26 +451,32 @@ def _plot_timescale_histogram(misalignment_tree, misalignment_input, summary_dic
     collect_array_2         = []
     collect_array_3         = []
     for ID_i in misalignment_tree.keys():
-        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+
+        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_min_trelax:
+            continue
+        else:
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
     
-        if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
-            co_co_array.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
-        elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
-            co_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
-        elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
-            counter_co_array.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
-        elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
-            counter_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
+                co_co_array.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
+                co_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
+                counter_co_array.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
+                counter_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
             
             
-        if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
-            if misalignment_tree['%s' %ID_i]['angle_peak'] > 135:
-                collect_array.append(ID_i)
-        if misalignment_tree['%s' %ID_i]['relaxation_time'] > 2:
-            collect_array_2.append(ID_i)
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
+                if misalignment_tree['%s' %ID_i]['angle_peak'] > 135:
+                    collect_array.append(ID_i)
+            if misalignment_tree['%s' %ID_i]['relaxation_time'] > 2:
+                collect_array_2.append(ID_i)
         
-        if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
-            collect_array_3.append(ID_i)
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
+                collect_array_3.append(ID_i)
+            
+        
     
     #print('-------------------------------------------------------------')
     #print('Number of counter-co misalignments:  ', len(collect_array_3))
@@ -412,8 +503,8 @@ def _plot_timescale_histogram(misalignment_tree, misalignment_input, summary_dic
     ### Plot histogram
     if set_plot_relaxation_type:
         if set_plot_percentage:
-            axs.hist([co_co_array, counter_counter_array, co_counter_array, counter_co_array], weights=(np.ones(len(summary_dict['ID']['co-co']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['co-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-co']))/len(relaxationtime_plot)), bins=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax), histtype='bar', edgecolor='none', alpha=0.5, stacked=True)
-            axs.hist([co_co_array, counter_counter_array, co_counter_array, counter_co_array], weights=(np.ones(len(summary_dict['ID']['co-co']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['co-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-co']))/len(relaxationtime_plot)), bins=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax), histtype='bar', facecolor='none', edgecolor='k', alpha=0.9, lw=0.7, stacked=True)
+            axs.hist([co_co_array, counter_counter_array, co_counter_array, counter_co_array], weights=(np.ones(len(co_co_array))/len(relaxationtime_plot), np.ones(len(counter_counter_array))/len(relaxationtime_plot), np.ones(len(co_counter_array))/len(relaxationtime_plot), np.ones(len(counter_co_array))/len(relaxationtime_plot)), bins=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax), histtype='bar', edgecolor='none', alpha=0.5, stacked=True)
+            axs.hist([co_co_array, counter_counter_array, co_counter_array, counter_co_array], weights=(np.ones(len(co_co_array))/len(relaxationtime_plot), np.ones(len(counter_counter_array))/len(relaxationtime_plot), np.ones(len(co_counter_array))/len(relaxationtime_plot), np.ones(len(counter_co_array))/len(relaxationtime_plot)), bins=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax), histtype='bar', facecolor='none', edgecolor='k', alpha=0.9, lw=0.7, stacked=True)
         
             # Add poisson errors to each bin (sqrt N)
             hist_n, _ = np.histogram(relaxationtime_plot, bins=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax), range=(0, set_bin_limit_trelax))
@@ -596,6 +687,7 @@ def _plot_tdyn_histogram(misalignment_tree, misalignment_input, summary_dict, pl
                       set_bin_limit_tdyn                  = 60,       # [ None / multiples ]
                       set_bin_width_tdyn                  = 2,        # [ multiples ]
                       set_thist_ymax_tdyn                 = 0.45,             # 0.35 / 400 yaxis max
+                      set_min_trelax                      = 0,
                       #-----------------------------
                       # Plot options
                       set_plot_percentage               = True,
@@ -645,22 +737,26 @@ def _plot_tdyn_histogram(misalignment_tree, misalignment_input, summary_dict, pl
     ID_collect_1          = []
     ID_collect_2          = []
     for ID_i in misalignment_tree.keys():
-        # append average tdyn over misalignment
-        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
-    
-        if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
-            co_co_array.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
-        elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
-            co_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
-        elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
-            counter_co_array.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
-        elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
-            counter_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
         
-        if misalignment_tree['%s' %ID_i]['relaxation_tdyn'] > 10:
-            ID_collect_1.append(ID_i)
-        if misalignment_tree['%s' %ID_i]['relaxation_tdyn'] > 20:   
-            ID_collect_2.append(ID_i) 
+        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_min_trelax:
+            continue
+        else:
+            # append average tdyn over misalignment
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+    
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
+                co_co_array.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+            elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
+                co_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+            elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
+                counter_co_array.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+            elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
+                counter_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+        
+            if misalignment_tree['%s' %ID_i]['relaxation_tdyn'] > 10:
+                ID_collect_1.append(ID_i)
+            if misalignment_tree['%s' %ID_i]['relaxation_tdyn'] > 20:   
+                ID_collect_2.append(ID_i)
             
             
         #if misalignment_tree['%s' %ID_i]['relaxation_tdyn'] > 20:
@@ -688,8 +784,8 @@ def _plot_tdyn_histogram(misalignment_tree, misalignment_input, summary_dict, pl
     ### Plot histogram
     if set_plot_relaxation_type:
         if set_plot_percentage:
-            axs.hist([co_co_array, counter_counter_array, co_counter_array, counter_co_array], weights=(np.ones(len(summary_dict['ID']['co-co']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['co-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-co']))/len(relaxationtime_plot)), bins=np.arange(0, set_bin_limit_tdyn+set_bin_width_tdyn, set_bin_width_tdyn), histtype='bar', edgecolor='none', alpha=0.5, stacked=True)
-            axs.hist([co_co_array, counter_counter_array, co_counter_array, counter_co_array], weights=(np.ones(len(summary_dict['ID']['co-co']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['co-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-co']))/len(relaxationtime_plot)), bins=np.arange(0, set_bin_limit_tdyn+set_bin_width_tdyn, set_bin_width_tdyn), histtype='bar', facecolor='none', edgecolor='k', alpha=0.9, lw=0.7, stacked=True)
+            axs.hist([co_co_array, counter_counter_array, co_counter_array, counter_co_array], weights=(np.ones(len(co_co_array))/len(relaxationtime_plot), np.ones(len(counter_counter_array))/len(relaxationtime_plot), np.ones(len(co_counter_array))/len(relaxationtime_plot), np.ones(len(counter_co_array))/len(relaxationtime_plot)), bins=np.arange(0, set_bin_limit_tdyn+set_bin_width_tdyn, set_bin_width_tdyn), histtype='bar', edgecolor='none', alpha=0.5, stacked=True)
+            axs.hist([co_co_array, counter_counter_array, co_counter_array, counter_co_array], weights=(np.ones(len(co_co_array))/len(relaxationtime_plot), np.ones(len(counter_counter_array))/len(relaxationtime_plot), np.ones(len(co_counter_array))/len(relaxationtime_plot), np.ones(len(counter_co_array))/len(relaxationtime_plot)), bins=np.arange(0, set_bin_limit_tdyn+set_bin_width_tdyn, set_bin_width_tdyn), histtype='bar', facecolor='none', edgecolor='k', alpha=0.9, lw=0.7, stacked=True)
         
             # Add poisson errors to each bin (sqrt N)
             hist_n, _ = np.histogram(relaxationtime_plot, bins=np.arange(0, set_bin_limit_tdyn+set_bin_width_tdyn, set_bin_width_tdyn), range=(0, set_bin_limit_tdyn))
@@ -873,6 +969,7 @@ def _plot_ttorque_histogram(misalignment_tree, misalignment_input, summary_dict,
                       set_bin_limit_ttorque               = 30,       # [ None / multiples ]
                       set_bin_width_ttorque               = 1.0,      # [ multiples ]
                       set_thist_ymax_ttorque              = 0.4,             # 0.35 / 400 yaxis max
+                      set_min_trelax                      = 0,
                       #-----------------------------
                       # Plot options
                       set_plot_percentage               = True,
@@ -924,23 +1021,29 @@ def _plot_ttorque_histogram(misalignment_tree, misalignment_input, summary_dict,
     ID_collect_1          = []
     ID_collect_2          = []
     for ID_i in misalignment_tree.keys():
-        # append average ttorque over misalignment
-        relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+        
+        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_min_trelax:
+            continue
+        else:
+            # append average ttorque over misalignment
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
     
-        if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
-            co_co_array.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
-        elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
-            co_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
-        elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
-            counter_co_array.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
-        elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
-            counter_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
+                co_co_array.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
+                co_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
+                counter_co_array.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-counter':
+                counter_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
             
-        if misalignment_tree['%s' %ID_i]['relaxation_ttorque'] > 10:
-            ID_collect_1.append(ID_i)
+            if misalignment_tree['%s' %ID_i]['relaxation_ttorque'] > 10:
+                ID_collect_1.append(ID_i)
             
-        if misalignment_tree['%s' %ID_i]['relaxation_ttorque'] > 23:
-            ID_collect_2.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            if misalignment_tree['%s' %ID_i]['relaxation_ttorque'] > 23:
+                ID_collect_2.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+        
+        
         
     #print('Number of >10 ttorque misalignments:   ', len(ID_collect_1))
     #print(ID_collect_1)
@@ -962,8 +1065,8 @@ def _plot_ttorque_histogram(misalignment_tree, misalignment_input, summary_dict,
     ### Plot histogram
     if set_plot_relaxation_type:
         if set_plot_percentage:
-            axs.hist([co_co_array, counter_counter_array, co_counter_array, counter_co_array], weights=(np.ones(len(summary_dict['ID']['co-co']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['co-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-co']))/len(relaxationtime_plot)), bins=np.arange(0, set_bin_limit_ttorque+set_bin_width_ttorque, set_bin_width_ttorque), histtype='bar', edgecolor='none', alpha=0.5, stacked=True)
-            axs.hist([co_co_array, counter_counter_array, co_counter_array, counter_co_array], weights=(np.ones(len(summary_dict['ID']['co-co']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['co-counter']))/len(relaxationtime_plot), np.ones(len(summary_dict['ID']['counter-co']))/len(relaxationtime_plot)), bins=np.arange(0, set_bin_limit_ttorque+set_bin_width_ttorque, set_bin_width_ttorque), histtype='bar', facecolor='none', edgecolor='k', alpha=0.9, lw=0.7, stacked=True)
+            axs.hist([co_co_array, counter_counter_array, co_counter_array, counter_co_array], weights=(np.ones(len(co_co_array))/len(relaxationtime_plot), np.ones(len(counter_counter_array))/len(relaxationtime_plot), np.ones(len(co_counter_array))/len(relaxationtime_plot), np.ones(len(counter_co_array))/len(relaxationtime_plot)), bins=np.arange(0, set_bin_limit_ttorque+set_bin_width_ttorque, set_bin_width_ttorque), histtype='bar', edgecolor='none', alpha=0.5, stacked=True)
+            axs.hist([co_co_array, counter_counter_array, co_counter_array, counter_co_array], weights=(np.ones(len(co_co_array))/len(relaxationtime_plot), np.ones(len(counter_counter_array))/len(relaxationtime_plot), np.ones(len(co_counter_array))/len(relaxationtime_plot), np.ones(len(counter_co_array))/len(relaxationtime_plot)), bins=np.arange(0, set_bin_limit_ttorque+set_bin_width_ttorque, set_bin_width_ttorque), histtype='bar', facecolor='none', edgecolor='k', alpha=0.9, lw=0.7, stacked=True)
         
             # Add poisson errors to each bin (sqrt N)
             hist_n, _ = np.histogram(relaxationtime_plot, bins=np.arange(0, set_bin_limit_ttorque+set_bin_width_ttorque, set_bin_width_ttorque), range=(0, set_bin_limit_ttorque))
@@ -2625,7 +2728,6 @@ def _plot_stacked_trelax_2x2(misalignment_tree, misalignment_input, summary_dict
                 append_angle = 10
                 ax = ax_co_co
                 diff_co_co.append(timeaxis_plot[1]-timeaxis_plot[0])
-                
             elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
                 line_color='C2'
                 append_angle = 170
@@ -2730,9 +2832,9 @@ def _plot_stacked_trelax_2x2(misalignment_tree, misalignment_input, summary_dict
             #mask_median = np.where(np.array(median_array) > misangle_threshold)[0][-1] + 1
             #mask_upper  = np.where(np.array(median_upper) > misangle_threshold)[0][-1] + 1
             #mask_lower  = np.where(np.array(median_lower) > misangle_threshold)[0][-1] + 1
-            mask_median = np.where(np.array(median_array) > 10)[0][-1] + 1
-            mask_upper  = np.where(np.array(median_upper) > 10)[0][-1] + 1
-            mask_lower  = np.where(np.array(median_lower) > 10)[0][-1] + 1
+            mask_median = np.where(np.array(median_array) > 15)[0][-1] + 1
+            mask_upper  = np.where(np.array(median_upper) > 15)[0][-1] + 1
+            mask_lower  = np.where(np.array(median_lower) > 15)[0][-1] + 1
             
             #----------
             # plot
@@ -2769,9 +2871,9 @@ def _plot_stacked_trelax_2x2(misalignment_tree, misalignment_input, summary_dict
             #mask_median = np.where(np.array(median_array) < (180-misangle_threshold))[0][-1] + 1
             #mask_upper  = np.where(np.array(median_upper) < (180-misangle_threshold))[0][-1] + 1
             #mask_lower  = np.where(np.array(median_lower) < (180-misangle_threshold))[0][-1] + 1
-            mask_median = np.where(np.array(median_array) < (180-10))[0][-1] + 1
-            mask_upper  = np.where(np.array(median_upper) < (180-10))[0][-1] + 1
-            mask_lower  = np.where(np.array(median_lower) < (180-10))[0][-1] + 1
+            mask_median = np.where(np.array(median_array) < (180-15))[0][-1] + 1
+            mask_upper  = np.where(np.array(median_upper) < (180-15))[0][-1] + 1
+            mask_lower  = np.where(np.array(median_lower) < (180-15))[0][-1] + 1
             
             #----------
             # plot
@@ -2808,9 +2910,9 @@ def _plot_stacked_trelax_2x2(misalignment_tree, misalignment_input, summary_dict
             #mask_median = np.where(np.array(median_array) < (180-misangle_threshold))[0][-1] + 1
             #mask_upper  = np.where(np.array(median_upper) < (180-misangle_threshold))[0][-1] + 1
             #mask_lower  = np.where(np.array(median_lower) < (180-misangle_threshold))[0][-1] + 1
-            mask_median = np.where(np.array(median_array) < (180-10))[0][-1] + 1
-            mask_upper  = np.where(np.array(median_upper) < (180-10))[0][-1] + 1
-            mask_lower  = np.where(np.array(median_lower) < (180-10))[0][-1] + 1
+            mask_median = np.where(np.array(median_array) < (180-15))[0][-1] + 1
+            mask_upper  = np.where(np.array(median_upper) < (180-15))[0][-1] + 1
+            mask_lower  = np.where(np.array(median_lower) < (180-15))[0][-1] + 1
             
             #----------
             # plot
@@ -2847,9 +2949,9 @@ def _plot_stacked_trelax_2x2(misalignment_tree, misalignment_input, summary_dict
             #mask_median = np.where(np.array(median_array) > misangle_threshold)[0][-1] + 1
             #mask_upper  = np.where(np.array(median_upper) > misangle_threshold)[0][-1] + 1
             #mask_lower  = np.where(np.array(median_lower) > misangle_threshold)[0][-1] + 1
-            mask_median = np.where(np.array(median_array) > 10)[0][-1] + 1
-            mask_upper  = np.where(np.array(median_upper) > 10)[0][-1] + 1
-            mask_lower  = np.where(np.array(median_lower) > 10)[0][-1] + 1
+            mask_median = np.where(np.array(median_array) > 15)[0][-1] + 1
+            mask_upper  = np.where(np.array(median_upper) > 15)[0][-1] + 1
+            mask_lower  = np.where(np.array(median_lower) > 15)[0][-1] + 1
             
             #----------
             # plot
@@ -4641,7 +4743,7 @@ def _plot_offset_trelax(misalignment_tree, misalignment_input, summary_dict, plo
     ### General formatting
     # Axis labels
     ax.set_ylabel('$t_{\mathrm{relax}}$ [Gyr]')
-    ax.set_xlabel('Peak angle from stability')
+    ax.set_xlabel('Peak angle from coplanarity')
     ax_histy.set_xlabel('Count')
     ax_histx.set_ylabel('Count')
     if set_plot_offset_log:
@@ -4866,7 +4968,7 @@ def _plot_offset_tdyn(misalignment_tree, misalignment_input, summary_dict, plot_
     ### General formatting
     # Axis labels
     ax.set_ylabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{dyn}}$')
-    ax.set_xlabel('Peak angle from stability')
+    ax.set_xlabel('Peak angle from coplanarity')
     ax_histy.set_xlabel('Count')
     ax_histx.set_ylabel('Count')
     if set_plot_offset_log:
@@ -4976,6 +5078,8 @@ def _plot_offset_ttorque(misalignment_tree, misalignment_input, summary_dict, pl
     relaxationmorph_plot = []
     angles_plot = []
     ID_plot     = []
+    number_of_offset_40 = 0
+    number_of_ttorque_1 = 0
     for ID_i in misalignment_tree.keys():
         # check offset angle within range            
         if not set_plot_offset_range[0] <=  misalignment_tree['%s' %ID_i]['angle_peak'] < set_plot_offset_range[1]:
@@ -4995,9 +5099,17 @@ def _plot_offset_ttorque(misalignment_tree, misalignment_input, summary_dict, pl
             relaxationmorph_plot.append('other')
             
         ID_plot.append(ID_i)
+        if misalignment_tree['%s' %ID_i]['relaxation_ttorque'] < 1:
+            number_of_ttorque_1 += 1
+            if misalignment_tree['%s' %ID_i]['angle_peak'] < 40:
+                number_of_offset_40 += 1
+        
+            
     
     # Collect data into dataframe
     print('  Using sample: ', len(ID_plot))
+    print('  number of sub ttorque 1 relaxations: \t%s' %number_of_ttorque_1)
+    print('            ...of which sub 40 offset: \t%s' %number_of_offset_40)
     df = pd.DataFrame(data={'Peak misalignment angle': angles_plot, 'Morphology': relaxationmorph_plot, 'Relaxation time': relaxationtime_plot, 'GalaxyIDs': ID_plot})
             
     #-------------
@@ -5090,7 +5202,7 @@ def _plot_offset_ttorque(misalignment_tree, misalignment_input, summary_dict, pl
     ### General formatting
     # Axis labels
     ax.set_ylabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{torque}}$')
-    ax.set_xlabel('Peak angle displaced from stability')
+    ax.set_xlabel('Peak angle displaced from coplanarity')
     ax_histy.set_xlabel('Count')
     ax_histx.set_ylabel('Count')
     if set_plot_offset_log:
@@ -12839,8 +12951,7 @@ def _plot_morphology_change_ttorque_ellip(misalignment_tree, misalignment_input,
             if showfig:
                 plt.show()
             plt.close()
-           
-
+              
 
 #\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 # Set starting parameters
@@ -12893,6 +13004,9 @@ if load_csv_file_in == '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010'
 """_plot_sample_hist(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             showfig = True,
                             savefig = False)"""
+"""_average_particle_count(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            showfig = True,
+                            savefig = False)"""
 
 """_plot_sample_vs_dist_hist(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                               use_PDF   = False,        # uses probability density function
@@ -12906,19 +13020,19 @@ if load_csv_file_in == '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010'
                             set_plot_histogram_log            = False,    # set yaxis as log
                               add_inset                       = True,
                             showfig = True,
-                            savefig = True)
+                            savefig = False)
 _plot_tdyn_histogram(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_plot_relaxation_type          = True,     # SET TO FALSE IF BELOW TRUE. Stack histogram types   
                             set_plot_histogram_log            = False,    # set yaxis as log
                               add_inset                       = True, 
                             showfig = True,
-                            savefig = True)
+                            savefig = False)
 _plot_ttorque_histogram(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_plot_relaxation_type          = True,     # SET TO FALSE IF BELOW TRUE. Stack histogram types   
                             set_plot_histogram_log            = False,    # set yaxis as log
                               add_inset                       = True, 
                             showfig = True,
-                            savefig = True)"""
+                            savefig = False)"""
 
 
 # STACKED SINGLE
@@ -13036,17 +13150,17 @@ _plot_timescale_gas_scatter_ttorque(misalignment_tree=misalignment_tree, misalig
                             set_gashist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_gashist_min_trelax              = 0.2,
                             showfig = True,
-                            savefig = False)     # will auto-rename to _allpath if all 4 set_gashist_type used
+                            savefig = True)     # will auto-rename to _allpath if all 4 set_gashist_type used
 _plot_timescale_gas_histogram_tdyn(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_gashist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_gashist_min_trelax              = 0.2,
                             showfig = True,
-                            savefig = False)
+                            savefig = True)
 _plot_timescale_gas_histogram_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_gashist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_gashist_min_trelax              = 0.2,
                             showfig = True,
-                            savefig = False)"""
+                            savefig = True)"""
                             
 
 

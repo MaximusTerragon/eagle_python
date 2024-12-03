@@ -719,6 +719,14 @@ def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misali
         #all_massflow... not added as we can't evaluate it here
         all_bhs['%s' %str(GalaxyID)]                    = bh_dict_temp              # this is not saved, its merged into all_general
         #---------------------------------
+        
+        
+        
+        print('REMOVE 97tyghiujkaf')
+        print('GalaxyID: ', subhalo.GalaxyID)
+        print('CoP BH ID:      ', all_bhs['%s' %str(GalaxyID)]['bh_id'])        # BECOMES 'bh_id' IN all_general
+        print('CoM BH ID:      ', all_general['%s' %GalaxyID]['bh_id'])         # BECOMES 'bh_id_old' IN all_general
+        
           
         if print_galaxy:
             print('|%s| |ID:   %s\t|M*:  %.2e  |HMR:  %.2f  |KAPPA:  %.2f' %(SnapNum, str(subhalo.GalaxyID), subhalo.stelmass, subhalo.halfmass_rad_proj, subhalo.general['kappa_stars'])) 
@@ -1303,7 +1311,9 @@ def _analysis_misalignment_minor(csv_sample = 'L100_19_minor_sample_misalignment
 #for snap_i in np.arange(165, 175, 1):
 #for snap_i in np.arange(175, 185, 1):
 #for snap_i in np.arange(185, 195, 1):
-for snap_i in np.arange(195, 201, 1):
+#for snap_i in np.arange(195, 201, 1):
+
+for snap_i in np.arange(188, 189, 1):
     _sample_misalignment(snapNum = int(snap_i), galaxy_mass_min    = 10**(9.5), galaxy_mass_max    = 10**(15))
     _analysis_misalignment_distribution(csv_sample = 'L100_' + str(int(snap_i)) + '_all_sample_misalignment_9.5')
 

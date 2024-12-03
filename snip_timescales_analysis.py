@@ -14047,7 +14047,7 @@ _plot_timescale_gas_histogram_ttorque(misalignment_tree=misalignment_tree, misal
                             set_gashist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_gashist_min_trelax              = 0.2,
                             showfig = True,
-                            savefig = True)
+                            savefig = False)
 
 
 # PLOTS HISTOGRAM OF AVERAGE KAPPA STARS WITH RELAXATION TIME

@@ -636,8 +636,8 @@ def _modify_radial_csv(csv_output = '#L12_radial_ID37445_RadProj_Err__stars_gas_
 
 #------------------------------
 # Test read
-def _test_read(csv_sample = 'L100_195_all_sample_misalignment_9.5',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
-               csv_output = 'L100_195_all_sample_misalignment_9.5_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_',
+def _test_read(csv_sample = 'L100_188_all_sample_misalignment_9.5',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+               csv_output = 'L100_188_all_sample_misalignment_9.5_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_',
                #--------------------------
                print_progress = False,
                debug = False):
@@ -662,7 +662,8 @@ def _test_read(csv_sample = 'L100_195_all_sample_misalignment_9.5',     # CSV sa
     
         
     # Loading output
-    dict_output = json.load(open('%s/%s.csv' %(output_dir, csv_output), 'r'))
+    dict_output = json.load(open('%s/july_run/%s.csv' %(output_dir, csv_output), 'r'))
+    old_flags           = dict_output['all_flags']
     old_general         = dict_output['all_general']
     old_spins           = dict_output['all_spins']
     old_coms            = dict_output['all_coms']
@@ -673,7 +674,10 @@ def _test_read(csv_sample = 'L100_195_all_sample_misalignment_9.5',     # CSV sa
     old_misangles       = dict_output['all_misangles']
     old_misanglesproj   = dict_output['all_misanglesproj']
     old_gasdata         = dict_output['all_gasdata']
-    old_flags           = dict_output['all_flags']
+    old_l               = dict_output['all_l']
+    old_spinshalo       = dict_output['all_spinshalo']
+    old_totmass         = dict_output['all_totmass']
+    old_misangleshalo   = dict_output['all_misangleshalo']
     
     
     
@@ -681,7 +685,20 @@ def _test_read(csv_sample = 'L100_195_all_sample_misalignment_9.5',     # CSV sa
     print('SAMPLE LENGTH: ', len(GalaxyID_List))
     print('OUTPUT LENGTH: ', len(old_general.keys()))
     
-    tally_bigger = 0
+    
+    i = 0
+    for GalaxyID in old_general.keys():
+        print(i)
+        print('GalaxyID: ', GalaxyID)
+        print('CoP BH ID:      ', old_general['%s' %GalaxyID]['bh_id'])
+        print('CoM BH ID:      ', old_general['%s' %GalaxyID]['bh_id_old'])
+        i = i + 1
+        if i == 20:
+            raise Exception('current break 7uighjnm')
+    
+    
+    
+    """tally_bigger = 0
     tally_smaller = 0
     tally_total_changed = 0
     for GalaxyID in old_general.keys():
@@ -707,7 +724,7 @@ def _test_read(csv_sample = 'L100_195_all_sample_misalignment_9.5',     # CSV sa
     
     print('Number changed (including nan): ', tally_total_changed)
     print('Number of bigger: ', tally_bigger)
-    print('Number of smaller: ', tally_smaller)
+    print('Number of smaller: ', tally_smaller)"""
     
     
 #==========================
@@ -719,7 +736,7 @@ def _test_read(csv_sample = 'L100_195_all_sample_misalignment_9.5',     # CSV sa
 
 #_modify_radial_csv()
 
-#_test_read()
+_test_read()
 #==========================
 
 

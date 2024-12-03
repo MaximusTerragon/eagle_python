@@ -535,6 +535,16 @@ class Subhalo_Extract:
         if len(bh['Mass']) > 0:
             bh_CoP = self._find_main_bh(bh)
         else:
+            bh_CoP = {'GroupNumber': 0,
+                      'SubGroupNumber': 0,
+                      'BH_Mass': 0,
+                      'BH_Mdot': 0,
+                      'Coordinates': 0,
+                      'Velocity': 0,
+                      'ParticleIDs': 0,
+                      'Mass': 0,
+                      'BH_CumlAccrMass': 0,
+                      'BH_CumlNumSeeds': 0}
             bh_CoP['GroupNumber'] = np.array([math.nan])
             bh_CoP['SubGroupNumber'] = np.array([math.nan])
             bh_CoP['BH_Mass'] = np.array([math.nan])
@@ -928,17 +938,21 @@ class Subhalo_Extract:
         r = np.linalg.norm(arr['Coordinates'], axis=1)
         mask = np.argmin(r)
         
-        arr['main'] = np.full(len(arr['Mass']), False)
-        arr['main'][mask] = True
+        #arr['main'] = np.full(len(arr['Mass']), False)
+        #arr['main'][mask] = True
+        
+        newData = {}
+        for header in arr.keys():
+            newData[header] = np.array([arr[header][mask]])
         
         if debug:
             print('_find_main_bh debug')
             print(arr['Coordinates'])
             print(r)
             print(mask)
-            print(arr['main'])
+            #print(arr['main'])
         
-        return arr
+        return newData
         
 
 
@@ -2353,7 +2367,7 @@ class Subhalo_Analysis:
             
             # Trim data to kappa radius
             trimmed_data = self._trim_data(data_nil, kappa_rad)
-            print('MAIN: kappa may be ever so slightly different as CoM not CoP')
+            #print('MAIN: kappa may be ever so slightly different as CoM not CoP')
             
             # Find peculiar velocity of trimmed data
             pec_vel_rad = self._peculiar_velocity(trimmed_data)
@@ -2372,7 +2386,7 @@ class Subhalo_Analysis:
             
             #-------------------------------    
             for parttype_name in kappa_parttype:
-                # For stars, cap at 30kpc
+                # For stars, cap at 30kpc. Else, r50
                 if parttype_name == 'stars':
                     # Trim data to kappa radius
                     trimmed_data = self._trim_data(data_nil, kappa_rad)

@@ -1,6 +1,9 @@
 from snip_timescales_tree import _analyse_tree
 
 
+
+
+
 #================================================================       
 # _normalLatency_anyMergers_anyMorph (default)
 print('\n\n\t_20Thresh_30Peak_normalLatency_anyMergers_anyMorph')
@@ -268,7 +271,23 @@ _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH', load_csv_file = False, 
                 relaxation_morph   = ['LTG-LTG', 'ETG-ETG', 'LTG-ETG', 'ETG-LTG', 'other'],
                 misalignment_morph = ['LTG', 'ETG'],
                   morph_limits     = [0.4, 0.4])
-                  
+
+
+#================================================================       
+# higher unstable and higher peak 
+print('\n\n\t_30Thresh_45Peak_normalLatency_anyMergers_anyMorph')
+_analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH', load_csv_file = False, csv_file = True, csv_name = '30Thresh_45Peak_normalLatency_anyMergers_anyMorph_NEW',
+                min_particles      = 20,
+                min_stelmass       = None, 
+                misangle_threshold = 30,
+                  peak_misangle    = 45, 
+                latency_time       = 0.1, 
+                  time_extra       = 0.1, 
+                  time_no_misangle = 0.1,   
+                use_merger_criteria = False,         
+                relaxation_morph   = ['LTG-LTG', 'ETG-ETG', 'LTG-ETG', 'ETG-LTG', 'other'],
+                misalignment_morph = ['LTG', 'ETG'],
+                  morph_limits     = [0.4, 0.4])
                   
 #================================================================      
 # _normalLatency_anyMergers_anyMorph_1010
@@ -288,8 +307,6 @@ _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH', load_csv_file = False, 
                   
 
 
-                  
-                  
                   
 #====================================================================
 """print('\n\n\t_normalLatency_anyMergers_anyMorph')

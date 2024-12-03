@@ -412,7 +412,19 @@ Output Parameters
     ['BH_Mdot']             = [Msun/s]
     ['GroupNumber']         - int array 
     ['SubGroupNumber']      - int array 
+    ['BH_CumlAccrMass']     - [Msun] Cumulative mass that has been accreted onto this black hole.
+    ['BH_CumlNumSeeds']     - Cumulative number of black hole seeds swallowed by this black hole.
     #['main']                - bool array, will have a single True for BH closest to CoP
+.data_bh_new     dictionary of particle dataa for 
+    ['Coordinates']         - [pkpc]
+    ['Velocity']            - [pkm/s]
+    ['Mass']                - [Msun]
+    ['BH_Mass']             = [Msun/s]
+    ['BH_Mdot']             = [Msun/s]
+    ['GroupNumber']         - int array 
+    ['SubGroupNumber']      - int array 
+    ['BH_CumlAccrMass']     - [Msun] Cumulative mass that has been accreted onto this black hole.
+    ['BH_CumlNumSeeds']     - Cumulative number of black hole seeds swallowed by this black hole.
 
 If centre_galaxy == True; 'Coordinates' - .centre, 'Velocity' - .perc_vel
 """
@@ -520,8 +532,20 @@ class Subhalo_Extract:
             
         #---------------------------
         # Find main BH after all coords have been centred based on CoP
-        #bh = self._find_main_bh(bh)
-            
+        if len(bh['Mass']) > 0:
+            bh_CoP = self._find_main_bh(bh)
+        else:
+            bh_CoP['GroupNumber'] = np.array([math.nan])
+            bh_CoP['SubGroupNumber'] = np.array([math.nan])
+            bh_CoP['BH_Mass'] = np.array([math.nan])
+            bh_CoP['BH_Mdot'] = np.array([math.nan])
+            bh_CoP['Coordinates'] = np.array([[math.nan, math.nan, math.nan]])
+            bh_CoP['Velocity'] = np.array([[math.nan, math.nan, math.nan]])
+            bh_CoP['ParticleIDs'] = np.array([math.nan])
+            bh_CoP['Mass'] = np.array([math.nan])
+            bh_CoP['BH_CumlAccrMass'] = np.array([math.nan])
+            bh_CoP['BH_CumlNumSeeds'] = np.array([math.nan])
+        
         
         #---------------------------
         # Finding stars COM within 30pkpc
@@ -537,6 +561,7 @@ class Subhalo_Extract:
         gas['Coordinates']   = gas['Coordinates'] - stars_com
         dm['Coordinates']    = dm['Coordinates'] - stars_com
         bh['Coordinates']    = bh['Coordinates'] - stars_com
+        bh_CoP['Coordinates']    = bh['Coordinates'] - stars_com
         self.stars_com       = [0, 0, 0] - stars_com
         
         #---------------------------
@@ -560,12 +585,16 @@ class Subhalo_Extract:
             gas['Velocity']   = gas['Velocity'] - self.perc_vel
             dm['Velocity']    = dm['Velocity'] - self.perc_vel
             bh['Velocity']    = bh['Velocity'] - self.perc_vel
+            bh_CoP['Velocity']    = bh['Velocity'] - self.perc_vel
         
         #---------------------------
         # Assigning particle data        
         self.data_nil = {}
         for parttype, parttype_name in zip([stars, gas, dm, bh], ['stars', 'gas', 'dm', 'bh']):
             self.data_nil['%s'%parttype_name] = parttype
+                  
+        self.data_bh_new = {}
+        self.data_bh_new['bh'] = bh_CoP
         
         if debug:
             print('_main DEBUG')
@@ -714,7 +743,7 @@ class Subhalo_Extract:
             f.close()
         # If bhs
         elif itype == 5:
-            for att in ['GroupNumber', 'SubGroupNumber', 'BH_Mass', 'BH_Mdot', 'Coordinates', 'Velocity', 'ParticleIDs', 'Mass']:
+            for att in ['GroupNumber', 'SubGroupNumber', 'BH_Mass', 'BH_Mdot', 'Coordinates', 'Velocity', 'ParticleIDs', 'Mass', 'BH_CumlAccrMass', 'BH_CumlNumSeeds']:
                 if (mask_sgn == False) and att == 'SubGroupNumber':
                     continue
                 # Ensure we use 'Mass' as name
@@ -802,6 +831,7 @@ class Subhalo_Extract:
         if itype == 5:
             data['BH_Mdot'] = data['BH_Mdot'] * u.g.to(u.Msun)  # [Msun/s]
             data['BH_Mass'] = data['BH_Mass'] * u.g.to(u.Msun)                   # [Msun]
+            data['BH_CumlAccrMass'] = data['BH_CumlAccrMass'] * u.g.to(u.Msun)                   # [Msun]
         
         # Periodic wrap coordinates around centre (in proper units). 
         # boxsize converted from cMpc/h -> pMpc
@@ -1009,10 +1039,11 @@ Output Parameters
         'halfmass_rad_proj', 'halfmass_rad_sf', 'viewing_axis',
         
         when bh code ran:
+        replaces existing 'bh_mass' with closest to CoP
         'bh_cumlmass' 
         'bh_cumlseeds'
         'bh_id_old'
-        'bh_mass_old'
+        'bh_mass_old'       (most massive in r50)
         'bh_mdot_old'
         'bh_edd_old'
         

@@ -2,6 +2,7 @@ import h5py
 import numpy as np
 import math
 from scipy import stats
+import pandas as pd
 import random
 import inspect
 import matplotlib as mpl
@@ -3195,7 +3196,7 @@ def _plot_misalignment_double_tree(csv_sample = 'L100_173_all_sample_misalignmen
     all_flags           = dict_output['all_flags']
     
     # Loading misalignment tree
-    dict_tree = json.load(open('%s/L100_misalignment_tree_%s.csv' %(output_dir, load_csv_file), 'r'))
+    dict_tree = json.load(open('/Users/c22048063/Documents/EAGLE/outputs_snips/L100_misalignment_tree_%s.csv' %(load_csv_file), 'r'))
     misalignment_input = dict_tree['misalignment_input']
     misalignment_tree  = dict_tree['misalignment_tree']
     
@@ -4012,7 +4013,9 @@ def _plot_misalignment_double_tree(csv_sample = 'L100_173_all_sample_misalignmen
     _plot_misalignment_distributions()
     #---------------------------------
                                        
-    
+
+
+
 
 
 #===========================    
@@ -4048,14 +4051,15 @@ _ = _plot_misalignment(use_angle = 'stars_gas_sf', ETG_or_LTG = 'LTG', cluster_o
     savefig=True)
 _plot_misalignment(csv_sample = 'L100_188_all_sample_misalignment_9.5', csv_output = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_', use_angle = 'stars_gas_sf', ETG_or_LTG = 'LTG', cluster_or_field   = 'both', use_proj_angle     = False, add_observational  = None,
     savefig=True)  """
-_plot_misalignment(csv_sample = 'L100_188_all_sample_misalignment_9.5', csv_output = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_', use_angle = 'stars_gas_sf', ETG_or_LTG = 'both', cluster_or_field   = 'both', use_proj_angle     = False, add_observational  = None, 
-    savefig=False, showfig=True, plot_gassf_counts = True)
+"""_plot_misalignment(csv_sample = 'L100_188_all_sample_misalignment_9.5', csv_output = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_', use_angle = 'stars_gas_sf', ETG_or_LTG = 'both', cluster_or_field   = 'both', use_proj_angle     = False, add_observational  = None, 
+    savefig=False, showfig=True, plot_gassf_counts = True)"""
 
     
 # SNIP MISALIGNMENTS plot ETg / LTG graphs at same time
 """_plot_misalignment_double(csv_sample = 'L100_188_all_sample_misalignment_9.5', csv_output = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_', use_angle = 'stars_gas_sf', ETG_or_LTG = 'both', cluster_or_field   = 'both', use_proj_angle     = True, add_observational  = None)
 _plot_misalignment_double(csv_sample = 'L100_188_all_sample_misalignment_9.5', csv_output = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_', use_angle = 'stars_gas_sf', ETG_or_LTG = 'both', cluster_or_field   = 'both', use_proj_angle     = False, add_observational  = None)
 """
+
 
 # SNAPSHOT/SNIP MISALIGNMENTS stars - dm (abs/proj angle in proj rad)
 """_ = _plot_misalignment(use_angle = 'stars_dm', ETG_or_LTG = 'ETG', cluster_or_field   = 'both', add_observational=False)
@@ -4064,12 +4068,25 @@ _ = _plot_misalignment(use_angle = 'stars_dm', ETG_or_LTG = 'LTG', cluster_or_fi
 _ = _plot_misalignment(csv_sample = 'L100_188_all_sample_misalignment_9.5', csv_output = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_gas_nsf_dm_plusNSF', use_angle = 'stars_dm', ETG_or_LTG = 'LTG', cluster_or_field   = 'both', use_proj_angle     = False, add_observational  = None)
 """
 
+
 # Output data for misalignment_z for all snips. Run on serpens
 #_misalignment_z_data()
 # Run on local:
 #_manual_plot_misalignment_z(read_misalignment_distributions_z_data = True, savefig_txt = 'complete_snip', add_errorbar=False, showfig = True, savefig = True)
                 
-        
+
+# Compare tree to instant misalignment angles                
+"""_plot_misalignment_double_tree(csv_sample = 'L100_173_all_sample_misalignment_9.5',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
+                              csv_output = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_',
+                              load_csv_file = '_20Thresh_30Peak_noLatency_NEW',     # _20Thresh_30Peak_normalLatency_anyMergers_anyMorph_NEW
+                              showfig = True,
+                              savefig = False)"""
+
+
+
+
+
+
 
 
 

@@ -1549,6 +1549,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
 ID_list = [108988077, 479647060, 21721896, 390595970, 401467650, 182125463, 192213531, 24276812, 116404995, 239808134, 215988755, 86715463, 6972011, 475772617, 374037507, 429352532, 441434976]
 ID_list = [1361598, 1403994, 10421872, 17879310, 21200847, 21659372, 24053428, 182125501, 274449295]
 ID_list = [21200847, 182125516, 462956141]
+ID_list = [349651640, 453139689, 251899973, 10950862, 10727191]
 def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                   #--------------------------
                   # Galaxy analysis
@@ -1654,7 +1655,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     file_format = 'pdf',
                     savefig_txt = 'txt',     # [ 'manual' / txt ] 'manual' will prompt txt before saving
               #====================================================================================================
-              load_csv_file  = '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph',     # [ 'file_name' / False ] load existing misalignment tree                                                                     '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph'                                                                                                                           '_20Thresh_30Peak_normalLatency_anyMergers_hardMorph'                                                                                                            '_20Thresh_30Peak_normalLatency_anyMergers_ETG-ETG'                                                                                                                         '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010' 
+              load_csv_file  = False,     # [ 'file_name' / False ] load existing misalignment tree                                                                     '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph'                                                                                                                           '_20Thresh_30Peak_normalLatency_anyMergers_hardMorph'                                                                                                            '_20Thresh_30Peak_normalLatency_anyMergers_ETG-ETG'                                                                                                                         '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010' 
               
                 plot_annotate  = False,    #  [ False / 'ETG → ETG' r'ETG ($\bar{\kappa}_{\mathrm{co}}^{\mathrm{*}} < 0.35$)'  ]      '$t_{\mathrm{relax}}>3\bar{t}_{\mathrm{torque}}$'             # string of text or False / 'ETG' 
               #====================================================================================================
@@ -1742,7 +1743,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 particle_selection.append('dm')
             compound_selection.append(['gas_nsf', 'dm'])
     
-    
+        
         #---------------------------
         # Find GalaxyID in tree and only process this
         if GalaxyID_list != None:
@@ -1766,13 +1767,60 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
         # Loop over all galaxies
         misalignment_tree = {}
         
-        # Check where we lose galaxies
-        o_number_in_tree              = 0      # check 1 - 5
-        o_number_with_1_misalignment  = 0
-        o_number_with_complete_window = 0
-        o_number_with_valid_timextra  = 0
-        o_number_with_valid_gap       = 0
-        o_number_going_to_processing  = 0
+        check_where_lose_galaxies = True
+        if check_where_lose_galaxies:
+            # Check where we lose galaxies
+            o_number_in_tree              = 0      # check 1 - 5
+            o_number_with_1_misalignment  = 0
+            o_number_with_complete_window = 0
+            o_number_with_valid_timextra  = 0
+            o_number_with_valid_gap       = 0
+            o_number_going_to_processing  = 0
+            # Check where we lose misalignment windows
+            o_N_misalignment_events = 0     # raw number
+            o_N_index_nan = 0
+            o_N_path = 0
+            o_N_ETG_ETG = 0
+            o_N_peak_angle = 0
+            o_N_trelax = 0
+            o_N_particles = 0
+            o_N_particles_dm = 0
+            o_N_stelmass_drop = 0
+            o_N_ap_stelmass = 0
+            o_N_inclination = 0
+            o_N_CoM = 0
+            o_N_uncertainty = 0
+            o_N_satellites = 0
+            o_N_morph = 0
+            o_N_halomass = 0
+            o_N_stelmass = 0
+            o_N_gasmass = 0
+            o_N_gasmass_sf = 0
+            o_N_gasmass_nsf = 0
+            o_N_sfr = 0
+            o_N_ssfr = 0
+            o_N_kappa_stars = 0
+            o_N_kappa_gas = 0
+            o_N_kappa_sf = 0
+            o_N_kappa_nsf = 0
+            o_N_ellip = 0
+            o_N_triax = 0
+            o_N_rad = 0
+            o_N_rad_sf = 0
+            o_N_inflow = 0
+            o_N_inflow_Z = 0
+            o_N_bh_mass = 0
+            o_N_bh_acc = 0
+            o_N_bh_acc_inst = 0
+            o_N_bh_edd = 0
+            o_N_bh_lbol = 0
+            o_N_vcirc = 0
+            o_N_tdyn = 0
+            o_N_ttorque = 0
+        
+        
+        o_number_mis_rejected_particles = 0
+        o_number_mis_rejected_com       = 0
         
         for GalaxyID in tqdm(galaxy_tree.keys()):
             
@@ -1802,7 +1850,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 plt.close()
             
                 ### Create figure
-                fig, axs = plt.subplots(1, 1, figsize=[8, 5], sharex=True, sharey=False)
+                fig, axs = plt.subplots(1, 1, figsize=[3.5, 1.8], sharex=True, sharey=False)
                 plt.subplots_adjust(wspace=0.4, hspace=0.4)
             
                 # Plot mergers
@@ -1813,18 +1861,22 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                             axs.axvline(time_i, c='grey', ls='--', lw=1)
                             axs.text(time_i-0.2, 175, '%.2f' %max(ratio_i), color='grey', fontsize=8, zorder=999)
                             axs.text(time_i-0.2, 170, '%.2f' %gas_i[np.argmax(ratio_i)], color='blue', fontsize=8, zorder=999)
-                axs.plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj], 'ko-', mec='k', lw=0.9, ms=1)
+                #axs.plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj], 'ko-', mec='k', lw=0.9, ms=1)
+                
+                # for presentation:
+                axs.plot(galaxy_tree['%s' %GalaxyID]['Lookbacktime'], galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj], alpha=1.0, ms=2, ls='-', lw=0.7, zorder=100, color='k')
+                
                 axs.text(8, 196, 'ID: %s' %GalaxyID, fontsize=8)
                 axs.text(8, 190, '%s' %(use_angle), fontsize=8, color='grey')
                 axs.text(8, 184, '%s' %(abs_or_proj), fontsize=8, color='grey')
-                axs.axhspan(0, misangle_threshold, alpha=0.25, ec=None, fc='grey')
-                axs.axhspan(180-misangle_threshold, 180, alpha=0.25, ec=None, fc='grey')
+                axs.axhspan(0, 30, alpha=0.25, ec=None, fc='grey')
+                axs.axhspan(150, 180, alpha=0.25, ec=None, fc='grey')
                 axs.set_ylim(0, 180)
                 axs.set_xlim(8.1, -0.1)
                 axs.set_xticks(np.arange(8, -1, -1))
                 axs.set_yticks(np.arange(0, 181, 30))
                 axs.set_xlabel('Lookback-time (Gyr)')
-                axs.set_ylabel('Misalignment angle')
+                axs.set_ylabel('Misalignment angle, $\psi_{\mathrm{3D}}$')
                 #axs.minorticks_on()
                 #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
                 #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
@@ -1967,7 +2019,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     print('\n> No misalignments using imposed limits <')
                 print(' ')
             # Green and orange bar, grey bars
-            if plot_misangle_detection:
+            """if plot_misangle_detection:
                 # Plot misalignment detections
                 axs.text(6.5, 196, 'Detected misalignments: %s' %len(index_dict['misalignment_locations']['misalign']['index']), fontsize=8, color='green')
                 axs.text(6.5, 190, 'Latency period: %s Gyr' %latency_time, fontsize=8, color='orange')
@@ -1982,7 +2034,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     axs.vlines(x=galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m], ymin=plot_height-7, ymax=plot_height+7, lw=1.5, colors='k', alpha=0.3)
                     axs.vlines(x=galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r], ymin=plot_height-7, ymax=plot_height+7, lw=1.5, colors='k', alpha=0.3)
                 
-   
+            """
             #>>>>>>>>>>>>>>>>>>>>>
             # Skip galaxy if no misalignments detected
             if len(index_dict['misalignment_locations']['misalign']['index']) == 0:
@@ -2045,7 +2097,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     index_dict['window_locations']['relax']['snapnum'].append(time_extra_snap_r)
         
             # Black bars = extract data
-            if plot_misangle_detection:
+            """if plot_misangle_detection:
                 # Plot misalignment detections
                 axs.text(6.5, 184, 'Sample window: %s Gyr' %time_extra, fontsize=8, color='k')
             
@@ -2061,7 +2113,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     axs.vlines(x=galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_window_m], ymin=plot_height-10, ymax=plot_height+10, lw=2, colors='k', alpha=0.8)
                     axs.vlines(x=galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_window_r], ymin=plot_height-10, ymax=plot_height+10, lw=2, colors='k', alpha=0.8)
                 
-                
+             """   
             #>>>>>>>>>>>>>>>>>>>>>
             # Skip galaxy if no windows available for misalignments
             if len(index_dict['window_locations']['misalign']['index']) == 0:
@@ -2182,7 +2234,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                         continue
         
             # Orange bars = no misalignments  
-            if plot_misangle_detection:
+            """if plot_misangle_detection:
                 # Plot misalignment detections
                 axs.text(4.2, 196, 'Isolation time: %s Gyr' %time_no_misangle, fontsize=8, color='orange')
             
@@ -2198,7 +2250,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     axs.vlines(x=galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_m]+(0 if time_no_misangle == None else time_no_misangle), ymin=plot_height-4, ymax=plot_height+4, lw=2, colors='orange', alpha=0.8)
                     axs.vlines(x=galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_r]-(0 if time_no_misangle == None else time_no_misangle), ymin=plot_height-4, ymax=plot_height+4, lw=2, colors='orange', alpha=0.8)
 
-                
+             """   
             #>>>>>>>>>>>>>>>>>>>>>
             # Skip galaxy if no windows available for misalignments
             if len(index_dict['windowgap_locations']['misalign']['index']) == 0:
@@ -2340,6 +2392,8 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 plot_misangle_accepted_misangle_t = []
             # Loop over all misalignments, and ignore any misalignments that didn't meet previous conditions
             for misindex_i in np.arange(0, len(index_dict['misalignment_locations']['misalign']['index'])):
+                
+                o_N_misalignment_events += 1
             
                 if print_checks:
                     print('  \nFor misalignment at: %.2f Gyr...' %(galaxy_tree['%s' %GalaxyID]['Lookbacktime'][index_dict['misalignment_locations']['misalign']['index'][misindex_i]]))
@@ -2347,6 +2401,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 if (np.isnan(index_dict['misalignment_locations']['misalign']['index'][misindex_i]) == True) | (np.isnan(index_dict['window_locations']['misalign']['index'][misindex_i]) == True) | (np.isnan(index_dict['windowgap_locations']['misalign']['index'][misindex_i]) == True):
                     if print_checks:
                         print('    x Misalignment index, window index, or window gap index nan for current misalignment')
+                    o_N_index_nan += 1
                     continue
             
                 # If we want mergers and we dont have any, skip
@@ -2381,6 +2436,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 if check not in relaxation_type:
                     if print_checks:
                         print('    x FAILED RELAXATION TYPE: %.2f -> %.2f\t%s' %(all_angles[index_dict['misalignment_locations']['misalign']['index'][misindex_i]], all_angles[index_dict['misalignment_locations']['relax']['index'][misindex_i]], check))
+                    o_N_path += 1
                     continue
                 elif print_checks:
                     print('    MET RELAXATION TYPE: %.2f -> %.2f\t%s' %(all_angles[index_dict['misalignment_locations']['misalign']['index'][misindex_i]], all_angles[index_dict['misalignment_locations']['relax']['index'][misindex_i]], check))
@@ -2400,6 +2456,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 if check not in relaxation_morph:
                     if print_checks:
                         print('    x FAILED RELAXATION MORPH: %.2f -> %.2f\t%s' %(np.mean(np.array(galaxy_tree['%s' %GalaxyID]['kappa_stars'][index_start:index_dict['misalignment_locations']['misalign']['index'][misindex_i]+1])), np.mean(np.array(galaxy_tree['%s' %GalaxyID]['kappa_stars'][index_dict['misalignment_locations']['relax']['index'][misindex_i]:index_stop+1])), check))
+                    o_N_ETG_ETG += 1
                     continue
                 elif print_checks:
                     print('    MET RELAXATION MORPH: %.2f -> %.2f\t%s' %(np.mean(np.array(galaxy_tree['%s' %GalaxyID]['stars']['kappa'][index_start:index_dict['misalignment_locations']['misalign']['index'][misindex_i]+1])), np.mean(np.array(galaxy_tree['%s' %GalaxyID]['stars']['kappa'][index_dict['misalignment_locations']['relax']['index'][misindex_i]:index_stop+1])), check))
@@ -2421,6 +2478,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 if check == False:
                     if print_checks:
                         print('    x FAILED PEAK ANGLE: \t Δ%.1f° to relax to %s, for limit Δ%s°' %(check_array, ('0°' if (all_angles[index_dict['misalignment_locations']['relax']['index'][misindex_i]] < misangle_threshold) else '180°'), (0 if peak_misangle == None else peak_misangle)))
+                    o_N_peak_angle += 1
                     continue
                 elif print_checks:
                     print('    MET PEAK ANGLE: \t Δ%.1f° to relax to %s, for limit Δ%s°' %(check_array, ('0°' if (all_angles[index_dict['misalignment_locations']['relax']['index'][misindex_i]] < misangle_threshold) else '180°'), (0 if peak_misangle == None else peak_misangle)))
@@ -2431,6 +2489,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 if (check < (0 if min_trelax == None else min_trelax)) or (check > (9999 if max_trelax == None else max_trelax)):
                     if print_checks:
                         print('    x FAILED t_relax SELECTION: \t %.2f Gyr, for limits %s / %s Gyr' %(check_array, min_trelax, max_trelax))
+                    o_N_trelax += 1
                     continue
                 elif print_checks:
                     print('    MET t_relax SELECTION: \t %.2f Gyr, for limits %s / %s Gyr' %(check_array, min_trelax, max_trelax))
@@ -2453,6 +2512,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 if np.array(check).all() == False:
                     if print_checks:
                         print('    x FAILED COUNTS:\t\t min %i, min %i, for limit %s' %(np.min(np.array(galaxy_tree['%s' %GalaxyID]['%s' %particle_selection[0]]['%s_hmr' %use_hmr_angle]['count'][index_start:index_stop])), np.min(np.array(galaxy_tree['%s' %GalaxyID]['%s' %particle_selection[1]]['%s_hmr' %use_hmr_angle]['count'][index_start:index_stop])), min_particles))
+                    o_N_particles += 1
                     continue
                 elif print_checks:
                     print('    MET COUNTS:\t\t min %i, min %i, for limit %s' %(np.min(np.array(galaxy_tree['%s' %GalaxyID]['%s' %particle_selection[0]]['%s_hmr' %use_hmr_angle]['count'][index_start:index_stop])), np.min(np.array(galaxy_tree['%s' %GalaxyID]['%s' %particle_selection[1]]['%s_hmr' %use_hmr_angle]['count'][index_start:index_stop])), min_particles))
@@ -2464,6 +2524,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 if np.array(check).all() == False:
                     if print_checks:
                         print('    x FAILED DM COUNTS:\t min %i, min %i, for limit %s' %(np.min(np.array(galaxy_tree['%s' %GalaxyID]['dm']['count'][index_start:index_stop])), np.min(np.array(galaxy_tree['%s' %GalaxyID]['dm']['count'][index_start:index_stop])), min_particles))
+                    o_N_particles_dm += 1
                     continue
                 elif print_checks:
                     print('    MET DM COUNTS:\t min %i, min %i, for limit %s' %(np.min(np.array(galaxy_tree['%s' %GalaxyID]['dm']['count'][index_start:index_stop])), np.min(np.array(galaxy_tree['%s' %GalaxyID]['dm']['count'][index_start:index_stop])), min_particles))
@@ -2489,6 +2550,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 if np.array(check).all() == False:
                     if print_checks:
                         print('    x MET SUBHALO SWITCH')
+                    o_N_stelmass_drop += 1
                     continue
                 if print_checks:
                     print('    MET MET SUBHALO SWITCH')
@@ -2500,6 +2562,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 if np.array(check).all() == False:
                     if print_checks:
                         print('    x FAILED APERTURE STEL MASS:\t %.1e, for limit 9.5+ [Msun]' %(np.average(check_array, weights=time_weight)))
+                    o_N_ap_stelmass += 1
                     continue
                 if print_checks:
                     print('    MET APERTURE STEL MASS:\t %.1e, for limit 9.5+ [Msun]' %(np.average(check_array, weights=time_weight)))
@@ -2513,6 +2576,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 if np.array(check).all() == False:
                     if print_checks:
                         print('    x FAILED INCLINATION:\t %.1f° / %.1f°, %.1f° / %.1f°, for limit %s / %s°' %(np.min(np.array(galaxy_tree['%s' %GalaxyID]['%s' %particle_selection[0]]['%s_hmr' %use_hmr_angle]['proj_angle'][index_start:index_stop])), np.max(np.array(galaxy_tree['%s' %GalaxyID]['%s' %particle_selection[0]]['%s_hmr' %use_hmr_angle]['proj_angle'][index_start:index_stop])), np.min(np.array(galaxy_tree['%s' %GalaxyID]['%s' %particle_selection[1]]['%s_hmr' %use_hmr_angle]['proj_angle'][index_start:index_stop])), np.max(np.array(galaxy_tree['%s' %GalaxyID]['%s' %particle_selection[1]]['%s_hmr' %use_hmr_angle]['proj_angle'][index_start:index_stop])), min_inclination, 180-min_inclination))
+                    o_N_inclination += 1
                     continue
                 if print_checks:
                     print('    MET INCLINATION:\t %.1f° / %.1f°, %.1f° / %.1f°, for limit %s / %s°' %(np.min(np.array(galaxy_tree['%s' %GalaxyID]['%s' %particle_selection[0]]['%s_hmr' %use_hmr_angle]['proj_angle'][index_start:index_stop])), np.max(np.array(galaxy_tree['%s' %GalaxyID]['%s' %particle_selection[0]]['%s_hmr' %use_hmr_angle]['proj_angle'][index_start:index_stop])), np.min(np.array(galaxy_tree['%s' %GalaxyID]['%s' %particle_selection[1]]['%s_hmr' %use_hmr_angle]['proj_angle'][index_start:index_stop])), np.max(np.array(galaxy_tree['%s' %GalaxyID]['%s' %particle_selection[1]]['%s_hmr' %use_hmr_angle]['proj_angle'][index_start:index_stop])), min_inclination, 180-min_inclination))
@@ -2523,10 +2587,11 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 check.append((np.array(galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['com_abs'][index_start:index_stop]) <= max_com).all())
                 if np.array(check).all() == False:
                     if print_checks:
-                        print('    x FAILED CoM:\t max %.1f kpc, for limit %s [kpc]' %(np.max(np.array(galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['com_abs'][index_start:index_stop])), min_inclination))
+                        print('    x FAILED CoM:\t max %.1f kpc, for limit %s [kpc]' %(np.max(np.array(galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['com_abs'][index_start:index_stop])), max_com))
+                    o_N_CoM += 1
                     continue
                 if print_checks:
-                    print('    MET CoM:\t\t max %.1f kpc, for limit %s [kpc]' %(np.max(np.array(galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['com_abs'][index_start:index_stop])), min_inclination))
+                    print('    MET CoM:\t\t max %.1f kpc, for limit %s [kpc]' %(np.max(np.array(galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['com_abs'][index_start:index_stop])), max_com))
                 
                 
                 # Filter for uncertainty
@@ -2536,6 +2601,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 if np.array(check).all() == False:
                     if print_checks:
                         print('    x FAILED UNCERTAINTY:\t max %i, for limit %s' %(max(check_array), max_uncertainty))
+                    o_N_uncertainty += 1
                     continue
                 if print_checks:
                     print('    MET UNCERTAINTY:\t max %i, for limit %s' %(max(check_array), max_uncertainty))
@@ -2562,6 +2628,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     if np.array(check).all() == False:
                         if print_checks:
                             print('    x FAILED CENTRAL/SAT:\t %i / %i, for limit %s' %(np.min(check_array), np.max(check_array), limit_satellites))
+                        o_N_satellites += 1
                         continue
                     if print_checks:
                         print('    MET CENTRAL/SAT:\t %i / %i, for limit %s' %(np.min(check_array), np.max(check_array), limit_satellites))
@@ -2590,6 +2657,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 if check not in misalignment_morph:
                     if print_checks:
                         print('    x FAILED MISALIGNMENT MORPH: %.2f\t%s' %(np.average(np.array(galaxy_tree['%s' %GalaxyID]['stars']['kappa'][index_start:index_stop]), weights=time_weight), check))
+                    o_N_morph += 1
                     continue
                 elif print_checks:
                     print('    MET MISALIGNMENT MORPH: %.2f\t%s' %(np.average(np.array(galaxy_tree['%s' %GalaxyID]['stars']['kappa'][index_start:index_stop]), weights=time_weight), check))
@@ -2604,6 +2672,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     if np.array(check).all() == False:
                         if print_checks:
                             print('    x FAILED HALO MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_halomass == None else min_halomass), (math.nan if max_halomass == None else max_halomass)))
+                        o_N_halomass += 1
                         continue
                     if print_checks:
                         print('    MET HALO MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_halomass == None else min_halomass), (math.nan if max_halomass == None else max_halomass)))
@@ -2622,6 +2691,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     if np.array(check).all() == False:
                         if print_checks:
                             print('    x FAILED STEL MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_stelmass == None else min_stelmass), (math.nan if max_stelmass == None else max_stelmass)))
+                        o_N_stelmass += 1
                         continue
                     if print_checks:
                         print('    MET STEL MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_stelmass == None else min_stelmass), (math.nan if max_stelmass == None else max_stelmass)))
@@ -2645,6 +2715,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     if np.array(check).all() == False:
                         if print_checks:
                             print('    x FAILED GAS MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_gasmass == None else min_gasmass), (math.nan if max_gasmass == None else max_gasmass)))
+                        o_N_gasmass += 1
                         continue
                     if print_checks:
                         print('    MET GAS MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_gasmass == None else min_gasmass), (math.nan if max_gasmass == None else max_gasmass)))
@@ -2669,6 +2740,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     if np.array(check).all() == False:
                         if print_checks:
                             print('    x FAILED SF MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_sfmass == None else min_sfmass), (math.nan if max_sfmass == None else max_sfmass)))
+                        o_N_gasmass_sf += 1
                         continue
                     if print_checks:
                         print('    MET SF MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_sfmass == None else min_sfmass), (math.nan if max_sfmass == None else max_sfmass)))
@@ -2692,6 +2764,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     if np.array(check).all() == False:
                         if print_checks:
                             print('    x FAILED NSF MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_nsfmass == None else min_nsfmass), (math.nan if max_nsfmass == None else max_nsfmass)))
+                        o_N_gasmass_nsf += 1
                         continue
                     if print_checks:
                         print('    MET NSF MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_nsfmass == None else min_nsfmass), (math.nan if max_nsfmass == None else max_nsfmass)))
@@ -2715,6 +2788,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     if np.array(check).all() == False:
                         if print_checks:
                             print('    x FAILED SFR:\t\t %.1e, for limits %.1e / %.1e [Msun/yr]' %(np.average(check_array, weights=time_weight), (math.nan if min_sfr == None else min_sfr), (math.nan if max_sfr == None else max_sfr)))
+                        o_N_sfr += 1
                         continue
                     if print_checks:
                         print('    MET SFR:\t\t %.1e, for limits %.1e / %.1e [Msun/yr]' %(np.average(check_array, weights=time_weight), (math.nan if min_sfr == None else min_sfr), (math.nan if max_sfr == None else max_sfr)))
@@ -2737,6 +2811,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     if np.array(check).all() == False:
                         if print_checks:
                             print('    x FAILED sSFR:\t\t %.1e, for limits %.1e / %.1e [Msun/yr]' %(np.average(check_array, weights=time_weight), (math.nan if min_ssfr == None else min_ssfr), (math.nan if max_ssfr == None else max_ssfr)))
+                        o_N_ssfr += 1
                         continue
                     if print_checks:
                         print('    MET sSFR:\t\t %.1e, for limits %.1e / %.1e [Msun/yr]' %(np.average(check_array, weights=time_weight), (math.nan if min_ssfr == None else min_ssfr), (math.nan if max_ssfr == None else max_ssfr)))
@@ -2754,6 +2829,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 if np.array(check).all() == False:
                     if print_checks:
                         print('    x FAILED KAPPA STARS:\t %.2f / %.2f, for limits %s / %s' %(np.min(check_array), np.max(check_array), min_kappa_stars, max_kappa_stars))
+                    o_N_kappa_stars += 1
                     continue
                 if print_checks:
                     print('    MET KAPPA STARS:\t %.2f / %.2f, for limits %s / %s' %(np.min(check_array), np.max(check_array), min_kappa_stars, max_kappa_stars))
@@ -2768,6 +2844,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 if np.array(check).all() == False:
                     if print_checks:
                         print('    x FAILED KAPPA GAS:\t %.2f / %.2f, for limits %s / %s' %(np.min(check_array), np.max(check_array), min_kappa_gas, max_kappa_gas))
+                    o_N_kappa_gas += 1
                     continue
                 if print_checks:
                     print('    MET KAPPA GAS:\t %.2f / %.2f, for limits %s / %s' %(np.min(check_array), np.max(check_array), min_kappa_gas, max_kappa_gas))
@@ -2781,6 +2858,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 if np.array(check).all() == False:
                     if print_checks:
                         print('    x FAILED KAPPA SF:\t %.2f / %.2f, for limits %s / %s' %(np.min(check_array), np.max(check_array), min_kappa_sf, max_kappa_sf))
+                    o_N_kappa_sf += 1
                     continue
                 if print_checks:
                     print('    MET KAPPA SF:\t %.2f / %.2f, for limits %s / %s' %(np.min(check_array), np.max(check_array), min_kappa_sf, max_kappa_sf))
@@ -2795,6 +2873,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     if np.array(check).all() == False:
                         if print_checks:
                             print('    x FAILED KAPPA NSF:\t %.2f / %.2f, for limits %s / %s' %(np.min(check_array), np.max(check_array), min_kappa_nsf, max_kappa_nsf))
+                        o_N_kappa_nsf += 1
                         continue
                     if print_checks:
                         print('    MET KAPPA NSF:\t %.2f / %.2f, for limits %s / %s' %(np.min(check_array), np.max(check_array), min_kappa_nsf, max_kappa_nsf))
@@ -2809,6 +2888,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 if np.array(check).all() == False:
                     if print_checks:
                         print('    x FAILED ELLIPTICITY:\t %.2f / %.2f, for limits %s / %s' %(np.min(check_array), np.max(check_array), min_ellip, max_ellip))
+                    o_N_ellip += 1
                     continue
                 if print_checks:
                     print('    MET ELLIPTICITY:\t %.2f / %.2f, for limits %s / %s' %(np.min(check_array), np.max(check_array), min_ellip, max_ellip))
@@ -2822,6 +2902,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 if np.array(check).all() == False:
                     if print_checks:
                         print('    x FAILED TRIAXIALITY:\t %.2f / %.2f, for limits %s / %s' %(np.min(check_array), np.max(check_array), min_triax, max_triax))
+                    o_N_triax += 1
                     continue
                 if print_checks:
                     print('    MET TRIAXIALITY:\t %.2f / %.2f, for limits %s / %s' %(np.min(check_array), np.max(check_array), min_triax, max_triax))
@@ -2838,6 +2919,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 if np.array(check).all() == False:
                     if print_checks:
                         print('    x FAILED RAD:\t\t %.2f / %.2f kpc, for limits %s %s / %s [kpc]' %(np.min(check_array), np.max(check_array), abs_or_proj, min_rad, max_rad))
+                    o_N_rad += 1
                     continue
                 if print_checks:
                     print('    MET RAD:\t\t %.2f / %.2f kpc, for limits %s %s / %s [kpc]' %(np.min(check_array), np.max(check_array), abs_or_proj, min_rad, max_rad))
@@ -2852,6 +2934,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     if np.array(check).all() == False:
                         if print_checks:
                             print('    x FAILED RAD SF:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_rad_sf, max_rad_sf))
+                        o_N_rad_sf += 1
                         continue
                     if print_checks:
                         print('    MET RAD SF:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_rad_sf, max_rad_sf))
@@ -2865,6 +2948,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     if np.array(check).all() == False:
                         if print_checks:
                             print('    x FAILED GAS INFLOW:\t %.2f / %.2f, for limits %s / %s [Msun/yr]' %(np.min(check_array), np.max(check_array), min_inflow, max_inflow))
+                        o_N_inflow += 1
                         continue
                     if print_checks:
                         print('    MET GAS INFLOW:\t %.2f / %.2f, for limits %s / %s [Msun/yr]' %(np.min(check_array), np.max(check_array), min_inflow, max_inflow))
@@ -2879,6 +2963,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     if np.array(check).all() == False:
                         if print_checks:
                             print('    x FAILED INFLOW Z:\t %.2f / %.2f, for limits %s / %s [Z]' %(np.min(check_array), np.max(check_array), min_inflow_Z, max_inflow_Z))
+                        o_N_inflow_Z += 1
                         continue
                     if print_checks:
                         print('    MET INFLOW Z:\t %.2f / %.2f, for limits %s / %s [Z]' %(np.min(check_array), np.max(check_array), min_inflow_Z, max_inflow_Z))
@@ -2895,6 +2980,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     if np.array(check).all() == False:
                         if print_checks:
                             print('    x FAILED BH MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_bh_mass == None else min_bh_mass), (math.nan if max_bh_mass == None else max_bh_mass)))
+                        o_N_bh_mass += 1
                         continue
                     if print_checks:
                         print('    MET BH MASS:\t %.1e, for limits %.1e / %.1e [Msun]' %(np.average(check_array, weights=time_weight), (math.nan if min_bh_mass == None else min_bh_mass), (math.nan if max_bh_mass == None else max_bh_mass)))
@@ -2908,6 +2994,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     if np.array(check).all() == False:
                         if print_checks:
                             print('    x FAILED BH ACC (AV):\t %.1e, for limits %.1e / %.1e [Msun/yr]' %(np.average(check_array, weights=time_weight), (math.nan if min_bh_acc == None else min_bh_acc), (math.nan if max_bh_acc == None else max_bh_acc)))
+                        o_N_bh_acc += 1
                         continue
                     if print_checks:
                         print('    MET BH ACC (AV):\t %.1e, for limits %.1e / %.1e [Msun/yr]' %(np.average(check_array, weights=time_weight), (math.nan if min_bh_acc == None else min_bh_acc), (math.nan if max_bh_acc == None else max_bh_acc)))
@@ -2922,6 +3009,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     if np.array(check).all() == False:
                         if print_checks:
                             print('    x FAILED BH ACC (INST):\t %.1e, for limits %.1e / %.1e [Msun/yr]' %(np.average(check_array, weights=time_weight), (math.nan if min_bh_acc_instant == None else min_bh_acc_instant), (math.nan if max_bh_acc_instant == None else max_bh_acc_instant)))
+                        o_N_bh_acc_inst += 1
                         continue
                     if print_checks:
                         print('    MET BH ACC (INST):\t %.1e, for limits %.1e / %.1e [Msun/yr]' %(np.average(check_array, weights=time_weight), (math.nan if min_bh_acc_instant == None else min_bh_acc_instant), (math.nan if max_bh_acc_instant == None else max_bh_acc_instant)))
@@ -2935,6 +3023,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     if np.array(check).all() == False:
                         if print_checks:
                             print('    x FAILED BH EDD (INST):\t %.6f / %.6f, for limits %s / %s [Msun/yr]' %(np.min(check_array), np.max(check_array), min_edd, max_edd))
+                        o_N_bh_edd += 1
                         continue
                     if print_checks:
                         print('    MET BH EDD (INST):\t %.6f / %.6f, for limits %s / %s [Msun/yr]' %(np.min(check_array), np.max(check_array), min_edd, max_edd))
@@ -2948,6 +3037,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     if np.array(check).all() == False:
                         if print_checks:
                             print('    x FAILED BH Lbol (INST):\t %.1e / %.1e, for limits %s / %s [erg/s]' %(np.min(check_array), np.max(check_array), min_lbol, max_lbol))
+                        o_N_bh_lbol += 1
                         continue
                     if print_checks:
                         print('    MET BH Lbol (INST):\t %.1e / %.1e, for limits %s / %s [erg/s]' %(np.min(check_array), np.max(check_array), min_lbol, max_lbol))
@@ -2963,6 +3053,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     if np.array(check).all() == False:
                         if print_checks:
                             print('    x FAILED v_circ:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_vcirc, max_vcirc))
+                        o_N_vcirc += 1
                         continue
                     if print_checks:
                         print('    MET v_circ:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_vcirc, max_vcirc))
@@ -2976,6 +3067,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     if np.array(check).all() == False:
                         if print_checks:
                             print('    x FAILED t_dyn:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_tdyn, max_tdyn))
+                        o_N_tdyn += 1
                         continue
                     if print_checks:
                         print('    MET t_dyn:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_tdyn, max_tdyn))
@@ -2989,6 +3081,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                     if np.array(check).all() == False:
                         if print_checks:
                             print('    x FAILED t_torque:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_ttorque, max_ttorque))
+                        o_N_ttorque += 1
                         continue
                     if print_checks:
                         print('    MET t_torque:\t %.2f / %.2f kpc, for limits %s / %s [kpc]' %(np.min(check_array), np.max(check_array), min_ttorque, max_ttorque))
@@ -3212,7 +3305,7 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 #--------------------------------------
                 # Collect misalignment selection
                 if plot_misangle_detection:
-                    print('\n\t\t\tADDED TO SAMPLE | Duration: %.2f Gyr' %relaxation_time_entry)
+                    print('\n\t\tADDED TO SAMPLE | Duration: %.2f Gyr   %.2f tdyn   %.2f ttorque' %(relaxation_time_entry, relaxation_tdyn_entry, relaxation_ttorque_entry))
                     plot_misangle_accepted_window.append(misalignment_tree['%s' %ID_i][use_angle])
                     plot_misangle_accepted_window_t.append(misalignment_tree['%s' %ID_i]['Lookbacktime'])
                     plot_misangle_accepted_misangle.append(misalignment_tree['%s' %ID_i][use_angle][misalignment_tree['%s' %ID_i]['index_s']:misalignment_tree['%s' %ID_i]['index_r']+1])
@@ -3224,8 +3317,12 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
                 if len(plot_misangle_accepted_window) > 0:
                     # Plot each accepted misangle of this galaxy
                     for time_window_i, angle_window_i, time_misangle_i, angle_misangle_i in zip(plot_misangle_accepted_window_t, plot_misangle_accepted_window, plot_misangle_accepted_misangle_t, plot_misangle_accepted_misangle):
-                        p = axs.plot(time_window_i, angle_window_i, lw=7, alpha=0.4, zorder=1)
-                        axs.plot(time_misangle_i, angle_misangle_i, 'o-', c=p[0].get_color(), mec='k', ms=1.3, zorder=999)
+                        #p = axs.plot(time_window_i[1:], angle_window_i[1:], lw=7, alpha=0.4, zorder=1)
+                        #axs.plot(time_misangle_i[1:], angle_misangle_i[1:], 'o-', c=p[0].get_color(), mec='k', ms=1.3, zorder=999)
+                        
+                        # for presentation:
+                        p = axs.plot(time_misangle_i[1:], angle_misangle_i[1:], lw=7, alpha=0.4, zorder=1)
+                        #axs.plot(time_misangle_i[1:], angle_window_i[1:], 'o-', c=p[0].get_color(), mec='k', ms=1.3, zorder=999)
                 
                     axs.text(1.8, 196, 'Window extracted', fontsize=8, color='lightblue')
                     axs.text(1.8, 190, 'Misalignment extracted', fontsize=8, color='r')
@@ -3463,13 +3560,58 @@ def _analyse_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
     #------------------------------------------------ 
     plt.close()
     
-    print('Rough guide to where we lose misalignments. NOTE: these are galaxy numbers, not misalignment numbers')
-    print('Number of galaxy tree:                                    ', o_number_in_tree)
-    #print('Number with at least 1 misalignment:                      ', o_number_with_1_misalignment)
-    print('Number with consecutive window:                           ', o_number_with_complete_window)
-    print('Number with existing time extra either side:              ', o_number_with_valid_timextra)
-    print('Number with time extra not misaligned:                    ', o_number_with_valid_gap)
-    print('Number meeting merger criteria (that go to processing):   ', o_number_going_to_processing)
+    if check_where_lose_galaxies:
+        print('Rough guide to where we lose misalignments. NOTE: these are galaxy numbers, not misalignment numbers')
+        print('Number of galaxy tree:                                    ', o_number_in_tree)
+        #print('Number with at least 1 misalignment:                      ', o_number_with_1_misalignment)
+        print('Number with consecutive window:                           ', o_number_with_complete_window)
+        print('Number with existing time extra either side:              ', o_number_with_valid_timextra)
+        print('Number with time extra not misaligned:                    ', o_number_with_valid_gap)
+        print('Number meeting merger criteria (that go to processing):   ', o_number_going_to_processing)
+        print('\tNumber of misalignments identified:         ', o_N_misalignment_events)
+        print('\t\tof which index nan: ', o_N_index_nan, ' (unfinished relax due to latency)')
+        print('\t\tof which wrong path: ', o_N_path)
+        print('\t\tof which wrong ETG-ETG: ', o_N_ETG_ETG)
+        print('\t\tof which not meeting peak angle: ', o_N_peak_angle, ' (displaced by <10 deg from unstable)')
+        print(' ')
+        print('Valid relaxations: ', (o_N_misalignment_events - o_N_index_nan - o_N_path - o_N_ETG_ETG - o_N_peak_angle))
+        print(' ')
+        print('\t\tof which not meeting min trelax: ', o_N_trelax)
+        print('\t\tof which not particle counts: ', o_N_particles, ' (sf dropping very low)')
+        print('\t\tof which not dm particle counts: ', o_N_particles_dm)
+        print('\t\tof which stelmass drop: ', o_N_stelmass_drop, ' (subhalo switching)')
+        print('\t\tof which not meeting ap_stelmass: ', o_N_ap_stelmass)
+        print('\t\tof which not metting inclination: ', o_N_inclination)
+        print('\t\tof which not metting CoM: ', o_N_CoM)
+        print('\t\tof which not metting uncertainty: ', o_N_uncertainty)
+        print(' ')
+        print('\t\tof which not metting satellites: ', o_N_satellites)
+        print('\t\tof which not metting ETG or LTG: ', o_N_morph)
+        print('\t\tof which not metting halomass: ', o_N_halomass)
+        print('\t\tof which not metting stelmass: ', o_N_stelmass)
+        print('\t\tof which not metting gasmass: ', o_N_gasmass)
+        print('\t\tof which not metting gas sf mass: ', o_N_gasmass_sf)
+        print('\t\tof which not metting gas nsf mass: ', o_N_gasmass_nsf)
+        print('\t\tof which not metting sfr: ', o_N_sfr)
+        print('\t\tof which not metting ssfr: ', o_N_ssfr)
+        print('\t\tof which not metting kappa stars: ', o_N_kappa_stars)
+        print('\t\tof which not metting kappa gas: ', o_N_kappa_gas)
+        print('\t\tof which not metting kappa sf: ', o_N_kappa_sf)
+        print('\t\tof which not metting kappa nsf: ', o_N_kappa_nsf)
+        print('\t\tof which not metting ellip: ', o_N_ellip)
+        print('\t\tof which not metting triax: ', o_N_triax)
+        print('\t\tof which not metting rad: ', o_N_rad)
+        print('\t\tof which not metting rad_sf: ', o_N_rad_sf)
+        print('\t\tof which not metting inflow: ', o_N_inflow)
+        print('\t\tof which not metting inflow metal: ', o_N_inflow_Z)
+        print('\t\tof which not metting bh mass: ', o_N_bh_mass)
+        print('\t\tof which not metting bh acc: ', o_N_bh_acc)
+        print('\t\tof which not metting bh acc inst: ', o_N_bh_acc_inst)
+        print('\t\tof which not metting bh edd: ', o_N_bh_edd)
+        print('\t\tof which not metting bh lbol: ', o_N_bh_lbol)
+        print('\t\tof which not metting vcirc: ', o_N_bh_lbol)
+        print('\t\tof which not metting tdyn: ', o_N_tdyn)
+        print('\t\tof which not metting ttorque: ', o_N_ttorque)
     
     
     # Summary and K-S KS test
@@ -5316,7 +5458,281 @@ def _create_BH_misaligned_tree(csv_tree = 'L100_BH_tree__',
            json.dump(csv_dict, open('%s/L100_BHmis_tree_CoP%s_window%s_trelax%s%s_%s%s.csv' %(output_dir, use_CoP_BH, min_window_size, set_min_trelax, load_csv_bh_file, csv_answer, csv_name), 'w'), cls=NumpyEncoder)
            print('\n  SAVED: %s/L100_BHmis_tree_CoP%s_window%s_trelax%s%s_%s%s.csv' %(output_dir, use_CoP_BH, min_window_size, set_min_trelax, load_csv_bh_file, csv_answer, csv_name))
    
+
+#--------------------------------
+# Reads in galaxy_tree() and creates sample at z=0.1 going back at least X lookbacktime of reliable kinematic measurements
+def _create_z01_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
+                                    #--------------------------
+                                    print_checks              = False,
+                                    #--------------------------
+                                    # General values
+                                     use_hmr_general    = 2.0,
+                                     require_min_lookbacktime = 4,      # [ Gyr ] minimum time to go back and ensure we have reliable kinematics of this galaxy
+                                    #------------------------------------------------------------
+                                    # Misalignment angles                
+                                      use_hmr_angle        = 1.0,           # [ 1.0 / 2.0 ]                Used for misangle, inc angle, com, counts
+                                      abs_or_proj          = 'abs',         # [ 'abs' / 'proj' ]
+                                      use_angle            = 'stars_gas_sf',
+                                        min_particles      = 20,               # [ 20 ] number of particles
+                                        max_com            = 2.0,              # [ 2.0 ] pkpc
+                                        max_uncertainty    = 30,            # [ None / 30 / 45 ]                  Degrees
+                                      misangle_threshold   = 30,            # [ 20 / 30 / 45 ]  Must meet this angle (or 180-misangle_threshold) to be considered misaligned
+                                    #--------------------------
+                                    csv_file       = True,             # Will write sample to csv file in sample_dir
+                                      csv_name     = '_',               # extra stuff at end
+                                     #--------------------------
+                                     print_progress = False,
+                                     debug = False):
     
+    #================================================ 
+    assert (answer == '4') or (answer == '3'), 'Must use snips'
+
+    #---------------------------
+    # Loading files
+    if print_progress:
+        print('Loading files')
+        time_start = time.time()
+    
+    # Loading mergertree file to establish windows
+    f = h5py.File(tree_dir + 'Snip100_MainProgenitorTrees.hdf5', 'r')
+    Redshift_tree     = np.array(f['Snapnum_Index']['Redshift'])
+    Lookbacktime_tree = np.array(f['Snapnum_Index']['LookbackTime'])
+    f.close()
+    
+    # Load galaxy_tree
+    dict_tree = json.load(open('%s/%s.csv' %(output_dir, csv_tree), 'r'))
+    galaxy_tree     = dict_tree['galaxy_tree']
+    tree_input      = dict_tree['tree_input']
+    output_input    = dict_tree['output_input']
+    sample_input    = dict_tree['sample_input']
+
+
+    #---------------------------
+    # Test for required particles
+    particle_selection = []         #particle_list_in = []
+    compound_selection = []         #angle_selection  = []
+    if 'stars_gas' == use_angle:
+        if 'stars' not in particle_selection:
+            particle_selection.append('stars')
+        if 'gas' not in particle_selection:
+            particle_selection.append('gas')
+        compound_selection.append(['stars', 'gas'])
+    if 'stars_gas_sf' == use_angle:
+        if 'stars' not in particle_selection:
+            particle_selection.append('stars')
+        if 'gas_sf' not in particle_selection:
+            particle_selection.append('gas_sf')
+        compound_selection.append(['stars', 'gas_sf'])
+    if 'stars_gas_nsf' == use_angle:
+        if 'stars' not in particle_selection:
+            particle_selection.append('stars')
+        if 'gas_nsf' not in particle_selection:
+            particle_selection.append('gas_nsf')
+        compound_selection.append(['stars', 'gas_nsf'])
+    if 'gas_sf_gas_nsf' == use_angle:
+        if 'gas_sf' not in particle_selection:
+            particle_selection.append('gas_sf')
+        if 'gas_nsf' not in particle_selection:
+            particle_selection.append('gas_nsf')
+        compound_selection.append(['gas_sf', 'gas_nsf'])
+    if 'stars_dm' == use_angle:
+        if 'stars' not in particle_selection:
+            particle_selection.append('stars')
+        if 'dm' not in particle_selection:
+            particle_selection.append('dm')
+        compound_selection.append(['stars', 'dm'])
+    if 'gas_dm' == use_angle:
+        if 'gas' not in particle_selection:
+            particle_selection.append('gas')
+        if 'dm' not in particle_selection:
+            particle_selection.append('dm')
+        compound_selection.append(['gas', 'dm'])
+    if 'gas_sf_dm' == use_angle:
+        if 'gas_sf' not in particle_selection:
+            particle_selection.append('gas_sf')
+        if 'dm' not in particle_selection:
+            particle_selection.append('dm')
+        compound_selection.append(['gas_sf', 'dm'])
+    if 'gas_nsf_dm' == use_angle:
+        if 'gas_nsf' not in particle_selection:
+            particle_selection.append('gas_nsf')
+        if 'dm' not in particle_selection:
+            particle_selection.append('dm')
+        compound_selection.append(['gas_nsf', 'dm'])
+
+    #==================================================================================================
+    # Loop over all galaxies
+    local_z01_tree = {}
+    lookbacktime_z01 = Lookbacktime_tree[188]
+    target_min_snapnum = np.where(Lookbacktime_tree > (lookbacktime_z01 + require_min_lookbacktime))[0][-1]
+    target_max_snapnum = 188
+    
+    for GalaxyID in tqdm(galaxy_tree.keys()):
+        
+        # If tree doesn't have all snaps from snapmin to snapmax, ignore
+        
+        if set(np.arange(target_min_snapnum, target_max_snapnum+1, 1)).issubset(set(galaxy_tree['%s' %GalaxyID]['SnapNum'])) == False:
+            continue
+            
+        # For this specific galaxy, find the indicies of start/stop
+        index_start = np.where(np.array(galaxy_tree['%s' %GalaxyID]['SnapNum']) == target_min_snapnum)[0][0]
+        index_stop = np.where(np.array(galaxy_tree['%s' %GalaxyID]['SnapNum']) == target_max_snapnum)[0][0]
+        index_stop = index_stop + 1
+        
+        
+        #--------------------
+        # Ensure we have non-NaN angles for all snaps
+        angles_array = np.array(galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj])[index_start:index_stop]
+        if np.isnan(angles_array).any() == True:
+            if print_checks:
+                print('    x FAILED angle non-NaN ALL HMR', angles_array)
+            continue
+        if print_checks:
+            print('    Met angles')
+        
+        
+        # Ensure we have non-NaN stellarmass for all snaps
+        stelmass_array = np.array(galaxy_tree['%s' %GalaxyID]['stars']['%s_hmr' %use_hmr_general]['mass'])[index_start:index_stop]
+        if np.isnan(angles_array).any() == True:
+            if print_checks:
+                print('    x FAILED stelmass non-NaN ALL HMR', stelmass_array)
+            continue
+        if print_checks:
+            print('    Met stelmass')
+        
+        
+        #--------------------
+        # Ensure we have reliable kinematic measurements for duration given
+        
+        # Check particle counts
+        check = []            
+        for particle_i in particle_selection:
+            if particle_i == 'dm':
+                check.append((np.array(galaxy_tree['%s' %GalaxyID]['dm']['count'][index_start:index_stop]) >= min_particles).all())
+            else:
+                check.append((np.array(galaxy_tree['%s' %GalaxyID]['%s' %particle_i]['%s_hmr' %use_hmr_angle]['count'][index_start:index_stop]) >= min_particles).all())
+        if np.array(check).all() == False:
+            if print_checks:
+                print('    x FAILED COUNTS:\t\t min %i, min %i, for limit %s' %(np.min(np.array(galaxy_tree['%s' %GalaxyID]['%s' %particle_selection[0]]['%s_hmr' %use_hmr_angle]['count'][index_start:index_stop])), np.min(np.array(galaxy_tree['%s' %GalaxyID]['%s' %particle_selection[1]]['%s_hmr' %use_hmr_angle]['count'][index_start:index_stop])), min_particles))
+            continue
+        elif print_checks:
+            print('    MET COUNTS:\t\t min %i, min %i, for limit %s' %(np.min(np.array(galaxy_tree['%s' %GalaxyID]['%s' %particle_selection[0]]['%s_hmr' %use_hmr_angle]['count'][index_start:index_stop])), np.min(np.array(galaxy_tree['%s' %GalaxyID]['%s' %particle_selection[1]]['%s_hmr' %use_hmr_angle]['count'][index_start:index_stop])), min_particles))
+        
+        # Check CoM
+        check = [] 
+        check.append((np.array(galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['com_abs'][index_start:index_stop]) <= max_com).all())
+        if np.array(check).all() == False:
+            if print_checks:
+                print('    x FAILED CoM:\t max %.1f kpc, for limit %s [kpc]' %(np.max(np.array(galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['com_abs'][index_start:index_stop])), max_com))
+            continue
+        if print_checks:
+            print('    MET CoM:\t\t max %.1f kpc, for limit %s [kpc]' %(np.max(np.array(galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['com_abs'][index_start:index_stop])), max_com))
+        
+        # Filter for uncertainty
+        check = []
+        check_array = [max(np.abs(i)) for i in (np.array(galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['err_%s' %abs_or_proj][index_start:index_stop]) - np.array(galaxy_tree['%s' %GalaxyID]['%s' %use_angle]['%s_hmr' %use_hmr_angle]['angle_%s' %abs_or_proj][index_start:index_stop])[:,None])]
+        check.append((np.array(check_array) <= (9999 if max_uncertainty == None else max_uncertainty)).all())
+        if np.array(check).all() == False:
+            if print_checks:
+                print('    x FAILED UNCERTAINTY:\t max %i, for limit %s' %(max(check_array), max_uncertainty))
+            continue
+        if print_checks:
+            print('    MET UNCERTAINTY:\t max %i, for limit %s' %(max(check_array), max_uncertainty))
+        
+        #---------------------
+        # Ensure we have a BHmass at the end
+        bh_array = np.array(galaxy_tree['%s' %GalaxyID]['bh']['mass_alt'])[index_start:index_stop]
+        if np.isnan(np.array(bh_array[-1])).any() == True:
+            if print_checks:
+                print('    x FAILED bhmass non-NaN', bh_array[-1])
+            continue
+        if print_checks:
+            print('    Met BH mass at z=0.1')
+        
+        
+        #------------------------
+        # Add to new tree
+        ID_i = galaxy_tree['%s' %GalaxyID]['GalaxyID'][index_start]
+        
+        # Find times associated with pure co/mis/cnt rotation
+        time_since_start = -1*np.array(np.array(galaxy_tree['%s' %GalaxyID]['Lookbacktime'])[index_start:index_stop] - np.array(galaxy_tree['%s' %GalaxyID]['Lookbacktime'])[index_start])
+        time_dif_array   = time_since_start[1:] - time_since_start[:-1]
+        
+        # No index 0 assigned, therefore we can time_dif_array
+        # Find time in co-rotation
+        index_co = np.where((angles_array[1:] < misangle_threshold))[0]
+        time_co = np.sum(time_dif_array[index_co])
+        
+        # Find time in unstable misaligned
+        index_mis = np.where((angles_array[1:] > misangle_threshold) & (angles_array[1:] < (180-misangle_threshold)))[0]
+        time_mis = np.sum(time_dif_array[index_mis])
+        
+        # Find time in counter-rotation
+        index_cnt = np.where((angles_array[1:] > (180-misangle_threshold)))[0]
+        time_cnt = np.sum(time_dif_array[index_cnt])
+        
+        local_z01_tree.update({'%s' %ID_i: {'Snapnum': np.array(galaxy_tree['%s' %GalaxyID]['SnapNum'])[index_start:index_stop],
+                                          'Lookbacktime': np.array(galaxy_tree['%s' %GalaxyID]['Lookbacktime'])[index_start:index_stop],
+                                          'Redshift': np.array(galaxy_tree['%s' %GalaxyID]['Redshift'])[index_start:index_stop],
+                                          'GalaxyID':  np.array(galaxy_tree['%s' %GalaxyID]['GalaxyID'])[index_start:index_stop],
+                                          'stelmass':   stelmass_array,
+                                          'bhmass':     bh_array,
+                                          'angle':      angles_array,
+                                          'time_co':    time_co, 
+                                          'time_mis':   time_mis, 
+                                          'time_cnt':   time_cnt,
+                                          'time_total': time_since_start[-1],
+                                          'f_time_co':  time_co/time_since_start[-1],           # fraction of window time
+                                          'f_time_mis':  time_mis/time_since_start[-1],
+                                          'f_time_cnt':  time_cnt/time_since_start[-1]
+                                      }})
+        
+    print('Total length of local_z01_tree: ', len(local_z01_tree.keys()))
+    
+    #---------------------------------------
+    # Save as csv    
+    if csv_file: 
+       # Converting numpy arrays to lists. When reading, may need to simply convert list back to np.array() (easy)
+       class NumpyEncoder(json.JSONEncoder):
+           ''' Special json encoder for numpy types '''
+           def default(self, obj):
+               if isinstance(obj, np.integer):
+                   return int(obj)
+               elif isinstance(obj, np.floating):
+                   return float(obj)
+               elif isinstance(obj, np.ndarray):
+                   return obj.tolist()
+               return json.JSONEncoder.default(self, obj)
+                 
+       # Combining all dictionaries
+       csv_dict = {'local_z01_tree': local_z01_tree}
+       
+       local_z01_input = {'use_hmr_general':  use_hmr_general,
+                   'require_min_lookbacktime':   require_min_lookbacktime,
+                   'use_hmr_angle':             use_hmr_angle,
+                   'abs_or_proj':                abs_or_proj,
+                   'use_angle':                 use_angle, 
+                   'min_particles':            min_particles,
+                   'max_com':                   max_com,
+                   'max_uncertainty':            max_uncertainty, 
+                   'misangle_threshold':        misangle_threshold}
+                   
+                   
+                   
+                   
+       csv_dict.update({'local_z01_input': local_z01_input,
+                        'tree_input': tree_input,
+                        'output_input': output_input,
+                        'sample_input': sample_input})
+       
+       #-----------------------------
+       csv_answer = input("\n  > Choose csv name L100_misalignment_tree_...  '_' ... or 'n' to cancel       ")
+       if csv_answer != 'n':
+           # Writing one massive JSON file
+           json.dump(csv_dict, open('%s/L100_local_z01_input_windowt%sGyr_%s%s.csv' %(output_dir, require_min_lookbacktime, csv_answer, csv_name), 'w'), cls=NumpyEncoder)
+           print('\n  SAVED: %s/L100_local_z01_input_windowt%sGyr_%s%s.csv' %(output_dir, require_min_lookbacktime, csv_answer, csv_name))
+       
+        
 
 
 
@@ -5325,7 +5741,12 @@ def _create_BH_misaligned_tree(csv_tree = 'L100_BH_tree__',
 #=============================
 #_create_galaxy_tree()  
 
-#_analyse_tree()
+
+#_create_z01_tree()      # for use in BH analysis
+
+
+# Some of the plot stuff is commented out:
+#_analyse_tree(plot_misangle_detection=True, GalaxyID_list = [349651640, 453139689, 251899973, 10950862, 10727191], savefig_txt='for_presentation', savefig=True)
 
 # Need to run BH_tree _05Gyr once, then run _create_BH_misaligned to replace misaligned sample with new sample
 #_create_BH_tree(min_time = 0.5, csv_name = '_05Gyr')
@@ -5333,6 +5754,22 @@ def _create_BH_misaligned_tree(csv_tree = 'L100_BH_tree__',
 #_create_BH_misaligned_tree(set_min_trelax = 0, set_misalignment_type = None, use_CoP_BH = True)
 #_create_BH_misaligned_tree(set_min_trelax = 0, set_misalignment_type = None, use_CoP_BH = False, min_bhmass = 1*10**6, csv_name = 'no_seed')
 #_create_BH_misaligned_tree(set_min_trelax = 0, set_misalignment_type = None, use_CoP_BH = True, min_bhmass = 1*10**6, csv_name = 'no_seed')
+
+
+# Need to run BH_tree _05Gyr once, then run _create_BH_misaligned to replace misaligned sample with new sample
+#_create_BH_tree(min_time = 0.5, csv_name = '_05Gyr_20Thresh', co_threshold = 20, cnt_threshold = 160)
+#_create_BH_misaligned_tree(load_csv_bh_file  = '_05Gyr_20Thresh', set_min_trelax = 0, set_misalignment_type = None, use_CoP_BH = False)
+#_create_BH_misaligned_tree(load_csv_bh_file  = '_05Gyr_20Thresh', set_min_trelax = 0, set_misalignment_type = None, use_CoP_BH = True)
+#_create_BH_misaligned_tree(load_csv_bh_file  = '_05Gyr_20Thresh', set_min_trelax = 0, set_misalignment_type = None, use_CoP_BH = False, min_bhmass = 1*10**6, csv_name = 'no_seed')
+#_create_BH_misaligned_tree(load_csv_bh_file  = '_05Gyr_20Thresh', set_min_trelax = 0, set_misalignment_type = None, use_CoP_BH = True, min_bhmass = 1*10**6, csv_name = 'no_seed')
+
+
+
+
+
+
+
+
 
 
 #=============================

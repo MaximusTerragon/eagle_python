@@ -450,6 +450,8 @@ def _plot_timescale_histogram(misalignment_tree, misalignment_input, summary_dic
     collect_array         = []
     collect_array_2         = []
     collect_array_3         = []
+    collect_initial_angle   = []
+    collect_second_angle    = []
     for ID_i in misalignment_tree.keys():
 
         if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_min_trelax:
@@ -459,6 +461,11 @@ def _plot_timescale_histogram(misalignment_tree, misalignment_input, summary_dic
     
             if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-co':
                 co_co_array.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+                
+                # Collect initial angle snip, and the second angle snip if it hasnt relaxed yet and was still <30 in last snip
+                collect_initial_angle.append(misalignment_tree['%s' %ID_i]['stars_gas_sf'][misalignment_tree['%s' %ID_i]['index_s']+1])
+                if (misalignment_tree['%s' %ID_i]['index_s']+2 != misalignment_tree['%s' %ID_i]['index_r']) & (misalignment_tree['%s' %ID_i]['stars_gas_sf'][misalignment_tree['%s' %ID_i]['index_s']+1] < 30):
+                    collect_second_angle.append(misalignment_tree['%s' %ID_i]['stars_gas_sf'][misalignment_tree['%s' %ID_i]['index_s']+2])
             elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'co-counter':
                 co_counter_array.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
             elif misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
@@ -475,6 +482,8 @@ def _plot_timescale_histogram(misalignment_tree, misalignment_input, summary_dic
         
             if misalignment_tree['%s' %ID_i]['relaxation_type'] == 'counter-co':
                 collect_array_3.append(ID_i)
+                
+            
             
         
     
@@ -489,9 +498,25 @@ def _plot_timescale_histogram(misalignment_tree, misalignment_input, summary_dic
     print('\nMax trelax:  %.2f Gyr' %max(relaxationtime_plot))  
     
     
+    
+    # Check first angle
+    """print('  Usin co-co sample of: ', len(collect_initial_angle))
+    fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.1], sharex=False, sharey=False) 
+    plt.subplots_adjust(wspace=0.4, hspace=0.4)
+    bins = np.arange(0, 181, 10)
+    axs.hist(collect_initial_angle, bins=bins, weights=np.ones(len(collect_initial_angle))/len(collect_initial_angle), linewidth=1, facecolor='none', edgecolor='k', alpha=0.8, label='initial snip')
+    #axs.hist(collect_second_angle, bins=bins, weights=np.ones(len(collect_second_angle))/len(collect_second_angle), linewidth=1, facecolor='none', edgecolor='r', alpha=0.8, label='second snip')
+    axs.set_xlabel('First angle in array')
+    axs.set_xlim(0, 180)
+    plt.legend()
+    plt.show()
+    plt.close()"""
+    
+    
+    
     #-------------
     ### Plotting
-    fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.5], sharex=True, sharey=False)
+    fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.4], sharex=True, sharey=False)
     plt.subplots_adjust(wspace=0.4, hspace=0.4)
             
     if set_bin_limit_trelax == None:
@@ -772,7 +797,7 @@ def _plot_tdyn_histogram(misalignment_tree, misalignment_input, summary_dict, pl
             
     #-------------
     ### Plotting
-    fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.5], sharex=True, sharey=False)
+    fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.4], sharex=True, sharey=False)
     plt.subplots_adjust(wspace=0.4, hspace=0.4)
             
     if set_bin_limit_tdyn == None:
@@ -1053,7 +1078,7 @@ def _plot_ttorque_histogram(misalignment_tree, misalignment_input, summary_dict,
     
     #-------------
     ### Plotting
-    fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.5], sharex=True, sharey=False)
+    fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.4], sharex=True, sharey=False)
     plt.subplots_adjust(wspace=0.4, hspace=0.4)
             
     if set_bin_limit_ttorque == None:
@@ -2669,8 +2694,8 @@ def _plot_stacked_trelax_2x2(misalignment_tree, misalignment_input, summary_dict
     
     #===========================================================================
     # Graph initialising and base formatting
-    fig, ((ax_co_co, ax_co_counter), (ax_counter_counter, ax_counter_co)) = plt.subplots(2, 2, figsize=[2*10/3, 2*1.8], sharex=True, sharey=True)
-    plt.subplots_adjust(wspace=0.4, hspace=0.4)
+    fig, ((ax_co_co, ax_co_counter), (ax_counter_counter, ax_counter_co)) = plt.subplots(2, 2, figsize=[7, 2*1.5], sharex=True, sharey=True)
+    plt.subplots_adjust(wspace=0.0, hspace=0.0)
     
     # Creating colormaps to mark mergers
     merger_colormap = plt.get_cmap('Blues', 5)
@@ -2974,8 +2999,9 @@ def _plot_stacked_trelax_2x2(misalignment_tree, misalignment_input, summary_dict
     ### Formatting
     ax_co_co.set_ylim(0, 180)
     ax_co_co.set_yticks(np.arange(0, 181, 30))
-    ax_co_co.set_ylabel('Misalignment angle, $\psi_{\mathrm{3D}}$')
-    ax_counter_counter.set_ylabel('Misalignment angle, $\psi_{\mathrm{3D}}$')
+    fig.supylabel('Misalignment angle, $\psi_{\mathrm{3D}}$', fontsize=9)
+    #ax_co_co.set_ylabel('Misalignment angle, $\psi_{\mathrm{3D}}$')
+    #ax_counter_counter.set_ylabel('Misalignment angle, $\psi_{\mathrm{3D}}$')
     #ax_counter_counter.get_yaxis().set_label_coords(-0.12,1)
     if set_plot_type == 'time':
         ax_counter_counter.set_xlim(0-4*time_extra, set_bin_limit_trelax)
@@ -3620,7 +3646,7 @@ def _plot_stacked_ttorque_2x2(misalignment_tree, misalignment_input, summary_dic
 
     #=================================================================================================
     # Graph initialising and base formatting
-    fig, ((ax_co_co, ax_co_counter), (ax_counter_counter, ax_counter_co)) = plt.subplots(2, 2, figsize=[2*10/3, 2*1.8], sharex=True, sharey=True)
+    fig, ((ax_co_co, ax_co_counter), (ax_counter_counter, ax_counter_co)) = plt.subplots(2, 2, figsize=[7, 2*1.5], sharex=True, sharey=True)
     plt.subplots_adjust(wspace=0.0, hspace=0.0)
     
     # Creating colormaps to mark mergers
@@ -5114,7 +5140,7 @@ def _plot_offset_ttorque(misalignment_tree, misalignment_input, summary_dict, pl
             
     #-------------
     # Plotting
-    fig = plt.figure(figsize=(10/3, 10/3))
+    fig = plt.figure(figsize=(10/3, 2.5))
     gs  = fig.add_gridspec(2, 2,  width_ratios=(4, 1), height_ratios=(1, 4),
                           left=0.1, right=0.9, bottom=0.1, top=0.9,
                           wspace=0.1, hspace=0.1)
@@ -5135,7 +5161,7 @@ def _plot_offset_ttorque(misalignment_tree, misalignment_input, summary_dict, pl
         
     #-------------------
     ### Plot scatter
-    ax.scatter(df['Peak misalignment angle'], df['Relaxation time'], s=4, c='k', edgecolor='k', marker='.', linewidths=0, alpha=0.5, zorder=-2)
+    ax.scatter(df['Peak misalignment angle'], df['Relaxation time'], s=4, c='dimgrey', edgecolor='dimgrey', marker='.', linewidths=0, alpha=0.8, zorder=-2)
     #ax.scatter(df['Peak misalignment angle'], df['Relaxation time'], s=5, c='grey', edgecolor='k', marker='.', linewidths=0, alpha=0.6, zorder=-2)
         
     ### Plot upper, median, and lower sigma
@@ -5207,7 +5233,7 @@ def _plot_offset_ttorque(misalignment_tree, misalignment_input, summary_dict, pl
     ax_histx.set_ylabel('Count')
     if set_plot_offset_log:
         ax.set_yscale('log')
-        ax.set_ylim(0.2, 25)
+        ax.set_ylim(0.2, 35)
         ax.set_yticks([0.2, 1, 10])
         ax.set_yticklabels(['0.2', '1', '10'])
     else:
@@ -9409,6 +9435,204 @@ def _plot_timescale_occupation_histogram_ttorque(misalignment_tree, misalignment
 
 
 #-------------------------
+# Scatter of halomass vs estimate of gassf ring size for centrals
+def _plot_halomass_radsf(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
+                      #==============================================
+                      set_hist_min_trelax                 = 0.2,                # [ 0.25 / 0 ] removing low resolution
+                        halomass_limits                   = [12.5, 13.5],         # [ < lower - upper < ] e.g. [12.5, 14] means <10**12.5, 10**12.5-10**14, >10**14
+                      showfig       = True,
+                      savefig       = False,    
+                        file_format   = 'pdf',
+                        savefig_txt = '',            # [ '' / 'any text' / 'manual' ] 'manual' will prompt txt before saving
+                      #-----------------------------
+                      debug = False):
+                      
+    #-------------------------
+    # Average timescales from input (for use in metadata)
+    mean_timescale   = np.mean(np.array(summary_dict['trelax']['array']))
+    median_timescale = np.median(np.array(summary_dict['trelax']['array']))
+    std_timescale    = np.std(np.array(summary_dict['trelax']['array']))
+    # Average tdyn
+    mean_tdyn   = np.mean(np.array(summary_dict['tdyn']['array']))
+    median_tdyn = np.median(np.array(summary_dict['tdyn']['array']))
+    std_tdyn    = np.std(np.array(summary_dict['tdyn']['array']))
+    # Average ttorque
+    mean_ttorque   = np.mean(np.array(summary_dict['ttorque']['array']))
+    median_ttorque = np.median(np.array(summary_dict['ttorque']['array']))
+    std_ttorque    = np.std(np.array(summary_dict['ttorque']['array']))
+    
+    #-------------------------
+    relaxation_type    = misalignment_input['relaxation_type']
+    relaxation_morph   = misalignment_input['relaxation_morph']
+    misalignment_morph = misalignment_input['misalignment_morph']
+    morph_limits       = misalignment_input['morph_limits']
+    peak_misangle      = misalignment_input['peak_misangle']
+    min_trelax         = misalignment_input['min_trelax']        
+    max_trelax         = misalignment_input['max_trelax'] 
+    use_angle          = misalignment_input['use_angle']
+    misangle_threshold = misalignment_input['misangle_threshold']
+    time_extra         = misalignment_input['time_extra']
+    #------------------------- 
+    
+    
+    #==========================================================================
+    # Gather data
+    plot_rad = []
+    plot_halomass = []
+    ID_plot       = []
+    for ID_i in misalignment_tree.keys():
+        
+        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_hist_min_trelax:
+            continue
+        
+        # find subgroupnum, and classify as following:  central: all==0, satellite: all>0, mixed: ones that change
+        sgn = np.array(misalignment_tree['%s' %ID_i]['SubGroupNum'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']])
+        if np.all(sgn == 0):
+            # Average particle count during relaxation
+            plot_rad.append(min(misalignment_tree['%s' %ID_i]['rad'][misalignment_tree['%s' %ID_i]['index_s']+1], 2*misalignment_tree['%s' %ID_i]['rad_sf'][misalignment_tree['%s' %ID_i]['index_s']+1]))
+            plot_halomass.append(misalignment_tree['%s' %ID_i]['halomass'][misalignment_tree['%s' %ID_i]['index_s']+1])
+            ID_plot.append(ID_i)
+        
+        
+    df = pd.DataFrame(data={'Rad': plot_rad, 'Halo mass': plot_halomass})
+    halo_1_df = df.loc[(df['Halo mass'] < 10**halomass_limits[0])]
+    halo_2_df = df.loc[(df['Halo mass'] > 10**halomass_limits[0])]
+    print('  Using sample: ', len(ID_plot))
+    print('  Median <12.5: ', np.median(halo_1_df['Rad']))
+    print('  Median >12.5: ', np.median(halo_2_df['Rad']))
+    
+    
+    #-------------
+    ### Plotting
+    fig, axs = plt.subplots(1, 1, figsize=[10/3, 3], sharex=True, sharey=False)
+    plt.subplots_adjust(wspace=0.4, hspace=0.4)
+    
+    plt.scatter(np.log10(plot_halomass), plot_rad, s=1.5, zorder=99, edgecolors='k', linewidths=0.1, alpha=1)
+    
+    #-------------
+    ### Formatting
+    axs.set_xlabel('log10 halomass')
+    axs.set_ylabel('gas disc estimate min(2*rad_sf, r_50) [pkpc]')
+    #axs.set_xticks(np.arange(0, 501, 20))
+    #axs.set_xlim(0, 500)
+    #axs.set_ylim(0, 35)
+    
+    axs.set_title('centrals', size=7, loc='left', pad=3)
+    
+    #-----------
+    ### other
+    plt.tight_layout()
+    
+    #-----------
+    # savefig     
+    if savefig:
+        savefig_txt = savefig_txt_in + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
+        
+        plt.savefig("%s/time_spent_misaligned_environment/%ssample_halomass_sfrad_%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), savefig_txt, file_format), format=file_format, bbox_inches='tight', dpi=600)    
+        print("\n  SAVED: %s/time_spent_misaligned_environment/%ssample_halomass_sfrad_%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), savefig_txt, file_format)) 
+    if showfig:
+        plt.show()
+    plt.close()
+#-------------------------
+# Scatter of halomass vs gassf mass for centrals
+def _plot_halomass_masssf(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
+                      #==============================================
+                      set_hist_min_trelax                 = 0.2,                # [ 0.25 / 0 ] removing low resolution
+                        halomass_limits                   = [12.5, 13.5],         # [ < lower - upper < ] e.g. [12.5, 14] means <10**12.5, 10**12.5-10**14, >10**14
+                      showfig       = True,
+                      savefig       = False,    
+                        file_format   = 'pdf',
+                        savefig_txt = '',            # [ '' / 'any text' / 'manual' ] 'manual' will prompt txt before saving
+                      #-----------------------------
+                      debug = False):
+                      
+    #-------------------------
+    # Average timescales from input (for use in metadata)
+    mean_timescale   = np.mean(np.array(summary_dict['trelax']['array']))
+    median_timescale = np.median(np.array(summary_dict['trelax']['array']))
+    std_timescale    = np.std(np.array(summary_dict['trelax']['array']))
+    # Average tdyn
+    mean_tdyn   = np.mean(np.array(summary_dict['tdyn']['array']))
+    median_tdyn = np.median(np.array(summary_dict['tdyn']['array']))
+    std_tdyn    = np.std(np.array(summary_dict['tdyn']['array']))
+    # Average ttorque
+    mean_ttorque   = np.mean(np.array(summary_dict['ttorque']['array']))
+    median_ttorque = np.median(np.array(summary_dict['ttorque']['array']))
+    std_ttorque    = np.std(np.array(summary_dict['ttorque']['array']))
+    
+    #-------------------------
+    relaxation_type    = misalignment_input['relaxation_type']
+    relaxation_morph   = misalignment_input['relaxation_morph']
+    misalignment_morph = misalignment_input['misalignment_morph']
+    morph_limits       = misalignment_input['morph_limits']
+    peak_misangle      = misalignment_input['peak_misangle']
+    min_trelax         = misalignment_input['min_trelax']        
+    max_trelax         = misalignment_input['max_trelax'] 
+    use_angle          = misalignment_input['use_angle']
+    misangle_threshold = misalignment_input['misangle_threshold']
+    time_extra         = misalignment_input['time_extra']
+    #------------------------- 
+    
+    
+    #==========================================================================
+    # Gather data
+    plot_sfmass = []
+    plot_halomass = []
+    ID_plot       = []
+    for ID_i in misalignment_tree.keys():
+        
+        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_hist_min_trelax:
+            continue
+        
+        # find subgroupnum, and classify as following:  central: all==0, satellite: all>0, mixed: ones that change
+        sgn = np.array(misalignment_tree['%s' %ID_i]['SubGroupNum'][misalignment_tree['%s' %ID_i]['index_s']+1:misalignment_tree['%s' %ID_i]['index_r']])
+        if np.all(sgn == 0):
+            # Average particle count during relaxation
+            plot_sfmass.append(misalignment_tree['%s' %ID_i]['sfmass_1hmr'][misalignment_tree['%s' %ID_i]['index_s']+1])
+            plot_halomass.append(misalignment_tree['%s' %ID_i]['halomass'][misalignment_tree['%s' %ID_i]['index_s']+1])
+            ID_plot.append(ID_i)
+        
+        
+    df = pd.DataFrame(data={'SF Mass': plot_sfmass, 'Halo mass': plot_halomass})
+    halo_1_df = df.loc[(df['Halo mass'] < 10**halomass_limits[0])]
+    halo_2_df = df.loc[(df['Halo mass'] > 10**halomass_limits[0])]
+    print('  Using sample: ', len(ID_plot))
+    print('  Median <12.5: ', np.median(halo_1_df['SF Mass']))
+    print('  Median >12.5: ', np.median(halo_2_df['SF Mass']))
+    
+    
+    #-------------
+    ### Plotting
+    fig, axs = plt.subplots(1, 1, figsize=[10/3, 3], sharex=True, sharey=False)
+    plt.subplots_adjust(wspace=0.4, hspace=0.4)
+    
+    plt.scatter(np.log10(plot_halomass), np.log10(plot_sfmass), s=1.5, zorder=99, edgecolors='k', linewidths=0.1, alpha=1)
+    
+    #-------------
+    ### Formatting
+    axs.set_xlabel('log10 halomass')
+    axs.set_ylabel('log10 gassf mass')
+    #axs.set_xticks(np.arange(0, 501, 20))
+    #axs.set_xlim(0, 500)
+    #axs.set_ylim(0, 35)
+    
+    axs.set_title('centrals', size=7, loc='left', pad=3)
+    
+    #-----------
+    ### other
+    plt.tight_layout()
+    
+    #-----------
+    # savefig     
+    if savefig:
+        savefig_txt = savefig_txt_in + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
+        
+        plt.savefig("%s/time_spent_misaligned_environment/%ssample_halomass_sfmass_%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), savefig_txt, file_format), format=file_format, bbox_inches='tight', dpi=600)    
+        print("\n  SAVED: %s/time_spent_misaligned_environment/%ssample_halomass_sfmass_%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), savefig_txt, file_format)) 
+    if showfig:
+        plt.show()
+    plt.close()
+#-------------------------
 # Plots histogram of halo mass (average) vs relax time. cluster: > 1014, group/field: < 1014
 def _plot_timescale_environment_histogram_trelax(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
                       #==============================================
@@ -10156,7 +10380,7 @@ def _plot_timescale_environment_histogram_ttorque(misalignment_tree, misalignmen
 def _plot_timescale_accretion_histogram_trelax(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
                       #==============================================
                       # Plot scatter to check
-                      plot_scatter_test                   = True,
+                      plot_scatter_test                   = False,
                       #--------------------
                       # Plot options
                       set_hist_type                       = ['enter below'],          # which paths to use
@@ -10268,7 +10492,7 @@ def _plot_timescale_accretion_histogram_trelax(misalignment_tree, misalignment_i
     
     #===================================================================================
     inflow_1_df = df.loc[(df['Inflow rate'] < inflow_limits[0])]
-    #inflow_2_df = df.loc[(df['Inflow rate'] > inflow_limits[0]) & (df['Inflow rate'] < inflow_limits[1])]
+    inflow_2_df = df.loc[(df['Inflow rate'] > inflow_limits[0]) & (df['Inflow rate'] < inflow_limits[1])]
     inflow_3_df = df.loc[(df['Inflow rate'] > inflow_limits[1])]
     #ETG_df = df.loc[(df['Relaxation morph'] == 'ETG → ETG')]
     #LTG_df = df.loc[(df['Relaxation morph'] == 'LTG → LTG')]
@@ -10279,13 +10503,13 @@ def _plot_timescale_accretion_histogram_trelax(misalignment_tree, misalignment_i
         print('  Using only - CENTRALS -:')
     print('\tInflow rates %s [ Msun/yr ]:'%use_gas_type)
     print('\t0  - %i:    %i' %(inflow_limits[0], len(inflow_1_df)))
-    #print('\t%i - %i:    %i' %(inflow_limits[0], inflow_limits[1], len(inflow_2_df)))
+    print('\t%i - %i:    %i' %(inflow_limits[0], inflow_limits[1], len(inflow_2_df)))
     print('\t%i +   :    %i' %(inflow_limits[1], len(inflow_3_df)))
     print(' ')
     print('-------')
     print('Medians:       [ Gyr ]')
     print('range 1:    %.2f' %(np.median(inflow_1_df['Relaxation time'])))
-    #print('range 2:    %.2f' %(np.median(inflow_2_df['Relaxation time'])))
+    print('range 2:    %.2f' %(np.median(inflow_2_df['Relaxation time'])))
     print('range 3:    %.2f' %(np.median(inflow_3_df['Relaxation time'])))
     
 
@@ -10310,15 +10534,15 @@ def _plot_timescale_accretion_histogram_trelax(misalignment_tree, misalignment_i
     
     #---------------
     # KS test
-    #print('-------------')
-    #res = stats.ks_2samp(inflow_1_df['Relaxation time'], inflow_2_df['Relaxation time'])
-    #print('KS-test:     lowest inflow range - middle inflow range')
-    #print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(inflow_1_df.index) + len(inflow_2_df.index))/(len(inflow_1_df.index)*len(inflow_2_df.index))))))
-    #print('   p-value: %s' %res.pvalue)
-    #res = stats.ks_2samp(inflow_2_df['Relaxation time'], inflow_3_df['Relaxation time'])
-    #print('KS-test:     middle inflow range - highest inflow range')
-    #print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(inflow_2_df.index) + len(inflow_3_df.index))/(len(inflow_2_df.index)*len(inflow_3_df.index))))))
-    #print('   p-value: %s' %res.pvalue)
+    print('-------------')
+    res = stats.ks_2samp(inflow_1_df['Relaxation time'], inflow_2_df['Relaxation time'])
+    print('KS-test:     lowest inflow range - middle inflow range')
+    print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(inflow_1_df.index) + len(inflow_2_df.index))/(len(inflow_1_df.index)*len(inflow_2_df.index))))))
+    print('   p-value: %s' %res.pvalue)
+    res = stats.ks_2samp(inflow_2_df['Relaxation time'], inflow_3_df['Relaxation time'])
+    print('KS-test:     middle inflow range - highest inflow range')
+    print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(inflow_2_df.index) + len(inflow_3_df.index))/(len(inflow_2_df.index)*len(inflow_3_df.index))))))
+    print('   p-value: %s' %res.pvalue)
     res = stats.ks_2samp(inflow_1_df['Relaxation time'], inflow_3_df['Relaxation time'])
     print('KS-test:     lowest inflow range - highest inflow range')
     print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(inflow_1_df.index) + len(inflow_3_df.index))/(len(inflow_1_df.index)*len(inflow_3_df.index))))))
@@ -10337,13 +10561,14 @@ def _plot_timescale_accretion_histogram_trelax(misalignment_tree, misalignment_i
     
     #-------------
     ### Plot histogram
-    cmap = cm.get_cmap('Greens')
-    c1 = cmap(0.5)
-    #c2 = cmap(0.7)
-    c3 = cmap(1.0)
+    cmap = cm.get_cmap('copper')
+    c1 = cmap(1.0)
+    c2 = cmap(0.7)
+    c3 = cmap(0.4)
     
     #for inflow_df, plot_color in zip([inflow_1_df, inflow_2_df, inflow_3_df], [c1, c2, c3]):
-    for inflow_df, plot_color in zip([inflow_1_df, inflow_3_df], [c1, c3]):
+    #for inflow_df, plot_color in zip([inflow_1_df, inflow_3_df], [c1, c3]):
+    for inflow_df, plot_color in zip([inflow_1_df, inflow_2_df, inflow_3_df], [c1, c2, c3]):
         # Add hist
         axs.hist(inflow_df['Relaxation time'], weights=np.ones(len(inflow_df['Relaxation time']))/len(inflow_df['Relaxation time']), bins=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax), histtype='step', facecolor='none', alpha=0.9, lw=1, edgecolor=plot_color)
         hist_n, _ = np.histogram(inflow_df['Relaxation time'], bins=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax), range=(0, set_bin_limit_trelax))
@@ -10376,9 +10601,9 @@ def _plot_timescale_accretion_histogram_trelax(misalignment_tree, misalignment_i
     legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
     legend_colors.append(c1)
     
-    #legend_labels.append(r'$%s<\dot{M}_{\mathrm{gas}}$'%(inflow_limits[0]) + '/M$_{\odot}$ yr$^{-1}$' + r'$<%s$' %(inflow_limits[1]))
-    #legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-    #legend_colors.append(c2)
+    legend_labels.append(r'$%s<\dot{M}_{\mathrm{gas}}$'%(inflow_limits[0]) + '/M$_{\odot}$ yr$^{-1}$' + r'$<%s$' %(inflow_limits[1]))
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append(c2)
 
     legend_labels.append(r'$\dot{M}_{\mathrm{gas}}$' + r'$>%s$'%(inflow_limits[1]) + ' M$_{\odot}$ yr$^{-1}$')
     legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
@@ -10432,7 +10657,7 @@ def _plot_timescale_accretion_histogram_trelax(misalignment_tree, misalignment_i
 def _plot_timescale_accretion_histogram_tdyn(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
                       #==============================================
                       # Plot scatter to check
-                      plot_scatter_test                   = True,
+                      plot_scatter_test                   = False,
                       #--------------------
                       # Plot options
                       set_hist_type                       = ['enter below'],          # which paths to use
@@ -10545,7 +10770,7 @@ def _plot_timescale_accretion_histogram_tdyn(misalignment_tree, misalignment_inp
     
     #===================================================================================
     inflow_1_df = df.loc[(df['Inflow rate'] < inflow_limits[0])]
-    #inflow_2_df = df.loc[(df['Inflow rate'] > inflow_limits[0]) & (df['Inflow rate'] < inflow_limits[1])]
+    inflow_2_df = df.loc[(df['Inflow rate'] > inflow_limits[0]) & (df['Inflow rate'] < inflow_limits[1])]
     inflow_3_df = df.loc[(df['Inflow rate'] > inflow_limits[1])]
     #ETG_df = df.loc[(df['Relaxation morph'] == 'ETG → ETG')]
     #LTG_df = df.loc[(df['Relaxation morph'] == 'LTG → LTG')]
@@ -10556,13 +10781,13 @@ def _plot_timescale_accretion_histogram_tdyn(misalignment_tree, misalignment_inp
         print('  Using only - CENTRALS -:')
     print('\tInflow rates %s [ Msun/yr ]:'%use_gas_type)
     print('\t0  - %i:    %i' %(inflow_limits[0], len(inflow_1_df)))
-    #print('\t%i - %i:    %i' %(inflow_limits[0], inflow_limits[1], len(inflow_2_df)))
+    print('\t%i - %i:    %i' %(inflow_limits[0], inflow_limits[1], len(inflow_2_df)))
     print('\t%i +   :    %i' %(inflow_limits[1], len(inflow_3_df)))
     print(' ')
     print('-------')
     print('Medians:       [ tdyn ]')
     print('range 1:    %.2f' %(np.median(inflow_1_df['Relaxation time'])))
-    #print('range 2:    %.2f' %(np.median(inflow_2_df['Relaxation time'])))
+    print('range 2:    %.2f' %(np.median(inflow_2_df['Relaxation time'])))
     print('range 3:    %.2f' %(np.median(inflow_3_df['Relaxation time'])))
     
 
@@ -10587,15 +10812,15 @@ def _plot_timescale_accretion_histogram_tdyn(misalignment_tree, misalignment_inp
     
     #---------------
     # KS test
-    #print('-------------')
-    #res = stats.ks_2samp(inflow_1_df['Relaxation time'], inflow_2_df['Relaxation time'])
-    #print('KS-test:     lowest inflow range - middle inflow range')
-    #print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(inflow_1_df.index) + len(inflow_2_df.index))/(len(inflow_1_df.index)*len(inflow_2_df.index))))))
-    #print('   p-value: %s' %res.pvalue)
-    #res = stats.ks_2samp(inflow_2_df['Relaxation time'], inflow_3_df['Relaxation time'])
-    #print('KS-test:     middle inflow range - highest inflow range')
-    #print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(inflow_2_df.index) + len(inflow_3_df.index))/(len(inflow_2_df.index)*len(inflow_3_df.index))))))
-    #print('   p-value: %s' %res.pvalue)
+    print('-------------')
+    res = stats.ks_2samp(inflow_1_df['Relaxation time'], inflow_2_df['Relaxation time'])
+    print('KS-test:     lowest inflow range - middle inflow range')
+    print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(inflow_1_df.index) + len(inflow_2_df.index))/(len(inflow_1_df.index)*len(inflow_2_df.index))))))
+    print('   p-value: %s' %res.pvalue)
+    res = stats.ks_2samp(inflow_2_df['Relaxation time'], inflow_3_df['Relaxation time'])
+    print('KS-test:     middle inflow range - highest inflow range')
+    print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(inflow_2_df.index) + len(inflow_3_df.index))/(len(inflow_2_df.index)*len(inflow_3_df.index))))))
+    print('   p-value: %s' %res.pvalue)
     res = stats.ks_2samp(inflow_1_df['Relaxation time'], inflow_3_df['Relaxation time'])
     print('KS-test:     lowest inflow range - highest inflow range')
     print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(inflow_1_df.index) + len(inflow_3_df.index))/(len(inflow_1_df.index)*len(inflow_3_df.index))))))
@@ -10614,13 +10839,13 @@ def _plot_timescale_accretion_histogram_tdyn(misalignment_tree, misalignment_inp
     
     #-------------
     ### Plot histogram
-    cmap = cm.get_cmap('Greens')
-    c1 = cmap(0.5)
-    #c2 = cmap(0.7)
-    c3 = cmap(1.0)
+    cmap = cm.get_cmap('copper')
+    c1 = cmap(1.0)
+    c2 = cmap(0.7)
+    c3 = cmap(0.4)
     
-    #for inflow_df, plot_color in zip([inflow_1_df, inflow_2_df, inflow_3_df], [c1, c2, c3]):
-    for inflow_df, plot_color in zip([inflow_1_df, inflow_3_df], [c1, c3]):
+    #for inflow_df, plot_color in zip([inflow_1_df, inflow_3_df], [c1, c3]):
+    for inflow_df, plot_color in zip([inflow_1_df, inflow_2_df, inflow_3_df], [c1, c2, c3]):
         # Add hist
         axs.hist(inflow_df['Relaxation time'], weights=np.ones(len(inflow_df['Relaxation time']))/len(inflow_df['Relaxation time']), bins=np.arange(0, set_bin_limit_tdyn+set_bin_width_tdyn, set_bin_width_tdyn), histtype='step', facecolor='none', alpha=0.9, lw=1, edgecolor=plot_color)
         hist_n, _ = np.histogram(inflow_df['Relaxation time'], bins=np.arange(0, set_bin_limit_tdyn+set_bin_width_tdyn, set_bin_width_tdyn), range=(0, set_bin_limit_tdyn))
@@ -10653,9 +10878,9 @@ def _plot_timescale_accretion_histogram_tdyn(misalignment_tree, misalignment_inp
     legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
     legend_colors.append(c1)
     
-    #legend_labels.append(r'$%s<\dot{M}_{\mathrm{gas}}$'%(inflow_limits[0]) + '/M$_{\odot}$ yr$^{-1}$' + r'$<%s$' %(inflow_limits[1]))
-    #legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
-    #legend_colors.append(c2)
+    legend_labels.append(r'$%s<\dot{M}_{\mathrm{gas}}$'%(inflow_limits[0]) + '/M$_{\odot}$ yr$^{-1}$' + r'$<%s$' %(inflow_limits[1]))
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append(c2)
 
     legend_labels.append(r'$\dot{M}_{\mathrm{gas}}$' + r'$>%s$'%(inflow_limits[1]) + ' M$_{\odot}$ yr$^{-1}$')
     legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
@@ -10708,7 +10933,7 @@ def _plot_timescale_accretion_histogram_tdyn(misalignment_tree, misalignment_inp
 def _plot_timescale_accretion_histogram_ttorque(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
                       #==============================================
                       # Plot scatter to check
-                      plot_scatter_test                   = True,
+                      plot_scatter_test                   = False,
                       #--------------------
                       # Plot options
                       set_hist_type                       = ['enter below'],          # which paths to use
@@ -10821,7 +11046,7 @@ def _plot_timescale_accretion_histogram_ttorque(misalignment_tree, misalignment_
     
     #===================================================================================
     inflow_1_df = df.loc[(df['Inflow rate'] < inflow_limits[0])]
-    #inflow_2_df = df.loc[(df['Inflow rate'] > inflow_limits[0]) & (df['Inflow rate'] < inflow_limits[1])]
+    inflow_2_df = df.loc[(df['Inflow rate'] > inflow_limits[0]) & (df['Inflow rate'] < inflow_limits[1])]
     inflow_3_df = df.loc[(df['Inflow rate'] > inflow_limits[1])]
     #ETG_df = df.loc[(df['Relaxation morph'] == 'ETG → ETG')]
     #LTG_df = df.loc[(df['Relaxation morph'] == 'LTG → LTG')]
@@ -10832,13 +11057,13 @@ def _plot_timescale_accretion_histogram_ttorque(misalignment_tree, misalignment_
         print('  Using only - CENTRALS -:')
     print('\tInflow rates %s [ Msun/yr ]:'%use_gas_type)
     print('\t0  - %i:    %i' %(inflow_limits[0], len(inflow_1_df)))
-    #print('\t%i - %i:    %i' %(inflow_limits[0], inflow_limits[1], len(inflow_2_df)))
+    print('\t%i - %i:    %i' %(inflow_limits[0], inflow_limits[1], len(inflow_2_df)))
     print('\t%i +   :    %i' %(inflow_limits[1], len(inflow_3_df)))
     print(' ')
     print('-------')
     print('Medians:       [ ttorque ]')
     print('range 1:    %.2f' %(np.median(inflow_1_df['Relaxation time'])))
-    #print('range 2:    %.2f' %(np.median(inflow_2_df['Relaxation time'])))
+    print('range 2:    %.2f' %(np.median(inflow_2_df['Relaxation time'])))
     print('range 3:    %.2f' %(np.median(inflow_3_df['Relaxation time'])))
     
 
@@ -10863,15 +11088,15 @@ def _plot_timescale_accretion_histogram_ttorque(misalignment_tree, misalignment_
     
     #---------------
     # KS test
-    #print('-------------')
-    #res = stats.ks_2samp(inflow_1_df['Relaxation time'], inflow_2_df['Relaxation time'])
-    #print('KS-test:     lowest inflow range - middle inflow range')
-    #print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(inflow_1_df.index) + len(inflow_2_df.index))/(len(inflow_1_df.index)*len(inflow_2_df.index))))))
-    #print('   p-value: %s' %res.pvalue)
-    #res = stats.ks_2samp(inflow_2_df['Relaxation time'], inflow_3_df['Relaxation time'])
-    #print('KS-test:     middle inflow range - highest inflow range')
-    #print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(inflow_2_df.index) + len(inflow_3_df.index))/(len(inflow_2_df.index)*len(inflow_3_df.index))))))
-    #print('   p-value: %s' %res.pvalue)
+    print('-------------')
+    res = stats.ks_2samp(inflow_1_df['Relaxation time'], inflow_2_df['Relaxation time'])
+    print('KS-test:     lowest inflow range - middle inflow range')
+    print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(inflow_1_df.index) + len(inflow_2_df.index))/(len(inflow_1_df.index)*len(inflow_2_df.index))))))
+    print('   p-value: %s' %res.pvalue)
+    res = stats.ks_2samp(inflow_2_df['Relaxation time'], inflow_3_df['Relaxation time'])
+    print('KS-test:     middle inflow range - highest inflow range')
+    print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(inflow_2_df.index) + len(inflow_3_df.index))/(len(inflow_2_df.index)*len(inflow_3_df.index))))))
+    print('   p-value: %s' %res.pvalue)
     res = stats.ks_2samp(inflow_1_df['Relaxation time'], inflow_3_df['Relaxation time'])
     print('KS-test:     lowest inflow range - highest inflow range')
     print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(inflow_1_df.index) + len(inflow_3_df.index))/(len(inflow_1_df.index)*len(inflow_3_df.index))))))
@@ -10890,15 +11115,17 @@ def _plot_timescale_accretion_histogram_ttorque(misalignment_tree, misalignment_
     
     #-------------
     ### Plot histogram
+    #cmap = cm.get_cmap('Greens')
     cmap = cm.get_cmap('Greens')
     c1 = cmap(0.5)
-    #c2 = cmap(0.7)
+    #c2 = 'grey'
+    #c2 = cmap(0.5)
     c3 = cmap(1.0)
     
-    #for inflow_df, plot_color in zip([inflow_1_df, inflow_2_df, inflow_3_df], [c1, c2, c3]):
     for inflow_df, plot_color in zip([inflow_1_df, inflow_3_df], [c1, c3]):
+        #for inflow_df, plot_color in zip([inflow_1_df, inflow_2_df, inflow_3_df], [c1, c2, c3]):
         # Add hist
-        axs.hist(inflow_df['Relaxation time'], weights=np.ones(len(inflow_df['Relaxation time']))/len(inflow_df['Relaxation time']), bins=np.arange(0, set_bin_limit_ttorque+set_bin_width_ttorque, set_bin_width_ttorque), histtype='step', facecolor='none', alpha=0.9, lw=1, edgecolor=plot_color)
+        axs.hist(inflow_df['Relaxation time'], weights=np.ones(len(inflow_df['Relaxation time']))/len(inflow_df['Relaxation time']), bins=np.arange(0, set_bin_limit_ttorque+set_bin_width_ttorque, set_bin_width_ttorque), histtype='step', facecolor='none', alpha=0.8, lw=1, edgecolor=plot_color)
         hist_n, _ = np.histogram(inflow_df['Relaxation time'], bins=np.arange(0, set_bin_limit_ttorque+set_bin_width_ttorque, set_bin_width_ttorque), range=(0, set_bin_limit_ttorque))
         
         # Add error bars
@@ -10916,7 +11143,7 @@ def _plot_timescale_accretion_histogram_ttorque(misalignment_tree, misalignment_
     axs.set_xticks(np.arange(0, set_bin_limit_ttorque+0.1, step=2))
     axs.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{torque}}$')
     axs.set_ylabel('Percentage of\nmisalignments')
-    axs.set_ylim(bottom=0.00025)
+    axs.set_ylim(bottom=0.0005)
     
     
     #-----------
@@ -12953,6 +13180,665 @@ def _plot_morphology_change_ttorque_ellip(misalignment_tree, misalignment_input,
             plt.close()
               
 
+#-------------------------
+# Plots histogram of halo mass (average) vs relax time. cluster: > 1014, group/field: < 1014
+def _plot_timescale_kappastars_histogram_trelax(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
+                      #==============================================
+                      # Plot options
+                      set_hist_type                       = ['enter below'],          # which paths to use
+                      set_hist_min_trelax                 = 0.2,                # [ 0.25 / 0 ] removing low resolution
+                        add_plot_errorbars                = True,
+                        kappa_limits                      = [0.2, 0.3, 0.4, 0.5, 0.6],         # kappa stars
+                      #--------------------
+                      # General formatting
+                      set_bin_limit_trelax                = 6,        # [ None / Gyr ]
+                      set_bin_width_trelax                = 0.2,     # [ 0.25 / Gyr ]
+                      set_plot_histogram_log              = False,    # set yaxis as log
+                      #==============================================
+                      showfig       = True,
+                      savefig       = False,    
+                        file_format   = 'pdf',
+                        savefig_txt = '',            # [ '' / 'any text' / 'manual' ] 'manual' will prompt txt before saving
+                      #-----------------------------
+                      debug = False):
+                      
+    #-------------------------
+    # Average timescales from input (for use in metadata)
+    mean_timescale   = np.mean(np.array(summary_dict['trelax']['array']))
+    median_timescale = np.median(np.array(summary_dict['trelax']['array']))
+    std_timescale    = np.std(np.array(summary_dict['trelax']['array']))
+    # Average tdyn
+    mean_tdyn   = np.mean(np.array(summary_dict['tdyn']['array']))
+    median_tdyn = np.median(np.array(summary_dict['tdyn']['array']))
+    std_tdyn    = np.std(np.array(summary_dict['tdyn']['array']))
+    # Average ttorque
+    mean_ttorque   = np.mean(np.array(summary_dict['ttorque']['array']))
+    median_ttorque = np.median(np.array(summary_dict['ttorque']['array']))
+    std_ttorque    = np.std(np.array(summary_dict['ttorque']['array']))
+    
+    #-------------------------
+    relaxation_type    = misalignment_input['relaxation_type']
+    relaxation_morph   = misalignment_input['relaxation_morph']
+    misalignment_morph = misalignment_input['misalignment_morph']
+    morph_limits       = misalignment_input['morph_limits']
+    peak_misangle      = misalignment_input['peak_misangle']
+    min_trelax         = misalignment_input['min_trelax']        
+    max_trelax         = misalignment_input['max_trelax'] 
+    use_angle          = misalignment_input['use_angle']
+    misangle_threshold = misalignment_input['misangle_threshold']
+    time_extra         = misalignment_input['time_extra']
+    #------------------------- 
+    
+    
+    #==========================================================================
+    # Gather data
+    relaxationtime_plot  = []
+    relaxationtype_plot  = []
+    relaxationmorph_plot = []
+    kappastars_plot      = []
+    ID_plot              = []
+    for ID_i in misalignment_tree.keys():
+        
+        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_hist_min_trelax:
+            continue
+    
+        if misalignment_tree['%s' %ID_i]['relaxation_type'] in set_hist_type:
+            ID_plot.append(ID_i)
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_time'])
+            kappastars_plot.append(np.mean(misalignment_tree['%s' %ID_i]['kappa_stars']))
+            
+            
+    print('  Using sample: ', len(ID_plot))
+    
+    # Collect data into dataframe
+    df = pd.DataFrame(data={'Relaxation time': relaxationtime_plot, 'GalaxyIDs': ID_plot})
+    df['Kappa stars'] = kappastars_plot
+    
+    
+    #===================================================================================
+
+    df_1 = df.loc[(df['Kappa stars'] < kappa_limits[0])]
+    df_2 = df.loc[(df['Kappa stars'] > kappa_limits[0]) & (df['Kappa stars'] < kappa_limits[1])]
+    df_3 = df.loc[(df['Kappa stars'] > kappa_limits[1]) & (df['Kappa stars'] < kappa_limits[2])]
+    df_4 = df.loc[(df['Kappa stars'] > kappa_limits[2]) & (df['Kappa stars'] < kappa_limits[3])]
+    df_5 = df.loc[(df['Kappa stars'] > kappa_limits[3]) & (df['Kappa stars'] < kappa_limits[4])]
+    df_6 = df.loc[(df['Kappa stars'] > kappa_limits[4])]
+    
+    
+    
+    print('-------------------------------------------------------------')
+    print('Number of relaxations: ', len(ID_plot))
+    print('\tKappa stars thresholds: (average)')
+    print('\t0.0 - %.1f:    %i' %(kappa_limits[0], len(df_1['Kappa stars'])))
+    print('\t%.1f - %.1f:    %i' %(kappa_limits[0], kappa_limits[1], len(df_2['Kappa stars'])))
+    print('\t%.1f - %.1f:    %i' %(kappa_limits[1], kappa_limits[2], len(df_3['Kappa stars'])))
+    print('\t%.1f - %.1f:    %i' %(kappa_limits[2], kappa_limits[3], len(df_4['Kappa stars'])))
+    print('\t%.1f - %.1f:    %i' %(kappa_limits[3], kappa_limits[4], len(df_5['Kappa stars'])))
+    print('\t%.1f - 1.0:    %i' %(kappa_limits[4], len(df_6['Kappa stars'])))
+    
+    print('-------')
+    print('Medians:       [ Gyr ]')
+    print('0.0 - %.1f:    %.2f' %(kappa_limits[0], np.median(df_1['Relaxation time'])))
+    print('%.1f - %.1f:    %.2f' %(kappa_limits[0], kappa_limits[1], np.median(df_2['Relaxation time'])))
+    print('%.1f - %.1f:    %.2f' %(kappa_limits[1], kappa_limits[2], np.median(df_3['Relaxation time'])))
+    print('%.1f - %.1f:    %.2f' %(kappa_limits[2], kappa_limits[3], np.median(df_4['Relaxation time'])))
+    print('%.1f - %.1f:    %.2f' %(kappa_limits[3], kappa_limits[4], np.median(df_5['Relaxation time'])))
+    print('%.1f - 1.0:    %.2f' %(kappa_limits[4], np.median(df_6['Relaxation time'])))
+    
+    
+    #---------------
+    # KS test
+    print('-------------')
+    res = stats.ks_2samp(df_1['Relaxation time'], df_3['Relaxation time'])
+    print('KS-test:     kappa 0-0.2  -  0.3-0.4 range')
+    print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(df_1.index) + len(df_3.index))/(len(df_1.index)*len(df_3.index))))))
+    print('   p-value: %s' %res.pvalue)
+    res = stats.ks_2samp(df_3['Relaxation time'], df_5['Relaxation time'])
+    print('KS-test:     kappa 0.3-0.4  -  0.5-0.6 range')
+    print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(df_3.index) + len(df_5.index))/(len(df_3.index)*len(df_5.index))))))
+    print('   p-value: %s' %res.pvalue)
+    res = stats.ks_2samp(df_1['Relaxation time'], df_5['Relaxation time'])
+    print('KS-test:     kappa 0-0.2  -  0.5-0.6 range')
+    print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(df_1.index) + len(df_5.index))/(len(df_1.index)*len(df_5.index))))))
+    print('   p-value: %s' %res.pvalue)
+    
+    
+    #-------------
+    ### Plotting
+    fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.1], sharex=True, sharey=False)
+    plt.subplots_adjust(wspace=0.4, hspace=0.4)
+            
+    if set_bin_limit_trelax == None:
+        set_bin_limit_trelax = math.ceil(max(relaxationtime_plot))
+    if set_plot_histogram_log:
+        set_plot_relaxation_type = False 
+    
+    #-------------
+    ### Plot histogram
+    cmap = cm.get_cmap('Spectral')
+    c1 = cmap(0.2)
+    c3 = cmap(0.6)
+    c5 = cmap(1.0)
+    #for kappa_df, plot_color in zip([df_1, df_2, df_3, df_4, df_5, df_6], [c1, c2, c3, c4, c5, c6]):
+    for kappa_df, plot_color in zip([df_1, df_3, df_5], [c1, c3, c5]):
+        # Add hist
+        axs.hist(kappa_df['Relaxation time'], weights=np.ones(len(kappa_df['Relaxation time']))/len(kappa_df['Relaxation time']), bins=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax), histtype='step', facecolor='none', alpha=0.9, lw=1, edgecolor=plot_color)
+        hist_n, _ = np.histogram(kappa_df['Relaxation time'], bins=np.arange(0, set_bin_limit_trelax+set_bin_width_trelax, set_bin_width_trelax), range=(0, set_bin_limit_trelax))
+        
+        # Add error bars
+        if add_plot_errorbars:
+            axs.errorbar(np.arange(set_bin_width_trelax/2, set_bin_limit_trelax, set_bin_width_trelax), hist_n/np.sum(hist_n), xerr=None, yerr=np.sqrt(hist_n)/np.sum(hist_n), ecolor=plot_color, ls='none', capsize=1, elinewidth=0.7, markeredgewidth=0.7, alpha=0.3)
+        
+    
+    
+    #-----------
+    ### General formatting
+    # Axis labels
+    axs.set_yscale('log')
+    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
+    axs.set_xlim(0, set_bin_limit_trelax)
+    axs.set_xticks(np.arange(0, set_bin_limit_trelax+0.1, step=1))
+    axs.set_xlabel('$t_{\mathrm{relax}}$ [Gyr]')
+    axs.set_ylabel('Percentage of\nmisalignments')
+    axs.set_ylim(bottom=0.00025)
+    
+    
+    #-----------
+    ### Legend
+    legend_elements = []
+    legend_labels = []
+    legend_colors = []
+    
+    legend_labels.append(r'$\bar{\kappa}^{*}_{\mathrm{co}} < %.1f$' %(kappa_limits[0]))
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append(c1)
+    
+    legend_labels.append(r'$%.1f < \bar{\kappa}^{*}_{\mathrm{co}} < %.1f$' %(kappa_limits[1], kappa_limits[2]))
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append(c3)
+    
+    legend_labels.append(r'$%.1f < \bar{\kappa}^{*}_{\mathrm{co}} < %.1f$' %(kappa_limits[-2], kappa_limits[-1]))
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append(c5)
+    
+    ncol=1
+    axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0, ncol=ncol)
+    
+    
+    #-----------
+    ### title
+    plot_annotate = ''
+    if len(set_hist_type) < 4:
+        if 'co-co' in set_hist_type:
+            plot_annotate = plot_annotate + 'co → co'
+        if 'counter-counter' in set_hist_type:
+            plot_annotate = plot_annotate + ', counter → counter'
+        if 'co-counter' in set_hist_type:
+            plot_annotate = plot_annotate + ', co → counter'
+        if 'counter-co' in set_hist_type:
+            plot_annotate = plot_annotate + ', counter → co'
+    if plot_annotate:
+        axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
+        
+    #-----------
+    ### other
+    plt.tight_layout()
+    
+    
+    #-----------
+    ### Savefig  
+                     
+    if savefig:
+        savefig_txt = savefig_txt_in + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
+
+        if len(set_hist_type) == 4:
+            savefig_txt = savefig_txt + '_allpaths'
+            
+        plt.savefig("%s/time_spent_misaligned_stellardisp/%strelax_halomass_%s_subsample%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), len(ID_plot), savefig_txt, file_format), format=file_format, bbox_inches='tight', dpi=600)    
+        print("\n  SAVED: %s/time_spent_misaligned_stellardisp/%strelax_halomass_%s_subsample%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), len(ID_plot), savefig_txt, file_format)) 
+    if showfig:
+        plt.show()
+    plt.close()
+# tdyn
+def _plot_timescale_kappastars_histogram_tdyn(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
+                      #==============================================
+                      # Plot options
+                      set_hist_type                       = ['enter below'],          # which paths to use
+                      set_hist_min_trelax                 = 0.2,                # [ 0.25 / 0 ] removing low resolution
+                        add_plot_errorbars                = True,
+                        kappa_limits                      = [0.2, 0.3, 0.4, 0.5, 0.6],         # kappa stars
+                      #--------------------
+                      # General formatting
+                      set_bin_limit_tdyn                  = 50,       # [ None / multiples ]
+                      set_bin_width_tdyn                  = 2,        # [ multiples ]
+                      set_plot_histogram_log              = False,    # set yaxis as log
+                      #==============================================
+                      showfig       = True,
+                      savefig       = False,    
+                        file_format   = 'pdf',
+                        savefig_txt = '',            # [ '' / 'any text' / 'manual' ] 'manual' will prompt txt before saving
+                      #-----------------------------
+                      debug = False):
+                      
+    #-------------------------
+    # Average timescales from input (for use in metadata)
+    mean_timescale   = np.mean(np.array(summary_dict['trelax']['array']))
+    median_timescale = np.median(np.array(summary_dict['trelax']['array']))
+    std_timescale    = np.std(np.array(summary_dict['trelax']['array']))
+    # Average tdyn
+    mean_tdyn   = np.mean(np.array(summary_dict['tdyn']['array']))
+    median_tdyn = np.median(np.array(summary_dict['tdyn']['array']))
+    std_tdyn    = np.std(np.array(summary_dict['tdyn']['array']))
+    # Average ttorque
+    mean_ttorque   = np.mean(np.array(summary_dict['ttorque']['array']))
+    median_ttorque = np.median(np.array(summary_dict['ttorque']['array']))
+    std_ttorque    = np.std(np.array(summary_dict['ttorque']['array']))
+    
+    #-------------------------
+    relaxation_type    = misalignment_input['relaxation_type']
+    relaxation_morph   = misalignment_input['relaxation_morph']
+    misalignment_morph = misalignment_input['misalignment_morph']
+    morph_limits       = misalignment_input['morph_limits']
+    peak_misangle      = misalignment_input['peak_misangle']
+    min_trelax         = misalignment_input['min_trelax']        
+    max_trelax         = misalignment_input['max_trelax'] 
+    use_angle          = misalignment_input['use_angle']
+    misangle_threshold = misalignment_input['misangle_threshold']
+    time_extra         = misalignment_input['time_extra']
+    #------------------------- 
+    
+    
+    #==========================================================================
+    # Gather data
+    relaxationtime_plot  = []
+    relaxationtype_plot  = []
+    relaxationmorph_plot = []
+    kappastars_plot      = []
+    ID_plot              = []
+    for ID_i in misalignment_tree.keys():
+        
+        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_hist_min_trelax:
+            continue
+    
+        if misalignment_tree['%s' %ID_i]['relaxation_type'] in set_hist_type:
+            ID_plot.append(ID_i)
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_tdyn'])
+            kappastars_plot.append(np.mean(misalignment_tree['%s' %ID_i]['kappa_stars']))
+            
+            
+    print('  Using sample: ', len(ID_plot))
+    
+    # Collect data into dataframe
+    df = pd.DataFrame(data={'Relaxation time': relaxationtime_plot, 'GalaxyIDs': ID_plot})
+    df['Kappa stars'] = kappastars_plot
+    
+    
+    #===================================================================================
+
+    df_1 = df.loc[(df['Kappa stars'] < kappa_limits[0])]
+    df_2 = df.loc[(df['Kappa stars'] > kappa_limits[0]) & (df['Kappa stars'] < kappa_limits[1])]
+    df_3 = df.loc[(df['Kappa stars'] > kappa_limits[1]) & (df['Kappa stars'] < kappa_limits[2])]
+    df_4 = df.loc[(df['Kappa stars'] > kappa_limits[2]) & (df['Kappa stars'] < kappa_limits[3])]
+    df_5 = df.loc[(df['Kappa stars'] > kappa_limits[3]) & (df['Kappa stars'] < kappa_limits[4])]
+    df_6 = df.loc[(df['Kappa stars'] > kappa_limits[4])]
+    
+    
+    
+    print('-------------------------------------------------------------')
+    print('Number of relaxations: ', len(ID_plot))
+    print('\tKappa stars thresholds: (average)')
+    print('\t0.0 - %.1f:    %i' %(kappa_limits[0], len(df_1['Kappa stars'])))
+    print('\t%.1f - %.1f:    %i' %(kappa_limits[0], kappa_limits[1], len(df_2['Kappa stars'])))
+    print('\t%.1f - %.1f:    %i' %(kappa_limits[1], kappa_limits[2], len(df_3['Kappa stars'])))
+    print('\t%.1f - %.1f:    %i' %(kappa_limits[2], kappa_limits[3], len(df_4['Kappa stars'])))
+    print('\t%.1f - %.1f:    %i' %(kappa_limits[3], kappa_limits[4], len(df_5['Kappa stars'])))
+    print('\t%.1f - 1.0:    %i' %(kappa_limits[4], len(df_6['Kappa stars'])))
+    
+    print('-------')
+    print('Medians:       [ tdyn ]')
+    print('0.0 - %.1f:    %.2f' %(kappa_limits[0], np.median(df_1['Relaxation time'])))
+    print('%.1f - %.1f:    %.2f' %(kappa_limits[0], kappa_limits[1], np.median(df_2['Relaxation time'])))
+    print('%.1f - %.1f:    %.2f' %(kappa_limits[1], kappa_limits[2], np.median(df_3['Relaxation time'])))
+    print('%.1f - %.1f:    %.2f' %(kappa_limits[2], kappa_limits[3], np.median(df_4['Relaxation time'])))
+    print('%.1f - %.1f:    %.2f' %(kappa_limits[3], kappa_limits[4], np.median(df_5['Relaxation time'])))
+    print('%.1f - 1.0:    %.2f' %(kappa_limits[4], np.median(df_6['Relaxation time'])))
+    
+    #---------------
+    # KS test
+    print('-------------')
+    res = stats.ks_2samp(df_1['Relaxation time'], df_3['Relaxation time'])
+    print('KS-test:     kappa 0-0.2  -  0.3-0.4 range')
+    print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(df_1.index) + len(df_3.index))/(len(df_1.index)*len(df_3.index))))))
+    print('   p-value: %s' %res.pvalue)
+    res = stats.ks_2samp(df_3['Relaxation time'], df_5['Relaxation time'])
+    print('KS-test:     kappa 0.3-0.4  -  0.5-0.6 range')
+    print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(df_3.index) + len(df_5.index))/(len(df_3.index)*len(df_5.index))))))
+    print('   p-value: %s' %res.pvalue)
+    res = stats.ks_2samp(df_1['Relaxation time'], df_5['Relaxation time'])
+    print('KS-test:     kappa 0-0.2  -  0.5-0.6 range')
+    print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(df_1.index) + len(df_5.index))/(len(df_1.index)*len(df_5.index))))))
+    print('   p-value: %s' %res.pvalue)
+    
+    
+    #-------------
+    ### Plotting
+    fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.1], sharex=True, sharey=False)
+    plt.subplots_adjust(wspace=0.4, hspace=0.4)
+            
+    if set_bin_limit_tdyn == None:
+        set_bin_limit_tdyn = math.ceil(max(relaxationtime_plot))
+    if set_plot_histogram_log:
+        set_plot_relaxation_type = False 
+    
+    #-------------
+    ### Plot histogram
+    cmap = cm.get_cmap('Spectral')
+    c1 = cmap(0.2)
+    c3 = cmap(0.6)
+    c5 = cmap(1.0)
+    #for kappa_df, plot_color in zip([df_1, df_2, df_3, df_4, df_5, df_6], [c1, c2, c3, c4, c5, c6]):
+    for kappa_df, plot_color in zip([df_1, df_3, df_5], [c1, c3, c5]):
+        # Add hist
+        axs.hist(kappa_df['Relaxation time'], weights=np.ones(len(kappa_df['Relaxation time']))/len(kappa_df['Relaxation time']), bins=np.arange(0, set_bin_limit_tdyn+set_bin_width_tdyn, set_bin_width_tdyn), histtype='step', facecolor='none', alpha=0.9, lw=1, edgecolor=plot_color)
+        hist_n, _ = np.histogram(kappa_df['Relaxation time'], bins=np.arange(0, set_bin_limit_tdyn+set_bin_width_tdyn, set_bin_width_tdyn), range=(0, set_bin_limit_tdyn))
+        
+        # Add error bars
+        if add_plot_errorbars:
+            axs.errorbar(np.arange(set_bin_width_tdyn/2, set_bin_limit_tdyn, set_bin_width_tdyn), hist_n/np.sum(hist_n), xerr=None, yerr=np.sqrt(hist_n)/np.sum(hist_n), ecolor=plot_color, ls='none', capsize=1, elinewidth=0.7, markeredgewidth=0.7, alpha=0.3)
+        
+    
+    
+    #-----------
+    ### General formatting
+    # Axis labels
+    axs.set_yscale('log')
+    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
+    axs.set_xlim(0, set_bin_limit_tdyn)
+    axs.set_xticks(np.arange(0, set_bin_limit_tdyn+0.1, step=4))
+    axs.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{dyn}}$')
+    axs.set_ylabel('Percentage of\nmisalignments')
+    axs.set_ylim(bottom=0.00025)
+    
+    
+    #-----------
+    ### Legend
+    legend_elements = []
+    legend_labels = []
+    legend_colors = []
+    
+    legend_labels.append(r'$\bar{\kappa}^{*}_{\mathrm{co}} < %.1f$' %(kappa_limits[0]))
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append(c1)
+    
+    legend_labels.append(r'$%.1f < \bar{\kappa}^{*}_{\mathrm{co}} < %.1f$' %(kappa_limits[1], kappa_limits[2]))
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append(c3)
+    
+    legend_labels.append(r'$%.1f < \bar{\kappa}^{*}_{\mathrm{co}} < %.1f$' %(kappa_limits[-2], kappa_limits[-1]))
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append(c5)
+    
+    ncol=1
+    axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0, ncol=ncol)
+    
+    
+    #-----------
+    ### title
+    plot_annotate = ''
+    if len(set_hist_type) < 4:
+        if 'co-co' in set_hist_type:
+            plot_annotate = plot_annotate + 'co → co'
+        if 'counter-counter' in set_hist_type:
+            plot_annotate = plot_annotate + ', counter → counter'
+        if 'co-counter' in set_hist_type:
+            plot_annotate = plot_annotate + ', co → counter'
+        if 'counter-co' in set_hist_type:
+            plot_annotate = plot_annotate + ', counter → co'
+    if plot_annotate:
+        axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
+        
+    #-----------
+    ### other
+    plt.tight_layout()
+    
+    
+    #-----------
+    ### Savefig  
+                     
+    if savefig:
+        savefig_txt = savefig_txt_in + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
+
+        if len(set_hist_type) == 4:
+            savefig_txt = savefig_txt + '_allpaths'
+            
+        plt.savefig("%s/time_spent_misaligned_stellardisp/%stdyn_halomass_%s_subsample%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), len(ID_plot), savefig_txt, file_format), format=file_format, bbox_inches='tight', dpi=600)    
+        print("\n  SAVED: %s/time_spent_misaligned_stellardisp/%stdyn_halomass_%s_subsample%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), len(ID_plot), savefig_txt, file_format)) 
+    if showfig:
+        plt.show()
+    plt.close()
+# ttorque
+def _plot_timescale_kappastars_histogram_ttorque(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
+                      #==============================================
+                      # Plot options
+                      set_hist_type                       = ['enter below'],          # which paths to use
+                      set_hist_min_trelax                 = 0.2,                # [ 0.25 / 0 ] removing low resolution
+                        add_plot_errorbars                = True,
+                        kappa_limits                      = [0.2, 0.3, 0.4, 0.5, 0.6],         # kappa stars
+                      #--------------------
+                      # General formatting
+                      set_bin_limit_ttorque               = 20,       # [ None / multiples ]
+                      set_bin_width_ttorque               = 1,      # [ multiples ]
+                      set_plot_histogram_log              = False,    # set yaxis as log
+                      #==============================================
+                      showfig       = True,
+                      savefig       = False,    
+                        file_format   = 'pdf',
+                        savefig_txt = '',            # [ '' / 'any text' / 'manual' ] 'manual' will prompt txt before saving
+                      #-----------------------------
+                      debug = False):
+                      
+    #-------------------------
+    # Average timescales from input (for use in metadata)
+    mean_timescale   = np.mean(np.array(summary_dict['trelax']['array']))
+    median_timescale = np.median(np.array(summary_dict['trelax']['array']))
+    std_timescale    = np.std(np.array(summary_dict['trelax']['array']))
+    # Average tdyn
+    mean_tdyn   = np.mean(np.array(summary_dict['tdyn']['array']))
+    median_tdyn = np.median(np.array(summary_dict['tdyn']['array']))
+    std_tdyn    = np.std(np.array(summary_dict['tdyn']['array']))
+    # Average ttorque
+    mean_ttorque   = np.mean(np.array(summary_dict['ttorque']['array']))
+    median_ttorque = np.median(np.array(summary_dict['ttorque']['array']))
+    std_ttorque    = np.std(np.array(summary_dict['ttorque']['array']))
+    
+    #-------------------------
+    relaxation_type    = misalignment_input['relaxation_type']
+    relaxation_morph   = misalignment_input['relaxation_morph']
+    misalignment_morph = misalignment_input['misalignment_morph']
+    morph_limits       = misalignment_input['morph_limits']
+    peak_misangle      = misalignment_input['peak_misangle']
+    min_trelax         = misalignment_input['min_trelax']        
+    max_trelax         = misalignment_input['max_trelax'] 
+    use_angle          = misalignment_input['use_angle']
+    misangle_threshold = misalignment_input['misangle_threshold']
+    time_extra         = misalignment_input['time_extra']
+    #------------------------- 
+    
+    
+    #==========================================================================
+    # Gather data
+    relaxationtime_plot  = []
+    relaxationtype_plot  = []
+    relaxationmorph_plot = []
+    kappastars_plot      = []
+    ID_plot              = []
+    for ID_i in misalignment_tree.keys():
+        
+        if misalignment_tree['%s' %ID_i]['relaxation_time'] < set_hist_min_trelax:
+            continue
+    
+        if misalignment_tree['%s' %ID_i]['relaxation_type'] in set_hist_type:
+            ID_plot.append(ID_i)
+            relaxationtime_plot.append(misalignment_tree['%s' %ID_i]['relaxation_ttorque'])
+            kappastars_plot.append(np.mean(misalignment_tree['%s' %ID_i]['kappa_stars']))
+            
+            
+    print('  Using sample: ', len(ID_plot))
+    
+    # Collect data into dataframe
+    df = pd.DataFrame(data={'Relaxation time': relaxationtime_plot, 'GalaxyIDs': ID_plot})
+    df['Kappa stars'] = kappastars_plot
+    
+    
+    #===================================================================================
+
+    df_1 = df.loc[(df['Kappa stars'] < kappa_limits[0])]
+    df_2 = df.loc[(df['Kappa stars'] > kappa_limits[0]) & (df['Kappa stars'] < kappa_limits[1])]
+    df_3 = df.loc[(df['Kappa stars'] > kappa_limits[1]) & (df['Kappa stars'] < kappa_limits[2])]
+    df_4 = df.loc[(df['Kappa stars'] > kappa_limits[2]) & (df['Kappa stars'] < kappa_limits[3])]
+    df_5 = df.loc[(df['Kappa stars'] > kappa_limits[3]) & (df['Kappa stars'] < kappa_limits[4])]
+    df_6 = df.loc[(df['Kappa stars'] > kappa_limits[4])]
+    
+    
+    
+    print('-------------------------------------------------------------')
+    print('Number of relaxations: ', len(ID_plot))
+    print('\tKappa stars thresholds: (average)')
+    print('\t0.0 - %.1f:    %i' %(kappa_limits[0], len(df_1['Kappa stars'])))
+    print('\t%.1f - %.1f:    %i' %(kappa_limits[0], kappa_limits[1], len(df_2['Kappa stars'])))
+    print('\t%.1f - %.1f:    %i' %(kappa_limits[1], kappa_limits[2], len(df_3['Kappa stars'])))
+    print('\t%.1f - %.1f:    %i' %(kappa_limits[2], kappa_limits[3], len(df_4['Kappa stars'])))
+    print('\t%.1f - %.1f:    %i' %(kappa_limits[3], kappa_limits[4], len(df_5['Kappa stars'])))
+    print('\t%.1f - 1.0:    %i' %(kappa_limits[4], len(df_6['Kappa stars'])))
+    
+    print('-------')
+    print('Medians:       [ ttorque ]')
+    print('0.0 - %.1f:    %.2f' %(kappa_limits[0], np.median(df_1['Relaxation time'])))
+    print('%.1f - %.1f:    %.2f' %(kappa_limits[0], kappa_limits[1], np.median(df_2['Relaxation time'])))
+    print('%.1f - %.1f:    %.2f' %(kappa_limits[1], kappa_limits[2], np.median(df_3['Relaxation time'])))
+    print('%.1f - %.1f:    %.2f' %(kappa_limits[2], kappa_limits[3], np.median(df_4['Relaxation time'])))
+    print('%.1f - %.1f:    %.2f' %(kappa_limits[3], kappa_limits[4], np.median(df_5['Relaxation time'])))
+    print('%.1f - 1.0:    %.2f' %(kappa_limits[4], np.median(df_6['Relaxation time'])))
+    
+    
+    #---------------
+    # KS test
+    print('-------------')
+    res = stats.ks_2samp(df_1['Relaxation time'], df_3['Relaxation time'])
+    print('KS-test:     kappa 0-0.2  -  0.3-0.4 range')
+    print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(df_1.index) + len(df_3.index))/(len(df_1.index)*len(df_3.index))))))
+    print('   p-value: %s' %res.pvalue)
+    res = stats.ks_2samp(df_3['Relaxation time'], df_5['Relaxation time'])
+    print('KS-test:     kappa 0.3-0.4  -  0.5-0.6 range')
+    print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(df_3.index) + len(df_5.index))/(len(df_3.index)*len(df_5.index))))))
+    print('   p-value: %s' %res.pvalue)
+    res = stats.ks_2samp(df_1['Relaxation time'], df_5['Relaxation time'])
+    print('KS-test:     kappa 0-0.2  -  0.5-0.6 range')
+    print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(df_1.index) + len(df_5.index))/(len(df_1.index)*len(df_5.index))))))
+    print('   p-value: %s' %res.pvalue)
+    
+    
+    #-------------
+    ### Plotting
+    fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.1], sharex=True, sharey=False)
+    plt.subplots_adjust(wspace=0.4, hspace=0.4)
+            
+    if set_bin_limit_ttorque == None:
+        set_bin_limit_ttorque = math.ceil(max(relaxationtime_plot))
+    if set_plot_histogram_log:
+        set_plot_relaxation_type = False 
+    
+    
+    #-----------------
+    ### Plot histogram
+    cmap = cm.get_cmap('Spectral')
+    c1 = cmap(0.2)
+    c3 = cmap(0.6)
+    c5 = cmap(1.0)
+    #for kappa_df, plot_color in zip([df_1, df_2, df_3, df_4, df_5, df_6], [c1, c2, c3, c4, c5, c6]):
+    for kappa_df, plot_color in zip([df_1, df_3, df_5], [c1, c3, c5]):
+        # Add hist
+        axs.hist(kappa_df['Relaxation time'], weights=np.ones(len(kappa_df['Relaxation time']))/len(kappa_df['Relaxation time']), bins=np.arange(0, set_bin_limit_ttorque+set_bin_width_ttorque, set_bin_width_ttorque), histtype='step', facecolor='none', alpha=0.9, lw=1, edgecolor=plot_color)
+        hist_n, _ = np.histogram(kappa_df['Relaxation time'], bins=np.arange(0, set_bin_limit_ttorque+set_bin_width_ttorque, set_bin_width_ttorque), range=(0, set_bin_limit_ttorque))
+        
+        # Add error bars
+        if add_plot_errorbars:
+            axs.errorbar(np.arange(set_bin_width_ttorque/2, set_bin_limit_ttorque, set_bin_width_ttorque), hist_n/np.sum(hist_n), xerr=None, yerr=np.sqrt(hist_n)/np.sum(hist_n), ecolor=plot_color, ls='none', capsize=1, elinewidth=0.7, markeredgewidth=0.7, alpha=0.3)
+        
+    
+    
+    #-----------
+    ### General formatting
+    # Axis labels
+    axs.set_yscale('log')
+    axs.yaxis.set_major_formatter(PercentFormatter(1, symbol='', decimals=1))
+    axs.set_xlim(0, set_bin_limit_ttorque)
+    axs.set_xticks(np.arange(0, set_bin_limit_ttorque+0.1, step=2))
+    axs.set_xlabel(r'$t_{\mathrm{relax}}/\bar{t}_{\rm{torque}}$')
+    axs.set_ylabel('Percentage of\nmisalignments')
+    axs.set_ylim(bottom=0.00025)
+    
+    
+    #-----------
+    ### Legend
+    legend_elements = []
+    legend_labels = []
+    legend_colors = []
+    
+    legend_labels.append(r'$\bar{\kappa}^{*}_{\mathrm{co}} < %.1f$' %(kappa_limits[0]))
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append(c1)
+    
+    legend_labels.append(r'$%.1f < \bar{\kappa}^{*}_{\mathrm{co}} < %.1f$' %(kappa_limits[1], kappa_limits[2]))
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append(c3)
+    
+    legend_labels.append(r'$%.1f < \bar{\kappa}^{*}_{\mathrm{co}} < %.1f$' %(kappa_limits[-2], kappa_limits[-1]))
+    legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+    legend_colors.append(c5)
+    
+    ncol=1
+    axs.legend(handles=legend_elements, labels=legend_labels, loc='upper right', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0, ncol=ncol)
+    
+    
+    #-----------
+    ### title
+    plot_annotate = ''
+    if len(set_hist_type) < 4:
+        if 'co-co' in set_hist_type:
+            plot_annotate = plot_annotate + 'co → co'
+        if 'counter-counter' in set_hist_type:
+            plot_annotate = plot_annotate + ', counter → counter'
+        if 'co-counter' in set_hist_type:
+            plot_annotate = plot_annotate + ', co → counter'
+        if 'counter-co' in set_hist_type:
+            plot_annotate = plot_annotate + ', counter → co'
+    if plot_annotate:
+        axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
+        
+    #-----------
+    ### other
+    plt.tight_layout()
+    
+    
+    #-----------
+    ### Savefig  
+                     
+    if savefig:
+        savefig_txt = savefig_txt_in + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
+
+        if len(set_hist_type) == 4:
+            savefig_txt = savefig_txt + '_allpaths'
+            
+        plt.savefig("%s/time_spent_misaligned_stellardisp/%sttorque_kappastars_%s_subsample%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), len(ID_plot), savefig_txt, file_format), format=file_format, bbox_inches='tight', dpi=600)    
+        print("\n  SAVED: %s/time_spent_misaligned_stellardisp/%sttorque_kappastars_%s_subsample%s_%s.%s" %(fig_dir, 'L100_', len(misalignment_tree.keys()), len(ID_plot), savefig_txt, file_format)) 
+    if showfig:
+        plt.show()
+    plt.close()
+
+
+
+
 #\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 # Set starting parameters
 load_csv_file_in = '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_NEW'  
@@ -12979,8 +13865,9 @@ savefig_txt_in   = load_csv_file_in               # [ 'manual' / load_csv_file_i
 #'_10error_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_NEW'
 #'_normalLatency_anyMergers_anyMorph_NEW'   # no unstable
 #'_lowmisangle_thresh_NEW.csv'              # no unstable, limit at 20
+#'_30Thresh_45Peak_normalLatency_anyMergers_anyMorph_NEW'       # unstable at 30/150, must peak to 45/135
 
-#  False 
+#  None 
 # 'ETG → ETG' , 'LTG → LTG'
 #  r'ETG ($\bar{\kappa}_{\mathrm{co}}^{\mathrm{*}} < 0.35$)'
 # '$t_{\mathrm{relax}}>3\bar{t}_{\mathrm{torque}}$'    
@@ -13020,8 +13907,8 @@ if load_csv_file_in == '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010'
                             set_plot_histogram_log            = False,    # set yaxis as log
                               add_inset                       = True,
                             showfig = True,
-                            savefig = False)
-_plot_tdyn_histogram(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            savefig = False)"""
+"""_plot_tdyn_histogram(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_plot_relaxation_type          = True,     # SET TO FALSE IF BELOW TRUE. Stack histogram types   
                             set_plot_histogram_log            = False,    # set yaxis as log
                               add_inset                       = True, 
@@ -13058,17 +13945,17 @@ _plot_ttorque_histogram(misalignment_tree=misalignment_tree, misalignment_input=
                             add_stacked_median                = True,             # Whether to add a median line (will lower transparency of other lines)
                             set_stacked_relaxation_type       = ['co-co', 'co-counter', 'counter-co', 'counter-counter'],          # ['co-co', 'co-counter', 'counter-co', 'counter-counter']
                             showfig = True,
-                            savefig = True)
+                            savefig = False)
 _plot_stacked_tdyn_2x2(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             add_stacked_median                = True,             # Whether to add a median line (will lower transparency of other lines)
                             set_stacked_relaxation_type       = ['co-co', 'co-counter', 'counter-co', 'counter-counter'],          # ['co-co', 'co-counter', 'counter-co', 'counter-counter']
                             showfig = True,
-                            savefig = True)
+                            savefig = False)
 _plot_stacked_ttorque_2x2(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             add_stacked_median                = True,             # Whether to add a median line (will lower transparency of other lines)
                             set_stacked_relaxation_type       = ['co-co', 'co-counter', 'counter-co', 'counter-counter'],          # ['co-co', 'co-counter', 'counter-co', 'counter-counter']
                             showfig = True,
-                            savefig = True)"""
+                            savefig = False)"""
                             
 
 # PLOT BOX AND WHISKER OF RELAXATION DISTRIBUTIONS
@@ -13096,8 +13983,8 @@ _plot_offset_tdyn(misalignment_tree=misalignment_tree, misalignment_input=misali
                             use_offset_morphs    = True,
                               set_offset_morphs  = ['LTG-LTG', 'ETG-ETG'],           # Can be either relaxation_morph or misalignment_morph
                             showfig = True,
-                            savefig = True)
-_plot_offset_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            savefig = True)"""
+"""_plot_offset_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             use_offset_morphs    = True,
                               set_offset_morphs  = ['LTG-LTG', 'ETG-ETG'],           # Can be either relaxation_morph or misalignment_morph
                             showfig = True,
@@ -13150,17 +14037,36 @@ _plot_timescale_gas_scatter_ttorque(misalignment_tree=misalignment_tree, misalig
                             set_gashist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_gashist_min_trelax              = 0.2,
                             showfig = True,
-                            savefig = True)     # will auto-rename to _allpath if all 4 set_gashist_type used
+                            savefig = False)     # will auto-rename to _allpath if all 4 set_gashist_type used
 _plot_timescale_gas_histogram_tdyn(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_gashist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_gashist_min_trelax              = 0.2,
                             showfig = True,
-                            savefig = True)
+                            savefig = False)"""
 _plot_timescale_gas_histogram_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_gashist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_gashist_min_trelax              = 0.2,
                             showfig = True,
-                            savefig = True)"""
+                            savefig = True)
+
+
+# PLOTS HISTOGRAM OF AVERAGE KAPPA STARS WITH RELAXATION TIME
+"""_plot_timescale_kappastars_histogram_trelax(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
+                            set_hist_min_trelax              = 0.2,
+                            showfig = True,
+                            savefig = True)      # will auto-rename to _allpath if all 4 set_gashist_type used
+_plot_timescale_kappastars_histogram_tdyn(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
+                            set_hist_min_trelax              = 0.2,
+                            showfig = True,
+                            savefig = True)      # will auto-rename to _allpath if all 4 set_gashist_type used
+_plot_timescale_kappastars_histogram_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
+                            set_hist_min_trelax              = 0.2,
+                            showfig = True,
+                            savefig = True) """     # will auto-rename to _allpath if all 4 set_gashist_type used
+                        
                             
 
 
@@ -13176,13 +14082,13 @@ _plot_timescale_occupation_histogram_tdyn(misalignment_tree=misalignment_tree, m
                             set_hist_min_trelax              = 0.2,
                               use_occ_morph                  = False,               
                             showfig = True,
-                            savefig = True)
-_plot_timescale_occupation_histogram_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            savefig = True)"""
+"""_plot_timescale_occupation_histogram_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_hist_min_trelax              = 0.2,
                               use_occ_morph                  = False,        
                             showfig = True,
-                            savefig = True)"""
+                            savefig = False)"""
                             
 """_plot_timescale_occupation_histogram_trelax(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
@@ -13210,76 +14116,84 @@ _plot_timescale_occupation_histogram_ttorque(misalignment_tree=misalignment_tree
                             set_hist_min_trelax              = 0.2,
                               use_only_centrals              = False,        # Use only centrals
                             showfig = True,
-                            savefig = True)      # will auto-rename to _allpath if all 4 set_gashist_type used
+                            savefig = False)      # will auto-rename to _allpath if all 4 set_gashist_type used
 _plot_timescale_stelmass_histogram_tdyn(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_hist_min_trelax              = 0.2,
                               use_only_centrals              = False,        # Use only centrals
                             showfig = True,
-                            savefig = True)      # will auto-rename to _allpath if all 4 set_gashist_type used
-_plot_timescale_stelmass_histogram_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            savefig = False)      # will auto-rename to _allpath if all 4 set_gashist_type used"""
+"""_plot_timescale_stelmass_histogram_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_hist_min_trelax              = 0.2,
                               use_only_centrals              = False,        # Use only centrals
                             showfig = True,
-                            savefig = True)      # will auto-rename to _allpath if all 4 set_gashist_type used"""
+                            savefig = False)      # will auto-rename to _allpath if all 4 set_gashist_type used"""
 
 
 # PLOTS HISTOGRAM OF HALO MASS WITH RELAXATION TIME
+"""_plot_halomass_radsf(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            showfig = True,
+                            savefig = False)"""
+"""_plot_halomass_masssf(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            showfig = True,
+                            savefig = False)"""
 """_plot_timescale_environment_histogram_trelax(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_hist_min_trelax              = 0.2,
                               use_occ_morph                  = False,        # Differentiates between ETG centrals, and LTG centrals. Will autorename
                               use_only_centrals              = True,        # Use only centrals
                             showfig = True,
-                            savefig = True)      # will auto-rename to _allpath if all 4 set_gashist_type used
+                            savefig = False)      # will auto-rename to _allpath if all 4 set_gashist_type used
 _plot_timescale_environment_histogram_tdyn(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_hist_min_trelax              = 0.2,
                               use_occ_morph                  = False,      
                               use_only_centrals              = True,        # Use only centrals  
                             showfig = True,
-                            savefig = True)
-_plot_timescale_environment_histogram_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            savefig = False)"""
+"""_plot_timescale_environment_histogram_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_hist_min_trelax              = 0.2,
                               use_occ_morph                  = False,       
                               use_only_centrals              = True,        # Use only centrals                               
                             showfig = True,
-                            savefig = True)"""
+                            savefig = False)"""
 
 
 # PLOTS HISTOGRAM OF GAS INFLOW WITH RELAXATION TIME - simplified    (un-comment df_2 lines)             
 """_plot_timescale_accretion_histogram_trelax(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_hist_min_trelax              = 0.2,
+                              ignore_trelax_inflow           = 0.3,                 # [ 0.3 / 0 ] do not consider inflow within this region as this counts toward initial formation
                               inflow_radius                  = 2.0,                # HMR to use
-                              inflow_limits                  = [10, 10],            # [ < lower - upper < Msun/yr ] e.g. [5, 10] means <5, 5-10, 10+      
+                              inflow_limits                  = [1, 10],            # [ < lower - upper < Msun/yr ] e.g. [5, 10] means <5, 5-10, 10+      
                               use_gas_type                   = 'gas',                  # [ 'gas' / 'gas_sf' ]        
                               use_only_centrals              = True,        # Use only centrals                                                        
                             showfig = True,
-                            savefig = False,
-                            savefig_txt = 'simple')
+                            savefig = True)
 _plot_timescale_accretion_histogram_tdyn(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_hist_min_trelax              = 0.2,
+                              ignore_trelax_inflow           = 0.3,                 # [ 0.3 / 0 ] do not consider inflow within this region as this counts toward initial formation
                               inflow_radius                  = 2.0,                # HMR to use
-                              inflow_limits                  = [10, 10],            # [ < lower - upper < Msun/yr ] e.g. [5, 10] means <5, 5-10, 10+   
+                              inflow_limits                  = [1, 10],            # [ < lower - upper < Msun/yr ] e.g. [5, 10] means <5, 5-10, 10+   
                               use_gas_type                   = 'gas',                  # [ 'gas' / 'gas_sf' ]     
                               use_only_centrals              = True,        # Use only centrals                                                              
                             showfig = True,
-                            savefig = False,
-                            savefig_txt = 'simple')
-_plot_timescale_accretion_histogram_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            savefig = True)"""
+"""_plot_timescale_accretion_histogram_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_hist_min_trelax              = 0.2,
+                              ignore_trelax_inflow           = 0.3,                 # [ 0.3 / 0 ] do not consider inflow within this region as this counts toward initial formation
                               inflow_radius                  = 2.0,                # HMR to use
-                              inflow_limits                  = [10, 10],            # [ < lower - upper < Msun/yr ] e.g. [5, 10] means <5, 5-10, 10+         
+                              inflow_limits                  = [1, 10],            # [ < lower - upper < Msun/yr ] e.g. [5, 10] means <5, 5-10, 10+         
                               use_gas_type                   = 'gas',                  # [ 'gas' / 'gas_sf' ]   
                               use_only_centrals              = True,        # Use only centrals                                                          
                             showfig = True,
                             savefig = False,
-                            savefig_txt = 'simple')"""
+                            savefig_txt = 'for_paper')"""
+
                             
                             
 # PLOTS HISTOGRAM OF SPECIFIC GAS INFLOW WITH RELAXATION TIME

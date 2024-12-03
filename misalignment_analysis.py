@@ -581,6 +581,7 @@ def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misali
     all_misangleshalo = {}          # has all 3D angles to outer halo, beyond a certain radius
     all_misanglesproj = {}          # has all 2D projected angles from 3d when given a viewing axis and viewing_angle = 0
     all_gasdata       = {}
+    all_bhs           = {}          # has values for CoP BHs ONLY - regular 'most massive' in all_general
     
     
     #============================================
@@ -609,6 +610,18 @@ def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misali
         if debug:
             print(galaxy.gn, galaxy.sgn, galaxy.centre, galaxy.halfmass_rad, galaxy.halfmass_rad_proj)
     
+        
+        # CoP BH values
+        bh_epsilon = 0.1        # efficiency
+        accretion_rate_temp = galaxy.data_bh_new['bh']['BH_Mdot'][0]
+        bh_mass_temp        = galaxy.data_bh_new['bh']['BH_Mass'][0]         
+        bh_edd_temp         = accretion_rate_temp / (bh_mass_temp * 7e-17 / bh_epsilon)
+        bh_id_temp          = galaxy.data_bh_new['bh']['ParticleIDs'][0]
+        bh_cumlmass_temp    = galaxy.data_bh_new['bh']['BH_CumlAccrMass'][0]
+        bh_cumlseeds_temp   = galaxy.data_bh_new['bh']['BH_CumlNumSeeds'][0]
+        bh_dict_temp = {'bh_mass': bh_mass_temp, 'bh_edd': bh_edd_temp, 'bh_id': bh_id_temp, 'bh_mdot': accretion_rate_temp, 'bh_cumlmass': bh_cumlmass_temp, 'bh_cumlseeds': bh_cumlseeds_temp}
+        
+        
         
         
         #-----------------------------
@@ -704,6 +717,7 @@ def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misali
         all_misanglesproj['%s' %str(subhalo.GalaxyID)]  = subhalo.mis_angles_proj
         all_gasdata['%s' %str(subhalo.GalaxyID)]        = subhalo.gas_data
         #all_massflow... not added as we can't evaluate it here
+        all_bhs['%s' %str(GalaxyID)]                    = bh_dict_temp              # this is not saved, its merged into all_general
         #---------------------------------
           
         if print_galaxy:
@@ -712,6 +726,26 @@ def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misali
             
     #=====================================
     # End of individual subhalo loop
+
+    # Modify _general to account for the BH changes we made
+    for GalaxyID in all_general.keys():
+        # Copy 'most massive BH' into a new '_old' dict
+        all_general['%s' %GalaxyID].update({'bh_id_old':   all_general['%s' %GalaxyID]['bh_id'],
+                                            'bh_mass_old': all_general['%s' %GalaxyID]['bh_mass'],
+                                            'bh_mdot_old': all_general['%s' %GalaxyID]['bh_mdot'],
+                                            'bh_edd_old':  all_general['%s' %GalaxyID]['bh_edd'],
+                                            'bh_cumlmass_old':  all_general['%s' %GalaxyID]['bh_cumlmass'],
+                                            'bh_cumlseeds_old':  all_general['%s' %GalaxyID]['bh_cumlseeds']})
+        
+        # Re-assign dict to new values
+        all_general['%s' %GalaxyID]['bh_id']        = all_bhs['%s' %GalaxyID]['bh_id'] 
+        all_general['%s' %GalaxyID]['bh_mass']      = all_bhs['%s' %GalaxyID]['bh_mass'] 
+        all_general['%s' %GalaxyID]['bh_mdot']      = all_bhs['%s' %GalaxyID]['bh_mdot'] 
+        all_general['%s' %GalaxyID]['bh_edd']       = all_bhs['%s' %GalaxyID]['bh_edd'] 
+        all_general['%s' %GalaxyID]['bh_cumlmass']  = all_bhs['%s' %GalaxyID]['bh_cumlmass'] 
+        all_general['%s' %GalaxyID]['bh_cumlseeds'] = all_bhs['%s' %GalaxyID]['bh_cumlseeds'] 
+        
+        
     
     if csv_file: 
         # Converting numpy arrays to lists. When reading, may need to simply convert list back to np.array() (easy)
@@ -933,11 +967,13 @@ def _analysis_bh_details(csv_sample = 'L100_151_all_sample_misalignment_9.5',   
     #=========================================================
     # Modify _general
     for GalaxyID in all_general.keys():
+        # Copy 'most massive BH' into a new '_old' dict
         all_general['%s' %GalaxyID].update({'bh_id_old':   all_general['%s' %GalaxyID]['bh_id'],
                                             'bh_mass_old': all_general['%s' %GalaxyID]['bh_mass'],
                                             'bh_mdot_old': all_general['%s' %GalaxyID]['bh_mdot'],
                                             'bh_edd_old':  all_general['%s' %GalaxyID]['bh_edd']})
         
+        # Re-assign dict to new values
         all_general['%s' %GalaxyID]['bh_id']    = all_bhs['%s' %GalaxyID]['bh_id'] 
         all_general['%s' %GalaxyID]['bh_mass']  = all_bhs['%s' %GalaxyID]['bh_mass'] 
         all_general['%s' %GalaxyID]['bh_mdot']  = all_bhs['%s' %GalaxyID]['bh_mdot'] 
@@ -1267,15 +1303,22 @@ def _analysis_misalignment_minor(csv_sample = 'L100_19_minor_sample_misalignment
 #for snap_i in np.arange(165, 175, 1):
 #for snap_i in np.arange(175, 185, 1):
 #for snap_i in np.arange(185, 195, 1):
-#for snap_i in np.arange(195, 201, 1):
-#    _sample_misalignment(snapNum = int(snap_i), galaxy_mass_min    = 10**(9.5), galaxy_mass_max    = 10**(15))
-#    _analysis_misalignment_distribution(csv_sample = 'L100_' + str(int(snap_i)) + '_all_sample_misalignment_9.5')
+for snap_i in np.arange(195, 201, 1):
+    _sample_misalignment(snapNum = int(snap_i), galaxy_mass_min    = 10**(9.5), galaxy_mass_max    = 10**(15))
+    _analysis_misalignment_distribution(csv_sample = 'L100_' + str(int(snap_i)) + '_all_sample_misalignment_9.5')
 
     
 #_analysis_misalignment_distribution(csv_sample = 'L100_' + str(188) + '_all_sample_misalignment_9.5', csv_name = 'plusNSF')
 
-for snap_i in np.arange(134, 145, 1):
-    _analysis_bh_details(csv_sample = 'L100_' + str(int(snap_i)) + '_all_sample_misalignment_9.5')
+
+#for snap_i in np.arange(134, 145, 1):
+#for snap_i in np.arange(145, 155, 1):
+#for snap_i in np.arange(155, 165, 1):
+#for snap_i in np.arange(165, 175, 1):
+#for snap_i in np.arange(175, 185, 1):
+#for snap_i in np.arange(185, 195, 1):
+#for snap_i in np.arange(195, 201, 1):
+#    _analysis_bh_details(csv_sample = 'L100_' + str(int(snap_i)) + '_all_sample_misalignment_9.5')
 
 #===========================
 

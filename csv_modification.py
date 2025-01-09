@@ -690,8 +690,8 @@ def _test_read(csv_sample = 'L100_188_all_sample_misalignment_9.5',     # CSV sa
     for GalaxyID in old_general.keys():
         print(i)
         print('GalaxyID: ', GalaxyID)
-        print('CoP BH ID:      ', old_general['%s' %GalaxyID]['bh_id'])
-        print('CoM BH ID:      ', old_general['%s' %GalaxyID]['bh_id_old'])
+        print('CoP BH ID:               ', old_general['%s' %GalaxyID]['bh_id'], old_general['%s' %GalaxyID]['bh_mass'])
+        print('most massive BH ID:      ', old_general['%s' %GalaxyID]['bh_id_old'], old_general['%s' %GalaxyID]['bh_mass_old'])
         i = i + 1
         if i == 20:
             raise Exception('current break 7uighjnm')

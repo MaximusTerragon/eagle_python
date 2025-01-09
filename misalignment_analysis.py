@@ -722,10 +722,10 @@ def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misali
         
         
         
-        print('REMOVE 97tyghiujkaf')
-        print('GalaxyID: ', subhalo.GalaxyID)
-        print('CoP BH ID:      ', all_bhs['%s' %str(GalaxyID)]['bh_id'])        # BECOMES 'bh_id' IN all_general
-        print('CoM BH ID:      ', all_general['%s' %GalaxyID]['bh_id'])         # BECOMES 'bh_id_old' IN all_general
+        #print('REMOVE 97tyghiujkaf')
+        #print('GalaxyID: ', subhalo.GalaxyID)
+        #print('CoP BH ID:               ', all_bhs['%s' %str(GalaxyID)]['bh_id'], all_bhs['%s' %str(GalaxyID)]['bh_mass'])        # BECOMES 'bh_id' IN all_general
+        #print('most massive BH ID:      ', all_general['%s' %GalaxyID]['bh_id'], all_general['%s' %GalaxyID]['bh_mass'])         # BECOMES 'bh_id_old' IN all_general
         
           
         if print_galaxy:
@@ -739,16 +739,16 @@ def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misali
     for GalaxyID in all_general.keys():
         # Copy 'most massive BH' into a new '_old' dict
         all_general['%s' %GalaxyID].update({'bh_id_old':   all_general['%s' %GalaxyID]['bh_id'],
-                                            'bh_mass_old': all_general['%s' %GalaxyID]['bh_mass'],
-                                            'bh_mdot_old': all_general['%s' %GalaxyID]['bh_mdot'],
+                                            'bh_mass_old': all_general['%s' %GalaxyID]['bh_mass'],      # subgrid
+                                            'bh_mdot_old': all_general['%s' %GalaxyID]['bh_mdot'],      # subgrid
                                             'bh_edd_old':  all_general['%s' %GalaxyID]['bh_edd'],
                                             'bh_cumlmass_old':  all_general['%s' %GalaxyID]['bh_cumlmass'],
                                             'bh_cumlseeds_old':  all_general['%s' %GalaxyID]['bh_cumlseeds']})
         
         # Re-assign dict to new values
         all_general['%s' %GalaxyID]['bh_id']        = all_bhs['%s' %GalaxyID]['bh_id'] 
-        all_general['%s' %GalaxyID]['bh_mass']      = all_bhs['%s' %GalaxyID]['bh_mass'] 
-        all_general['%s' %GalaxyID]['bh_mdot']      = all_bhs['%s' %GalaxyID]['bh_mdot'] 
+        all_general['%s' %GalaxyID]['bh_mass']      = all_bhs['%s' %GalaxyID]['bh_mass']        # subgrid
+        all_general['%s' %GalaxyID]['bh_mdot']      = all_bhs['%s' %GalaxyID]['bh_mdot']        # subgrid
         all_general['%s' %GalaxyID]['bh_edd']       = all_bhs['%s' %GalaxyID]['bh_edd'] 
         all_general['%s' %GalaxyID]['bh_cumlmass']  = all_bhs['%s' %GalaxyID]['bh_cumlmass'] 
         all_general['%s' %GalaxyID]['bh_cumlseeds'] = all_bhs['%s' %GalaxyID]['bh_cumlseeds'] 

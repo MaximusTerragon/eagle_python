@@ -6247,7 +6247,7 @@ def _BH_deltamassmass2_gas_infow_in_window(BHmis_tree = None, BHmis_input = None
 
 #\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 # Set starting parameters
-load_BHmis_tree_in = '_CoPFalse_window0.5_trelax0_05Gyr_20Thresh__no_seed'
+load_BHmis_tree_in = '_CoPFalse_window0.5_trelax0_05Gyr__no_seed'
 plot_annotate_in                  = None
 savefig_txt_in     = load_BHmis_tree_in               # [ 'manual' / load_csv_file_in ] 'manual' will prompt txt before saving
 
@@ -6255,7 +6255,7 @@ savefig_txt_in     = load_BHmis_tree_in               # [ 'manual' / load_csv_fi
 # '_CoPFalse_window0.5_trelax0_05Gyr___'
 # '_CoPTrue_window0.5_trelax0_05Gyr__no_seed'
 # '_CoPTrue_window0.5_trelax0_05Gyr___'
-# '_CoPFalse_window0.5_trelax0_05Gyr_20Thresh__no_seed'  # <-- default with 20 thresh
+# '_CoPFalse_window0.5_trelax0_05Gyr_20Thresh__no_seed'  # <-- default with a 'purer' co- and counter- rotation sample of <20 and >160
 # '_CoPFalse_window0.5_trelax0_05Gyr_20Thresh___'
 # '_CoPTrue_window0.5_trelax0_05Gyr_20Thresh__no_seed'
 # '_CoPTrue_window0.5_trelax0_05Gyr_20Thresh___'
@@ -6364,14 +6364,14 @@ for target_bh_mass_i in [6.1, 6.3, 6.5, 6.75, 7, 7.25, 7.5, 7.75, 8]:
 
 
 # SCATTER x-y mass at start and mass at end after X Gyr
-"""for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
+for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
     _BH_deltamass_in_window(BHmis_tree=BHmis_tree, BHmis_input=BHmis_input, BHmis_summary=BHmis_summary, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                                         target_window_size   = target_window_size_i,         # [ Gyr ] trim to at least 1 Gyr to allow overlay
                                           window_err      = window_err_i,           # [ +/- Gyr ] trim
                                           must_still_be_misaligned = True,  # target window = target trelax
                                         run_refinement = False,
                                           showfig = True,
-                                          savefig = False)"""
+                                          savefig = False)
 
 
 # make sample plot of SCATTER (above) with _seed_

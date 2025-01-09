@@ -1049,21 +1049,24 @@ Output Parameters
 .general:       dictionary
     'GroupNum', 'SubGroupNum', 'GalaxyID', 'SnapNum', 'halo_mass', 
         'stelmass', 'gasmass', 'gasmass_sf', 'gasmass_nsf', 'dmmass', 
-        'ap_sfr', 'bh_id', 'bh_mass' (subgrid), 'bh_mdot' (subgrid), 'bh_edd', 'halfmass_rad', 
-        'halfmass_rad_proj', 'halfmass_rad_sf', 'viewing_axis',
+        'ap_sfr', 'halfmass_rad', 'halfmass_rad_proj', 'halfmass_rad_sf', 'viewing_axis',
         
-        when bh code ran:
-        replaces existing 'bh_mass' with closest to CoP
-        'bh_cumlmass' 
-        'bh_cumlseeds'
-        'bh_id_old'
-        'bh_mass_old'       (most massive in r50)
-        'bh_mdot_old'
+        'bh_id_old'         (most massive in r50)
+        'bh_mass_old'       (subgrid)
+        'bh_mdot_old'       (subgrid)
         'bh_edd_old'
+        'bh_cumlmass_old'           # not currently in gaalxy_tree
+        'bh_cumlseeds_old'          # not currently in gaalxy_tree
+        'bh_id'             (closest CoP)
+        'bh_mass'           (subgrid)
+        'bh_mdot'           (subgrid)
+        'bh_edd'
+        'bh_cumlmass' 
+        'bh_cumlseeds'          
         
         'kappa_stars' - 30 kpc
-        'kappa_gas'   - 2.0 hmr
-        'kappa_gas_sf'
+        'kappa_gas'   - 1.0 hmr
+        'kappa_gas_sf' - 1.0 hmr
         'kappa_gas_nsf'
         'ellip', 'triax', 'kappa_stars', 'disp_ani', 'disc_to_total', 'rot_to_disp_ratio'
 

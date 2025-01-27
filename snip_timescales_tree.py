@@ -5650,6 +5650,7 @@ def _create_z01_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
             print('    Met BH mass at z=0.1')
         
         
+        
         #------------------------
         # Add to new tree
         ID_i = galaxy_tree['%s' %GalaxyID]['GalaxyID'][index_start]
@@ -5671,20 +5672,37 @@ def _create_z01_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
         index_cnt = np.where((angles_array[1:] > (180-misangle_threshold)))[0]
         time_cnt = np.sum(time_dif_array[index_cnt])
         
+        
+        # Find time spent above 0.1 gassf ratio
+        fgassf_array = np.divide(np.array(galaxy_tree['%s' %GalaxyID]['gas_sf']['1.0_hmr']['mass'])[index_start:index_stop], np.array(galaxy_tree['%s' %GalaxyID]['gas']['1.0_hmr']['mass'])[index_start:index_stop] + np.array(galaxy_tree['%s' %GalaxyID]['stars']['1.0_hmr']['mass'])[index_start:index_stop])
+        
+        # Find time gas poor
+        index_gaspoor = np.where((fgassf_array[1:] < 0.1))[0]
+        time_gaspoor = np.sum(time_dif_array[index_gaspoor])
+        
+        # Find time gas rich
+        index_gasrich = np.where((fgassf_array[1:] > 0.1))[0]
+        time_gasrich = np.sum(time_dif_array[index_gasrich])
+        
+        
         local_z01_tree.update({'%s' %ID_i: {'Snapnum': np.array(galaxy_tree['%s' %GalaxyID]['SnapNum'])[index_start:index_stop],
                                           'Lookbacktime': np.array(galaxy_tree['%s' %GalaxyID]['Lookbacktime'])[index_start:index_stop],
                                           'Redshift': np.array(galaxy_tree['%s' %GalaxyID]['Redshift'])[index_start:index_stop],
                                           'GalaxyID':  np.array(galaxy_tree['%s' %GalaxyID]['GalaxyID'])[index_start:index_stop],
                                           'stelmass':   stelmass_array,
+                                          'stelmass_ap': np.array(galaxy_tree['%s' %GalaxyID]['stars']['ap_mass'])[index_start:index_stop],
                                           'bhmass':     bh_array,
                                           'angle':      angles_array,
+                                          'fgassf':     fgassf_array,
                                           'time_co':    time_co, 
                                           'time_mis':   time_mis, 
                                           'time_cnt':   time_cnt,
                                           'time_total': time_since_start[-1],
                                           'f_time_co':  time_co/time_since_start[-1],           # fraction of window time
                                           'f_time_mis':  time_mis/time_since_start[-1],
-                                          'f_time_cnt':  time_cnt/time_since_start[-1]
+                                          'f_time_cnt':  time_cnt/time_since_start[-1],
+                                          'f_time_gaspoor': time_gaspoor/time_since_start[-1],      
+                                          'f_time_gasrich': time_gasrich/time_since_start[-1]                                       
                                       }})
         
     print('Total length of local_z01_tree: ', len(local_z01_tree.keys()))
@@ -5742,7 +5760,9 @@ def _create_z01_tree(csv_tree = 'L100_galaxy_tree__NEW_NEW_BH',
 #_create_galaxy_tree()  
 
 
-#_create_z01_tree()      # for use in BH analysis
+#_create_z01_tree(require_min_lookbacktime = 2)      # for use in BH analysis
+#_create_z01_tree(require_min_lookbacktime = 4)      # for use in BH analysis
+_create_z01_tree(require_min_lookbacktime = 6)      # for use in BH analysis
 
 
 # Some of the plot stuff is commented out:

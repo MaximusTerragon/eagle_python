@@ -703,6 +703,10 @@ def _refine_BHmis_sample(BHmis_tree = None, BHmis_input = None, BHmis_summary = 
                      min_bhmass   = None,      max_bhmass   = None,
                      min_sfr      = None,      max_sfr      = None,        # [ Msun/yr ] SF limit of ~ 0.1
                      min_ssfr     = None,      max_ssfr     = None,        # [ /yr ] SF limit of ~ 1e-10-11
+                     
+                     
+                     
+                     
                   
                    # Mergers, looked for within range considered +/- halfwindow
                    use_merger_criteria = False,

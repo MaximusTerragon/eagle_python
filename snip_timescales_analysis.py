@@ -14043,11 +14043,11 @@ _plot_timescale_gas_histogram_tdyn(misalignment_tree=misalignment_tree, misalign
                             set_gashist_min_trelax              = 0.2,
                             showfig = True,
                             savefig = False)"""
-_plot_timescale_gas_histogram_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+"""_plot_timescale_gas_histogram_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_gashist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_gashist_min_trelax              = 0.2,
                             showfig = True,
-                            savefig = False)
+                            savefig = False)"""
 
 
 # PLOTS HISTOGRAM OF AVERAGE KAPPA STARS WITH RELAXATION TIME

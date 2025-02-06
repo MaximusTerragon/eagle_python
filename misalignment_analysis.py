@@ -717,7 +717,7 @@ def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misali
         all_misanglesproj['%s' %str(subhalo.GalaxyID)]  = subhalo.mis_angles_proj
         all_gasdata['%s' %str(subhalo.GalaxyID)]        = subhalo.gas_data
         #all_massflow... not added as we can't evaluate it here
-        all_bhs['%s' %str(GalaxyID)]                    = bh_dict_temp              # this is not saved, its merged into all_general
+        all_bhs['%s' %str(GalaxyID)]                    = bh_dict_temp              # CoP BHs, this is not saved, its merged into all_general
         #---------------------------------
         
         
@@ -745,7 +745,7 @@ def _analysis_misalignment_distribution(csv_sample = 'L100_151_all_sample_misali
                                             'bh_cumlmass_old':  all_general['%s' %GalaxyID]['bh_cumlmass'],
                                             'bh_cumlseeds_old':  all_general['%s' %GalaxyID]['bh_cumlseeds']})
         
-        # Re-assign dict to new values
+        # Re-assign dict to new CoP values
         all_general['%s' %GalaxyID]['bh_id']        = all_bhs['%s' %GalaxyID]['bh_id'] 
         all_general['%s' %GalaxyID]['bh_mass']      = all_bhs['%s' %GalaxyID]['bh_mass']        # subgrid
         all_general['%s' %GalaxyID]['bh_mdot']      = all_bhs['%s' %GalaxyID]['bh_mdot']        # subgrid

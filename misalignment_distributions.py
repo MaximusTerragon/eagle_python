@@ -243,6 +243,7 @@ def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_9.5',     #
         
         #=================================
         # Collect values to plot
+        plot_IDs        = []
         plot_angles     = []
         plot_angles_err = []
         collect_stelmass = []
@@ -360,7 +361,7 @@ def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_9.5',     #
                         
                         #--------------
                         catalogue['plot']['all'] += 1
-                        
+                        plot_IDs.append(GalaxyID)
                         
                         # Determine if cluster or field, and morphology
                         if all_general['%s' %GalaxyID]['halo_mass'] > cluster_threshold:
@@ -387,8 +388,10 @@ def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_9.5',     #
                         # Collect misangle or misangleproj
                         if use_proj_angle:
                             plot_angles.append(all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle' %use_angle][mask_angles])
+                            plot_angles_err.append(all_misanglesproj['%s' %GalaxyID][output_input['viewing_axis']]['%s_angle_err' %use_angle][mask_angles])
                         else:
                             plot_angles.append(all_misangles['%s' %GalaxyID]['%s_angle' %use_angle][mask_angles])
+                            plot_angles_err.append(all_misangles['%s' %GalaxyID]['%s_angle_err' %use_angle][mask_angles])
                         
                         if (all_misangles['%s' %GalaxyID]['%s_angle' %use_angle][mask_angles] > 30) & (all_misangles['%s' %GalaxyID]['%s_angle' %use_angle][mask_angles] < 150):
                             plot_sfgas_counts.append(all_counts['%s' %GalaxyID]['gas_sf'][mask_counts])
@@ -524,6 +527,24 @@ def _plot_misalignment(csv_sample = 'L100_27_all_sample_misalignment_9.5',     #
             # Plot
             axs.hist(obs_data['%s' %add_observational]['%s_%s' %(ETG_or_LTG, cluster_or_field)], weights=np.ones(len(obs_data['%s' %add_observational]['%s_%s' %(ETG_or_LTG, cluster_or_field)]))/len(obs_data['%s' %add_observational]['%s_%s' %(ETG_or_LTG, cluster_or_field)]), bins=np.arange(0, 181, 10), histtype='bar', edgecolor='grey', facecolor=None, fill=False, linestyle='-', linewidth=1, alpha=1)
             axs.errorbar(np.arange(5, 181, 10), obs_percent['%s' %author_i]['%s_%s' %(ETG_or_LTG, cluster_or_field)], xerr=None, yerr=np.sqrt(np.array(obs_percent['%s' %author_i]['%s_%s' %(ETG_or_LTG, cluster_or_field)]) * obs_number['%s' %author_i]['%s_%s' %(ETG_or_LTG, cluster_or_field)]) / obs_number['%s' %author_i]['%s_%s' %(ETG_or_LTG, cluster_or_field)], ecolor='grey', ls='none', capsize=3, elinewidth=1, markeredgewidth=1, alpha=0.9)
+        
+        
+        """
+        # Find galaxies to plot on SQL table that are misaligned
+        for mass_iii, angle_iii, err_iii, ID_iii in zip(collect_stelmass, plot_angles, plot_angles_err, plot_IDs):
+            
+            max_error_iii = np.max(abs(np.array(err_iii) - angle_iii))
+            
+            if (angle_iii > 70) & (angle_iii < 110):
+                if mass_iii > 10**10.2:
+                    if max_error_iii < 2:
+                        print(ID_iii)
+            
+        raise Exception('current break 97ty0haoihfao')
+        """
+        
+        
+        
         
         
         # Plot histogram
@@ -4031,7 +4052,6 @@ def _plot_misalignment_double_tree(csv_sample = 'L100_173_all_sample_misalignmen
 #_plot_misalignment_distribution_timescale()    NOT FINISHED
 #_plot_misalignment_double_tree()
 #===========================
-
 
 
 # SNAPSHOT MISALIGNMENTS (abs/proj angle in proj rad)

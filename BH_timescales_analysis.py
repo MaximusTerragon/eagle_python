@@ -536,9 +536,9 @@ def _plot_stelmass_BH_scatter(csv_sample = 'L100_27_all_sample_misalignment_9.5'
             #------------
             # Title
             if use_proj_angle:
-                axs.set_title(r'%s2D angles, $z\sim0.1$' %('' if ETG_or_LTG == 'both' else '%ss, '%ETG_or_LTG), size=7, loc='left', pad=3)
+                axs.set_title(r'%s2D angles, $z\approx0.1$' %('' if ETG_or_LTG == 'both' else '%ss, '%ETG_or_LTG), size=7, loc='left', pad=3)
             else:
-                axs.set_title(r'%s$z\sim0.1$' %('' if ETG_or_LTG == 'both' else '%ss, '%ETG_or_LTG), size=7, loc='left', pad=3)
+                axs.set_title(r'%s$z\approx0.1$' %('' if ETG_or_LTG == 'both' else '%ss, '%ETG_or_LTG), size=7, loc='left', pad=3)
             
             #-----------
             # other
@@ -698,7 +698,7 @@ def _plot_stelmass_BH_scatter(csv_sample = 'L100_27_all_sample_misalignment_9.5'
         legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
         legend_colors.append(color_dict['counter'])
         
-        #legend_labels.append(r'$z\sim0.1$')
+        #legend_labels.append(r'$z\approx0.1$')
         #legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
         #legend_colors.append('grey')
         axs.legend(handles=legend_elements, labels=legend_labels, loc='upper left', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0, ncol=1)
@@ -706,9 +706,9 @@ def _plot_stelmass_BH_scatter(csv_sample = 'L100_27_all_sample_misalignment_9.5'
         #------------
         # Title
         if use_proj_angle:
-            axs.set_title(r'%s2D angles, $z\sim0.1$' %('' if ETG_or_LTG == 'both' else '%ss, '%ETG_or_LTG), size=7, loc='left', pad=3)
+            axs.set_title(r'%s2D angles, $z\approx0.1$' %('' if ETG_or_LTG == 'both' else '%ss, '%ETG_or_LTG), size=7, loc='left', pad=3)
         else:
-            axs.set_title(r'%s$z\sim0.1$' %('' if ETG_or_LTG == 'both' else '%ss, '%ETG_or_LTG), size=7, loc='left', pad=3)
+            axs.set_title(r'%s$z\approx0.1$' %('' if ETG_or_LTG == 'both' else '%ss, '%ETG_or_LTG), size=7, loc='left', pad=3)
         
         
         if use_satellites:
@@ -916,7 +916,7 @@ def _plot_stelmass_BH_hexbin_z01_tree(local_z01_tree_load = 'L100_local_z01_inpu
         #-----------
         # Title
         #axs.set_title(r'Reliable kinematics for %.1f Gyr %s' %(local_z01_input['require_min_lookbacktime'], (', currently aligned' if plot_only_current_aligned else '')), size=7, loc='left', pad=3)
-        axs.set_title(r'%s$z\sim0.1$'%('Aligned sub-sample at ' if plot_only_current_aligned else ''), size=7, loc='left', pad=3)
+        axs.set_title(r'%s$z\approx0.1$'%('Aligned sub-sample at ' if plot_only_current_aligned else ''), size=7, loc='left', pad=3)
     
         #-----------
         ### Legend
@@ -940,7 +940,7 @@ def _plot_stelmass_BH_hexbin_z01_tree(local_z01_tree_load = 'L100_local_z01_inpu
         legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
         legend_colors.append(color_dict['counter'])
     
-        #legend_labels.append(r'$z\sim0.1$')
+        #legend_labels.append(r'$z\approx0.1$')
         #legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
         #legend_colors.append('grey')
         axs.legend(handles=legend_elements, labels=legend_labels, loc='upper left', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0, ncol=1)
@@ -1136,7 +1136,7 @@ def _plot_stelmass_BH_hexbin_gassf_z01_tree(local_z01_tree_load = 'L100_local_z0
         #-----------
         # Title
         #axs.set_title(r'Reliable kinematics for %.1f Gyr %s' %(local_z01_input['require_min_lookbacktime'], (', currently aligned' if plot_only_current_aligned else '')), size=7, loc='left', pad=3)
-        axs.set_title(r'%s$z\sim0.1$'%('Aligned sub-sample at ' if plot_only_current_aligned else ''), size=7, loc='left', pad=3)
+        axs.set_title(r'%s$z\approx0.1$'%('Aligned sub-sample at ' if plot_only_current_aligned else ''), size=7, loc='left', pad=3)
     
         #-----------
         ### Legend
@@ -1160,7 +1160,7 @@ def _plot_stelmass_BH_hexbin_gassf_z01_tree(local_z01_tree_load = 'L100_local_z0
         legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
         legend_colors.append(color_dict['counter'])
     
-        #legend_labels.append(r'$z\sim0.1$')
+        #legend_labels.append(r'$z\approx0.1$')
         #legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
         #legend_colors.append('grey')
         axs.legend(handles=legend_elements, labels=legend_labels, loc='upper left', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0, ncol=1)
@@ -2537,7 +2537,9 @@ def _BH_deltamass_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary
     trelax_ID      = []
     duration_plot  = []
     state_plot     = []
-    err_test       = []
+    err_test       = []     # 'low' and 'high' for <10 and 10-30 error
+    r50_plot       = []
+    r50_sf_plot    = []
     ID_plot        = []
     for galaxy_state in ['aligned', 'misaligned', 'counter']:
         for ID_i in BH_subsample['%s' %galaxy_state].keys():
@@ -2579,10 +2581,11 @@ def _BH_deltamass_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary
                             bhmass_start_plot.append(mass_axis[0])
                             bhmass_delta_plot.append(mass_axis[-1] - mass_axis[0])
                             bhmdot_window_plot.append((mass_axis[-1] - mass_axis[0])/(time_axis[-1]*(10**9)))
-                        
+                            
+                            # converting simple Lbol to common e_r / 1-e_r version, multiply by 1.111
                             bh_mdot_inst_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mdot_inst'])[index_start:index_stop]))
                             bh_edd_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_edd'])[index_start:index_stop]))
-                            bh_lbol_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_lbol'])[index_start:index_stop]))
+                            bh_lbol_plot.append(np.mean(1.111 * np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_lbol'])[index_start:index_stop]))
                             
                             mass_delta_axis = mass_axis[1:] - mass_axis[0:-1]
                             time_delta_axis = time_axis[1:] - time_axis[0:-1]
@@ -2592,10 +2595,13 @@ def _BH_deltamass_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary
                             bhmass_start_plot.append(mass_axis[0])
                             bhmass_delta_plot.append(mass_axis[-1] - mass_axis[0])
                             bhmdot_window_plot.append((mass_axis[-1] - mass_axis[0])/(time_axis[-1]*(10**9)))
-                            
+                        
+                            # converting simple Lbol to common e_r / 1-e_r version, multiply by 1.111
                             bh_mdot_inst_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mdot_inst_alt'])[index_start:index_stop]))
                             bh_edd_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_edd_alt'])[index_start:index_stop]))
-                            bh_lbol_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_lbol_alt'])[index_start:index_stop]))
+                            bh_lbol_plot.append(np.mean(1.111 * np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_lbol_alt'])[index_start:index_stop]))
+                            #bh_lbol_plot.append(np.max(1.111 * np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_lbol_alt'])[index_start:index_stop]))
+                            
                             
                             mass_delta_axis = mass_axis[1:] - mass_axis[0:-1]
                             time_delta_axis = time_axis[1:] - time_axis[0:-1]
@@ -2624,6 +2630,9 @@ def _BH_deltamass_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary
                         trelax_ID.append(ID_i)
                         state_plot.append(galaxy_state)
                         ID_plot.append(ID_i)
+                        
+                        r50_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['rad'])[index_start:index_stop]))
+                        r50_sf_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['rad_sf'])[index_start:index_stop]))
                         
                         angle_array = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stars_gas_sf'])[index_start:index_stop]
                         err_array = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stars_gas_sf_err'])[index_start:index_stop]
@@ -2670,9 +2679,10 @@ def _BH_deltamass_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary
                         bhmass_delta_plot.append(mass_axis[-1] - mass_axis[0])
                         bhmdot_window_plot.append((mass_axis[-1] - mass_axis[0])/(time_axis[-1]*(10**9)))
                         
+                        # converting simple Lbol to common e_r / 1-e_r version, multiply by 1.111
                         bh_mdot_inst_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mdot_inst'])[index_start:index_stop]))
                         bh_edd_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_edd'])[index_start:index_stop]))
-                        bh_lbol_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_lbol'])[index_start:index_stop]))
+                        bh_lbol_plot.append(np.mean(1.111 * np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_lbol'])[index_start:index_stop]))
                         
                         mass_delta_axis = mass_axis[1:] - mass_axis[0:-1]
                         time_delta_axis = time_axis[1:] - time_axis[0:-1]
@@ -2683,9 +2693,12 @@ def _BH_deltamass_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary
                         bhmass_delta_plot.append(mass_axis[-1] - mass_axis[0])
                         bhmdot_window_plot.append((mass_axis[-1] - mass_axis[0])/(time_axis[-1]*(10**9)))
                         
+                        # converting simple Lbol to common e_r / 1-e_r version, multiply by 1.111
                         bh_mdot_inst_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mdot_inst_alt'])[index_start:index_stop]))
                         bh_edd_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_edd_alt'])[index_start:index_stop]))
-                        bh_lbol_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_lbol_alt'])[index_start:index_stop]))
+                        bh_lbol_plot.append(np.mean(1.111 * np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_lbol_alt'])[index_start:index_stop]))
+                        #bh_lbol_plot.append(np.max(1.111 * np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_lbol_alt'])[index_start:index_stop]))
+                        
                         
                         mass_delta_axis = mass_axis[1:] - mass_axis[0:-1]
                         time_delta_axis = time_axis[1:] - time_axis[0:-1]
@@ -2714,6 +2727,9 @@ def _BH_deltamass_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary
                     state_plot.append(galaxy_state)
                     ID_plot.append(ID_i)
                     trelax_plot.append(math.nan)
+                        
+                    r50_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['rad'])[index_start:index_stop]))
+                    r50_sf_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['rad_sf'])[index_start:index_stop]))
                     
                     angle_array = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stars_gas_sf'])[index_start:index_stop]
                     err_array = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stars_gas_sf_err'])[index_start:index_stop]
@@ -2724,11 +2740,12 @@ def _BH_deltamass_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary
                 
                                     
     # Collect data into dataframe
-    df = pd.DataFrame(data={'stelmass': stelmass_plot, 'SFR': sfr_plot, 'sSFR': ssfr_plot, 'Time delta': time_delta_plot, 'trelax': trelax_plot, 'BH mass start': bhmass_start_plot, 'BH mass delta': bhmass_delta_plot, 'BH mdot inst': bh_mdot_inst_plot, 'BH edd inst': bh_edd_plot, 'BH lbol inst': bh_lbol_plot, 'Morphology': kappa_plot, 'Kappa mean': kappa_mean_plot, 'Kappa snip': kappa_snip_plot, 'Gassf fraction': fgassf_plot, 'State': state_plot, 'window': duration_plot, 'err_test': err_test, 'GalaxyIDs': ID_plot})        
+    df = pd.DataFrame(data={'stelmass': stelmass_plot, 'SFR': sfr_plot, 'sSFR': ssfr_plot, 'Time delta': time_delta_plot, 'trelax': trelax_plot, 'BH mass start': bhmass_start_plot, 'BH mass delta': bhmass_delta_plot, 'BH mdot inst': bh_mdot_inst_plot, 'BH edd inst': bh_edd_plot, 'BH lbol inst': bh_lbol_plot, 'Morphology': kappa_plot, 'Kappa mean': kappa_mean_plot, 'Kappa snip': kappa_snip_plot, 'Gassf fraction': fgassf_plot, 'State': state_plot, 'window': duration_plot, 'err_test': err_test, 'r50': r50_plot, 'r50_sf': r50_sf_plot, 'GalaxyIDs': ID_plot})        
     df['BH deltamassmass2']  = df['BH mass delta']/(df['BH mass start']**2)
     df['BH fraction growth'] = df['BH mass delta']/(df['BH mass start'])
     df['BH mdot window']     = bhmdot_window_plot       # delta mass over window / window size
     df['BH mdot snip']       = bhmdot_snip_plot         # time-weighted delta at each step
+    
     
     #-------------------
     # Select only ETG/LTG
@@ -2783,10 +2800,15 @@ def _BH_deltamass_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary
     print('Number of trelax >0.9  Gyr: %s' %len([i for i in df_mis['trelax'] if i > 0.9]))
     print('Number of trelax >1.0  Gyr: %s' %len([i for i in df_mis['trelax'] if i > 1.0]))
     
+    #print(' ')
+    #print('Median r50_sf / r_50: ')
+    #print('  aligned:       %.3f' %np.median(np.array(df_co['r50_sf']/df_co['r50'])))
+    #print('  misaligned:    %.3f' %np.median(np.array(df_mis['r50_sf']/df_mis['r50'])))
+    #print('  counter:       %.3f' %np.median(np.array(df_cnt['r50_sf']/df_cnt['r50'])))
+    
     print(' ')
     print('Fraction of aligned / misaligned / counter with Lbol > 1043: \t%.2f\t%.2f\t%.2f' %((len([i for i in np.array(df_co['BH lbol inst']) if i > 10**43])/len(np.array(df_co['BH lbol inst']))), (len([i for i in np.array(df_mis['BH lbol inst']) if i > 10**43])/len(np.array(df_mis['BH lbol inst']))), (len([i for i in np.array(df_cnt['BH lbol inst']) if i > 10**43])/len(np.array(df_cnt['BH lbol inst'])))))
     print('Fraction of aligned / misaligned / counter with EddR > 0.01: \t%.2f\t%.2f\t%.2f' %((len([i for i in np.array(df_co['BH edd inst']) if i > 0.01])/len(np.array(df_co['BH edd inst']))), (len([i for i in np.array(df_mis['BH edd inst']) if i > 0.01])/len(np.array(df_mis['BH edd inst']))), (len([i for i in np.array(df_cnt['BH edd inst']) if i > 0.01])/len(np.array(df_cnt['BH edd inst'])))))
-    
     
     
     
@@ -2837,9 +2859,10 @@ def _BH_deltamass_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary
     
         #--------------
         # scatter
-        #axs.scatter(np.log10(df['BH mass start']), np.log10(df['BH mass delta']), s=6, c=[color_dict_scatter[i] for i in df['State']], edgecolor='k', marker='.', linewidths=0, alpha=0.7, zorder=-2)
+        ###axs.scatter(np.log10(df['BH mass start']), np.log10(df['BH mass delta']), s=6, c=[color_dict_scatter[i] for i in df['State']], edgecolor='k', marker='.', linewidths=0, alpha=0.7, zorder=-2)
         
         axs.scatter(np.log10(df['BH mass start']), np.log10(df['BH mass delta']), s=4, c=[color_dict_scatter[i] for i in df['State']], edgecolor='w', marker='.', linewidths=0.1, alpha=0.25, zorder=-2)
+        
         #axs.scatter(np.log10(df['BH mass start']), np.log10(df['BH mdot inst']), s=4, c=[color_dict_scatter[i] for i in df['State']], edgecolor='w', marker='.', linewidths=0.1, alpha=0.25, zorder=-2)
         #axs.scatter(np.log10(df['BH mass start']), np.log10(df['BH lbol inst']), s=4, c=[color_dict_scatter[i] for i in df['State']], edgecolor='w', marker='.', linewidths=0.1, alpha=0.25, zorder=-2)
         #axs.scatter(np.log10(df['BH mass start']), np.log10(df['BH edd inst']), s=4, c=[color_dict_scatter[i] for i in df['State']], edgecolor='w', marker='.', linewidths=0.1, alpha=0.25, zorder=-2)
@@ -2881,9 +2904,10 @@ def _BH_deltamass_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary
         
         # looking at alternative ways of expressing our findings
         """axs.set_xlim(5.95, 9)
-        axs.set_ylim(-6, 0)
+        axs.set_ylim(38, 46)
         axs.set_xlabel(r'log$_{10}$ $M_{\mathrm{BH,initial}}$ [M$_{\odot}]$')
-        axs.set_ylabel(r'log$_{10}$ mean subgrid $\lambda_{\mathrm{Edd}}$')
+        #axs.set_ylabel(r'log$_{10}$ mean subgrid $\lambda_{\mathrm{Edd}}$')
+        axs.set_ylabel(r'log$_{10}$ subgrid $L_{\mathrm{bol}}$ [erg/s]')
         axs.minorticks_on()
         axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
         axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
@@ -3858,7 +3882,8 @@ def _BH_deltamassmass_hist_in_window(BHmis_tree = None, BHmis_input = None, BHmi
     axs.set_xlim(-5, 1.5)
     axs.set_ylim(0.001, 1)
     #axs.set_yticks([1, 10, 100, 1000])
-    axs.set_xlabel(r'log$_{10}$ $\Delta M_{\mathrm{BH,%s \:Gyr}}/M_{\mathrm{BH,initial}}$' %target_window_size)
+    #axs.set_xlabel(r'log$_{10}$ $\Delta M_{\mathrm{BH,%s \:Gyr}}/M_{\mathrm{BH,initial}}$' %target_window_size)
+    axs.set_xlabel(r'log$_{10}$ $\Delta M_{\mathrm{BH}}/M_{\mathrm{BH,initial}}$')
     axs.set_ylabel('fraction of sub-sample')
     #axs.minorticks_on()
     #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
@@ -3958,6 +3983,7 @@ def _BH_mdotmass_hist_in_window(BHmis_tree = None, BHmis_input = None, BHmis_sum
     bhmass_delta_plot = []
     bhmdot_snip_plot   = []
     bhmdot_window_plot = []
+    lbol_snip_plot = [] # mean over window
     sfr_plot       = []
     ssfr_plot      = []
     kappa_plot     = []
@@ -4013,6 +4039,12 @@ def _BH_mdotmass_hist_in_window(BHmis_tree = None, BHmis_input = None, BHmis_sum
                             mass_delta_axis = mass_axis[1:] - mass_axis[0:-1]
                             time_delta_axis = time_axis[1:] - time_axis[0:-1]
                             bhmdot_snip_plot.append(np.mean(np.divide(mass_delta_axis, time_delta_axis*(10**9))))
+                            
+                            #bhmdot_snip_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mdot_inst'])[index_start:index_stop]))
+                            
+                            # converting simple Lbol to common e_r / 1-e_r version, multiply by 1.111
+                            lbol_snip_plot.append(np.mean(1.111 * np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_lbol'])[index_start:index_stop]))
+                            
                         else:
                             mass_axis = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mass_alt'])[index_start:index_stop]
                             bhmass_start_plot.append(mass_axis[0])
@@ -4025,6 +4057,9 @@ def _BH_mdotmass_hist_in_window(BHmis_tree = None, BHmis_input = None, BHmis_sum
                             bhmdot_snip_plot.append(np.mean(np.divide(mass_delta_axis, time_delta_axis*(10**9))))
                             
                             #bhmdot_snip_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mdot_inst_alt'])[index_start:index_stop]))
+                        
+                            # converting simple Lbol to common e_r / 1-e_r version, multiply by 1.111
+                            lbol_snip_plot.append(np.mean(1.111 * np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_lbol_alt'])[index_start:index_stop]))
                             
                     
                         #--------------------------
@@ -4091,6 +4126,12 @@ def _BH_mdotmass_hist_in_window(BHmis_tree = None, BHmis_input = None, BHmis_sum
                         mass_delta_axis = mass_axis[1:] - mass_axis[0:-1]
                         time_delta_axis = time_axis[1:] - time_axis[0:-1]
                         bhmdot_snip_plot.append(np.mean(np.divide(mass_delta_axis, time_delta_axis*(10**9))))
+                        
+                        #bhmdot_snip_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mdot_inst'])[index_start:index_stop]))
+                        
+                        # converting simple Lbol to common e_r / 1-e_r version, multiply by 1.111
+                        lbol_snip_plot.append(np.mean(1.111 * np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_lbol'])[index_start:index_stop]))       
+                        
                     else:
                         mass_axis = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mass_alt'])[index_start:index_stop]
                         bhmass_start_plot.append(mass_axis[0])
@@ -4102,6 +4143,9 @@ def _BH_mdotmass_hist_in_window(BHmis_tree = None, BHmis_input = None, BHmis_sum
                         bhmdot_snip_plot.append(np.mean(np.divide(mass_delta_axis, time_delta_axis*(10**9))))
                         
                         #bhmdot_snip_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mdot_inst_alt'])[index_start:index_stop]))
+                        
+                        # converting simple Lbol to common e_r / 1-e_r version, multiply by 1.111
+                        lbol_snip_plot.append(np.mean(1.111 * np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_lbol_alt'])[index_start:index_stop]))
                         
                 
                     #--------------------------
@@ -4135,6 +4179,7 @@ def _BH_mdotmass_hist_in_window(BHmis_tree = None, BHmis_input = None, BHmis_sum
     df['BH fraction growth'] = df['BH mass delta']/(df['BH mass start'])
     df['BH mdot window']     = bhmdot_window_plot       # delta mass over window / window size
     df['BH mdot snip']       = bhmdot_snip_plot         # time-weighted delta at each step (default)
+    df['BH lbol window']     = lbol_snip_plot           # time-weighted instantaneous lbol
     df['BH mdot growth']     = df['BH mdot snip']/(df['BH mass start'])
     
     #-------------------
@@ -4179,6 +4224,10 @@ def _BH_mdotmass_hist_in_window(BHmis_tree = None, BHmis_input = None, BHmis_sum
     print('   aligned:       %.2e /yr' %(np.median(df_co['BH mdot growth'])))
     print('   misaligned:    %.2e /yr' %(np.median(df_mis['BH mdot growth'])))
     print('   counter:       %.2e /yr' %(np.median(df_cnt['BH mdot growth'])))
+    #print('Median lbol:       [ erg / s ]')
+    #print('   aligned:       %.2e erg/s' %(np.median(df_co['BH lbol window'])))
+    #print('   misaligned:    %.2e erg/s' %(np.median(df_mis['BH lbol window'])))
+    #print('   counter:       %.2e erg/s' %(np.median(df_cnt['BH lbol window'])))
     
     
     
@@ -4241,8 +4290,9 @@ def _BH_mdotmass_hist_in_window(BHmis_tree = None, BHmis_input = None, BHmis_sum
         df_cnt_LTG = 0
     
     
-    
-    """fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.1], sharex=False, sharey=False) 
+    """
+    # Plot initial angle
+    fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.1], sharex=False, sharey=False) 
     plt.subplots_adjust(wspace=0.4, hspace=0.4)
     bins = np.arange(0, 181, 10)
     axs.hist(df_co['Angle'], bins=bins, weights=np.ones(len(df_co['BH mdot growth']))/len(df_co['BH mdot growth']), linewidth=1, facecolor='none', edgecolor='k', alpha=0.8)
@@ -4251,8 +4301,8 @@ def _BH_mdotmass_hist_in_window(BHmis_tree = None, BHmis_input = None, BHmis_sum
     axs.set_xlabel('First angle in array')
     axs.set_xlim(0, 180)
     plt.show()
-    plt.close()"""
-    
+    plt.close()
+    """
     
     
     
@@ -4850,11 +4900,14 @@ def _BH_deltamassmass_fgas_in_window(BHmis_tree = None, BHmis_input = None, BHmi
     #axs.set_ylim(0.0025, 1)
     axs.set_ylim(-2, -0.25)
     #axs.set_yticks([1, 10, 100, 1000])
-    axs.set_xlabel(r'log$_{10}$ $\Delta M_{\mathrm{BH,%s \:Gyr}}/M_{\mathrm{BH,initial}}$' %target_window_size)
+    #axs.set_xlabel(r'log$_{10}$ $\Delta M_{\mathrm{BH,%s \:Gyr}}/M_{\mathrm{BH,initial}}$' %target_window_size)
+    axs.set_xlabel(r'log$_{10}$ $\Delta M_{\mathrm{BH}}/M_{\mathrm{BH,initial}}$')
     if initial_or_average == 'initial':
         axs.set_ylabel('log$_{10}$ $f_{\mathrm{gas,SF}}(<r_{50})$')
     elif initial_or_average == 'average':
-        axs.set_ylabel(r'log$_{10}$ $\langle f_{\mathrm{gas,SF}}(<r_{50}) \rangle _{\mathrm{%s\:Gyr}}$' %target_window_size)
+        #axs.set_ylabel(r'log$_{10}$ $\langle f_{\mathrm{gas,SF}}(<r_{50}) \rangle _{\mathrm{%s\:Gyr}}$' %target_window_size)
+        axs.set_ylabel(r'log$_{10}$ $\bar{f}_{\mathrm{gas,SF}}(<r_{50})$')
+        
     elif initial_or_average == 'peak':
         axs.set_ylabel(r'log$_{10}$ $f_{\mathrm{peak gas,SF}}(<r_{50})$')
         
@@ -6692,6 +6745,8 @@ def _BH_deltamassmass_gassfkappa_in_window(BHmis_tree = None, BHmis_input = None
                               window_err      = 0.05,           # [ +/- Gyr ] trim
                               must_still_be_misaligned = True,  # target window = target trelax
                               initial_or_average       = 'average',
+                          # Test if difference with low 
+                            select_low_err         = False,         # [ True / False ] trim to max error of 10 (3 sigma = 30)
                           # Sample refinement
                             run_refinement = False,
                               #use_hmr_general_sample = '2.0',   # [ 1.0 / 2.0 / aperture]
@@ -6748,6 +6803,7 @@ def _BH_deltamassmass_gassfkappa_in_window(BHmis_tree = None, BHmis_input = None
     trelax_ID      = []
     duration_plot  = []
     state_plot     = []
+    err_test       = []     # 'low' and 'high' for <10 and 10-30 error
     ID_plot        = []
     density_fail = {'gas': {'aligned': [], 'misaligned': [], 'counter': []},
                     'gas_sf': {'aligned': [], 'misaligned': [], 'counter': []}}       # galaxies for which surface density ratio is infinite
@@ -6822,6 +6878,14 @@ def _BH_deltamassmass_gassfkappa_in_window(BHmis_tree = None, BHmis_input = None
                         trelax_ID.append(ID_i)
                         state_plot.append(galaxy_state)
                         ID_plot.append(ID_i)
+                        
+                        
+                        angle_array = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stars_gas_sf'])[index_start:index_stop]
+                        err_array = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stars_gas_sf_err'])[index_start:index_stop]
+                        if np.max(np.abs(err_array - angle_array[:,None])) < 10:
+                            err_test.append('low')
+                        else:
+                            err_test.append('high')
                     
                     
                 else:
@@ -6888,15 +6952,31 @@ def _BH_deltamassmass_gassfkappa_in_window(BHmis_tree = None, BHmis_input = None
                     duration_plot.append(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['entry_duration'])
                     state_plot.append(galaxy_state)
                     ID_plot.append(ID_i)
+                    
+                    
+                    angle_array = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stars_gas_sf'])[index_start:index_stop]
+                    err_array = np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['stars_gas_sf_err'])[index_start:index_stop]
+                    if np.max(np.abs(err_array - angle_array[:,None])) < 10:
+                        err_test.append('low')
+                    else:
+                        err_test.append('high')
                 
                 
                           
     # Collect data into dataframe
-    df = pd.DataFrame(data={'stelmass': stelmass_plot, 'SFR': sfr_plot, 'sSFR': ssfr_plot, 'Time delta': time_delta_plot, 'BH mass start': bhmass_start_plot, 'BH mass delta': bhmass_delta_plot, 'Morphology': kappa_plot, 'Kappa SF': kappa_gas_plot, 'State': state_plot, 'window': duration_plot, 'GalaxyIDs': ID_plot})        
+    df = pd.DataFrame(data={'stelmass': stelmass_plot, 'SFR': sfr_plot, 'sSFR': ssfr_plot, 'Time delta': time_delta_plot, 'BH mass start': bhmass_start_plot, 'BH mass delta': bhmass_delta_plot, 'Morphology': kappa_plot, 'Kappa SF': kappa_gas_plot, 'State': state_plot, 'window': duration_plot, 'err_test': err_test, 'GalaxyIDs': ID_plot})        
     df['BH deltamassmass2']  = df['BH mass delta']/(df['BH mass start']**2)
     df['BH fraction growth'] = df['BH mass delta']/(df['BH mass start'])
     df['BH mdot window']     = bhmdot_window_plot       # delta mass over window / window size
     df['BH mdot snip']       = bhmdot_snip_plot         # time-weighted delta at each step
+    
+    # Select only low uncertainty systems
+    if select_low_err:
+        # testing effect if using stricter 3 sigma uncertainty
+        df = df.loc[(df['err_test'] == 'low')]
+        
+        print('Using sample of max. 10 deg error (3 sigma = 30):      %s' %(len(df['GalaxyIDs'])))
+    
     
     df_co  = df.loc[(df['State'] == 'aligned')]
     df_mis = df.loc[(df['State'] == 'misaligned')]
@@ -6992,6 +7072,12 @@ def _BH_deltamassmass_gassfkappa_in_window(BHmis_tree = None, BHmis_input = None
     #else:
     #    axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
     
+    plot_annotate = ''
+    if select_low_err:
+        plot_annotate = plot_annotate + '$<10^{\circ}$ error'
+    if plot_annotate != '':
+        axs.set_title(r'%s' %(plot_annotate), size=7, loc='left', pad=3)
+    
 
     #-----------
     ### General formatting
@@ -7000,9 +7086,12 @@ def _BH_deltamassmass_gassfkappa_in_window(BHmis_tree = None, BHmis_input = None
     #axs.set_yscale('log')
     axs.set_ylim(0.2, 1)
     #axs.set_yticks([1, 10, 100, 1000])
-    axs.set_xlabel(r'log$_{10}$ $\Delta M_{\mathrm{BH,%s \:Gyr}}/M_{\mathrm{BH,initial}}$' %target_window_size)
+    #axs.set_xlabel(r'log$_{10}$ $\Delta M_{\mathrm{BH,%s \:Gyr}}/M_{\mathrm{BH,initial}}$' %target_window_size)
+    axs.set_xlabel(r'log$_{10}$ $\Delta M_{\mathrm{BH}}/M_{\mathrm{BH,initial}}$')
     if initial_or_average == 'average':
-        axs.set_ylabel(r'$\langle \kappa_{\mathrm{co}}^{\mathrm{SF}} \rangle _{\mathrm{%s \:Gyr}}$' %target_window_size)
+        #axs.set_ylabel(r'$\langle \kappa_{\mathrm{co}}^{\mathrm{SF}} \rangle _{\mathrm{%s \:Gyr}}$' %target_window_size)
+
+        axs.set_ylabel(r'$\bar{\kappa}_{\mathrm{co}}^{\mathrm{SF}}$')
     if initial_or_average == 'initial':
         axs.set_ylabel(r'$\kappa_{\mathrm{co}}^{\mathrm{SF}}$')
     axs.minorticks_on()
@@ -7734,7 +7823,9 @@ def _BH_deltamassmass_gas_inflow_in_window(BHmis_tree = None, BHmis_input = None
     axs.set_ylim(-1.5, 1.5)
     #axs.set_yticks([1, 10, 100, 1000])
     axs.set_xlabel(r'log$_{10}$ $\Delta M_{\mathrm{BH,%s \:Gyr}}/M_{\mathrm{BH,initial}}$' %target_window_size)
-    axs.set_ylabel(r'log$_{10}$ $\langle \dot{M}_{\mathrm{%s}, %s r_{50}} \rangle _{\mathrm{%s \: Gyr}}$ [M$_{\odot}$ yr$^{-1}$]'%('gas' if gas_fraction_type == 'gas' else 'gas,SF', inflow_hmr, target_window_size))
+    #axs.set_ylabel(r'log$_{10}$ $\langle \dot{M}_{\mathrm{%s}, %s r_{50}} \rangle _{\mathrm{%s \: Gyr}}$ [M$_{\odot}$ yr$^{-1}$]'%('gas' if gas_fraction_type == 'gas' else 'gas,SF', inflow_hmr, target_window_size))
+    axs.set_ylabel(r'log$_{10}$ $\bar{\dot{M}}_{\mathrm{%s}} (%s r_{50})$ [M$_{\odot}$ yr$^{-1}$]'%('gas' if gas_fraction_type == 'gas' else 'gas,SF', ('' if inflow_hmr == 1 else '2')))
+    
     axs.minorticks_on()
     axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
     axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
@@ -9215,7 +9306,7 @@ BHmis_tree, BHmis_input, BH_input, BHmis_summary = _extract_BHmis_tree(csv_BHmis
 
 
 
-# x-y of scatter of 2r50 stelmass and bh mass at z=0.1. In projection and as abs
+# x-y of scatter of 2r50 stelmass and bh mass at z=0.1. In projection:
 """_plot_stelmass_BH_scatter(csv_sample = 'L100_27_all_sample_misalignment_9.5', csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_',
                         use_angle = 'stars_gas_sf', ETG_or_LTG = 'both', cluster_or_field   = 'both',
                         use_proj_angle = True,      # False if snip 188 used
@@ -9236,14 +9327,15 @@ _plot_stelmass_BH_scatter(csv_sample = 'L100_27_all_sample_misalignment_9.5', cs
                           paper_formatting = True,
                         showfig = True,
                         savefig = True)"""
+# and as abs abs:
 """_plot_stelmass_BH_scatter(csv_sample = 'L100_188_all_sample_misalignment_9.5', csv_output = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_',
                         use_angle = 'stars_gas_sf', ETG_or_LTG = 'both', cluster_or_field   = 'both',
                         use_proj_angle = False,      # False if snip 188 used
                           plot_histogram = True,
                           paper_formatting = True,
                         showfig = True,
-                        savefig = True)
-_plot_stelmass_BH_scatter(csv_sample = 'L100_188_all_sample_misalignment_9.5', csv_output = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_',
+                        savefig = True)"""
+"""_plot_stelmass_BH_scatter(csv_sample = 'L100_188_all_sample_misalignment_9.5', csv_output = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_',
                         use_angle = 'stars_gas_sf', ETG_or_LTG = 'ETG', cluster_or_field   = 'both',
                         use_proj_angle = False,      # False if snip 188 used
                           plot_histogram = True,
@@ -9265,8 +9357,8 @@ _plot_stelmass_BH_scatter(csv_sample = 'L100_188_all_sample_misalignment_9.5', c
                                 type_of_fraction = 'f_mis',     # f_mis f_cnt f_co
                                 plot_only_current_aligned = False,      # galaxies that are aligned at z=0.1
                                showfig = True,
-                               savefig = True)
-_plot_stelmass_BH_hexbin_z01_tree(local_z01_tree_load = 'L100_local_z01_input_windowt4Gyr___',
+                               savefig = True)"""
+"""_plot_stelmass_BH_hexbin_z01_tree(local_z01_tree_load = 'L100_local_z01_input_windowt4Gyr___',
                                 type_of_fraction = 'f_mis',     # f_mis f_cnt f_co
                                 plot_only_current_aligned = False,      # galaxies that are aligned at z=0.1
                                showfig = True,
@@ -9371,17 +9463,16 @@ for target_bh_mass_i in [6.1, 6.3, 6.5, 6.75, 7, 7.25, 7.5, 7.75, 8]:
 
 
 #------------------------
-# Delta growth
-
+# Delta growth    
 # SCATTER x-y mass at start and mass at end after X Gyr
-"""for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
+for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
     _BH_deltamass_in_window(BHmis_tree=BHmis_tree, BHmis_input=BHmis_input, BHmis_summary=BHmis_summary, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                                         target_window_size   = target_window_size_i,         # [ Gyr ] trim to at least 1 Gyr to allow overlay
                                           window_err      = window_err_i,           # [ +/- Gyr ] trim
                                           must_still_be_misaligned = True,  # target window = target trelax
                                         run_refinement = False,
                                           showfig = True,
-                                          savefig = False)"""
+                                          savefig = False)
 # SCATTER x-y mass at start and mass at end after X Gyr, morphology
 """for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
     _BH_deltamass_in_window(BHmis_tree=BHmis_tree, BHmis_input=BHmis_input, BHmis_summary=BHmis_summary, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
@@ -9516,7 +9607,7 @@ for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.
                                           must_still_be_misaligned = True,  # target window = target trelax
                                         run_refinement = False,
                                           showfig = True,
-                                          savefig = False)"""
+                                          savefig = True)"""              
 # HIST of fractional growth for a given time window/trelax - morphology
 """for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
     _BH_deltamassmass_hist_in_window(BHmis_tree=BHmis_tree, BHmis_input=BHmis_input, BHmis_summary=BHmis_summary, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
@@ -9635,8 +9726,11 @@ for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.
                                           must_still_be_misaligned = True,  # target window = target trelax
                                           initial_or_average = 'average',
                                         run_refinement = False,
+                                        # select_low_err = True,
                                           showfig = True,
                                           savefig = True)"""
+
+
 
 
 # SCATTER of fractional growth vs inflow rate

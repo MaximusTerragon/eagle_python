@@ -314,7 +314,7 @@ Output Parameters
 def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CSV sample file to load GroupNum, SubGroupNum, GalaxyID, SnapNum
                        csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_',
                        #--------------------------
-                       use_hmr_values = 'aperture',            # [ 1.0 / 2.0 / 'aperture' ] value to extract general values from
+                       use_hmr_values = '2.0',            # [ 1.0 / 2.0 / 'aperture' ] value to extract general values from
                        # CTRL+F -> 'INPUT VALUES HERE' ... and change teh axis
                        #--------------------------
                        # Selection criteria
@@ -337,7 +337,7 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
                        showfig       = True,
                        savefig       = False,
                          file_format = 'pdf',
-                         savefig_txt = 'bh_mass_centrals',
+                         savefig_txt = '',
                        #--------------------------
                        print_progress = False,
                        debug = False):
@@ -515,8 +515,12 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
         
         array_ETG = []
         array_LTG = []
+        array_ETG_ratio = []
+        array_LTG_ratio = []
         array_ETG_mass = []
         array_LTG_mass = []
+        array_ETG_kappa = []
+        array_LTG_kappa = []
         
         # Find angle galaxy makes with viewing axis
         def _find_angle(vector1, vector2):
@@ -636,6 +640,11 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
                             value_c.append(all_general['%s' %GalaxyID]['kappa_stars'])
                             
                             #value_s.append()
+                            
+                            if all_general['%s' %GalaxyID]['kappa_stars'] > 0.5:
+                                array_LTG_mass.append(np.log10(np.array(all_general['%s' %GalaxyID]['stelmass'])))
+                            if all_general['%s' %GalaxyID]['kappa_stars'] < 0.3:
+                                array_ETG_mass.append(np.log10(np.array(all_general['%s' %GalaxyID]['stelmass'])))
                             #========================================================
                         else:
                             
@@ -662,20 +671,31 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
                             #ylabel = 'gassf / stelmass + gassf'
                             #value_y.append(all_general['%s' %GalaxyID]['kappa_stars'])
                             #value_y.append(np.divide(np.array(all_masses['%s' %GalaxyID]['gas_sf'][value_mask_masses]), np.array(all_masses['%s' %GalaxyID]['gas_sf'][value_mask_masses]) + np.array(all_masses['%s' %GalaxyID]['stars'][value_mask_masses])))
-                            ylabel = 'sSFR [yr-1]'
-                            value_y.append(np.divide(3.154e+7*np.array(all_sfr['%s' %GalaxyID]['gas_sf'][value_mask_sfr]), np.array(all_masses['%s' %GalaxyID]['stars'][value_mask_masses])))
+                            #ylabel = 'sSFR [yr-1]'
+                            #value_y.append(np.divide(3.154e+7*np.array(all_sfr['%s' %GalaxyID]['gas_sf'][value_mask_sfr]), np.array(all_masses['%s' %GalaxyID]['stars'][value_mask_masses])))
+                            
                             
                             clabel = 'kappa'
                             value_c.append(all_general['%s' %GalaxyID]['kappa_stars'])
                             
                             #value_s.append(math.nan)
+                            
+                        
+                            if all_general['%s' %GalaxyID]['kappa_stars'] > 0.5:
+                                array_LTG_mass.append(np.log10(np.array(all_masses['%s' %GalaxyID]['stars'][value_mask_masses])))
+                            if all_general['%s' %GalaxyID]['kappa_stars'] < 0.3:
+                                array_ETG_mass.append(np.log10(np.array(all_masses['%s' %GalaxyID]['stars'][value_mask_masses])))
                             #========================================================
                         
                         
                         if all_general['%s' %GalaxyID]['kappa_stars'] > 0.5:
                             array_LTG.append(all_general['%s' %GalaxyID]['halfmass_rad_sf'])
+                            array_LTG_ratio.append(all_general['%s' %GalaxyID]['halfmass_rad_sf']/all_general['%s' %GalaxyID]['halfmass_rad'])
+                            array_LTG_kappa.append(all_general['%s' %GalaxyID]['kappa_stars'])
                         if all_general['%s' %GalaxyID]['kappa_stars'] < 0.3:
                             array_ETG.append(all_general['%s' %GalaxyID]['halfmass_rad_sf'])
+                            array_ETG_ratio.append(all_general['%s' %GalaxyID]['halfmass_rad_sf']/all_general['%s' %GalaxyID]['halfmass_rad'])
+                            array_ETG_kappa.append(all_general['%s' %GalaxyID]['kappa_stars'])
                             
                         
                         
@@ -683,8 +703,13 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
         #============================================    
         # END OF ALL GALAXIES + PLOTTING
         print('Final sample length: ', len(value_x))
-        #print(np.median(array_LTG))
-        #print(np.median(array_ETG))
+        #print(np.median(array_LTG_ratio))
+        #print(np.median(array_ETG_ratio))
+        #value_x = array_ETG_mass
+        #value_y = array_ETG_ratio
+        #value_c = array_ETG_kappa
+        #ylabel = 'r50_sf/r50'
+        
                 
         # COLLECT ID -> CTRL+F 'COLLECT ID OF INTERESTED GALAXIES aaa'
         #print('\tcollect_ID of counter-rotatos:')
@@ -737,8 +762,8 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
         # Axis labels
         axs.set_xlim(9, 11.5)
         #axs.set_xticks(np.arange(0, 181, step=30))
-        axs.set_ylim(3*10**-13, 3*10**-9)
-        axs.set_yscale('log')
+        #axs.set_ylim(3*10**-13, 3*10**-9)
+        #axs.set_yscale('log')
         axs.set_xlabel(xlabel)
         axs.set_ylabel(ylabel)
         #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='both', width=0.8, length=2)
@@ -788,9 +813,12 @@ def _plot_relations(csv_sample = 'L100_27_all_sample_misalignment_9.5',     # CS
 #_plot_relations(ETG_or_LTG = 'ETG')
 #_plot_relations(ETG_or_LTG = 'LTG')
 
-#_plot_relations(csv_sample = 'L100_195_all_sample_misalignment_9.5', csv_output = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_')
+#_plot_relations(csv_sample = 'L100_188_all_sample_misalignment_9.5', csv_output = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_gas_nsf_dm_plusNSF')
 #_plot_relations(csv_sample = 'L100_19_all_sample_misalignment_9.5', csv_output = '_RadProj_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_')
 
+_plot_relations(csv_sample = 'L100_188_all_sample_misalignment_9.5', csv_output = '_Rad_Err__stars_gas_stars_gas_sf_gas_sf_gas_nsf_stars_dm_gas_dm_gas_sf_dm_gas_nsf_dm_plusNSF')
+
+                                                                                   
 #===========================
 
 

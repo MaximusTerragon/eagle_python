@@ -5,6 +5,7 @@ from scipy import stats
 from scipy.stats import gaussian_kde
 import math
 import random
+import seaborn as sns
 import matplotlib as mpl
 import matplotlib.pyplot as plt 
 import matplotlib.colors as colors
@@ -741,7 +742,7 @@ def _plot_stelmass_BH_hexbin_z01_tree(local_z01_tree_load = 'L100_local_z01_inpu
                       #==============================================
                       showfig       = True,
                       savefig       = False,    
-                        file_format   = 'pdf',
+                        file_format   = 'png',
                         savefig_txt = '',            # [ '' / 'any text' / 'manual' ] 'manual' will prompt txt before saving
                       #-----------------------------
                       debug = False):
@@ -896,11 +897,18 @@ def _plot_stelmass_BH_hexbin_z01_tree(local_z01_tree_load = 'L100_local_z01_inpu
         # Colorbar
         if type_of_fraction == 'f_mis':
             colorbar_angle = r'=[30^{\circ}-150^{\circ}]'
+            colorbar_angle_t = r'misaligned'
         if type_of_fraction == 'f_cnt':
             colorbar_angle = r'>150^{\circ}'
+            colorbar_angle_t = r'counter'
         if type_of_fraction == 'f_co':
             colorbar_angle = r'<30^{\circ}'
-        cb = fig.colorbar(hb, ax=axs, label=r'$\langle$time spent in $\psi_{\mathrm{3D}}%s$$\rangle$' %colorbar_angle)
+            colorbar_angle_t = r'corot'
+        #cb = fig.colorbar(hb, ax=axs, label=r'$\langle$time spent in $\psi_{\mathrm{3D}}%s$$\rangle$' %colorbar_angle)
+        cb = fig.colorbar(hb, ax=axs, label=r'$\langle t_{\mathrm{\psi_{\mathrm{3D}}%s}}/t_{\mathrm{lookback=%i\:Gyr}}$ $\rangle$' %(colorbar_angle, local_z01_input['require_min_lookbacktime']))
+        
+        
+        
     
         #-----------
         ### General formatting
@@ -955,6 +963,258 @@ def _plot_stelmass_BH_hexbin_z01_tree(local_z01_tree_load = 'L100_local_z01_inpu
         if savefig:
             plt.savefig("/Users/c22048063/Documents/EAGLE/plots_snips/BH_hexbin_overmassive/L100_overmassiveBH_%s_hexbin_window%sGyr_%s.%s" %(type_of_fraction, local_z01_input['require_min_lookbacktime'], savefig_txt, file_format), format=file_format, bbox_inches='tight', dpi=600)    
             print("\n  SAVED: /Users/c22048063/Documents/EAGLE/plots_snips/BH_hexbin_overmassive/L100_overmassiveBH_%s_hexbin_window%sGyr_%s.%s" %(type_of_fraction, local_z01_input['require_min_lookbacktime'], savefig_txt, file_format))
+        if showfig:
+            plt.show()
+        plt.close()
+    else:
+        return df['stelmass_ap'], "%s_hexbin_window%sGyr_%s.%s" %(type_of_fraction, local_z01_input['require_min_lookbacktime'], savefig_txt, file_format)
+# HEXBIN x-y of stellar mass in 2r50 and BH mass at z=0, colouring by fraction of galaxies in hex that have at some point been misaligned in past 2 Gyr
+def _plot_stelmass_BH_hexbin_fmis_z01_tree(local_z01_tree_load = 'L100_local_z01_input_windowt4Gyr___',
+                      #==============================================
+                      # Graph settings
+                      type_of_fraction      = 'mis',      # [ mis / cnt ] for 30-150, >150 and <30
+                      plot_only_current_aligned = False,
+                      #==============================================
+                      # Export stelmass
+                      export_stelmass   = False,
+                      #==============================================
+                      showfig       = True,
+                      savefig       = False,    
+                        file_format   = 'png',
+                        savefig_txt = '',            # [ '' / 'any text' / 'manual' ] 'manual' will prompt txt before saving
+                      #-----------------------------
+                      debug = False):
+                      
+    #-----------------------------------
+    assert (answer == '4') or (answer == '3'), 'Must use snips'
+    
+    # Load local_z01_tree
+    dict_tree = json.load(open('%s/%s.csv' %(output_dir, local_z01_tree_load), 'r'))
+    local_z01_tree = dict_tree['local_z01_tree']
+    local_z01_input = dict_tree['local_z01_input']
+    
+
+    #------------
+    # Extract values we want
+    stelmass_plot = []
+    stelmass_ap_plot = []
+    bhmass_plot   = []
+    ID_plot       = []
+    f_co_plot     = []
+    f_mis_plot    = []
+    f_cnt_plot    = []
+    has_misalignment_plot = []
+    has_counter_plot = []
+    state_plot    = []
+    for ID_i in local_z01_tree.keys():
+        
+        stelmass_plot.append(local_z01_tree['%s' %ID_i]['stelmass'][-1])
+        stelmass_ap_plot.append(local_z01_tree['%s' %ID_i]['stelmass_ap'][-1])
+        bhmass_plot.append(local_z01_tree['%s' %ID_i]['bhmass'][-1])
+        ID_plot.append(ID_i)
+        
+        f_co_plot.append(local_z01_tree['%s' %ID_i]['f_time_co'])
+        f_mis_plot.append(local_z01_tree['%s' %ID_i]['f_time_mis'])
+        f_cnt_plot.append(local_z01_tree['%s' %ID_i]['f_time_cnt'])
+        
+        if local_z01_tree['%s' %ID_i]['f_time_mis'] > 0:
+            has_misalignment_plot.append(1)
+        else:
+            has_misalignment_plot.append(0)
+        if local_z01_tree['%s' %ID_i]['f_time_cnt'] > 0:
+            has_counter_plot.append(1)
+        else:
+            has_counter_plot.append(0)
+        
+        if local_z01_tree['%s' %ID_i]['angle'][-1] < 30:
+            state_plot.append('aligned')
+        elif local_z01_tree['%s' %ID_i]['angle'][-1] > 150:
+            state_plot.append('counter')
+        else:
+            state_plot.append('misaligned')
+            
+                
+    # Collect data into dataframe
+    df = pd.DataFrame(data={'stelmass': stelmass_plot, 'stelmass_ap': stelmass_ap_plot, 'bhmass': bhmass_plot, 'GalaxyID': ID_plot, 'f_co': f_co_plot, 'f_mis': f_mis_plot, 'f_cnt': f_cnt_plot, 'State': state_plot})
+    df['stel BH ratio'] = df['bhmass']/df['stelmass'] 
+    df['has mis history'] = has_misalignment_plot
+    df['has cnt history'] = has_counter_plot
+    
+    
+    df_co  = df.loc[(df['State'] == 'aligned')]
+    df_mis = df.loc[(df['State'] == 'misaligned')]
+    df_cnt = df.loc[(df['State'] == 'counter')]
+    
+    
+    
+    if not export_stelmass:
+        #---------------------------  
+        # Figure initialising
+        fig, axs = plt.subplots(1, 1, figsize=[10/3, 2.8], sharex=False, sharey=False) 
+        plt.subplots_adjust(wspace=0.4, hspace=0.4)
+
+        color_dict         = {'total': 'darkviolet', 'aligned': 'k', 'misaligned':'r', 'counter':'b'}
+        #color_dict_scatter = {'total': 'darkviolet', 'aligned': 'k', 'misaligned':'r', 'counter':'b'}
+        cmap = 'BuPu'
+        norm = colors.Normalize(vmin=-0., vmax = 1)
+    
+        #------------
+        # Hexbin and scatter
+        if plot_only_current_aligned:
+            print('\n-----------------------\nSample size of local_z01_tree:  ', len(df_co['stelmass']))
+            print('    aligned:    ', len(df_co['stelmass']))
+            print('    misaligned: ', len(df_mis['stelmass']))
+            print('    counter:    ', len(df_cnt['stelmass']))
+            hb = axs.hexbin(np.log10(df_co['stelmass']), np.log10(df_co['bhmass']), C=df_co['has %s history'%type_of_fraction], mincnt=5, gridsize=25, extent=(9.25, 11.5, 5, 10), cmap=cmap, norm=norm, zorder=1)
+    
+
+            #color_dict = {'aligned':'darkgrey', 'misaligned':'orangered', 'counter':'dodgerblue'}
+            axs.scatter(np.log10(df_co['stelmass']), np.log10(df_co['bhmass']), s=8, c=[color_dict[i] for i in df_co['State']], edgecolor='k', marker='.', linewidths=0, alpha=0.8, zorder=-2)
+        else:
+            print('\n-----------------------\nSample size of local_z01_tree:  ', len(ID_plot))
+            print('    aligned:    ', len(df_co['stelmass']))
+            print('    misaligned: ', len(df_mis['stelmass']))
+            print('    counter:    ', len(df_cnt['stelmass']))
+            hb = axs.hexbin(np.log10(df['stelmass']), np.log10(df['bhmass']), C=df['has %s history'%type_of_fraction], mincnt=5, gridsize=25, extent=(9.25, 11.5, 5, 10), cmap=cmap, norm=norm, zorder=1)
+    
+
+            #color_dict = {'aligned':'darkgrey', 'misaligned':'orangered', 'counter':'dodgerblue'}
+            axs.scatter(np.log10(df['stelmass']), np.log10(df['bhmass']), s=8, c=[color_dict[i] for i in df['State']], edgecolor='k', marker='.', linewidths=0, alpha=0.8, zorder=-2)
+   
+        
+        #---------------
+        # KS test
+        print('-------------')
+        print('KS-test of (M_bh / M*) distributions:')
+        res = stats.ks_2samp(df_co['stel BH ratio'], df_mis['stel BH ratio'])
+        print('KS-test:     aligned - misaligned')
+        print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(df_co.index) + len(df_mis.index))/(len(df_co.index)*len(df_mis.index))))))
+        print('   p-value: %s' %res.pvalue)
+        res = stats.ks_2samp(df_co['stel BH ratio'], df_cnt['stel BH ratio'])
+        print('KS-test:     aligned - counter')
+        print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(df_co.index) + len(df_cnt.index))/(len(df_co.index)*len(df_cnt.index))))))
+        print('   p-value: %s' %res.pvalue)
+        res = stats.ks_2samp(df_mis['stel BH ratio'], df_cnt['stel BH ratio'])
+        print('KS-test:     misaligned - counter')
+        print('   D:       %.2f       D$_{crit}$ (0.05):       %.2f' %(res.statistic, (1.358*np.sqrt((len(df_mis.index) + len(df_cnt.index))/(len(df_mis.index)*len(df_cnt.index))))))
+        print('   p-value: %s' %res.pvalue)
+        
+        
+        #----------------
+        ### Plot median bins + residuals
+        bins = np.arange(9.25+0.125, 11.5+0.1, 0.25)
+        delta = bins[1]-bins[0]
+        use_percentiles = 16        # 1 sigma
+        min_bin_size = 10
+    
+        median_dict = {'total': 1, 'aligned': 1, 'misaligned': 1, 'counter': 1}
+        upper_dict  = {'total': 1, 'aligned': 1, 'misaligned': 1, 'counter': 1}
+        lower_dict  = {'total': 1, 'aligned': 1, 'misaligned': 1, 'counter': 1}
+        upper_dict_fill  = {'total': 1, 'aligned': 1, 'misaligned': 1, 'counter': 1}
+        lower_dict_fill  = {'total': 1, 'aligned': 1, 'misaligned': 1, 'counter': 1}
+        mask_dict   = {'total': 1, 'aligned': 1, 'misaligned': 1, 'counter': 1}
+        for df_i, state_i, ls_i in zip([df, df_co, df_mis, df_cnt], ['total', 'aligned', 'misaligned', 'counter'], ['--', '-', '-.', '-.']):
+            linecol_i = color_dict[state_i]
+        
+            idx  = np.digitize(np.log10(df_i['stelmass']), bins)
+            
+            running_median = [np.median(df_i['bhmass'][idx==k]) for k in np.arange(1, len(bins)+1)]
+            mask_count = np.where(np.array([len(df_i['bhmass'][idx==k]) for k in np.arange(1, len(bins)+1)]) >= min_bin_size)[0]
+            running_upper  = [np.percentile(df_i['bhmass'][idx==k], 100-use_percentiles) for k in np.arange(1, len(bins)+1)[mask_count]]
+            running_lower  = [np.percentile(df_i['bhmass'][idx==k], use_percentiles) for k in np.arange(1, len(bins)+1)[mask_count]]
+        
+            bins_plot = np.array(bins+(delta/2))[mask_count]
+            median_plot = np.array(running_median)[mask_count]
+        
+            if state_i in ['aligned', 'misaligned', 'counter']:
+                axs.plot(bins_plot, np.log10(median_plot), c=linecol_i, ls=ls_i, lw=1, alpha=1)
+            if state_i in ['total']:
+                axs.plot(bins_plot, np.log10(median_plot), c=linecol_i, ls=ls_i, lw=1, alpha=0.8)
+                #axs.plot(np.array(bins+(delta/2))[mask_count], np.log10(running_median), c=linecol_i, ls=ls_i, lw=1.1, alpha=1)
+                #axs.plot(np.array(bins+(delta/2))[mask_count], np.log10(running_upper), c=linecol_i, lw=0.5, alpha=0.8, ls='--')
+                #axs.plot(np.array(bins+(delta/2))[mask_count], np.log10(running_lower), c=linecol_i, lw=0.5, alpha=0.8, ls='--')
+        
+        
+            median_dict['%s'%state_i] = running_median
+            mask_dict['%s'%state_i]   = mask_count
+            upper_dict['%s'%state_i]  = np.log10(np.array(running_upper)) - np.log10(median_plot)      # for use in plt.errorbars
+            lower_dict['%s'%state_i]  = np.log10(median_plot) - np.log10(np.array(running_lower))
+            upper_dict_fill['%s'%state_i]  = np.log10(np.array(running_upper))                          # for use in fill
+            lower_dict_fill['%s'%state_i]  = np.log10(np.array(running_lower))
+        
+        
+        
+        #------------
+        # Colorbar
+        if type_of_fraction == 'mis':
+            colorbar_angle = r'[30^{\circ}-150^{\circ}]'
+            colorbar_angle_t = r'misaligned'
+        if type_of_fraction == 'cnt':
+            colorbar_angle = r'150^{\circ}'
+            colorbar_angle_t = r'counter-rotating'
+        if type_of_fraction == 'co':
+            colorbar_angle = r'30^{\circ}'
+            colorbar_angle_t = r'align'
+        #cb = fig.colorbar(hb, ax=axs, label=r'$\langle$time spent in $\psi_{\mathrm{3D}}%s$$\rangle$' %colorbar_angle)
+        #cb = fig.colorbar(hb, ax=axs, label=r'$\langle f_{\mathrm{\psi_{\mathrm{3D}}%s}}/t_{\mathrm{lookback=%i\:Gyr}}$ $\rangle$' %(colorbar_angle, local_z01_input['require_min_lookbacktime']))
+        #cb = fig.colorbar(hb, ax=axs, label=r'$\langle f_{\mathrm{\psi_{\mathrm{3D}}%s}} \rangle$' %(colorbar_angle))
+        cb = fig.colorbar(hb, ax=axs, label=r'fraction %s within $t_{\mathrm{lookback=%i\:Gyr}}$' %(colorbar_angle_t, local_z01_input['require_min_lookbacktime']))
+        
+        
+    
+        #-----------
+        ### General formatting
+        # Axis labels
+        axs.set_xlim(9.3, 11.2)
+        axs.set_ylim(5, 10)
+        axs.set_xlabel(r'log$_{10}$ $M_{*}(2r_{50})$ [M$_{\odot}$]')
+        axs.set_ylabel(r'log$_{10}$ $M_{\mathrm{BH}}$ [M$_{\odot}]$')
+        axs.minorticks_on()
+        axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
+        axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
+    
+        #-----------
+        # Title
+        #axs.set_title(r'Reliable kinematics for %.1f Gyr %s' %(local_z01_input['require_min_lookbacktime'], (', currently aligned' if plot_only_current_aligned else '')), size=7, loc='left', pad=3)
+        axs.set_title(r'%s$z\approx0.1$'%('Aligned sub-sample at ' if plot_only_current_aligned else ''), size=7, loc='left', pad=3)
+    
+        #-----------
+        ### Legend
+        legend_elements = []
+        legend_labels = []
+        legend_colors = []
+        legend_labels.append('total sample')
+        legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+        legend_colors.append(color_dict['total'])
+    
+        legend_labels.append('aligned')
+        legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+        legend_colors.append(color_dict['aligned'])
+    
+        legend_labels.append('misaligned $[30^{\circ}-150^{\circ}]$')
+        #legend_labels.append('unstable misaligned')
+        legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+        legend_colors.append(color_dict['misaligned'])
+    
+        legend_labels.append('counter-rotating')
+        legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+        legend_colors.append(color_dict['counter'])
+    
+        #legend_labels.append(r'$z\approx0.1$')
+        #legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+        #legend_colors.append('grey')
+        axs.legend(handles=legend_elements, labels=legend_labels, loc='upper left', frameon=False, labelspacing=0.1, labelcolor=legend_colors, handlelength=0, ncol=1)
+    
+        #-----------
+        # other
+        plt.tight_layout()
+    
+        if plot_only_current_aligned:
+            savefig_txt = savefig_txt + '_currently_aligned'
+
+        if savefig:
+            plt.savefig("/Users/c22048063/Documents/EAGLE/plots_snips/BH_hexbin_overmassive/L100_overmassiveBH_%sInBin_hexbin_window%sGyr_%s.%s" %(type_of_fraction, local_z01_input['require_min_lookbacktime'], savefig_txt, file_format), format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: /Users/c22048063/Documents/EAGLE/plots_snips/BH_hexbin_overmassive/L100_overmassiveBH_%sInBin_hexbin_window%sGyr_%s.%s" %(type_of_fraction, local_z01_input['require_min_lookbacktime'], savefig_txt, file_format))
         if showfig:
             plt.show()
         plt.close()
@@ -1120,7 +1380,9 @@ def _plot_stelmass_BH_hexbin_gassf_z01_tree(local_z01_tree_load = 'L100_local_z0
         
         #------------
         # Colorbar
-        cb = fig.colorbar(hb, ax=axs, label=r'$\langle$time spent $f_{\mathrm{gas,SF}}>0.1\rangle$')
+        #cb = fig.colorbar(hb, ax=axs, label=r'$\langle$time spent $\rangle$')
+        cb = fig.colorbar(hb, ax=axs, label=r'$\langle t_{\mathrm{f_{\mathrm{gas,SF}}>0.1}}/t_{\mathrm{lookback=%i\:Gyr}}$ $\rangle$' %(local_z01_input['require_min_lookbacktime']))
+        
     
         #-----------
         ### General formatting
@@ -2475,6 +2737,7 @@ def _BH_deltamass_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary
                               morph_average_or_snips = 'snips',     # [ 'snips' / 'average' ] whether to define the morphology as an average over period or over all snips
                             select_high_fgas       = False,         # [ False / value ] trim based on average
                             select_low_err         = False,         # [ True / False ] trim to max error of 10 (3 sigma = 30)
+                            subgrid_average        = 'peak',        # [ 'mean' / 'peak' ] mdot inst, lbol, eddington
                           #------------------------------------
                           # Sample refinement
                             run_refinement = False,
@@ -2583,9 +2846,14 @@ def _BH_deltamass_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary
                             bhmdot_window_plot.append((mass_axis[-1] - mass_axis[0])/(time_axis[-1]*(10**9)))
                             
                             # converting simple Lbol to common e_r / 1-e_r version, multiply by 1.111
-                            bh_mdot_inst_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mdot_inst'])[index_start:index_stop]))
-                            bh_edd_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_edd'])[index_start:index_stop]))
-                            bh_lbol_plot.append(np.mean(1.111 * np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_lbol'])[index_start:index_stop]))
+                            if subgrid_average == 'mean':
+                                bh_mdot_inst_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mdot_inst'])[index_start:index_stop]))
+                                bh_edd_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_edd'])[index_start:index_stop]))
+                                bh_lbol_plot.append(np.mean(1.111 * np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_lbol'])[index_start:index_stop]))
+                            elif subgrid_average == 'peak':
+                                bh_mdot_inst_plot.append(np.max(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mdot_inst'])[index_start:index_stop]))
+                                bh_edd_plot.append(np.max(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_edd'])[index_start:index_stop]))
+                                bh_lbol_plot.append(np.max(1.111 * np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_lbol'])[index_start:index_stop]))
                             
                             mass_delta_axis = mass_axis[1:] - mass_axis[0:-1]
                             time_delta_axis = time_axis[1:] - time_axis[0:-1]
@@ -2597,11 +2865,14 @@ def _BH_deltamass_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary
                             bhmdot_window_plot.append((mass_axis[-1] - mass_axis[0])/(time_axis[-1]*(10**9)))
                         
                             # converting simple Lbol to common e_r / 1-e_r version, multiply by 1.111
-                            bh_mdot_inst_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mdot_inst_alt'])[index_start:index_stop]))
-                            bh_edd_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_edd_alt'])[index_start:index_stop]))
-                            bh_lbol_plot.append(np.mean(1.111 * np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_lbol_alt'])[index_start:index_stop]))
-                            #bh_lbol_plot.append(np.max(1.111 * np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_lbol_alt'])[index_start:index_stop]))
-                            
+                            if subgrid_average == 'mean':
+                                bh_mdot_inst_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mdot_inst_alt'])[index_start:index_stop]))
+                                bh_edd_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_edd_alt'])[index_start:index_stop]))
+                                bh_lbol_plot.append(np.mean(1.111 * np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_lbol_alt'])[index_start:index_stop]))
+                            elif subgrid_average == 'peak':
+                                bh_mdot_inst_plot.append(np.max(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mdot_inst_alt'])[index_start:index_stop]))
+                                bh_lbol_plot.append(np.max(1.111 * np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_lbol_alt'])[index_start:index_stop]))
+                                bh_edd_plot.append(np.max(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_edd_alt'])[index_start:index_stop]))
                             
                             mass_delta_axis = mass_axis[1:] - mass_axis[0:-1]
                             time_delta_axis = time_axis[1:] - time_axis[0:-1]
@@ -2680,9 +2951,14 @@ def _BH_deltamass_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary
                         bhmdot_window_plot.append((mass_axis[-1] - mass_axis[0])/(time_axis[-1]*(10**9)))
                         
                         # converting simple Lbol to common e_r / 1-e_r version, multiply by 1.111
-                        bh_mdot_inst_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mdot_inst'])[index_start:index_stop]))
-                        bh_edd_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_edd'])[index_start:index_stop]))
-                        bh_lbol_plot.append(np.mean(1.111 * np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_lbol'])[index_start:index_stop]))
+                        if subgrid_average == 'mean':
+                            bh_mdot_inst_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mdot_inst'])[index_start:index_stop]))
+                            bh_edd_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_edd'])[index_start:index_stop]))
+                            bh_lbol_plot.append(np.mean(1.111 * np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_lbol'])[index_start:index_stop]))
+                        elif subgrid_average == 'peak':
+                            bh_mdot_inst_plot.append(np.max(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mdot_inst'])[index_start:index_stop]))
+                            bh_edd_plot.append(np.max(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_edd'])[index_start:index_stop]))
+                            bh_lbol_plot.append(np.max(1.111 * np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_lbol'])[index_start:index_stop]))
                         
                         mass_delta_axis = mass_axis[1:] - mass_axis[0:-1]
                         time_delta_axis = time_axis[1:] - time_axis[0:-1]
@@ -2694,10 +2970,14 @@ def _BH_deltamass_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary
                         bhmdot_window_plot.append((mass_axis[-1] - mass_axis[0])/(time_axis[-1]*(10**9)))
                         
                         # converting simple Lbol to common e_r / 1-e_r version, multiply by 1.111
-                        bh_mdot_inst_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mdot_inst_alt'])[index_start:index_stop]))
-                        bh_edd_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_edd_alt'])[index_start:index_stop]))
-                        bh_lbol_plot.append(np.mean(1.111 * np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_lbol_alt'])[index_start:index_stop]))
-                        #bh_lbol_plot.append(np.max(1.111 * np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_lbol_alt'])[index_start:index_stop]))
+                        if subgrid_average == 'mean':
+                            bh_mdot_inst_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mdot_inst_alt'])[index_start:index_stop]))
+                            bh_edd_plot.append(np.mean(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_edd_alt'])[index_start:index_stop]))
+                            bh_lbol_plot.append(np.mean(1.111 * np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_lbol_alt'])[index_start:index_stop]))
+                        elif subgrid_average == 'peak':
+                            bh_mdot_inst_plot.append(np.max(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_mdot_inst_alt'])[index_start:index_stop]))
+                            bh_lbol_plot.append(np.max(1.111 * np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_lbol_alt'])[index_start:index_stop]))
+                            bh_edd_plot.append(np.max(np.array(BH_subsample['%s' %galaxy_state]['%s' %ID_i]['bh_edd_alt'])[index_start:index_stop]))
                         
                         
                         mass_delta_axis = mass_axis[1:] - mass_axis[0:-1]
@@ -2807,8 +3087,8 @@ def _BH_deltamass_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary
     #print('  counter:       %.3f' %np.median(np.array(df_cnt['r50_sf']/df_cnt['r50'])))
     
     print(' ')
-    print('Fraction of aligned / misaligned / counter with Lbol > 1043: \t%.2f\t%.2f\t%.2f' %((len([i for i in np.array(df_co['BH lbol inst']) if i > 10**43])/len(np.array(df_co['BH lbol inst']))), (len([i for i in np.array(df_mis['BH lbol inst']) if i > 10**43])/len(np.array(df_mis['BH lbol inst']))), (len([i for i in np.array(df_cnt['BH lbol inst']) if i > 10**43])/len(np.array(df_cnt['BH lbol inst'])))))
-    print('Fraction of aligned / misaligned / counter with EddR > 0.01: \t%.2f\t%.2f\t%.2f' %((len([i for i in np.array(df_co['BH edd inst']) if i > 0.01])/len(np.array(df_co['BH edd inst']))), (len([i for i in np.array(df_mis['BH edd inst']) if i > 0.01])/len(np.array(df_mis['BH edd inst']))), (len([i for i in np.array(df_cnt['BH edd inst']) if i > 0.01])/len(np.array(df_cnt['BH edd inst'])))))
+    print('Fraction of aligned / misaligned / counter with %s Lbol > 1043: \t%.2f\t%.2f\t%.2f' %(subgrid_average, (len([i for i in np.array(df_co['BH lbol inst']) if i > 10**43])/len(np.array(df_co['BH lbol inst']))), (len([i for i in np.array(df_mis['BH lbol inst']) if i > 10**43])/len(np.array(df_mis['BH lbol inst']))), (len([i for i in np.array(df_cnt['BH lbol inst']) if i > 10**43])/len(np.array(df_cnt['BH lbol inst'])))))
+    print('Fraction of aligned / misaligned / counter with %s EddR > 0.01: \t%.2f\t%.2f\t%.2f' %(subgrid_average, (len([i for i in np.array(df_co['BH edd inst']) if i > 0.01])/len(np.array(df_co['BH edd inst']))), (len([i for i in np.array(df_mis['BH edd inst']) if i > 0.01])/len(np.array(df_mis['BH edd inst']))), (len([i for i in np.array(df_cnt['BH edd inst']) if i > 0.01])/len(np.array(df_cnt['BH edd inst'])))))
     
     
     
@@ -2871,7 +3151,7 @@ def _BH_deltamass_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary
         
         #--------------
         # Contours
-        levels = [1-0.68, 1-0.38, 1] # 1 - sigma, as contour will plot 'probability of lying outside this contour', not 'within contour'
+        """levels = [1-0.68, 1-0.38, 1] # 1 - sigma, as contour will plot 'probability of lying outside this contour', not 'within contour'
         for state_i in ['aligned', 'misaligned', 'counter']:
             df_i = df.loc[(df['State'] == state_i)]
         
@@ -2900,6 +3180,17 @@ def _BH_deltamass_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary
         
         
             #axs.clabel(CS, fmt='%.3f', colors='b', fontsize=8)
+        """
+        # alternative contour
+        levels = [0.38, 0.68]       # 0.5 and 1 sigma
+        for state_i in ['aligned', 'misaligned', 'counter']:
+            df_i = df.loc[(df['State'] == state_i)]
+        
+            x = np.array(np.log10(df_i['BH mass start']))
+            y = np.array(np.log10(df_i['BH mass delta']))
+            
+            CS = sns.kdeplot(x=x, y=y, ax=axs, levels=levels)
+        
 
         
         # looking at alternative ways of expressing our findings
@@ -7055,6 +7346,9 @@ def _BH_deltamassmass_gassfkappa_in_window(BHmis_tree = None, BHmis_input = None
         axs.contourf(xi, yi, zi,levels = [levels[0], levels[1]], colors=(lighten_color(color_dict['%s' %state_i], 0.8),), origin=origin, zorder=-3, alpha=0.1)
         axs.contourf(xi, yi, zi,levels = [levels[1], levels[2]], colors=(lighten_color(color_dict['%s' %state_i], 0.5),), origin=origin, zorder=-3, alpha=0.1)
     
+    
+    
+    
     #--------------
     # annotation
     #arr = mpatches.FancyArrowPatch((-11, 0.65), (-12.8, 0.65), arrowstyle='->,head_width=.15', mutation_scale=6, color='grey')
@@ -9383,8 +9677,24 @@ _plot_stelmass_BH_hexbin_z01_tree(local_z01_tree_load = 'L100_local_z01_input_wi
                                 plot_only_current_aligned = False,
                                showfig = True,
                                savefig = True)"""
-"""# x-y of hexbin of 2r50 stelmass and bh mass at z=0.1, but looking at the galaxy's cold gas fraction history (fgassf > 0.1)
-_plot_stelmass_BH_hexbin_gassf_z01_tree(local_z01_tree_load = 'L100_local_z01_input_windowt2Gyr___',
+"""# x-y of hexbin of 2r50 stelmass and bh mass at z=0.1, but looking at the fraction of galaxies in a bin that have at some point been misaligned in past 2 Gyr
+_plot_stelmass_BH_hexbin_fmis_z01_tree(local_z01_tree_load = 'L100_local_z01_input_windowt2Gyr___',
+                                type_of_fraction = 'mis',     # mis cnt
+                                plot_only_current_aligned = False,      # galaxies that are aligned at z=0.1
+                               showfig = True,
+                               savefig = True)"""
+"""_plot_stelmass_BH_hexbin_fmis_z01_tree(local_z01_tree_load = 'L100_local_z01_input_windowt4Gyr___',
+                                type_of_fraction = 'mis',     # mis cnt
+                                plot_only_current_aligned = False,      # galaxies that are aligned at z=0.1
+                               showfig = True,
+                               savefig = True)
+_plot_stelmass_BH_hexbin_fmis_z01_tree(local_z01_tree_load = 'L100_local_z01_input_windowt6Gyr___',
+                                type_of_fraction = 'mis',     # mis cnt
+                                plot_only_current_aligned = False,
+                               showfig = True,
+                               savefig = True)"""
+# x-y of hexbin of 2r50 stelmass and bh mass at z=0.1, but looking at the galaxy's cold gas fraction history (fgassf > 0.1)
+"""_plot_stelmass_BH_hexbin_gassf_z01_tree(local_z01_tree_load = 'L100_local_z01_input_windowt2Gyr___',
                                 plot_only_current_aligned = False,      # galaxies that are aligned at z=0.1
                                showfig = True,
                                savefig = True)
@@ -9470,9 +9780,13 @@ for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.
                                         target_window_size   = target_window_size_i,         # [ Gyr ] trim to at least 1 Gyr to allow overlay
                                           window_err      = window_err_i,           # [ +/- Gyr ] trim
                                           must_still_be_misaligned = True,  # target window = target trelax
+                                          subgrid_average = 'peak',     # peak or mean, for quoting lbol edd and mdot and whether to average over window or state peak value attained
                                         run_refinement = False,
                                           showfig = True,
                                           savefig = False)
+                                          
+    raise Exception('current pause 98yoihlnk')
+                                          
 # SCATTER x-y mass at start and mass at end after X Gyr, morphology
 """for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
     _BH_deltamass_in_window(BHmis_tree=BHmis_tree, BHmis_input=BHmis_input, BHmis_summary=BHmis_summary, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,

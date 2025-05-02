@@ -929,7 +929,7 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                         
                         
                         #================================================
-                        # Find inflow/outflow
+                        # Find inflow/outflow -      !!! outflow incorrect do not use, inflow fine !!!
                         # If gasdata_old does not have current hmr_i, update and move on. Else... find inflow/outflow
                         if '%s_hmr'%str(hmr_i) not in galaxy_tree['%s' %ID_dict]['gasdata_old'].keys():
                             galaxy_tree['%s' %ID_dict]['gas']['%s_hmr' %hmr_i]['inflow_rate'].append(math.nan)

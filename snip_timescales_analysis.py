@@ -9,6 +9,7 @@ import hashlib
 import matplotlib as mpl
 import matplotlib.pyplot as plt 
 import matplotlib.colors as colors
+import matplotlib.patches as patches
 import matplotlib.cm as cm
 from matplotlib import ticker
 from matplotlib.ticker import (MultipleLocator, AutoMinorLocator, NullFormatter, ScalarFormatter, FuncFormatter)
@@ -6880,6 +6881,7 @@ def _plot_origins(misalignment_tree, misalignment_input, summary_dict, plot_anno
                       use_only_start_morph     = True,          # use only ETG - and LTG - 
                       set_origins_morph        = ['ETG-ETG', 'ETG-LTG', 'LTG-ETG', 'LTG-LTG'],
                       add_total                = True,          # Add total in sample
+                      split_high_z_low_z       = False,          # Splits at lookbacktime ~4 Gyr, or about z=0.35. Makes 4 plots
                       #-----------------------
                       # Mergers
                       use_alt_merger_criteria = True,
@@ -6932,9 +6934,15 @@ def _plot_origins(misalignment_tree, misalignment_input, summary_dict, plot_anno
     GasMass_tree              = np.array(f['Histories']['GasMass'])
     f.close()
     
-    tally_minor = []
+    tally_minor = []        # appends e.g. ETG-ETG (relaxation_morph)
     tally_major = []
     tally_other = []
+    tally_minor_low_z = []
+    tally_major_low_z = []
+    tally_other_low_z = []
+    tally_minor_high_z = []
+    tally_major_high_z = []
+    tally_other_high_z = []
     for ID_i in misalignment_tree.keys():
         
         if misalignment_tree['%s' %ID_i]['relaxation_morph'] not in set_origins_morph:
@@ -7020,15 +7028,35 @@ def _plot_origins(misalignment_tree, misalignment_input, summary_dict, plot_anno
                     if merger_count == 0:
                         if 0.3 > max(merger_i) > 0.1:
                             tally_minor.append(misalignment_tree['%s' %ID_i]['relaxation_morph'])
+                            
+                            if misalignment_tree['%s' %ID_i]['Redshift'][misalignment_tree['%s' %ID_i]['index_s']+1] < 0.35:
+                                tally_minor_low_z.append(misalignment_tree['%s' %ID_i]['relaxation_morph'])
+                            else:
+                                tally_minor_high_z.append(misalignment_tree['%s' %ID_i]['relaxation_morph'])
+                                
                         if max(merger_i) > 0.3:
                             tally_major.append(misalignment_tree['%s' %ID_i]['relaxation_morph'])
+                            
+                            if misalignment_tree['%s' %ID_i]['Redshift'][misalignment_tree['%s' %ID_i]['index_s']+1] < 0.35:
+                                tally_major_low_z.append(misalignment_tree['%s' %ID_i]['relaxation_morph'])
+                            else:
+                                tally_major_high_z.append(misalignment_tree['%s' %ID_i]['relaxation_morph'])
+                            
+                            
                     merger_count += 1
         if merger_count == 0:
             tally_other.append(misalignment_tree['%s' %ID_i]['relaxation_morph'])
+            
+            if misalignment_tree['%s' %ID_i]['Redshift'][misalignment_tree['%s' %ID_i]['index_s']+1] < 0.35:
+                tally_other_low_z.append(misalignment_tree['%s' %ID_i]['relaxation_morph'])
+            else:
+                tally_other_high_z.append(misalignment_tree['%s' %ID_i]['relaxation_morph'])
     
-
-    print('  Using sample: ', len(merger_ID_array_array))     
+ 
     tally_total_1 = len(tally_major)+len(tally_minor)+len(tally_other)
+    tally_total_low_z = len(tally_major_low_z)+len(tally_minor_low_z)+len(tally_other_low_z)
+    tally_total_high_z = len(tally_major_high_z)+len(tally_minor_high_z)+len(tally_other_high_z)
+    
     
     print('\n======================================')
     print('Using merger criteria, half_window = %.1f Gyr, min_ratio = %.1f' %(half_window, min_ratio))
@@ -7037,15 +7065,31 @@ def _plot_origins(misalignment_tree, misalignment_input, summary_dict, plot_anno
     print('\tother: %s    %.3f  ' %(len(tally_other), (len(tally_other)/tally_total_1)))
     print('\ttotal: %s   ' %tally_total_1)
     
+    if split_high_z_low_z:
+        print('    1 < z < 0.35: ')
+        print('\tmajor: %s    %.3f  ' %(len(tally_major_high_z), (len(tally_major_high_z)/tally_total_high_z)))
+        print('\tminor: %s    %.3f  ' %(len(tally_minor_high_z), (len(tally_minor_high_z)/tally_total_high_z)))
+        print('\tother: %s    %.3f  ' %(len(tally_other_high_z), (len(tally_other_high_z)/tally_total_high_z)))
+        print('\ttotal: %s   ' %tally_total_high_z)
+        print('    0.35 < z < 0: ')
+        print('\tmajor: %s    %.3f  ' %(len(tally_major_low_z), (len(tally_major_low_z)/tally_total_low_z)))
+        print('\tminor: %s    %.3f  ' %(len(tally_minor_low_z), (len(tally_minor_low_z)/tally_total_low_z)))
+        print('\tother: %s    %.3f  ' %(len(tally_other_low_z), (len(tally_other_low_z)/tally_total_low_z)))
+        print('\ttotal: %s   ' %tally_total_low_z)
+        
     
-    # left with tallo_minor = ['ETG-ETG', 'LTG-ETG', 'ETG-ETG', etc..]
+    
+    # left with tally_minor = ['ETG-ETG', 'LTG-ETG', 'ETG-ETG', etc..]
     plot_dict = {'ETG-ETG': {}, 'LTG-ETG': {}, 'ETG-LTG': {}, 'LTG-LTG': {}}
-    for dict_i in plot_dict.keys():
-        plot_dict[dict_i] = {'array': [],
-                             'major': [],
-                             'minor': [],
-                             'other': []}
-    
+    plot_dict_high_z = {'ETG-ETG': {}, 'LTG-ETG': {}, 'ETG-LTG': {}, 'LTG-LTG': {}}
+    plot_dict_low_z  = {'ETG-ETG': {}, 'LTG-ETG': {}, 'ETG-LTG': {}, 'LTG-LTG': {}}
+    for dict_name_i in [plot_dict, plot_dict_high_z, plot_dict_low_z]:
+        for dict_i in dict_name_i.keys():
+            dict_name_i[dict_i] = {'array': [],
+                                   'major': [],
+                                   'minor': [],
+                                   'other': []}
+    # total sample
     for morph_i in set_origins_morph:
         plot_dict['%s' %morph_i]['major'] = len([i for i in tally_major if i == morph_i])
         plot_dict['%s' %morph_i]['minor'] = len([i for i in tally_minor if i == morph_i])
@@ -7056,6 +7100,28 @@ def _plot_origins(misalignment_tree, misalignment_input, summary_dict, plot_anno
         temp_array.extend([i for i in tally_minor if i == morph_i])
         temp_array.extend([i for i in tally_other if i == morph_i])
         plot_dict['%s' %morph_i]['array'] = temp_array
+    # high z
+    for morph_i in set_origins_morph:
+        plot_dict_high_z['%s' %morph_i]['major'] = len([i for i in tally_major_high_z if i == morph_i])
+        plot_dict_high_z['%s' %morph_i]['minor'] = len([i for i in tally_minor_high_z if i == morph_i])
+        plot_dict_high_z['%s' %morph_i]['other'] = len([i for i in tally_other_high_z if i == morph_i])
+        
+        temp_array = []
+        temp_array.extend([i for i in tally_major_high_z if i == morph_i])
+        temp_array.extend([i for i in tally_minor_high_z if i == morph_i])
+        temp_array.extend([i for i in tally_other_high_z if i == morph_i])
+        plot_dict_high_z['%s' %morph_i]['array'] = temp_array
+    # low z
+    for morph_i in set_origins_morph:
+        plot_dict_low_z['%s' %morph_i]['major'] = len([i for i in tally_major_low_z if i == morph_i])
+        plot_dict_low_z['%s' %morph_i]['minor'] = len([i for i in tally_minor_low_z if i == morph_i])
+        plot_dict_low_z['%s' %morph_i]['other'] = len([i for i in tally_other_low_z if i == morph_i])
+        
+        temp_array = []
+        temp_array.extend([i for i in tally_major_low_z if i == morph_i])
+        temp_array.extend([i for i in tally_minor_low_z if i == morph_i])
+        temp_array.extend([i for i in tally_other_low_z if i == morph_i])
+        plot_dict_low_z['%s' %morph_i]['array'] = temp_array
         
         
         
@@ -7188,6 +7254,176 @@ def _plot_origins(misalignment_tree, misalignment_input, summary_dict, plot_anno
         if showfig:
             plt.show()
         plt.close()    
+    elif split_high_z_low_z:
+        #-----------
+        # Plotting ongoing fraction histogram
+        #fig, ((ax_tot, _),( ax_ETG, ax_LTG)) = plt.subplots(2, 2, figsize=[10/3, 2.5], sharex=True, sharey=False)
+        #plt.subplots_adjust(wspace=0, hspace=0)
+        fig = plt.figure(figsize=[2*10/3, 1.5])
+        gs = fig.add_gridspec(1, 4, width_ratios=[1, 1, 1, 1], wspace=0.2)  # <-- wspace controls gap
+
+        # Create axes from the gridspec
+        ax_tot_highz = fig.add_subplot(gs[0])
+        ax_tot_lowz = fig.add_subplot(gs[1])
+        ax_ETG = fig.add_subplot(gs[2])
+        ax_LTG = fig.add_subplot(gs[3])
+
+        # Put them in a list for easier handling later
+        axs = [ax_tot_highz, ax_tot_lowz, ax_ETG, ax_LTG]
+        
+        
+        #-----------
+        # Add pie plots
+        #colors = ['orange', 'cornflowerblue', 'blue']
+        colors = ['royalblue', 'orange', 'orangered']
+        for morph_i in ['ETG', 'LTG']:
+            
+            y = np.array([plot_dict_low_z['%s-ETG' %morph_i]['other']+plot_dict_low_z['%s-LTG' %morph_i]['other'], plot_dict_low_z['%s-ETG' %morph_i]['minor']+plot_dict_low_z['%s-LTG' %morph_i]['minor'], plot_dict_low_z['%s-ETG' %morph_i]['major']+plot_dict_low_z['%s-LTG' %morph_i]['major']])
+            mylabels = ['%s' %(' ' if y[0] == 0 else y[0]), '%s' %(' ' if y[1] == 0 else y[1]), '%s' %(' ' if y[2] == 0 else y[2])]
+            
+            if morph_i == 'ETG':
+                ax_ETG.pie(y, labels = mylabels, startangle = 90, colors = colors, wedgeprops = {'linewidth': 1, 'edgecolor': 'w'})
+                #ax_ETG.set_title('ETG', loc='center', pad=0, fontsize=8)
+                ax_ETG.pie([1], startangle = 90, colors = ['w'], radius=0.5, wedgeprops = {'linewidth': 1, 'edgecolor': 'w'})
+            if morph_i == 'LTG':
+                ax_LTG.pie(y, labels = mylabels, startangle = 90, colors = colors, wedgeprops = {'linewidth': 1, 'edgecolor': 'w'})
+                #ax_LTG.set_title('LTG', loc='center', pad=0, fontsize=8)
+                ax_LTG.pie([1], startangle = 90, colors = ['w'], radius=0.5, wedgeprops = {'linewidth': 1, 'edgecolor': 'w'})
+                
+                
+        #-----------
+        # Add total pie plot for high and low z
+        y_low_z = np.array([plot_dict_low_z['ETG-ETG']['other']+plot_dict_low_z['ETG-LTG']['other']+plot_dict_low_z['LTG-ETG']['other']+plot_dict_low_z['LTG-LTG']['other'], plot_dict_low_z['ETG-ETG']['minor']+plot_dict_low_z['ETG-LTG']['minor']+plot_dict_low_z['LTG-ETG']['minor']+plot_dict_low_z['LTG-LTG']['minor'], plot_dict_low_z['ETG-ETG']['major']+plot_dict_low_z['ETG-LTG']['major']+plot_dict_low_z['LTG-ETG']['major']+plot_dict_low_z['LTG-LTG']['major']])
+        y_high_z = np.array([plot_dict_high_z['ETG-ETG']['other']+plot_dict_high_z['ETG-LTG']['other']+plot_dict_high_z['LTG-ETG']['other']+plot_dict_high_z['LTG-LTG']['other'], plot_dict_high_z['ETG-ETG']['minor']+plot_dict_high_z['ETG-LTG']['minor']+plot_dict_high_z['LTG-ETG']['minor']+plot_dict_high_z['LTG-LTG']['minor'], plot_dict_high_z['ETG-ETG']['major']+plot_dict_high_z['ETG-LTG']['major']+plot_dict_high_z['LTG-ETG']['major']+plot_dict_high_z['LTG-LTG']['major']])
+        mylabels_low_z = ['%s' %(' ' if y_low_z[0] == 0 else y_low_z[0]), '%s' %(' ' if y_low_z[1] == 0 else y_low_z[1]), '%s' %(' ' if y_low_z[2] == 0 else y_low_z[2])]
+        mylabels_high_z = ['%s' %(' ' if y_high_z[0] == 0 else y_high_z[0]), '%s' %(' ' if y_high_z[1] == 0 else y_high_z[1]), '%s' %(' ' if y_high_z[2] == 0 else y_high_z[2])]
+        
+        ax_tot_lowz.pie(y_low_z, labels = mylabels_low_z, startangle = 90, colors = colors, wedgeprops = {'linewidth': 1, 'edgecolor': 'w'})
+        #ax_tot_lowz.set_title('Total', loc='center', pad=0, fontsize=8)
+        ax_tot_lowz.pie([1], startangle = 90, colors = ['w'], radius=0.5, wedgeprops = {'linewidth': 1, 'edgecolor': 'w'})
+        
+        ax_tot_highz.pie(y_high_z, labels = mylabels_high_z, startangle = 90, colors = colors, wedgeprops = {'linewidth': 1, 'edgecolor': 'w'})
+        #ax_tot_highz.set_title('Total', loc='center', pad=0, fontsize=8)
+        ax_tot_highz.pie([1], startangle = 90, colors = ['w'], radius=0.5, wedgeprops = {'linewidth': 1, 'edgecolor': 'w'})
+        
+        
+        #------------
+        # Background formatting
+        
+        # Frame around the first plot (rounded)
+        bbox0 = ax_tot_highz.get_position()
+        rect0 = patches.FancyBboxPatch(
+            (bbox0.x0, bbox0.y0), bbox0.width, bbox0.height*1.14,
+            boxstyle="round,pad=0.01",  # <-- 'round' makes it rounded!
+            transform=fig.transFigure,
+            fill=False, edgecolor='grey', linewidth=1.2
+        )
+        fig.patches.append(rect0)
+        rect0 = patches.FancyBboxPatch(
+            (bbox0.x0, bbox0.y0), bbox0.width, bbox0.height*1.14,
+            boxstyle="round,pad=0.01",  # <-- 'round' makes it rounded!
+            transform=fig.transFigure,
+            fill=True, alpha=0.06, edgecolor='none', linewidth=0
+        )
+        fig.patches.append(rect0)
+        
+        # Get bounding box covering ax_tot_lowz, ax_ETG, ax_LTG
+        bbox1 = axs[1].get_position()
+        bbox2 = axs[2].get_position()
+        bbox3 = axs[3].get_position()
+
+        group_x0 = bbox1.x0
+        group_y0 = min(bbox1.y0, bbox3.y0)
+        group_width = bbox3.x1 - bbox1.x0
+        group_height = max(bbox1.y1, bbox3.y1) - group_y0
+
+        rect_group = patches.FancyBboxPatch(
+            (group_x0, group_y0), group_width, group_height*1.14,
+            boxstyle="round,pad=0.01",
+            transform=fig.transFigure,
+            fill=False, edgecolor='grey', linewidth=1.2
+        )
+        fig.patches.append(rect_group)
+        rect_group = patches.FancyBboxPatch(
+            (group_x0, group_y0), group_width, group_height*1.14,
+            boxstyle="round,pad=0.01",
+            transform=fig.transFigure,
+            fill=True, alpha=0.06, edgecolor='none', linewidth=0
+        )
+        fig.patches.append(rect_group)
+        
+        
+        #------------
+        # Box labels
+        fig.text(
+            bbox0.x0 + 0.08, bbox0.y1 +0.08,  # slightly inside top-left corner
+            "$0.35<z<1.00$",
+            ha='center', va='top',
+            fontsize=8, fontweight='bold', color='k'
+        )
+        fig.text(
+            group_x0 + 0.29, group_y0 + group_height +0.08,  # top-left corner
+            "$z<0.35$",
+            ha='center', va='top',
+            fontsize=8, fontweight='bold', color='k'
+        )
+        
+        #------------
+        # Pie labels
+        fig.text(
+            bbox0.x0+0.085, bbox0.y0 +0.36,  # slightly inside top-left corner
+            "Total",
+            ha='center', va='center',
+            fontsize=8, fontweight='bold', color='k'
+        )
+        fig.text(
+            bbox1.x0+0.085, bbox1.y0 +0.36,  # slightly inside top-left corner
+            "Total",
+            ha='center', va='center',
+            fontsize=8, fontweight='bold', color='k'
+        )
+        fig.text(
+            bbox2.x0+0.085, bbox2.y0 +0.36,  # slightly inside top-left corner
+            "ETG",
+            ha='center', va='center',
+            fontsize=8, fontweight='bold', color='k'
+        )
+        fig.text(
+            bbox3.x0+0.085, bbox3.y0 +0.36,  # slightly inside top-left corner
+            "LTG",
+            ha='center', va='center',
+            fontsize=8, fontweight='bold', color='k'
+        )
+        
+            
+        #------------
+        # Add legend
+        legend_labels   = []
+        legend_elements = []
+        legend_colors   = []
+
+        legend_labels.append('Major\nmerger')
+        legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+        legend_colors.append('orangered')
+        legend_labels.append('Minor\nmerger')
+        legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+        legend_colors.append('orange')
+        legend_labels.append('Other')
+        legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
+        legend_colors.append('royalblue')
+    
+        ax_LTG.legend(handles=legend_elements, labels=legend_labels, loc='center right', bbox_to_anchor=(1.55, 0.6), labelspacing=1, frameon=False, labelcolor=legend_colors, handlelength=0, ncol=1, handletextpad=0)
+        
+        #-----------
+        # savefig
+        if savefig:
+            savefig_txt = savefig_txt_in + ('_' + input('\n  -> Enter savefig_txt:   ') if savefig_txt == 'manual' else savefig_txt)
+            
+            plt.savefig("%s/misangle_origins/origins_total_redshiftSplit_altmorph_%s_%s.%s" %(fig_dir, len(tally_major)+len(tally_minor), savefig_txt, file_format), format=file_format, bbox_inches='tight', dpi=600)    
+            print("\n  SAVED: %s/misangle_origins/origins_total_redshiftSplit_altmorph_%s_%s.%s" %(fig_dir, len(tally_major)+len(tally_minor), savefig_txt, file_format)) 
+        if showfig:
+            plt.show()
+        plt.close()
     else:
         #-----------
         # Plotting ongoing fraction histogram
@@ -7295,6 +7531,7 @@ def _plot_origins(misalignment_tree, misalignment_input, summary_dict, plot_anno
     axs.legend(loc='center left', bbox_to_anchor=(1, 0.5), frameon=False, labelspacing=0.1, handlelength=0.5)
     """
     
+
 
 #-------------------------
 # Plots scatter of gas fraction vs relax time
@@ -13841,7 +14078,7 @@ def _plot_timescale_kappastars_histogram_ttorque(misalignment_tree, misalignment
 
 #\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 # Set starting parameters
-load_csv_file_in = '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_NEW'  
+load_csv_file_in = '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010_NEW'  
 plot_annotate_in                                           = None
 savefig_txt_in   = load_csv_file_in               # [ 'manual' / load_csv_file_in ] 'manual' will prompt txt before saving
        
@@ -13855,7 +14092,7 @@ savefig_txt_in   = load_csv_file_in               # [ 'manual' / load_csv_file_i
 #'_20Thresh_30Peak_normalLatency_anyMergers_LTG-LTG_NEW'                                                                                                                         
 #'_20Thresh_30Peak_normalLatency_anyMergers_hardETG-ETG_NEW'                                                                                                                         
 #'_20Thresh_30Peak_normalLatency_anyMergers_hardLTG-LTG_NEW'                                                                                                                                          
-#'_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010_NEW'
+#'_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010_NEW'      # <-- use for mergers
 #'_20Thresh_30Peak_noLatency_NEW'
 #'_20Thresh_30Peak_highLatency_NEW'
 #'_20Thresh_30Peak_veryhighLatency_NEW'
@@ -14278,7 +14515,40 @@ _plot_merger_count_ttorque(misalignment_tree=misalignment_tree, misalignment_inp
                               min_ratio           = 0.1,   
                               merger_lookback_time = 2,       # Gyr, number of years to check for peak stellar mass
                             showfig = True,
-                            savefig = True)    """          
+                            savefig = False)   """  
+# PLOTS STACKED BAR CHART. splits based on high z / low z at around tlookback = 0.4 (z~0.35)         
+_plot_origins(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            # Mergers
+                            use_alt_merger_criteria = True,
+                            split_high_z_low_z      = True,     # splits based on high z / low z at around tlookback = 0.4 (z~0.35)  
+                              half_window         = 0.2,      # [ 0.2 / 0.3 / 0.5 +/-Gyr ] window centred on first misaligned snap to look for mergers
+                              min_ratio           = 0.1,   
+                              merger_lookback_time = 2,       # Gyr, number of years to check for peak stellar mass
+                              add_total = False, #keep false for this graph
+                            showfig = True,
+                            savefig = True)        
+                            
+_plot_origins(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            # Mergers
+                            use_alt_merger_criteria = True,
+                            split_high_z_low_z      = True,     # splits based on high z / low z at around tlookback = 0.4 (z~0.35)  
+                              half_window         = 0.3,      # [ 0.2 / 0.3 / 0.5 +/-Gyr ] window centred on first misaligned snap to look for mergers
+                              min_ratio           = 0.1,   
+                              merger_lookback_time = 2,       # Gyr, number of years to check for peak stellar mass
+                              add_total = False, #keep false for this graph
+                            showfig = True,
+                            savefig = True)  
+                            
+_plot_origins(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            # Mergers
+                            use_alt_merger_criteria = True,
+                            split_high_z_low_z      = True,     # splits based on high z / low z at around tlookback = 0.4 (z~0.35)  
+                              half_window         = 0.5,      # [ 0.2 / 0.3 / 0.5 +/-Gyr ] window centred on first misaligned snap to look for mergers
+                              min_ratio           = 0.1,   
+                              merger_lookback_time = 2,       # Gyr, number of years to check for peak stellar mass
+                              add_total = False, #keep false for this graph
+                            showfig = True,
+                            savefig = True)  
 #====================================
 
 

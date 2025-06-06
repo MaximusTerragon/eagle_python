@@ -9871,7 +9871,7 @@ def _plot_halomass_masssf(misalignment_tree, misalignment_input, summary_dict, p
     plt.close()
 #-------------------------
 # Plots histogram of halo mass (average) vs relax time. cluster: > 1014, group/field: < 1014
-def _plot_timescale_environment_histogram_trelax(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
+def _plot_timescale_halomass_histogram_trelax(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
                       #==============================================
                       # Plot options
                       set_hist_type                       = ['enter below'],          # which paths to use
@@ -10064,15 +10064,15 @@ def _plot_timescale_environment_histogram_trelax(misalignment_tree, misalignment
     legend_labels = []
     legend_colors = []
     
-    legend_labels.append(r'$M_{\mathrm{200}}$' + '/M$_{\odot}$' + r'$<10^{%s}$' %(halomass_limits[0]))
+    legend_labels.append(r'$M_{\mathrm{200c}}$' + '/M$_{\odot}$' + r'$<10^{%s}$' %(halomass_limits[0]))
     legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
     legend_colors.append('violet')
     
-    #legend_labels.append(r'$10^{%s}<M_{\mathrm{200}}$'%(halomass_limits[0]) + '/M$_{\odot}$' + r'$<10^{%s}$' %(halomass_limits[1]))
+    #legend_labels.append(r'$10^{%s}<M_{\mathrm{200c}}$'%(halomass_limits[0]) + '/M$_{\odot}$' + r'$<10^{%s}$' %(halomass_limits[1]))
     #legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
     #legend_colors.append('mediumorchid')
 
-    legend_labels.append(r'$M_{\mathrm{200}}$/M$_{\odot}$$>10^{%s}$'%(halomass_limits[0]))
+    legend_labels.append(r'$M_{\mathrm{200c}}$/M$_{\odot}$$>10^{%s}$'%(halomass_limits[0]))
     legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
     legend_colors.append('indigo')
     
@@ -10121,7 +10121,7 @@ def _plot_timescale_environment_histogram_trelax(misalignment_tree, misalignment
         plt.show()
     plt.close()
 # tdyn
-def _plot_timescale_environment_histogram_tdyn(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
+def _plot_timescale_halomass_histogram_tdyn(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
                       #==============================================
                       # Plot options
                       set_hist_type                       = ['enter below'],          # which paths to use
@@ -10309,15 +10309,15 @@ def _plot_timescale_environment_histogram_tdyn(misalignment_tree, misalignment_i
     legend_labels = []
     legend_colors = []
     
-    legend_labels.append(r'$M_{\mathrm{200}}$' + '/M$_{\odot}$' + r'$<10^{%s}$' %(halomass_limits[0]))
+    legend_labels.append(r'$M_{\mathrm{200c}}$' + '/M$_{\odot}$' + r'$<10^{%s}$' %(halomass_limits[0]))
     legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
     legend_colors.append('violet')
     
-    #legend_labels.append(r'$10^{%s}<M_{\mathrm{group}}$'%(halomass_limits[0]) + '/M$_{\odot}$' + r'$<10^{%s}$' %(halomass_limits[1]))
+    #legend_labels.append(r'$10^{%s}<M_{\mathrm{200c}}$'%(halomass_limits[0]) + '/M$_{\odot}$' + r'$<10^{%s}$' %(halomass_limits[1]))
     #legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
     #legend_colors.append('mediumorchid')
 
-    legend_labels.append(r'$M_{\mathrm{200}}$/M$_{\odot}$$>10^{%s}$'%(halomass_limits[0]))
+    legend_labels.append(r'$M_{\mathrm{200c}}$/M$_{\odot}$$>10^{%s}$'%(halomass_limits[0]))
     legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
     legend_colors.append('indigo')
     
@@ -10366,7 +10366,7 @@ def _plot_timescale_environment_histogram_tdyn(misalignment_tree, misalignment_i
         plt.show()
     plt.close()
 # ttorque
-def _plot_timescale_environment_histogram_ttorque(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
+def _plot_timescale_halomass_histogram_ttorque(misalignment_tree, misalignment_input, summary_dict, plot_annotate = None, savefig_txt_in = None,
                       #==============================================
                       # Plot options
                       set_hist_type                       = ['enter below'],          # which paths to use
@@ -10554,15 +10554,15 @@ def _plot_timescale_environment_histogram_ttorque(misalignment_tree, misalignmen
     legend_labels = []
     legend_colors = []
     
-    legend_labels.append(r'$M_{\mathrm{200}}$' + '/M$_{\odot}$' + r'$<10^{%s}$' %(halomass_limits[0]))
+    legend_labels.append(r'$M_{\mathrm{200c}}$' + '/M$_{\odot}$' + r'$<10^{%s}$' %(halomass_limits[0]))
     legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
     legend_colors.append('violet')
     
-    #legend_labels.append(r'$10^{%s}<M_{\mathrm{group}}$'%(halomass_limits[0]) + '/M$_{\odot}$' + r'$<10^{%s}$' %(halomass_limits[1]))
+    #legend_labels.append(r'$10^{%s}<M_{\mathrm{200c}}$'%(halomass_limits[0]) + '/M$_{\odot}$' + r'$<10^{%s}$' %(halomass_limits[1]))
     #legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
     #legend_colors.append('mediumorchid')
 
-    legend_labels.append(r'$M_{\mathrm{200}}$/M$_{\odot}$$>10^{%s}$'%(halomass_limits[0]))
+    legend_labels.append(r'$M_{\mathrm{200c}}$/M$_{\odot}$$>10^{%s}$'%(halomass_limits[0]))
     legend_elements.append(Line2D([0], [0], marker=' ', color='w'))
     legend_colors.append('indigo')
     
@@ -14078,7 +14078,7 @@ def _plot_timescale_kappastars_histogram_ttorque(misalignment_tree, misalignment
 
 #\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 # Set starting parameters
-load_csv_file_in = '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_1010_NEW'  
+load_csv_file_in = '_20Thresh_30Peak_normalLatency_anyMergers_anyMorph_NEW'  
 plot_annotate_in                                           = None
 savefig_txt_in   = load_csv_file_in               # [ 'manual' / load_csv_file_in ] 'manual' will prompt txt before saving
        
@@ -14375,27 +14375,27 @@ _plot_timescale_stelmass_histogram_tdyn(misalignment_tree=misalignment_tree, mis
 """_plot_halomass_masssf(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             showfig = True,
                             savefig = False)"""
-"""_plot_timescale_environment_histogram_trelax(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+"""_plot_timescale_halomass_histogram_trelax(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_hist_min_trelax              = 0.2,
                               use_occ_morph                  = False,        # Differentiates between ETG centrals, and LTG centrals. Will autorename
                               use_only_centrals              = True,        # Use only centrals
                             showfig = True,
-                            savefig = False)      # will auto-rename to _allpath if all 4 set_gashist_type used
-_plot_timescale_environment_histogram_tdyn(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            savefig = True)      # will auto-rename to _allpath if all 4 set_gashist_type used
+_plot_timescale_halomass_histogram_tdyn(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_hist_min_trelax              = 0.2,
                               use_occ_morph                  = False,      
                               use_only_centrals              = True,        # Use only centrals  
                             showfig = True,
-                            savefig = False)"""
-"""_plot_timescale_environment_histogram_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+                            savefig = True)
+_plot_timescale_halomass_histogram_ttorque(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             set_hist_type                    = ['co-co', 'counter-counter', 'co-counter', 'counter-co'],
                             set_hist_min_trelax              = 0.2,
                               use_occ_morph                  = False,       
                               use_only_centrals              = True,        # Use only centrals                               
                             showfig = True,
-                            savefig = False)"""
+                            savefig = True)"""
 
 
 # PLOTS HISTOGRAM OF GAS INFLOW WITH RELAXATION TIME - simplified    (un-comment df_2 lines)             
@@ -14517,7 +14517,7 @@ _plot_merger_count_ttorque(misalignment_tree=misalignment_tree, misalignment_inp
                             showfig = True,
                             savefig = False)   """  
 # PLOTS STACKED BAR CHART. splits based on high z / low z at around tlookback = 0.4 (z~0.35)         
-_plot_origins(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+"""_plot_origins(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             # Mergers
                             use_alt_merger_criteria = True,
                             split_high_z_low_z      = True,     # splits based on high z / low z at around tlookback = 0.4 (z~0.35)  
@@ -14526,9 +14526,9 @@ _plot_origins(misalignment_tree=misalignment_tree, misalignment_input=misalignme
                               merger_lookback_time = 2,       # Gyr, number of years to check for peak stellar mass
                               add_total = False, #keep false for this graph
                             showfig = True,
-                            savefig = True)        
+                            savefig = True)  """      
                             
-_plot_origins(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+"""_plot_origins(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             # Mergers
                             use_alt_merger_criteria = True,
                             split_high_z_low_z      = True,     # splits based on high z / low z at around tlookback = 0.4 (z~0.35)  
@@ -14537,9 +14537,9 @@ _plot_origins(misalignment_tree=misalignment_tree, misalignment_input=misalignme
                               merger_lookback_time = 2,       # Gyr, number of years to check for peak stellar mass
                               add_total = False, #keep false for this graph
                             showfig = True,
-                            savefig = True)  
+                            savefig = True)  """
                             
-_plot_origins(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
+"""_plot_origins(misalignment_tree=misalignment_tree, misalignment_input=misalignment_input, summary_dict=summary_dict, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in,
                             # Mergers
                             use_alt_merger_criteria = True,
                             split_high_z_low_z      = True,     # splits based on high z / low z at around tlookback = 0.4 (z~0.35)  
@@ -14548,7 +14548,7 @@ _plot_origins(misalignment_tree=misalignment_tree, misalignment_input=misalignme
                               merger_lookback_time = 2,       # Gyr, number of years to check for peak stellar mass
                               add_total = False, #keep false for this graph
                             showfig = True,
-                            savefig = True)  
+                            savefig = True)  """
 #====================================
 
 

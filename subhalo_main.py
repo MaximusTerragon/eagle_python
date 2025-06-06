@@ -3006,7 +3006,7 @@ class Subhalo_Extract_BH:
             print(stars_com)
         
         # Setting the stars COM in 30pkpc as the new centre, and the external stars_com w.r.t potential (which until now was at [0, 0, 0])
-        #stars['Coordinates'] = stars['Coordinates'] - stars_com
+        #stars['Coordinates'] = stars['Coordinates'] - stars_com        # <-- we dont want this as we want to retain the galaxy as centred on potential to find BH closest to potential 0
         bh['Coordinates']    = bh['Coordinates'] - stars_com
         
         #---------------------------

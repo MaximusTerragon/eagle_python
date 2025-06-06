@@ -1285,16 +1285,16 @@ def _create_galaxy_tree(csv_sample1 = 'L100_',                                 #
                 galaxy_tree['%s' %ID_dict]['bh']['cumlmass'].append(all_general['%s' %GalaxyID]['bh_cumlmass'])
                 galaxy_tree['%s' %ID_dict]['bh']['cumlseeds'].append(all_general['%s' %GalaxyID]['bh_cumlseeds'])
                 mdot = (float(galaxy_tree['%s' %ID_dict]['bh']['mass'][-1]) - float(galaxy_tree['%s' %ID_dict]['bh']['mass'][-2])) / time_step
-                galaxy_tree['%s' %ID_dict]['bh']['mdot'].append(mdot)
-                galaxy_tree['%s' %ID_dict]['bh']['mdot_instant'].append((3.154e+7*all_general['%s' %GalaxyID]['bh_mdot']))
+                galaxy_tree['%s' %ID_dict]['bh']['mdot'].append(mdot)   # Msun/yr
+                galaxy_tree['%s' %ID_dict]['bh']['mdot_instant'].append((3.154e+7*all_general['%s' %GalaxyID]['bh_mdot']))      # now in Msun/yr
                 galaxy_tree['%s' %ID_dict]['bh']['edd'].append(all_general['%s' %GalaxyID]['bh_edd'])
                 galaxy_tree['%s' %ID_dict]['bh']['lbol'].append((3.154e+7*all_general['%s' %GalaxyID]['bh_mdot']* (2e30 / 3.154e+7) * (0.1 * (3e8)**2) * (1e7)))
                 
                 galaxy_tree['%s' %ID_dict]['bh']['mass_alt'].append(all_general['%s' %GalaxyID]['bh_mass_old'])
                 galaxy_tree['%s' %ID_dict]['bh']['id_alt'].append(all_general['%s' %GalaxyID]['bh_id_old'])
                 mdot = (float(galaxy_tree['%s' %ID_dict]['bh']['mass_alt'][-1]) - float(galaxy_tree['%s' %ID_dict]['bh']['mass_alt'][-2])) / time_step
-                galaxy_tree['%s' %ID_dict]['bh']['mdot_alt'].append(mdot)
-                galaxy_tree['%s' %ID_dict]['bh']['mdot_instant_alt'].append((3.154e+7*all_general['%s' %GalaxyID]['bh_mdot_old']))
+                galaxy_tree['%s' %ID_dict]['bh']['mdot_alt'].append(mdot)   # Msun/yr
+                galaxy_tree['%s' %ID_dict]['bh']['mdot_instant_alt'].append((3.154e+7*all_general['%s' %GalaxyID]['bh_mdot_old']))  # now in Msun/yr
                 galaxy_tree['%s' %ID_dict]['bh']['edd_alt'].append(all_general['%s' %GalaxyID]['bh_edd_old'])
                 galaxy_tree['%s' %ID_dict]['bh']['lbol_alt'].append((3.154e+7*all_general['%s' %GalaxyID]['bh_mdot_old']* (2e30 / 3.154e+7) * (0.1 * (3e8)**2) * (1e7)))
                 

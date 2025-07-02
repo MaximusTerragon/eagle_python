@@ -896,7 +896,7 @@ def _plot_stelmass_BH_hexbin_z01_tree(local_z01_tree_load = 'L100_local_z01_inpu
         #------------
         # Colorbar
         if type_of_fraction == 'f_mis':
-            colorbar_angle = r'=[30^{\circ}-150^{\circ}]'
+            colorbar_angle = r'[30^{\circ}-150^{\circ}]'
             colorbar_angle_t = r'misaligned'
         if type_of_fraction == 'f_cnt':
             colorbar_angle = r'>150^{\circ}'
@@ -905,7 +905,9 @@ def _plot_stelmass_BH_hexbin_z01_tree(local_z01_tree_load = 'L100_local_z01_inpu
             colorbar_angle = r'<30^{\circ}'
             colorbar_angle_t = r'corot'
         #cb = fig.colorbar(hb, ax=axs, label=r'$\langle$time spent in $\psi_{\mathrm{3D}}%s$$\rangle$' %colorbar_angle)
-        cb = fig.colorbar(hb, ax=axs, label=r'$\langle t_{\mathrm{\psi_{\mathrm{3D}}%s}}/t_{\mathrm{lookback=%i\:Gyr}}$ $\rangle$' %(colorbar_angle, local_z01_input['require_min_lookbacktime']))
+        #cb = fig.colorbar(hb, ax=axs, label=r'$\langle t_{\mathrm{\psi_{\mathrm{3D}}%s}}/t_{\mathrm{lookback=%i\:Gyr}}$ $\rangle$' %(colorbar_angle, local_z01_input['require_min_lookbacktime']))
+        #cb = fig.colorbar(hb, ax=axs, label=r'$\langle f_{\mathrm{%s \in %s\:Gyr}} \rangle$' %(colorbar_angle, local_z01_input['require_min_lookbacktime']))
+        cb = fig.colorbar(hb, ax=axs, label=r'$\langle f_{\mathrm{%s}} \rangle$' %(colorbar_angle))
         
         
         
@@ -3235,7 +3237,7 @@ def _BH_deltamass_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary
             lower_bin_limit = 6.0
             upper_bin_limit = 9.0
             hist_bins = np.arange(lower_bin_limit, upper_bin_limit + hist_bin_width, hist_bin_width)  # Binning edges
-            for state_i in ['aligned', 'counter', 'misaligned']:
+            for state_i, ls_i in zip(['aligned', 'counter', 'misaligned'], ['-', '-.', '-.']):
                 
                 df_i = df.loc[(df['State'] == state_i)]
                 
@@ -3270,7 +3272,7 @@ def _BH_deltamass_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary
                         bin_centers.append((hist_bins[i] + hist_bins[i + 1]) / 2)  # Bin center in log space
         
                 # Convert bin centers back to linear space for plotting
-                axs.plot(bin_centers, medians, color=color_dict[state_i], linewidth=1)
+                axs.plot(bin_centers, medians, color=color_dict[state_i], linewidth=1, ls=ls_i)
                 axs.fill_between(bin_centers, lower_1sigma, upper_1sigma, color=color_dict[state_i], alpha=0.2, linewidth=0, zorder=-5)
         
 
@@ -3635,12 +3637,14 @@ def _BH_mdot_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary = No
                 
                                     
     # Collect data into dataframe
+    epsilon_r = 0.1
     df = pd.DataFrame(data={'stelmass': stelmass_plot, 'SFR': sfr_plot, 'sSFR': ssfr_plot, 'Time delta': time_delta_plot, 'trelax': trelax_plot, 'BH mass start': bhmass_start_plot, 'BH mass delta': bhmass_delta_plot, 'Morphology': kappa_plot, 'Kappa mean': kappa_mean_plot, 'Kappa snip': kappa_snip_plot, 'Gassf fraction': fgassf_plot, 'State': state_plot, 'window': duration_plot, 'GalaxyIDs': ID_plot})        
     df['BH deltamassmass2']  = df['BH mass delta']/(df['BH mass start']**2)
     df['BH fraction growth'] = df['BH mass delta']/(df['BH mass start'])        # Change in BH mass over window, divided by starting mass  
-    df['BH mdot window']     = bhmdot_window_plot       # Change in BH mass over window, divided by window t size 
+    df['BH mdot window']     = bhmdot_window_plot     # Change in BH mass over window, divided by window t size
     df['BH mdot snip']       = bhmdot_snip_plot         # [DEFAULT] Change in BH mass between each snip covering the window, divided by t_snip (making it time-weighted)
     
+    # multiply by (1 + epsilon_r) to get mdot onto AGN, rather than just the fraction that went toward BH growth
     
     #-------------------
     # Select only ETG/LTG
@@ -3878,7 +3882,7 @@ def _BH_mdot_in_window(BHmis_tree = None, BHmis_input = None, BHmis_summary = No
         axs.set_xlabel(r'log$_{10}$ $M_{\mathrm{BH,initial}}$ [M$_{\odot}]$')
         #axs.set_ylabel('BH mass [Msun]')
         #axs.set_ylabel(r'log$_{10}$ $\Delta M_{\mathrm{BH}}$ [M$_{\odot}]$')
-        axs.set_ylabel(r'log$_{10}$ $\langle \dot{M}_{\mathrm{BH}} \rangle _{\mathrm{%s\:Gyr}}$ [M$_{\odot}$ yr$^{-1}$]' %target_window_size)
+        axs.set_ylabel(r'log$_{10}$ $\langle \dot{M}_{\mathrm{BH,grow}} \rangle _{\mathrm{%s\:Gyr}}$ [M$_{\odot}$ yr$^{-1}$]' %target_window_size)
         axs.minorticks_on()
         axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
         axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='minor')
@@ -4816,7 +4820,7 @@ def _BH_mdotmass_hist_in_window(BHmis_tree = None, BHmis_input = None, BHmis_sum
     axs.set_xlim(-13, -7.5)
     axs.set_ylim(0.001, 1)
     #axs.set_yticks([1, 10, 100, 1000])
-    axs.set_xlabel(r'log$_{10}$ $\langle \dot{M}_{\mathrm{BH}} \rangle _{\mathrm{%s\:Gyr}}/M_{\mathrm{BH,initial}}$ [yr$^{-1}$]' %target_window_size)
+    axs.set_xlabel(r'log$_{10}$ $\langle \dot{M}_{\mathrm{BH,grow}} \rangle _{\mathrm{%s\:Gyr}}/M_{\mathrm{BH,initial}}$ [yr$^{-1}$]' %target_window_size)
     axs.set_ylabel('fraction of sub-sample')
     #axs.minorticks_on()
     #axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
@@ -5364,7 +5368,7 @@ def _BH_deltamassmass_fgas_in_window(BHmis_tree = None, BHmis_input = None, BHmi
         lower_bin_limit = -5
         upper_bin_limit = 1
         hist_bins = np.arange(lower_bin_limit, upper_bin_limit + hist_bin_width, hist_bin_width)  # Binning edges
-        for state_i in ['aligned', 'counter', 'misaligned']:
+        for state_i, ls_i in zip(['aligned', 'counter', 'misaligned'], ['-', '-.', '-.']):
             
             df_i = df.loc[(df['State'] == state_i)]
             
@@ -5395,7 +5399,7 @@ def _BH_deltamassmass_fgas_in_window(BHmis_tree = None, BHmis_input = None, BHmi
                     bin_centers.append((hist_bins[i] + hist_bins[i + 1]) / 2)  # Bin center in log space
     
             # Convert bin centers back to linear space for plotting
-            axs.plot(bin_centers, medians, color=color_dict[state_i], linewidth=1)
+            axs.plot(bin_centers, medians, color=color_dict[state_i], linewidth=1, ls=ls_i)
             axs.fill_between(bin_centers, lower_1sigma, upper_1sigma, color=color_dict[state_i], alpha=0.2, linewidth=0, zorder=-5)
         
         
@@ -5991,7 +5995,7 @@ def _BH_mdotmass_fgas_in_window(BHmis_tree = None, BHmis_input = None, BHmis_sum
     #axs.set_ylim(0.0025, 1)
     axs.set_ylim(-2, -0.25)
     #axs.set_yticks([1, 10, 100, 1000])
-    axs.set_xlabel(r'log$_{10}$ $\langle \dot{M}_{\mathrm{BH}} \rangle _{\mathrm{%s\:Gyr}}/M_{\mathrm{BH,initial}}$ [yr$^{-1}$]' %target_window_size)
+    axs.set_xlabel(r'log$_{10}$ $\langle \dot{M}_{\mathrm{BH,grow}} \rangle _{\mathrm{%s\:Gyr}}/M_{\mathrm{BH,initial}}$ [yr$^{-1}$]' %target_window_size)
     if initial_or_average == 'initial':
         axs.set_ylabel('log$_{10}$ $f_{\mathrm{gas,SF}}(<r_{50})$')
     elif initial_or_average == 'average':
@@ -7339,7 +7343,7 @@ def _BH_mdotmass_gassurfratio_in_window(BHmis_tree = None, BHmis_input = None, B
     axs.set_xlim(-13, -7.5)
     #axs.set_yscale('log')
     #axs.set_yticks([1, 10, 100, 1000])
-    axs.set_xlabel(r'log$_{10}$ $\langle \dot{M}_{\mathrm{BH}} \rangle _{\mathrm{%s\:Gyr}}/M_{\mathrm{BH,initial}}$ [yr$^{-1}$]' %target_window_size)
+    axs.set_xlabel(r'log$_{10}$ $\langle \dot{M}_{\mathrm{BH,grow}} \rangle _{\mathrm{%s\:Gyr}}/M_{\mathrm{BH,initial}}$ [yr$^{-1}$]' %target_window_size)
     if ring_or_enclosed == 'ring':
         axs.set_ylim(-2, 3)
         if initial_or_average == 'initial':
@@ -7758,7 +7762,7 @@ def _BH_deltamassmass_gassfkappa_in_window(BHmis_tree = None, BHmis_input = None
         lower_bin_limit = -5
         upper_bin_limit = 1
         hist_bins = np.arange(lower_bin_limit, upper_bin_limit + hist_bin_width, hist_bin_width)  # Binning edges
-        for state_i in ['aligned', 'counter', 'misaligned']:
+        for state_i, ls_i in zip(['aligned', 'counter', 'misaligned'], ['-', '-.', '-.']):
             
             df_i = df.loc[(df['State'] == state_i)]
             
@@ -7786,7 +7790,7 @@ def _BH_deltamassmass_gassfkappa_in_window(BHmis_tree = None, BHmis_input = None
                     bin_centers.append((hist_bins[i] + hist_bins[i + 1]) / 2)  # Bin center in log space
     
             # Convert bin centers back to linear space for plotting
-            axs.plot(bin_centers, medians, color=color_dict[state_i], linewidth=1)
+            axs.plot(bin_centers, medians, color=color_dict[state_i], linewidth=1, ls=ls_i)
             axs.fill_between(bin_centers, lower_1sigma, upper_1sigma, color=color_dict[state_i], alpha=0.2, linewidth=0, zorder=-5)
     
     #--------------
@@ -8202,7 +8206,7 @@ def _BH_mdotmass_gassfkappa_in_window(BHmis_tree = None, BHmis_input = None, BHm
     #axs.set_yscale('log')
     axs.set_ylim(0.2, 1)
     #axs.set_yticks([1, 10, 100, 1000])
-    axs.set_xlabel(r'log$_{10}$ $\langle \dot{M}_{\mathrm{BH}} \rangle _{\mathrm{%s\:Gyr}}/M_{\mathrm{BH,initial}}$ [yr$^{-1}$]' %target_window_size)
+    axs.set_xlabel(r'log$_{10}$ $\langle \dot{M}_{\mathrm{BH,grow}} \rangle _{\mathrm{%s\:Gyr}}/M_{\mathrm{BH,initial}}$ [yr$^{-1}$]' %target_window_size)
     if initial_or_average == 'average':
         axs.set_ylabel(r'$\langle \kappa_{\mathrm{co}}^{\mathrm{SF}} \rangle _{\mathrm{%s \:Gyr}}$' %target_window_size)
     if initial_or_average == 'initial':
@@ -9043,7 +9047,7 @@ def _BH_mdotmass_gas_inflow_in_window(BHmis_tree = None, BHmis_input = None, BHm
     #axs.set_yscale('log')
     axs.set_ylim(-1.5, 1.5)
     #axs.set_yticks([1, 10, 100, 1000])
-    axs.set_xlabel(r'log$_{10}$ $\langle \dot{M}_{\mathrm{BH}} \rangle _{\mathrm{%s\:Gyr}}/M_{\mathrm{BH,initial}}$ [yr$^{-1}$]' %target_window_size)
+    axs.set_xlabel(r'log$_{10}$ $\langle \dot{M}_{\mathrm{BH,grow}} \rangle _{\mathrm{%s\:Gyr}}/M_{\mathrm{BH,initial}}$ [yr$^{-1}$]' %target_window_size)
     axs.set_ylabel(r'log$_{10}$ $\langle \dot{M}_{\mathrm{%s}, %s r_{50}} \rangle _{\mathrm{%s \: Gyr}}$ [M$_{\odot}$ yr$^{-1}$]'%('gas' if gas_fraction_type == 'gas' else 'gas,SF', inflow_hmr, target_window_size))
     axs.minorticks_on()
     axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
@@ -9781,7 +9785,7 @@ def _BH_mdotmass_gas_outflow_in_window(BHmis_tree = None, BHmis_input = None, BH
     #axs.set_yscale('log')
     axs.set_ylim(-1, 2)
     #axs.set_yticks([1, 10, 100, 1000])
-    axs.set_xlabel(r'log$_{10}$ $\langle \dot{M}_{\mathrm{BH}} \rangle _{\mathrm{%s\:Gyr}}/M_{\mathrm{BH,initial}}$ [yr$^{-1}$]' %target_window_size)
+    axs.set_xlabel(r'log$_{10}$ $\langle \dot{M}_{\mathrm{BH,grow}} \rangle _{\mathrm{%s\:Gyr}}/M_{\mathrm{BH,initial}}$ [yr$^{-1}$]' %target_window_size)
     axs.set_ylabel(r'log$_{10}$ $\langle \dot{M}_{\mathrm{%s}, %s r_{50}} \rangle _{\mathrm{%s \: Gyr}}$ [M$_{\odot}$ yr$^{-1}$]'%('gas' if gas_fraction_type == 'gas' else 'gas,SF', outflow_hmr, target_window_size))
     axs.minorticks_on()
     axs.tick_params(axis='both', direction='in', top=True, bottom=True, left=True, right=True, which='major')
@@ -10205,7 +10209,7 @@ _plot_stelmass_BH_scatter(csv_sample = 'L100_188_all_sample_misalignment_9.5', c
 
 #==================================
 # x-y of hexbin of 2r50 stelmass and bh mass at z=0.1, but looking at the galaxy's history
-"""for gyr_i in ['2Gyr', '4Gyr', '6Gyr']:
+for gyr_i in ['2Gyr', '4Gyr', '6Gyr']:
     # misaligned
     _plot_stelmass_BH_hexbin_z01_tree(local_z01_tree_load = 'L100_local_z01_input_windowt%s___'%gyr_i,
                                     type_of_fraction = 'f_mis',     # f_mis f_cnt f_co
@@ -10217,7 +10221,7 @@ _plot_stelmass_BH_scatter(csv_sample = 'L100_188_all_sample_misalignment_9.5', c
                                     type_of_fraction = 'f_cnt',     # f_mis f_cnt f_co
                                     plot_only_current_aligned = False,      # galaxies that are aligned at z=0.1
                                    showfig = True,
-                                   savefig = True)"""
+                                   savefig = True)
                                    
 # x-y of hexbin of 2r50 stelmass and bh mass at z=0.1, but looking at CURRENTLY MISALIGNED
 """for gyr_i in ['2Gyr', '4Gyr', '6Gyr']:
@@ -10346,7 +10350,7 @@ for target_bh_mass_i in [6.1, 6.3, 6.5, 6.75, 7, 7.25, 7.5, 7.75, 8]:
                                           savefig = True)"""
                                           
                                           
-# SCATTER x-y mass at start and mass at end after X Gyr, but for lbol, mdot_inst, eddington                              
+# SCATTER x-y mass at start and mass at end after X Gyr, but for lbol, mdot_inst, eddington, and median growth per snipshot                           
 """for target_window_size_i, window_err_i in zip([0.5], [0.05]):                                       
     _BH_deltamass_in_window(BHmis_tree=BHmis_tree, BHmis_input=BHmis_input, BHmis_summary=BHmis_summary, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in, target_window_size   = target_window_size_i,  window_err = window_err_i,   must_still_be_misaligned = True,  
                                           subgrid_average = 'mean',     # peak or mean, for quoting lbol edd and mdot and whether to average over window or state peak value attained
@@ -10430,6 +10434,7 @@ for target_bh_mass_i in [6.1, 6.3, 6.5, 6.75, 7, 7.25, 7.5, 7.75, 8]:
                                           showfig = True,
                                           savefig = False)
 """                                          
+                                          
 # SCATTER x-y mass at start and mass at end after X Gyr, morphology
 """for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
     _BH_deltamass_in_window(BHmis_tree=BHmis_tree, BHmis_input=BHmis_input, BHmis_summary=BHmis_summary, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in, target_window_size   = target_window_size_i,  window_err      = window_err_i, must_still_be_misaligned = True,  
@@ -10489,7 +10494,7 @@ for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.
     _BH_deltamass_in_window(BHmis_tree=BHmis_tree, BHmis_input=BHmis_input, BHmis_summary=BHmis_summary, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in, target_window_size   = target_window_size_i, window_err      = window_err_i,  must_still_be_misaligned = True,  
                                           select_low_err = True,
                                           add_contours=False, 
-                                          add_median_lines = True, # target window = target trelax
+                                          add_median_lines = True,
                                         run_refinement = False,
                                           showfig = True,
                                           savefig = True)"""
@@ -10525,7 +10530,15 @@ for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.
     _BH_mdot_in_window(BHmis_tree=BHmis_tree, BHmis_input=BHmis_input, BHmis_summary=BHmis_summary, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in, target_window_size   = target_window_size_i, window_err      = window_err_i, must_still_be_misaligned = True,  
                                           window_or_snip_mdot = 'snip',     # average growth over window or time-weighted mean over each snip
                                         run_refinement = False,
-                                          showfig = False,
+                                          showfig = True,
+                                          savefig = True)
+                                          
+    _BH_mdot_in_window(BHmis_tree=BHmis_tree, BHmis_input=BHmis_input, BHmis_summary=BHmis_summary, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in, target_window_size   = target_window_size_i, window_err      = window_err_i, must_still_be_misaligned = True,  
+                                          window_or_snip_mdot = 'snip',     # average growth over window or time-weighted mean over each snip
+                                          add_contours=False, 
+                                          add_median_lines = True,
+                                        run_refinement = False,
+                                          showfig = True,
                                           savefig = True)"""
                                           
 # SCATTER x-y mass at start vs average mdot after X Gyr, using median values to show gradual growth not spike
@@ -10601,7 +10614,7 @@ for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.
                                           
 # SCATTER of fractional growth vs fgas in a given time window/trelax
 # Can change initial/average/peak
-for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
+"""for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
     _BH_deltamassmass_fgas_in_window(BHmis_tree=BHmis_tree, BHmis_input=BHmis_input, BHmis_summary=BHmis_summary, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in, target_window_size   = target_window_size_i, window_err      = window_err_i,  must_still_be_misaligned = True,  
                                            gas_fraction_type  = 'gas_sf',              # [ 'gas' / 'gas_sf' ]
                                            initial_or_average = 'initial',       # ['initial', 'average', 'peak'] first in window or averaged over window
@@ -10616,9 +10629,9 @@ for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.
                                            initial_or_average = 'initial',       # ['initial', 'average', 'peak'] first in window or averaged over window
                                         run_refinement = False,
                                           showfig = True,
-                                          savefig = True) 
+                                          savefig = True)""" 
     
-for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
+"""for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
     _BH_deltamassmass_fgas_in_window(BHmis_tree=BHmis_tree, BHmis_input=BHmis_input, BHmis_summary=BHmis_summary, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in, target_window_size   = target_window_size_i,  window_err      = window_err_i,  must_still_be_misaligned = True,  
                                            gas_fraction_type  = 'gas_sf',              # [ 'gas' / 'gas_sf' ]
                                            initial_or_average = 'average',       # ['initial', 'average', 'peak'] first in window or averaged over window
@@ -10633,13 +10646,13 @@ for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.
                                            initial_or_average = 'average',       # ['initial', 'average', 'peak'] first in window or averaged over window
                                         run_refinement = False,
                                           showfig = True,
-                                          savefig = True)
+                                          savefig = True)"""
                                           
                                      
                                      
 # SCATTER of fractional growth vs ratio of gas surface densities within r50, and 2r50 in a given time window/trelax
 # Can change initial/average/peak
-for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
+"""for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
     _BH_deltamassmass_gassurfratio_in_window(BHmis_tree=BHmis_tree, BHmis_input=BHmis_input, BHmis_summary=BHmis_summary, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in, target_window_size   = target_window_size_i, window_err      = window_err_i,  must_still_be_misaligned = True, 
                                            gas_fraction_type  = 'gas_sf',              # [ 'gas' / 'gas_sf' ]
                                            initial_or_average = 'initial',       # ['initial', 'average', 'delta', 'delta'] first in window or averaged over window
@@ -10702,11 +10715,11 @@ for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.
                                           add_median_lines = True, 
                                         run_refinement = False,
                                           showfig = True,
-                                          savefig = True)
+                                          savefig = True)"""
 
                                      
 # SCATTER of fractional growth vs average kappa SF in a given time window/trelax
-for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
+"""for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
     _BH_deltamassmass_gassfkappa_in_window(BHmis_tree=BHmis_tree, BHmis_input=BHmis_input, BHmis_summary=BHmis_summary, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in, target_window_size   = target_window_size_i,  window_err      = window_err_i,  must_still_be_misaligned = True, 
                                           initial_or_average = 'initial',
                                         run_refinement = False,
@@ -10719,8 +10732,8 @@ for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.
                                         add_contours=False, 
                                         add_median_lines = True,
                                           showfig = True,
-                                          savefig = True)
-for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
+                                          savefig = True)"""
+"""for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
     _BH_deltamassmass_gassfkappa_in_window(BHmis_tree=BHmis_tree, BHmis_input=BHmis_input, BHmis_summary=BHmis_summary, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in, target_window_size   = target_window_size_i, window_err      = window_err_i, must_still_be_misaligned = True,  
                                           initial_or_average = 'average',
                                         run_refinement = False,
@@ -10735,13 +10748,14 @@ for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.
                                         add_contours=False, 
                                         add_median_lines = True,
                                           showfig = True,
-                                          savefig = True)
+                                          savefig = True)"""
+    
 
 
 
 
 # SCATTER of fractional growth vs inflow rate
-for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
+"""for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.1]):
     _BH_deltamassmass_gas_inflow_in_window(BHmis_tree=BHmis_tree, BHmis_input=BHmis_input, BHmis_summary=BHmis_summary, plot_annotate=plot_annotate_in, savefig_txt_in=savefig_txt_in, target_window_size   = target_window_size_i,  window_err      = window_err_i, must_still_be_misaligned = True,  
                                           gas_fraction_type         = 'gas',
                                           inflow_hmr                = 1,
@@ -10804,7 +10818,7 @@ for target_window_size_i, window_err_i in zip([0.5, 0.75, 1.0], [0.05, 0.075, 0.
                                         add_contours=False, 
                                         add_median_lines = True,
                                           showfig = True,
-                                          savefig = True)
+                                          savefig = True)"""
                                       
 
 # outflows < DONT USE
